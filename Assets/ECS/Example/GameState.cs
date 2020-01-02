@@ -12,10 +12,10 @@ public class State : IState<State> {
 
     void IState<State>.Initialize(IWorld<State> world, bool freeze, bool restore) {
 
-        world.AddFilter(ref this.points, freeze, restore);
-        world.AddFilter(ref this.units, freeze, restore);
+        world.Register(ref this.points, freeze, restore);
+        world.Register(ref this.units, freeze, restore);
 
-        world.AddComponents(ref this.pointComponents, freeze, restore);
+        world.Register(ref this.pointComponents, freeze, restore);
         
     }
 

@@ -37,6 +37,36 @@ namespace ME.ECS {
 
         }
 
+        public bool Contains<TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> {
+
+            List<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    if (list[i] is TComponent) return true;
+
+                }
+
+            }
+            
+            return false;
+
+        }
+
+        public bool Contains(Entity entity, IComponent<TState, TEntity> data) {
+            
+            List<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                return list.Contains(data);
+
+            }
+
+            return false;
+
+        }
+
         public Dictionary<EntityId, List<IComponent<TState, TEntity>>> GetData() {
 
             return this.dic;

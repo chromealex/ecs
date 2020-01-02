@@ -7,12 +7,12 @@ namespace ME.ECS {
     public class World<TState> : IWorld<TState> where TState : class, IState<TState>, new() {
 
         private TState currentState;
-        private List<ISystemBase> systems = new List<ISystemBase>();
-        private Dictionary<int, IList> entitiesCache = new Dictionary<int, IList>(); // key = typeof(T:IData), value = list of T:IData
-        private Dictionary<EntityId, IEntity> entitiesDirectCache = new Dictionary<EntityId, IEntity>();
-        private Dictionary<int, IList> filtersCache = new Dictionary<int, IList>(); // key = typeof(T:IFilter), value = list of T:IFilter
-        private Dictionary<int, IComponents> componentsCache = new Dictionary<int, IComponents>(); // key = typeof(T:IData), value = list of T:Components
-        private Dictionary<int, int> capacityCache = new Dictionary<int, int>();
+        private readonly List<ISystemBase> systems = new List<ISystemBase>();
+        private readonly Dictionary<int, IList> entitiesCache = new Dictionary<int, IList>(); // key = typeof(T:IData), value = list of T:IData
+        private readonly Dictionary<EntityId, IEntity> entitiesDirectCache = new Dictionary<EntityId, IEntity>();
+        private readonly Dictionary<int, IList> filtersCache = new Dictionary<int, IList>(); // key = typeof(T:IFilter), value = list of T:IFilter
+        private readonly Dictionary<int, IComponents> componentsCache = new Dictionary<int, IComponents>(); // key = typeof(T:IData), value = list of T:Components
+        private readonly Dictionary<int, int> capacityCache = new Dictionary<int, int>();
 
         public bool GetEntityData<T>(EntityId entityId, out T data) where T : IEntity {
 
@@ -23,24 +23,6 @@ namespace ME.ECS {
                 return true;
 
             }
-
-            /*var code = this.GetKey<T>();
-            IList list;
-            if (this.entitiesCache.TryGetValue(code, out list) == true) {
-
-                for (int i = 0; i < list.Count; ++i) {
-
-                    var item = (IEntity)list[i];
-                    if (item.entity.id == entityId) {
-
-                        data = (T)item;
-                        return true;
-
-                    }
-
-                }
-
-            }*/
 
             data = default(T);
             return false;
@@ -54,7 +36,7 @@ namespace ME.ECS {
 
         }
 
-        public int GetCapacity<T>() {
+        public int GetCapacity<T>() where T : IEntity {
 
             var code = WorldUtilities.GetKey<T>();
             return this.GetCapacity<T>(code);
@@ -74,7 +56,7 @@ namespace ME.ECS {
 
         }
 
-        public void AddComponents<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : IEntity {
+        public void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : IEntity {
 
             var code = WorldUtilities.GetKey<TEntity>();
             var capacity = 100;
@@ -121,13 +103,13 @@ namespace ME.ECS {
 
         }
 
-        public void AddFilter<T>(ref Filter<T> filterRef, bool freeze, bool restore) where T : IEntity {
+        public void Register<TEntity>(ref Filter<TEntity> filterRef, bool freeze, bool restore) where TEntity : IEntity {
 
-            var code = WorldUtilities.GetKey<T>();
-            var capacity = this.GetCapacity<T>(code);
+            var code = WorldUtilities.GetKey<TEntity>();
+            var capacity = this.GetCapacity<TEntity>(code);
             if (filterRef == null) {
 
-                filterRef = new Filter<T>();
+                filterRef = new Filter<TEntity>();
                 filterRef.Initialize(capacity);
                 filterRef.SetFreeze(freeze);
 
@@ -140,12 +122,12 @@ namespace ME.ECS {
             IList list;
             if (this.filtersCache.TryGetValue(code, out list) == true) {
 
-                ((List<Filter<T>>)list).Add(filterRef);
+                ((List<Filter<TEntity>>)list).Add(filterRef);
 
             } else {
 
-                list = new List<Filter<T>>(capacity);
-                ((List<Filter<T>>)list).Add(filterRef);
+                list = new List<Filter<TEntity>>(capacity);
+                ((List<Filter<TEntity>>)list).Add(filterRef);
                 this.filtersCache.Add(code, list);
 
             }
@@ -156,13 +138,13 @@ namespace ME.ECS {
                 for (int i = 0; i < filterRef.Count; ++i) {
 
                     var item = filterRef[i];
-                    list = new List<T>(capacity);
-                    ((List<T>)list).Add(item);
+                    list = new List<TEntity>(capacity);
+                    ((List<TEntity>)list).Add(item);
                     this.AddEntity(item, updateFilters: false);
 
                 }
 
-                this.UpdateFilters<T>(code);
+                this.UpdateFilters<TEntity>(code);
 
             }
 
@@ -182,7 +164,7 @@ namespace ME.ECS {
             IList listFilters;
             if (this.filtersCache.TryGetValue(code, out listFilters) == true) {
 
-                for (int i = 0; i < listFilters.Count; ++i) {
+                for (int i = 0, count = listFilters.Count; i < count; ++i) {
 
                     var filter = (Filter<T>)listFilters[i];
                     filter.SetData((List<T>)listEntities);
@@ -245,21 +227,34 @@ namespace ME.ECS {
 
         }
 
-        public TData RunComponents<TData>(TData data, float deltaTime, int index) where TData : IEntity {
+        public void RemoveEntity<T>(T data) where T : IEntity {
+            
+            throw new System.NotImplementedException("RemoveEntity doesn't implemented yet");
+            
+        }
 
-            var code = WorldUtilities.GetKey<TData>(data);
+        public void AddSystem(ISystem<TState> instance) {
+
+            instance.world = this;
+            this.systems.Add(instance);
+
+        }
+
+        public TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : IEntity {
+
+            var code = WorldUtilities.GetKey<TEntity>(data);
             return this.RunComponents(code, data, deltaTime, index);
 
         }
 
-        public TData RunComponents<TData>(int code, TData data, float deltaTime, int index) where TData : IEntity {
+        public TEntity RunComponents<TEntity>(int code, TEntity data, float deltaTime, int index) where TEntity : IEntity {
 
             IComponents componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                var item = (Components<TData, TState>)componentsContainer;
+                var item = (Components<TEntity, TState>)componentsContainer;
                 var dic = item.GetData();
-                List<IComponent<TState, TData>> components;
+                List<IComponent<TState, TEntity>> components;
                 if (dic.TryGetValue(data.entity.id, out components) == true) {
 
                     for (int j = 0, count = components.Count; j < count; ++j) {
@@ -273,6 +268,20 @@ namespace ME.ECS {
             }
 
             return data;
+
+        }
+
+        public void Update(float deltaTime) {
+
+            Worlds<TState>.currentWorld = this;
+            Worlds<TState>.currentState = this.GetState();
+
+            for (int i = 0, count = this.systems.Count; i < count; ++i) {
+
+                var system = this.systems[i] as ISystem<TState>;
+                system.AdvanceTick(this.GetState(), deltaTime);
+
+            }
 
         }
 
@@ -314,9 +323,21 @@ namespace ME.ECS {
         /// <param name="data"></param>
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
-        public void AddComponent<TEntity, TComponent>(TComponent data) where TEntity : IEntity where TComponent : IComponentBase { }
+        public void AddComponent<TEntity, TComponent>(TComponent data) where TEntity : IEntity where TComponent : IComponentBase {
+            
+            throw new System.NotImplementedException("AddComponent doesn't implemented yet (for all current and future entities)");
 
-        public bool HasComponent<T>(Entity entity) where T : IComponent<IStateBase, IEntity> {
+        }
+
+        public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : IEntity {
+
+            var code = WorldUtilities.GetKey(entity);
+            IComponents components;
+            if (this.componentsCache.TryGetValue(code, out components) == true) {
+
+                return ((Components<TEntity, TState>)components).Contains<TComponent>(entity);
+
+            }
 
             return false;
 
@@ -327,39 +348,30 @@ namespace ME.ECS {
         /// </summary>
         /// <param name="entity"></param>
         /// <typeparam name="T"></typeparam>
-        public void RemoveComponent<T>(Entity entity) where T : IEntity { }
+        public void RemoveComponent<T>(Entity entity) where T : IEntity {
+            
+            throw new System.NotImplementedException("RemoveComponent doesn't implemented yet");
+
+        }
 
         /// <summary>
         /// Remove all components with type TComponent and on entities with type TEntity
         /// </summary>
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
-        public void RemoveComponent<TEntity, TComponent>() where TEntity : IEntity where TComponent : IComponent<IStateBase, TEntity> { }
+        public void RemoveComponent<TEntity, TComponent>() where TEntity : IEntity where TComponent : IComponent<IStateBase, TEntity> {
+            
+            throw new System.NotImplementedException("RemoveComponent doesn't implemented yet");
+
+        }
 
         /// <summary>
         /// Remove all components with type TComponent from all entities
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
-        public void RemoveComponent<TComponent>() where TComponent : IComponent<IStateBase, IEntity> { }
-
-        public void AddSystem(ISystem<TState> instance) {
-
-            instance.world = this;
-            this.systems.Add(instance);
-
-        }
-
-        public void Update(float deltaTime) {
-
-            Worlds<TState>.currentWorld = this;
-            Worlds<TState>.currentState = this.GetState();
-
-            for (int i = 0; i < this.systems.Count; ++i) {
-
-                var system = this.systems[i] as ISystem<TState>;
-                system.AdvanceTick(this.GetState(), deltaTime);
-
-            }
+        public void RemoveComponent<TComponent>() where TComponent : IComponent<IStateBase, IEntity> {
+            
+            throw new System.NotImplementedException("RemoveComponent doesn't implemented yet");
 
         }
 
@@ -387,6 +399,12 @@ namespace ME.ECS {
         }
 
         public static int GetKey<T>(Entity data) where T : IEntity {
+
+            return data.typeId;
+
+        }
+
+        public static int GetKey(Entity data) {
 
             return data.typeId;
 

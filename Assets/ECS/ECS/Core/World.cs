@@ -4,15 +4,45 @@ using EntityId = System.Int32;
 
 namespace ME.ECS {
 
-    public class World<TState> : IWorld<TState> where TState : class, IState<TState>, new() {
+    public class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
         private TState currentState;
-        private readonly List<ISystemBase> systems = new List<ISystemBase>();
-        private readonly Dictionary<int, IList> entitiesCache = new Dictionary<int, IList>(); // key = typeof(T:IData), value = list of T:IData
-        private readonly Dictionary<EntityId, IEntity> entitiesDirectCache = new Dictionary<EntityId, IEntity>();
-        private readonly Dictionary<int, IList> filtersCache = new Dictionary<int, IList>(); // key = typeof(T:IFilter), value = list of T:IFilter
-        private readonly Dictionary<int, IComponents> componentsCache = new Dictionary<int, IComponents>(); // key = typeof(T:IData), value = list of T:Components
-        private readonly Dictionary<int, int> capacityCache = new Dictionary<int, int>();
+        private List<ISystemBase> systems;
+        private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
+        private Dictionary<EntityId, IEntity> entitiesDirectCache;
+        private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
+        private Dictionary<int, IComponents> componentsCache; // key = typeof(T:IData), value = list of T:Components
+        private Dictionary<int, int> capacityCache;
+
+        public World() {
+
+            this.currentState = null;
+            
+        }
+        
+        void IPoolableSpawn.OnSpawn() {
+            
+            this.systems = PoolList<ISystemBase>.Spawn(100);
+            this.entitiesCache = PoolDictionary<int, IList>.Spawn(100);
+            this.entitiesDirectCache = PoolDictionary<EntityId, IEntity>.Spawn(100);
+            this.filtersCache = PoolDictionary<int, IList>.Spawn(100);
+            this.componentsCache = PoolDictionary<int, IComponents>.Spawn(100);
+            this.capacityCache = PoolDictionary<int, int>.Spawn(100);
+
+        }
+
+        void IPoolableRecycle.OnRecycle() {
+            
+            this.ReleaseState(ref this.currentState);
+            
+            PoolList<ISystemBase>.Recycle(ref this.systems);
+            PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
+            PoolDictionary<EntityId, IEntity>.Recycle(ref this.entitiesDirectCache);
+            PoolDictionary<int, IList>.Recycle(ref this.filtersCache);
+            PoolDictionary<int, IComponents>.Recycle(ref this.componentsCache);
+            PoolDictionary<int, int>.Recycle(ref this.capacityCache);
+            
+        }
 
         public bool GetEntityData<T>(EntityId entityId, out T data) where T : IEntity {
 
@@ -62,7 +92,7 @@ namespace ME.ECS {
             var capacity = 100;
             if (componentsRef == null) {
 
-                componentsRef = new Components<TEntity, TState>();
+                componentsRef = PoolClass<Components<TEntity, TState>>.Spawn();
                 componentsRef.Initialize(capacity);
                 componentsRef.SetFreeze(freeze);
 
@@ -85,7 +115,7 @@ namespace ME.ECS {
                 }
             }
 
-            if (restore == true) {
+            /*if (restore == true) {
 
                 var data = componentsRef.GetData();
                 foreach (var item in data) {
@@ -93,13 +123,13 @@ namespace ME.ECS {
                     var components = item.Value;
                     for (int i = 0, count = components.Count; i < count; ++i) {
 
-                        this.AddComponent<IComponent<TState, TEntity>, TEntity>(Entity.Create<TEntity>(item.Key), components[i]);
+                        this.AddComponent<TEntity, IComponent<TState, TEntity>>(Entity.Create<TEntity>(item.Key), components[i]);
 
                     }
 
                 }
 
-            }
+            }*/
 
         }
 
@@ -109,7 +139,7 @@ namespace ME.ECS {
             var capacity = this.GetCapacity<TEntity>(code);
             if (filterRef == null) {
 
-                filterRef = new Filter<TEntity>();
+                filterRef = PoolClass<Filter<TEntity>>.Spawn();
                 filterRef.Initialize(capacity);
                 filterRef.SetFreeze(freeze);
 
@@ -126,7 +156,7 @@ namespace ME.ECS {
 
             } else {
 
-                list = new List<Filter<TEntity>>(capacity);
+                list = PoolList<Filter<TEntity>>.Spawn(capacity);
                 ((List<Filter<TEntity>>)list).Add(filterRef);
                 this.filtersCache.Add(code, list);
 
@@ -138,7 +168,7 @@ namespace ME.ECS {
                 for (int i = 0; i < filterRef.Count; ++i) {
 
                     var item = filterRef[i];
-                    list = new List<TEntity>(capacity);
+                    list = PoolList<TEntity>.Spawn(capacity);
                     ((List<TEntity>)list).Add(item);
                     this.AddEntity(item, updateFilters: false);
 
@@ -175,6 +205,21 @@ namespace ME.ECS {
 
         }
 
+        public TState CreateState() {
+
+            var state = PoolClass<TState>.Spawn();
+            state.entityId = 0;
+            return state;
+
+        }
+
+        public void ReleaseState(ref TState state) {
+
+            state.entityId = 0;
+            PoolClass<TState>.Recycle(ref state);
+            
+        }
+
         public void SetState(TState state) {
 
             this.entitiesCache.Clear();
@@ -182,6 +227,7 @@ namespace ME.ECS {
             this.filtersCache.Clear();
             this.componentsCache.Clear();
 
+            if (this.currentState != null) this.ReleaseState(ref this.currentState);
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: true);
 
@@ -199,7 +245,7 @@ namespace ME.ECS {
 
         }
 
-        public void AddEntity<T>(T data, bool updateFilters = true) where T : IEntity {
+        public Entity AddEntity<T>(T data, bool updateFilters = true) where T : IEntity {
 
             if (data.entity.id == 0) data.entity = this.CreateNewEntity<T>();
 
@@ -213,7 +259,7 @@ namespace ME.ECS {
 
             } else {
 
-                list = new List<T>(this.GetCapacity<T>(code));
+                list = PoolList<T>.Spawn(this.GetCapacity<T>(code));
                 ((List<T>)list).Add(data);
                 this.entitiesCache.Add(code, list);
 
@@ -225,14 +271,69 @@ namespace ME.ECS {
 
             }
 
+            return data.entity;
+
         }
 
         public void RemoveEntity<T>(T data) where T : IEntity {
+
+            this.entitiesDirectCache.Remove(data.entity.id);
             
-            throw new System.NotImplementedException("RemoveEntity doesn't implemented yet");
+            var code = WorldUtilities.GetKey(data);
+            IList list;
+            if (this.entitiesCache.TryGetValue(code, out list) == true) {
+                
+                ((List<T>)list).Remove(data);
+                this.RemoveComponents(data.entity);
+                
+            }
             
         }
 
+        public void RemoveEntity(Entity entity) {
+
+            if (this.entitiesDirectCache.Remove(entity.id) == true) {
+
+                var code = WorldUtilities.GetKey(entity);
+                IList list;
+                if (this.entitiesCache.TryGetValue(code, out list) == true) {
+
+                    for (int i = 0; i < list.Count; ++i) {
+
+                        if ((list[i] as IEntity).entity.id == entity.id) {
+
+                            list.RemoveAt(i);
+                            this.RemoveComponents(entity);
+                            break;
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        /// <summary>
+        /// Add system by type
+        /// Retrieve system from pool
+        /// </summary>
+        /// <typeparam name="TSystem"></typeparam>
+        public void AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
+
+            var instance = PoolClass<TSystem>.Spawn();
+            instance.world = this;
+            this.systems.Add(instance);
+
+        }
+
+        /// <summary>
+        /// Add system manually
+        /// Pool will not used
+        /// </summary>
+        /// <param name="instance"></param>
         public void AddSystem(ISystem<TState> instance) {
 
             instance.world = this;
@@ -240,15 +341,42 @@ namespace ME.ECS {
 
         }
 
-        public TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : IEntity {
+        /// <summary>
+        /// Remove system manually
+        /// Pool wil not used
+        /// </summary>
+        /// <param name="instance"></param>
+        public void RemoveSystem(ISystem<TState> instance) {
 
-            var code = WorldUtilities.GetKey<TEntity>(data);
-            return this.RunComponents(code, data, deltaTime, index);
+            instance.world = null;
+            this.systems.Remove(instance);
 
         }
 
-        public TEntity RunComponents<TEntity>(int code, TEntity data, float deltaTime, int index) where TEntity : IEntity {
+        /// <summary>
+        /// Remove systems by type
+        /// Return systems into pool
+        /// </summary>
+        public void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new() {
 
+            for (int i = 0; i < this.systems.Count; ++i) {
+
+                var system = this.systems[i];
+                if (system is TSystem tSystem) {
+
+                    PoolClass<TSystem>.Recycle(tSystem);
+                    this.systems.RemoveAt(i);
+                    --i;
+
+                }
+
+            }
+
+        }
+
+        public TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : IEntity {
+
+            var code = WorldUtilities.GetKey(data);
             IComponents componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
@@ -286,19 +414,26 @@ namespace ME.ECS {
         }
 
         /// <summary>
-        /// Add component for current entity only
+        /// Add component for current entity only (create component data)
         /// </summary>
         /// <param name="entity"></param>
-        /// <typeparam name="TComponent"></typeparam>
         /// <typeparam name="TEntity"></typeparam>
-        public void AddComponent<TComponent, TEntity>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : IEntity {
+        /// <typeparam name="TComponent"></typeparam>
+        public void AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : IEntity {
 
-            var data = new TComponent();
-            this.AddComponent<TComponent, TEntity>(entity, (IComponent<TState, TEntity>)data);
+            var data = PoolComponents.Spawn<TComponent>();
+            this.AddComponent<TEntity, TComponent>(entity, (IComponent<TState, TEntity>)data);
 
         }
 
-        public void AddComponent<TComponent, TEntity>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : IEntity {
+        /// <summary>
+        /// Add component for entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="data"></param>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <typeparam name="TComponent"></typeparam>
+        public void AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : IEntity {
 
             var code = WorldUtilities.GetKey<TEntity>(entity);
             IComponents components;
@@ -309,7 +444,7 @@ namespace ME.ECS {
 
             } else {
 
-                components = new Components<TEntity, TState>();
+                components = PoolClass<Components<TEntity, TState>>.Spawn();
                 ((Components<TEntity, TState>)components).Add(entity, data);
                 this.componentsCache.Add(code, components);
 
@@ -318,17 +453,12 @@ namespace ME.ECS {
         }
 
         /// <summary>
-        /// Add component for all current and future entities with the type TEntity
+        /// Check is component exists on entity
         /// </summary>
-        /// <param name="data"></param>
+        /// <param name="entity"></param>
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
-        public void AddComponent<TEntity, TComponent>(TComponent data) where TEntity : IEntity where TComponent : IComponentBase {
-            
-            throw new System.NotImplementedException("AddComponent doesn't implemented yet (for all current and future entities)");
-
-        }
-
+        /// <returns></returns>
         public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : IEntity {
 
             var code = WorldUtilities.GetKey(entity);
@@ -344,24 +474,18 @@ namespace ME.ECS {
         }
 
         /// <summary>
-        /// Remove all components with type T from certain entity
+        /// Remove all components from certain entity
         /// </summary>
         /// <param name="entity"></param>
-        /// <typeparam name="T"></typeparam>
-        public void RemoveComponent<T>(Entity entity) where T : IEntity {
+        public void RemoveComponents(Entity entity) {
             
-            throw new System.NotImplementedException("RemoveComponent doesn't implemented yet");
-
-        }
-
-        /// <summary>
-        /// Remove all components with type TComponent and on entities with type TEntity
-        /// </summary>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <typeparam name="TComponent"></typeparam>
-        public void RemoveComponent<TEntity, TComponent>() where TEntity : IEntity where TComponent : IComponent<IStateBase, TEntity> {
-            
-            throw new System.NotImplementedException("RemoveComponent doesn't implemented yet");
+            var code = WorldUtilities.GetKey(entity);
+            IComponents componentsContainer;
+            if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
+                
+                componentsContainer.RemoveAll(entity);
+                
+            }
 
         }
 
@@ -369,10 +493,14 @@ namespace ME.ECS {
         /// Remove all components with type TComponent from all entities
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
-        public void RemoveComponent<TComponent>() where TComponent : IComponent<IStateBase, IEntity> {
+        public void RemoveComponents<TComponent>() where TComponent : class, IComponentBase {
             
-            throw new System.NotImplementedException("RemoveComponent doesn't implemented yet");
-
+            foreach (var components in this.componentsCache) {
+                
+                components.Value.RemoveAll<TComponent>();
+                
+            }
+            
         }
 
     }
@@ -385,6 +513,31 @@ namespace ME.ECS {
     }
 
     public static class WorldUtilities {
+
+        public static void Release<T>(ref Filter<T> filter) where T : IEntity {
+            
+            PoolClass<Filter<T>>.Recycle(ref filter);
+            
+        }
+
+        public static void Release<TEntity, TState>(ref Components<TEntity, TState> components) where TState : class, IState<TState>, new() where TEntity : IEntity {
+            
+            PoolClass<Components<TEntity, TState>>.Recycle(ref components);
+            
+        }
+
+        public static void CreateWorld<TState>(ref World<TState> worldRef) where TState : class, IState<TState>, new() {
+
+            if (worldRef != null) WorldUtilities.ReleaseWorld(ref worldRef);
+            worldRef = PoolClass<World<TState>>.Spawn();
+
+        }
+
+        public static void ReleaseWorld<TState>(ref World<TState> world) where TState : class, IState<TState>, new() {
+
+            PoolClass<World<TState>>.Recycle(ref world);
+
+        }
 
         public static int GetKey<T>() {
 

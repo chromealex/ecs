@@ -12,7 +12,7 @@
 
     public interface IStateBase { }
 
-    public interface IState<T> : IStateBase where T : IStateBase {
+    public interface IState<T> : IStateBase, IPoolableRecycle where T : IStateBase {
 
         int entityId { get; set; }
 
@@ -38,21 +38,22 @@
         void SetState(TState state);
         TState GetState();
 
-        void AddEntity<T>(T data, bool updateFilters = true) where T : IEntity;
+        Entity AddEntity<T>(T data, bool updateFilters = true) where T : IEntity;
         void RemoveEntity<T>(T data) where T : IEntity;
+        void RemoveEntity(Entity entity);
 
+        void AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new();
         void AddSystem(ISystem<TState> instance);
+        void RemoveSystem(ISystem<TState> instance);
+        void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
 
-        void AddComponent<TComponent, TEntity>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : IEntity;
-        void AddComponent<TComponent, TEntity>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : IEntity;
-        void AddComponent<TEntity, TComponent>(TComponent data) where TEntity : IEntity where TComponent : IComponentBase;
+        void AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : IEntity;
+        void AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : IEntity;
         bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : IEntity;
-        void RemoveComponent<T>(Entity entity) where T : IEntity;
-        void RemoveComponent<TEntity, TComponent>() where TEntity : IEntity where TComponent : IComponent<IStateBase, TEntity>;
-        void RemoveComponent<TComponent>() where TComponent : IComponent<IStateBase, IEntity>;
+        void RemoveComponents(Entity entity);
+        void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
 
         TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : IEntity;
-        TEntity RunComponents<TEntity>(int code, TEntity data, float deltaTime, int index) where TEntity : IEntity;
 
         void Update(float deltaTime);
 

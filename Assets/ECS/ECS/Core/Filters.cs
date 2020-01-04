@@ -3,11 +3,18 @@ using System.Linq;
 
 namespace ME.ECS {
     
-    public interface IFilter { }
+    public interface IFilter : IPoolableRecycle { }
     public class Filter<T> : IFilter where T : IEntity {
 
         private List<T> list;
         private bool freeze;
+
+        void IPoolableRecycle.OnRecycle() {
+            
+            PoolList<T>.Recycle(ref this.list);
+            this.freeze = false;
+
+        }
 
         public int Count {
 
@@ -30,7 +37,7 @@ namespace ME.ECS {
 
         public void Initialize(int capacity) {
             
-            this.list = new List<T>(capacity);
+            this.list = PoolList<T>.Spawn(capacity);
 
         }
 
@@ -42,6 +49,7 @@ namespace ME.ECS {
 
         public void CopyFrom(Filter<T> other) {
             
+            if (this.list != null) PoolList<T>.Recycle(ref this.list);
             this.list = other.list.ToList();
             
         }
@@ -54,8 +62,9 @@ namespace ME.ECS {
 
         public void SetData(List<T> data) {
 
-            if (this.freeze == false && data != null) {
+            if (this.freeze == false && data != null && this.list != data) {
 
+                if (this.list != null) PoolList<T>.Recycle(ref this.list);
                 this.list = data;
 
             }

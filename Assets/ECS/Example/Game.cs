@@ -15,38 +15,38 @@ public class Game : MonoBehaviour {
 
         if (Input.GetKeyDown(KeyCode.A) == true) {
 
-            this.world = new World<State>();
-            this.world.SetState(new State());
+            WorldUtilities.CreateWorld(ref this.world);
+            this.world.SetState(this.world.CreateState());
             this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
-            this.world.AddSystem(new InputSystem());
-            this.world.AddSystem(new PointsSystem());
+            this.world.AddSystem<InputSystem>();
+            this.world.AddSystem<PointsSystem>();
 
         }
 
         if (Input.GetKeyDown(KeyCode.Q) == true) {
 
-            this.world.AddComponent<IncreaseUnits, Point>(Entity.Create<Point>(1));
+            this.world.AddComponent<Point, IncreaseUnits>(Entity.Create<Point>(1));
 
         }
 
         if (Input.GetKeyDown(KeyCode.Z) == true) {
 
-            this.world = new World<State>();
-            this.world.SetState(new State());
+            WorldUtilities.CreateWorld(ref this.world);
+            this.world.SetState(this.world.CreateState());
             this.world.SetCapacity<Point>(1000000);
             for (int i = 0; i < 1000000; ++i) {
                 this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f }, updateFilters: false);
             }
             this.world.UpdateFilters<Point>();
-            this.world.AddSystem(new InputSystem());
-            this.world.AddSystem(new PointsSystem());
+            this.world.AddSystem<InputSystem>();
+            this.world.AddSystem<PointsSystem>();
 
         }
 
         if (Input.GetKeyDown(KeyCode.R) == true) {
             
-            var newState = (IState<State>)new State();
+            var newState = (IState<State>)this.world.CreateState();
             newState.Initialize(this.world, freeze: true, restore: false);
             newState.CopyFrom((State)this.savedState);
             this.world.SetState((State)newState);
@@ -56,7 +56,7 @@ public class Game : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.S) == true) {
             
             var state = this.world.GetState();
-            this.savedState = new State();
+            this.savedState = this.world.CreateState();
             this.savedState.Initialize(this.world, freeze: true, restore: false);
             this.savedState.CopyFrom(state);
             

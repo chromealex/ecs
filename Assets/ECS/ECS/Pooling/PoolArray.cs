@@ -21,47 +21,157 @@ namespace ME.ECS {
 
     }
 
-    public interface IPoolable {
+    public static class PoolList<TValue> {
 
-	    void OnSpawn();
-	    void OnRecycle();
+	    private static int capacity;
+	    private static PoolInternalBase pool = new PoolInternalBase(() => new List<TValue>(PoolList<TValue>.capacity), (x) => ((List<TValue>)x).Clear());
+
+	    public static List<TValue> Spawn(int capacity) {
+
+		    PoolList<TValue>.capacity = capacity;
+		    return (List<TValue>)PoolList<TValue>.pool.Spawn();
+		    
+	    }
+
+	    public static void Recycle(ref List<TValue> dic) {
+
+		    PoolList<TValue>.pool.Recycle(dic);
+		    dic = null;
+
+	    }
+
+	    public static void Recycle(List<TValue> dic) {
+
+		    PoolList<TValue>.pool.Recycle(dic);
+
+	    }
+
+    }
+
+    public static class PoolDictionary<TKey, TValue> {
+
+	    private static int capacity;
+	    private static PoolInternalBase pool = new PoolInternalBase(() => new Dictionary<TKey, TValue>(PoolDictionary<TKey, TValue>.capacity), (x) => ((Dictionary<TKey, TValue>)x).Clear());
+
+	    public static Dictionary<TKey, TValue> Spawn(int capacity) {
+
+		    PoolDictionary<TKey, TValue>.capacity = capacity;
+		    return (Dictionary<TKey, TValue>)PoolDictionary<TKey, TValue>.pool.Spawn();
+		    
+	    }
+
+	    public static void Recycle(ref Dictionary<TKey, TValue> dic) {
+
+		    PoolDictionary<TKey, TValue>.pool.Recycle(dic);
+		    dic = null;
+
+	    }
+
+    }
+
+    public static class PoolComponents {
+
+	    private static PoolInternalBase pool = new PoolInternalBase(null, null);
+	    
+	    public static T Spawn<T>() where T : class, IComponentBase, new() {
+            
+		    var obj = PoolComponents.pool.Spawn();
+		    if (obj == null) return new T();
+		    return (T)obj;
+
+	    }
+
+	    public static void Recycle<T>(ref T component) where T : class, IComponentBase {
+
+		    PoolComponents.pool.Recycle(component);
+		    component = null;
+
+	    }
+
+	    public static void Recycle<TComponent>(List<TComponent> list) where TComponent : class, IComponentBase {
+
+		    for (int i = 0; i < list.Count; ++i) {
+			    
+			    PoolComponents.Recycle(list[i]);
+			    
+		    }
+
+	    }
+
+	    public static void Recycle<T>(T component) where T : class, IComponentBase {
+
+		    PoolComponents.pool.Recycle(component);
+
+	    }
 
     }
 
     public static class PoolClass<T> where T : class, new() {
 
-	    private static Stack<T> cache = new Stack<T>();
+	    private static PoolInternalBase pool = new PoolInternalBase(() => new T(), null);
 
 	    public static T Spawn() {
 		    
-		    return PoolClass<T>.Spawn(null);
+		    return (T)PoolClass<T>.pool.Spawn();
 		    
 	    }
 
-	    public static T Spawn(System.Action<T> onSpawn) {
+	    public static void Recycle(ref T instance) {
+		    
+		    PoolClass<T>.pool.Recycle(instance);
+		    instance = null;
 
-		    T item = default(T);
-		    if (PoolClass<T>.cache.Count > 0) {
+	    }
 
-			    item = PoolClass<T>.cache.Pop();
+	    public static void Recycle(T instance) {
+		    
+		    PoolClass<T>.pool.Recycle(instance);
+		    
+	    }
+
+    }
+
+    public interface IPoolableSpawn {
+
+	    void OnSpawn();
+
+    }
+
+    public interface IPoolableRecycle {
+
+	    void OnRecycle();
+
+    }
+
+    public class PoolInternalBase {
+
+	    protected Stack<object> cache = new Stack<object>();
+	    protected System.Func<object> constructor;
+	    protected System.Action<object> desctructor;
+	    
+	    public PoolInternalBase(System.Func<object> constructor, System.Action<object> desctructor) {
+
+		    this.constructor = constructor;
+		    this.desctructor = desctructor;
+
+	    }
+
+	    public virtual object Spawn() {
+		    
+		    object item = null;
+		    if (this.cache.Count > 0) {
+
+			    item = this.cache.Pop();
 
 		    }
 
-		    if (item == null) {
+		    if (this.constructor != null && item == null) {
 			    
-			    item = new T();
-			    
-		    }
-
-		    // Run action?
-		    if (onSpawn != null) {
-			    
-			    onSpawn.Invoke(item);
+			    item = this.constructor.Invoke();
 			    
 		    }
 
-		    var poolable = item as IPoolable;
-		    if (poolable != null) {
+		    if (item is IPoolableSpawn poolable) {
 			    
 			    poolable.OnSpawn();
 			    
@@ -71,33 +181,24 @@ namespace ME.ECS {
 
 	    }
 
-	    public static void Recycle(ref T instance) {
+	    public virtual void Recycle(object instance) {
 		    
-		    PoolClass<T>.Recycle(ref instance, null);
-		    
-	    }
-
-	    public static void Recycle(ref T instance, System.Action<T> onDespawn) {
-		    
-		    PoolClass<T>.cache.Push(instance);
-		    
-		    if (onDespawn != null) {
+		    if (this.desctructor != null) {
 			    
-			    onDespawn.Invoke(instance);
+			    this.desctructor.Invoke(instance);
 			    
 		    }
 
-		    var poolable = instance as IPoolable;
-		    if (poolable != null) {
+		    if (instance is IPoolableRecycle poolable) {
 			    
 			    poolable.OnRecycle();
 			    
 		    }
 
-		    instance = null;
-
+		    this.cache.Push(instance);
+		    
 	    }
 
     }
-    
+
 }

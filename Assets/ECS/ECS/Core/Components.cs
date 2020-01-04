@@ -4,17 +4,79 @@ using EntityId = System.Int32;
 
 namespace ME.ECS {
 
-    public interface IComponents { }
+    public interface IComponents : IPoolableRecycle {
+
+        void RemoveAll(Entity entity);
+        void RemoveAll<TComponent>() where TComponent : class, IComponentBase;
+
+    }
     public class Components<TEntity, TState> : IComponents where TEntity : IEntity where TState : IStateBase {
 
         private Dictionary<EntityId, List<IComponent<TState, TEntity>>> dic;
         private bool freeze;
+        private int capacity;
+
+        void IPoolableRecycle.OnRecycle() {
+
+            foreach (var item in this.dic) {
+                
+                PoolComponents.Recycle(item.Value);
+                PoolList<IComponent<TState, TEntity>>.Recycle(item.Value);
+                
+            }
+            PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Recycle(ref this.dic);
+            
+            this.freeze = false;
+            this.capacity = 0;
+
+        }
 
         public int Count {
 
             get {
 
-                return this.dic.Count;
+                var count = 0;
+                foreach (var item in this.dic) {
+
+                    count += item.Value.Count;
+
+                }
+
+                return count;
+
+            }
+
+        }
+
+        public void RemoveAll<TComponent>() where TComponent : class, IComponentBase {
+
+            foreach (var item in this.dic) {
+
+                var list = item.Value;
+                for (int i = 0; i < list.Count; ++i) {
+
+                    var listItem = list[i];
+                    if (listItem is TComponent listItemComponent) {
+                        
+                        PoolComponents.Recycle(listItemComponent);
+                        list.RemoveAt(i);
+                        --i;
+
+                    }
+                    
+                }
+
+            }
+
+        }
+
+        public void RemoveAll(Entity entity) {
+            
+            List<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                PoolComponents.Recycle(list);
+                list.Clear();
 
             }
 
@@ -28,8 +90,8 @@ namespace ME.ECS {
                 list.Add(data);
 
             } else {
-                
-                list = new List<IComponent<TState, TEntity>>();
+
+                list = PoolList<IComponent<TState, TEntity>>.Spawn(this.capacity);
                 list.Add(data);
                 this.dic.Add(entity.id, list);
                 
@@ -74,8 +136,9 @@ namespace ME.ECS {
         }
 
         public void Initialize(int capacity) {
-            
-            this.dic = new Dictionary<EntityId, List<IComponent<TState, TEntity>>>(capacity);
+
+            this.capacity = capacity;
+            this.dic = PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Spawn(capacity);
 
         }
 
@@ -87,20 +150,14 @@ namespace ME.ECS {
 
         public void CopyFrom(Components<TEntity, TState> other) {
             
-            this.dic = new Dictionary<EntityId, List<IComponent<TState, TEntity>>>();
+            if (this.dic != null) PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Recycle(ref this.dic);
+            this.dic = PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Spawn(this.capacity);
             foreach (var item in other.dic) {
                 
-                this.dic.Add(item.Key, item.Value.ToList());
-                
-            }
-
-        }
-
-        public void SetData(Dictionary<EntityId, List<IComponent<TState, TEntity>>> data) {
-
-            if (this.freeze == false && data != null) {
-
-                this.dic = data;
+                var newList = PoolList<IComponent<TState, TEntity>>.Spawn(item.Value.Capacity);
+                newList.AddRange(item.Value);
+                this.dic.Add(item.Key, newList);
+                PoolList<IComponent<TState, TEntity>>.Recycle(item.Value);
 
             }
 

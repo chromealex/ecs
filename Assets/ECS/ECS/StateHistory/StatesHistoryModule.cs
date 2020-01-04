@@ -4,8 +4,8 @@ namespace ME.ECS.StatesHistory {
 
     public class CircularQueue<T> where T : class {
 
-        private T[] data;
-        private uint capacity;
+        private readonly T[] data;
+        private readonly uint capacity;
         private uint indexer;
 
         public CircularQueue(uint capacity) {
@@ -44,6 +44,7 @@ namespace ME.ECS.StatesHistory {
         private CircularQueue<TState> states;
         private Tick currentTick;
         private Tick maxTick;
+        private bool prewarmed;
 
         public IWorld<TState> world { get; set; }
 
@@ -119,7 +120,6 @@ namespace ME.ECS.StatesHistory {
 
         }
 
-        private bool prewarmed;
         private void Prewarm() {
 
             for (uint i = 0; i < this.GetQueueCapacity(); ++i) {

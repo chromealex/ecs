@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using EntityId = System.Int32;
 using Tick = System.UInt64;
 
@@ -182,9 +181,8 @@ namespace ME.ECS {
             }
 
             if (freeze == false) {
-                
-                IComponents components;
-                if (this.componentsCache.TryGetValue(code, out components) == true) {
+
+                if (this.componentsCache.ContainsKey(code) == true) {
 
                     this.componentsCache[code] = componentsRef;
 
@@ -401,9 +399,9 @@ namespace ME.ECS {
                 IList list;
                 if (this.entitiesCache.TryGetValue(code, out list) == true) {
 
-                    for (int i = 0; i < list.Count; ++i) {
+                    for (int i = 0, count = list.Count; i < count; ++i) {
 
-                        if ((list[i] as IEntity).entity.id == entity.id) {
+                        if (((IEntity)list[i]).entity.id == entity.id) {
 
                             list.RemoveAt(i);
                             this.RemoveComponents(entity);
@@ -655,7 +653,7 @@ namespace ME.ECS {
             }
 
             var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
-            for (Tick tick = prevTick + (Tick)1; tick <= currentTick; ++tick) {
+            for (Tick tick = prevTick + 1; tick <= currentTick; ++tick) {
 
                 for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
@@ -689,7 +687,7 @@ namespace ME.ECS {
         /// <typeparam name="TComponent"></typeparam>
         public void AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : IEntity {
 
-            var code = WorldUtilities.GetKey<TEntity>(entity);
+            var code = WorldUtilities.GetKey(entity);
             IComponents components;
             if (this.componentsCache.TryGetValue(code, out components) == true) {
 
@@ -803,12 +801,6 @@ namespace ME.ECS {
         public static int GetKey<T>(T data) where T : IEntity {
 
             return data.entity.typeId;
-
-        }
-
-        public static int GetKey<T>(Entity data) where T : IEntity {
-
-            return data.typeId;
 
         }
 

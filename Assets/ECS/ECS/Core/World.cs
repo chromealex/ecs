@@ -1,28 +1,92 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using EntityId = System.Int32;
+using Tick = System.UInt64;
 
 namespace ME.ECS {
 
     public class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
         private TState currentState;
-        private List<ISystemBase> systems;
+        private List<ISystem<TState>> systems;
+        private List<IModule<TState>> modules;
+        private Dictionary<int, int> capacityCache;
+
+        // State cache:
         private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
         private Dictionary<EntityId, IEntity> entitiesDirectCache;
         private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
         private Dictionary<int, IComponents> componentsCache; // key = typeof(T:IData), value = list of T:Components
-        private Dictionary<int, int> capacityCache;
+        
+        private float tickTime;
+        private double timeSinceStart;
+        private StatesHistory.StatesHistoryModule<TState> statesHistoryModule;
 
         public World() {
 
             this.currentState = null;
             
         }
+
+        void IWorldBase.SetTickTime(float tickTime) {
+
+            this.tickTime = tickTime;
+
+        }
         
+        float IWorldBase.GetTickTime() {
+
+            return this.tickTime;
+
+        }
+
+        double IWorldBase.GetTimeSinceStart() {
+
+            return this.timeSinceStart;
+
+        }
+
+        void IWorldBase.SetTimeSinceStart(double time) {
+
+            this.timeSinceStart = time;
+
+        }
+
+        public Tick GetTick() {
+
+            if (this.statesHistoryModule != null) {
+
+                return this.statesHistoryModule.GetTick();
+
+            }
+
+            return default(Tick);
+
+        }
+
+        public void SetStatesHistoryModule(StatesHistory.StatesHistoryModule<TState> module) {
+
+            this.statesHistoryModule = module;
+
+        }
+
+        void IWorldBase.Simulate(double time) {
+
+            this.timeSinceStart = time;
+
+        }
+
+        void IWorldBase.Simulate(Tick tick) {
+
+            if (this.statesHistoryModule != null) this.statesHistoryModule.SetTick(tick);
+
+        }
+
         void IPoolableSpawn.OnSpawn() {
             
-            this.systems = PoolList<ISystemBase>.Spawn(100);
+            this.systems = PoolList<ISystem<TState>>.Spawn(100);
+            this.modules = PoolList<IModule<TState>>.Spawn(100);
             this.entitiesCache = PoolDictionary<int, IList>.Spawn(100);
             this.entitiesDirectCache = PoolDictionary<EntityId, IEntity>.Spawn(100);
             this.filtersCache = PoolDictionary<int, IList>.Spawn(100);
@@ -34,14 +98,29 @@ namespace ME.ECS {
         void IPoolableRecycle.OnRecycle() {
             
             this.ReleaseState(ref this.currentState);
+
+            for (int i = 0; i < this.systems.Count; ++i) {
+                
+                this.systems[i].OnDeconstruct();
+                PoolSystems.Recycle(this.systems[i]);
+
+            }
+            PoolList<ISystem<TState>>.Recycle(ref this.systems);
             
-            PoolList<ISystemBase>.Recycle(ref this.systems);
+            for (int i = 0; i < this.modules.Count; ++i) {
+                
+                this.modules[i].OnDeconstruct();
+                PoolModules.Recycle(this.modules[i]);
+
+            }
+            PoolList<IModule<TState>>.Recycle(ref this.modules);
+            
             PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
             PoolDictionary<EntityId, IEntity>.Recycle(ref this.entitiesDirectCache);
             PoolDictionary<int, IList>.Recycle(ref this.filtersCache);
             PoolDictionary<int, IComponents>.Recycle(ref this.componentsCache);
             PoolDictionary<int, int>.Recycle(ref this.capacityCache);
-            
+
         }
 
         public bool GetEntityData<T>(EntityId entityId, out T data) where T : IEntity {
@@ -86,7 +165,7 @@ namespace ME.ECS {
 
         }
 
-        public void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : IEntity {
+        public void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity {
 
             var code = WorldUtilities.GetKey<TEntity>();
             var capacity = 100;
@@ -102,7 +181,8 @@ namespace ME.ECS {
 
             }
 
-            {
+            if (freeze == false) {
+                
                 IComponents components;
                 if (this.componentsCache.TryGetValue(code, out components) == true) {
 
@@ -113,6 +193,7 @@ namespace ME.ECS {
                     this.componentsCache.Add(code, componentsRef);
 
                 }
+                
             }
 
             /*if (restore == true) {
@@ -133,7 +214,7 @@ namespace ME.ECS {
 
         }
 
-        public void Register<TEntity>(ref Filter<TEntity> filterRef, bool freeze, bool restore) where TEntity : IEntity {
+        public void Register<TEntity>(ref Filter<TEntity> filterRef, bool freeze, bool restore) where TEntity : struct, IEntity {
 
             var code = WorldUtilities.GetKey<TEntity>();
             var capacity = this.GetCapacity<TEntity>(code);
@@ -149,16 +230,20 @@ namespace ME.ECS {
 
             }
 
-            IList list;
-            if (this.filtersCache.TryGetValue(code, out list) == true) {
+            if (freeze == false) {
 
-                ((List<Filter<TEntity>>)list).Add(filterRef);
+                IList list;
+                if (this.filtersCache.TryGetValue(code, out list) == true) {
 
-            } else {
+                    ((List<Filter<TEntity>>)list).Add(filterRef);
 
-                list = PoolList<Filter<TEntity>>.Spawn(capacity);
-                ((List<Filter<TEntity>>)list).Add(filterRef);
-                this.filtersCache.Add(code, list);
+                } else {
+
+                    list = PoolList<Filter<TEntity>>.Spawn(capacity);
+                    ((List<Filter<TEntity>>)list).Add(filterRef);
+                    this.filtersCache.Add(code, list);
+
+                }
 
             }
 
@@ -168,8 +253,8 @@ namespace ME.ECS {
                 for (int i = 0; i < filterRef.Count; ++i) {
 
                     var item = filterRef[i];
-                    list = PoolList<TEntity>.Spawn(capacity);
-                    ((List<TEntity>)list).Add(item);
+                    var list = PoolList<TEntity>.Spawn(capacity);
+                    list.Add(item);
                     this.AddEntity(item, updateFilters: false);
 
                 }
@@ -208,14 +293,16 @@ namespace ME.ECS {
         public TState CreateState() {
 
             var state = PoolClass<TState>.Spawn();
-            state.entityId = 0;
+            state.entityId = default;
+            state.tick = default;
             return state;
 
         }
 
         public void ReleaseState(ref TState state) {
 
-            state.entityId = 0;
+            state.entityId = default;
+            state.tick = default;
             PoolClass<TState>.Recycle(ref state);
             
         }
@@ -231,6 +318,8 @@ namespace ME.ECS {
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: true);
 
+            ((IWorldBase)this).Simulate(state.tick);
+
         }
 
         public TState GetState() {
@@ -245,11 +334,23 @@ namespace ME.ECS {
 
         }
 
+        public void UpdateEntityCache<T>(T data) where T : IEntity {
+
+            if (this.entitiesDirectCache.ContainsKey(data.entity.id) == true) {
+
+                this.entitiesDirectCache[data.entity.id] = data;
+                
+            } else {
+                
+                this.entitiesDirectCache.Add(data.entity.id, data);
+                
+            }
+
+        }
+
         public Entity AddEntity<T>(T data, bool updateFilters = true) where T : IEntity {
 
             if (data.entity.id == 0) data.entity = this.CreateNewEntity<T>();
-
-            this.entitiesDirectCache.Add(data.entity.id, data);
 
             var code = WorldUtilities.GetKey(data);
             IList list;
@@ -270,6 +371,8 @@ namespace ME.ECS {
                 this.UpdateFilters<T>(code);
 
             }
+            
+            this.UpdateEntityCache(data);
 
             return data.entity;
 
@@ -315,65 +418,193 @@ namespace ME.ECS {
             }
 
         }
+        
+        /// <summary>
+        /// Get first module by type
+        /// </summary>
+        /// <typeparam name="TModule"></typeparam>
+        /// <returns></returns>
+        public TModule GetModule<TModule>() where TModule : IModuleBase {
+
+            for (int i = 0, count = this.modules.Count; i < count; ++i) {
+
+                var module = this.modules[i];
+                if (module is TModule tModule) {
+
+                    return tModule;
+
+                }
+
+            }
+
+            return default;
+
+        }
 
         /// <summary>
-        /// Add system by type
-        /// Retrieve system from pool
+        /// Add module by type
+        /// Retrieve module from pool, OnConstruct() call
         /// </summary>
-        /// <typeparam name="TSystem"></typeparam>
-        public void AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
-
-            var instance = PoolClass<TSystem>.Spawn();
+        /// <typeparam name="TModule"></typeparam>
+        /// <returns></returns>
+        public bool AddModule<TModule>() where TModule : class, IModule<TState>, new() {
+            
+            var instance = PoolModules.Spawn<TModule>();
             instance.world = this;
-            this.systems.Add(instance);
+            if (instance is IModuleValidation instanceValidate) {
+
+                if (instanceValidate.CouldBeAdded() == false) {
+
+                    instance.world = null;
+                    PoolModules.Recycle(ref instance);
+                    return false;
+                    
+                }
+
+            }
+            
+            this.modules.Add(instance);
+            instance.OnConstruct();
+
+            return true;
 
         }
 
         /// <summary>
-        /// Add system manually
-        /// Pool will not used
+        /// Remove modules by type
+        /// Return modules into pool, OnDeconstruct() call
         /// </summary>
-        /// <param name="instance"></param>
-        public void AddSystem(ISystem<TState> instance) {
+        public void RemoveModules<TModule>() where TModule : class, IModule<TState>, new() {
 
-            instance.world = this;
-            this.systems.Add(instance);
+            for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
-        }
+                var module = this.modules[i];
+                if (module is TModule tModule) {
 
-        /// <summary>
-        /// Remove system manually
-        /// Pool wil not used
-        /// </summary>
-        /// <param name="instance"></param>
-        public void RemoveSystem(ISystem<TState> instance) {
-
-            instance.world = null;
-            this.systems.Remove(instance);
-
-        }
-
-        /// <summary>
-        /// Remove systems by type
-        /// Return systems into pool
-        /// </summary>
-        public void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new() {
-
-            for (int i = 0; i < this.systems.Count; ++i) {
-
-                var system = this.systems[i];
-                if (system is TSystem tSystem) {
-
-                    PoolClass<TSystem>.Recycle(tSystem);
-                    this.systems.RemoveAt(i);
+                    PoolModules.Recycle(tModule);
+                    this.modules.RemoveAt(i);
+                    module.OnDeconstruct();
                     --i;
+                    --count;
 
                 }
 
             }
 
         }
+        
+        /// <summary>
+        /// Add system by type
+        /// Retrieve system from pool, OnConstruct() call
+        /// </summary>
+        /// <typeparam name="TSystem"></typeparam>
+        public bool AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
 
+            var instance = PoolSystems.Spawn<TSystem>();
+            instance.world = this;
+            if (instance is ISystemValidation instanceValidate) {
+
+                if (instanceValidate.CouldBeAdded() == false) {
+
+                    instance.world = null;
+                    PoolSystems.Recycle(ref instance);
+                    return false;
+                    
+                }
+
+            }
+            
+            this.systems.Add(instance);
+            instance.OnConstruct();
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Add system manually
+        /// Pool will not be used, OnConstruct() call
+        /// </summary>
+        /// <param name="instance"></param>
+        public bool AddSystem(ISystem<TState> instance) {
+
+            instance.world = this;
+            if (instance is ISystemValidation instanceValidate) {
+
+                if (instanceValidate.CouldBeAdded() == false) {
+                    
+                    instance.world = null;
+                    return false;
+                    
+                }
+
+            }
+            
+            this.systems.Add(instance);
+            instance.OnConstruct();
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Remove system manually
+        /// Pool will not be used, OnDeconstruct() call
+        /// </summary>
+        /// <param name="instance"></param>
+        public void RemoveSystem(ISystem<TState> instance) {
+
+            instance.world = null;
+            this.systems.Remove(instance);
+            instance.OnDeconstruct();
+
+        }
+
+        /// <summary>
+        /// Get first system by type
+        /// </summary>
+        /// <typeparam name="TSystem"></typeparam>
+        /// <returns></returns>
+        public TSystem GetSystem<TSystem>() where TSystem : ISystemBase {
+
+            for (int i = 0, count = this.systems.Count; i < count; ++i) {
+
+                var system = this.systems[i];
+                if (system is TSystem tSystem) {
+
+                    return tSystem;
+
+                }
+
+            }
+
+            return default;
+
+        }
+
+        /// <summary>
+        /// Remove systems by type
+        /// Return systems into pool, OnDeconstruct() call
+        /// </summary>
+        public void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new() {
+
+            for (int i = 0, count = this.systems.Count; i < count; ++i) {
+
+                var system = this.systems[i];
+                if (system is TSystem tSystem) {
+
+                    PoolSystems.Recycle(tSystem);
+                    this.systems.RemoveAt(i);
+                    system.OnDeconstruct();
+                    --i;
+                    --count;
+
+                }
+
+            }
+
+        }
+        
         public TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : IEntity {
 
             var code = WorldUtilities.GetKey(data);
@@ -401,13 +632,36 @@ namespace ME.ECS {
 
         public void Update(float deltaTime) {
 
+            var state = this.GetState();
+            
             Worlds<TState>.currentWorld = this;
-            Worlds<TState>.currentState = this.GetState();
+            Worlds<TState>.currentState = state;
 
-            for (int i = 0, count = this.systems.Count; i < count; ++i) {
+            var prevTick = state.tick;
+            this.timeSinceStart += deltaTime;
 
-                var system = this.systems[i] as ISystem<TState>;
-                system.AdvanceTick(this.GetState(), deltaTime);
+            for (int i = 0, count = this.modules.Count; i < count; ++i) {
+                
+                this.modules[i].Update(state, deltaTime);
+                
+            }
+
+            var currentTick = state.tick;
+            if (prevTick > currentTick) {
+
+                ((IWorldBase)this).Simulate(currentTick);
+                return;
+
+            }
+
+            var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
+            for (Tick tick = prevTick + (Tick)1; tick <= currentTick; ++tick) {
+
+                for (int i = 0, count = this.systems.Count; i < count; ++i) {
+
+                    this.systems[i].AdvanceTick(state, fixedDeltaTime);
+
+                }
 
             }
 
@@ -505,7 +759,7 @@ namespace ME.ECS {
 
     }
 
-    public static class Worlds<TState> where TState : IStateBase {
+    public static class Worlds<TState> where TState : class, IState<TState> {
 
         public static IWorld<TState> currentWorld;
         public static TState currentState;
@@ -526,10 +780,11 @@ namespace ME.ECS {
             
         }
 
-        public static void CreateWorld<TState>(ref World<TState> worldRef) where TState : class, IState<TState>, new() {
+        public static void CreateWorld<TState>(ref World<TState> worldRef, float tickTime) where TState : class, IState<TState>, new() {
 
             if (worldRef != null) WorldUtilities.ReleaseWorld(ref worldRef);
             worldRef = PoolClass<World<TState>>.Spawn();
+            ((IWorldBase)worldRef).SetTickTime(tickTime);
 
         }
 

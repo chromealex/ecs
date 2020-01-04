@@ -1,9 +1,5 @@
 ﻿using ME.ECS;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using Unity.Jobs;
-using Unity.Burst;
 
 public class PointsSystem : ISystem<State> {
 
@@ -14,13 +10,18 @@ public class PointsSystem : ISystem<State> {
         
         void IJobParallelFor.Execute(int index) {
             
-            Worlds<State>.currentState.points[index] = Worlds<State>.currentWorld.RunComponents(Worlds<State>.currentState.points[index], this.deltaTime, index);
-            
+            var data = Worlds<State>.currentWorld.RunComponents(Worlds<State>.currentState.points[index], this.deltaTime, index);
+            Worlds<State>.currentState.points[index] = data;
+            Worlds<State>.currentWorld.UpdateEntityCache(data);
+
         }
 
     }
 
     public IWorld<State> world { get; set; }
+
+    void ISystem<State>.OnConstruct() { }
+    void ISystem<State>.OnDeconstruct() { }
 
     void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 

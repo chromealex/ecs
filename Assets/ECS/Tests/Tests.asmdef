@@ -3,8 +3,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "ECSAsm",
-        "ECSExample"
+        "ECSExample",
+        "ECSAssembly"
     ],
     "includePlatforms": [
         "Editor"

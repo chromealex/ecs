@@ -15,7 +15,7 @@ namespace ME.ECS.Tests {
             var world = TestsHelper.CreateWorld();
             
             // Adding items
-            world.AddSystem(new PointsSystem());
+            world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             world.AddComponent<Point, IncreaseUnits>(entity);
 
@@ -34,7 +34,7 @@ namespace ME.ECS.Tests {
             var world = TestsHelper.CreateWorld();
             
             // Adding items
-            world.AddSystem(new PointsSystem());
+            world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             world.AddComponent<Point, IncreaseUnits>(entity);
 
@@ -57,7 +57,7 @@ namespace ME.ECS.Tests {
             var world = TestsHelper.CreateWorld();
             
             // Adding items
-            world.AddSystem(new PointsSystem());
+            world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             var entityToRemove = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
             world.AddComponent<Point, IncreaseUnits>(entity);

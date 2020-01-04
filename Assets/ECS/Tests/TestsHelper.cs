@@ -7,7 +7,7 @@ namespace ME.ECS.Tests {
         public static World<State> CreateWorld() {
             
             World<State> world = null;
-            WorldUtilities.CreateWorld(ref world);
+            WorldUtilities.CreateWorld(ref world, 0.05f);
             world.SetState(world.CreateState());
 
             return world;

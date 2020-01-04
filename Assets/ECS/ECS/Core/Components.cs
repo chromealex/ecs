@@ -157,8 +157,7 @@ namespace ME.ECS {
                 var newList = PoolList<IComponent<TState, TEntity>>.Spawn(item.Value.Capacity);
                 newList.AddRange(item.Value);
                 this.dic.Add(item.Key, newList);
-                PoolList<IComponent<TState, TEntity>>.Recycle(item.Value);
-
+                
             }
 
         }

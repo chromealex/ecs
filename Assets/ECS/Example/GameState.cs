@@ -1,9 +1,11 @@
 ﻿using ME.ECS;
 using EntityId = System.Int32;
+using Tick = System.UInt64;
 
 public class State : IState<State> {
 
     public EntityId entityId { get; set; }
+    public Tick tick { get; set; }
 
     public Filter<Point> points;
     public Filter<Unit> units;
@@ -24,6 +26,7 @@ public class State : IState<State> {
     void IState<State>.CopyFrom(State other) {
 
         this.entityId = other.entityId;
+        this.tick = other.tick;
         
         this.points.CopyFrom(other.points);
         this.units.CopyFrom(other.units);

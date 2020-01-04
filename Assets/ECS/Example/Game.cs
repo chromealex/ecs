@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 using EntityId = System.Int32;
 using ME.ECS;
 
@@ -15,7 +12,9 @@ public class Game : MonoBehaviour {
 
         if (Input.GetKeyDown(KeyCode.A) == true) {
 
-            WorldUtilities.CreateWorld(ref this.world);
+            WorldUtilities.CreateWorld(ref this.world, 0.05f);
+            this.world.AddModule<StatesHistoryModule>();
+            
             this.world.SetState(this.world.CreateState());
             this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
@@ -27,15 +26,18 @@ public class Game : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.Q) == true) {
 
             this.world.AddComponent<Point, IncreaseUnits>(Entity.Create<Point>(1));
+            this.world.AddComponent<Point, IncreaseUnits>(Entity.Create<Point>(2));
 
         }
 
         if (Input.GetKeyDown(KeyCode.Z) == true) {
 
-            WorldUtilities.CreateWorld(ref this.world);
+            WorldUtilities.CreateWorld(ref this.world, 1f);
+            this.world.AddModule<StatesHistoryModule>();
+            
             this.world.SetState(this.world.CreateState());
-            this.world.SetCapacity<Point>(1000000);
-            for (int i = 0; i < 1000000; ++i) {
+            this.world.SetCapacity<Point>(100000);
+            for (int i = 0; i < 100000; ++i) {
                 this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f }, updateFilters: false);
             }
             this.world.UpdateFilters<Point>();

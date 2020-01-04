@@ -50,8 +50,9 @@ namespace ME.ECS {
         public void CopyFrom(Filter<T> other) {
             
             if (this.list != null) PoolList<T>.Recycle(ref this.list);
-            this.list = other.list.ToList();
-            
+            this.list = PoolList<T>.Spawn(other.list.Capacity);
+            this.list.AddRange(other.list);
+
         }
 
         public List<T> GetData() {

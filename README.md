@@ -1,5 +1,5 @@
 # ME.ECS
-ME.ECS - it's ECS implementation for Unity Engine with full state automatic recover
+ME.ECS - it's ECS implementation for Unity Engine with full state automatic rollbacks
 
 # Performance
 1.000.000 entities:

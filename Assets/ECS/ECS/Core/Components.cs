@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using EntityId = System.Int32;
 
 namespace ME.ECS {
@@ -10,6 +9,12 @@ namespace ME.ECS {
         void RemoveAll<TComponent>() where TComponent : class, IComponentBase;
 
     }
+    
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class Components<TEntity, TState> : IComponents where TEntity : IEntity where TState : IStateBase {
 
         private Dictionary<EntityId, List<IComponent<TState, TEntity>>> dic;

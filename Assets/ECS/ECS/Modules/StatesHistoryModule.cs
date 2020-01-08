@@ -1,47 +1,109 @@
 ﻿#if STATES_HISTORY_MODULE_SUPPORT
 using System.Collections.Generic;
 using Tick = System.UInt64;
+using RPCId = System.Int32;
 
 namespace ME.ECS.StatesHistory {
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class CircularQueue<T> where T : class {
 
-        private readonly T[] data;
+        private readonly Dictionary<Tick, T> data;
         private readonly uint capacity;
-        private uint indexer;
+        private readonly uint ticksPerState;
+        private bool beginSet;
 
-        public CircularQueue(uint capacity) {
+        public CircularQueue(uint ticksPerState, uint capacity) {
 
-            this.data = new T[capacity];
+            this.data = new Dictionary<Tick, T>((int)capacity);
             this.capacity = capacity;
-            this.indexer = 0;
+            this.ticksPerState = ticksPerState;
+            this.beginSet = false;
 
         }
 
-        public T[] GetData() {
+        public T Get(Tick tick) {
 
-            return this.data;
+            Tick nearestTick = tick - tick % this.ticksPerState;
+            T state;
+            if (this.data.TryGetValue(nearestTick, out state) == true) {
+
+                return state;
+
+            }
+
+            return default;
 
         }
 
-        public T Add(T data) {
+        public void BeginSet() {
 
-            T result = null;
-            if (this.data[this.indexer] != null) {
+            this.beginSet = true;
 
-                result = this.data[this.indexer];
+        }
+
+        public void EndSet() {
+            
+            this.beginSet = false;
+            
+        }
+
+        public T Set(Tick tick, T data, out T removedData) {
+
+            T result;
+            removedData = null;
+            
+            var nearestTick = (long)(tick - tick % this.ticksPerState);
+            var oldestTick = nearestTick - this.ticksPerState * this.capacity;
+            if (oldestTick < 0L) oldestTick = 0L;
+            if (oldestTick >= 0L) {
+
+                var key = (Tick)oldestTick;
+                if (this.data.TryGetValue(key, out result) == true) {
+
+                    // we've found oldest-tick record - need to remove it
+                    removedData = result;
+                    this.data.Remove(key);
+
+                }
 
             }
 
-            this.data[this.indexer] = data;
-            ++this.indexer;
-            if (this.indexer >= this.capacity) {
+            var searchTick = (Tick)nearestTick;
+            if (this.data.TryGetValue(searchTick, out result) == true) {
 
-                this.indexer = 0;
+                this.data[searchTick] = data;
+                return result;
 
+            } else {
+                
+                this.data.Add(searchTick, data);
+                
             }
 
-            return result;
+            if (this.beginSet == false && this.data.Count != this.capacity) {
+
+                foreach (var item in this.data) {
+                    
+                    UnityEngine.Debug.Log("Item: " + item.Key + ": " + item.Value);
+                    
+                }
+
+                throw new OutOfBoundsException("CircularQueue is out of bounds."+
+                                               " Count: " + this.data.Count +
+                                               ", Capacity: " + this.capacity +
+                                               ", SourceTick: " + tick +
+                                               ", NearestTick: " + nearestTick +
+                                               ", OldestTick: " + oldestTick +
+                                               ", RemovedData: " + (removedData != null));
+                
+            }
+
+            return default;
 
         }
         
@@ -51,14 +113,37 @@ namespace ME.ECS.StatesHistory {
     public struct HistoryEvent {
 
         // Header
+        /// <summary>
+        /// Event tick
+        /// </summary>
         public Tick tick;
+        /// <summary>
+        /// Global event order (for example: you have 30 players on the map, each has it's own index)
+        /// </summary>
         public int order;
+        /// <summary>
+        /// Local event order (order would be the first, then localOrder applies)
+        /// </summary>
         public int localOrder;
         
         // Data
+        /// <summary>
+        /// Object Id to be called on (see NetworkModule::RegisterObject)
+        /// </summary>
         public int objId;
+        /// <summary>
+        /// Group Id of objects (see NetworkModule::RegisterObject).
+        /// One object could be registered in different groups at the same time.
+        /// 0 by default (Common group)
+        /// </summary>
         public int groupId;
-        public int rpcId; // registered method id
+        /// <summary>
+        /// Rpc Id is a method Id (see NetworkModule::RegisterRPC) 
+        /// </summary>
+        public RPCId rpcId;
+        /// <summary>
+        /// Parameters of method
+        /// </summary>
         public object[] parameters;
 
         public override string ToString() {
@@ -75,6 +160,13 @@ namespace ME.ECS.StatesHistory {
 
     }
 
+    public class OutOfBoundsException : System.Exception {
+
+        public OutOfBoundsException() : base("ME.ECS Exception") { }
+        public OutOfBoundsException(string message) : base(message) { }
+
+    }
+    
     public class StateNotFoundException : System.Exception {
 
         public StateNotFoundException() : base("ME.ECS Exception") { }
@@ -105,6 +197,11 @@ namespace ME.ECS.StatesHistory {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public abstract class StatesHistoryModule<TState> : IStatesHistoryModule<TState>, IModuleValidation where TState : class, IState<TState> {
 
         private CircularQueue<TState> states;
@@ -122,7 +219,7 @@ namespace ME.ECS.StatesHistory {
 
         void IModule<TState>.OnConstruct() {
             
-            this.states = new CircularQueue<TState>(this.GetQueueCapacity());
+            this.states = new CircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
             this.events = PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Spawn(1000);
             PoolSortedList<int, HistoryEvent>.Prewarm(1000, 2);
             
@@ -262,10 +359,10 @@ namespace ME.ECS.StatesHistory {
 
             this.ValidatePrewarm();
             
-            TState state = default;
-            var minDelta = long.MaxValue;
-            var arr = this.states.GetData();
-            for (int i = 0; i < arr.Length; ++i) {
+            //TState state = default;
+            //var minDelta = long.MaxValue;
+            var state = this.states.Get(tick);
+            /*for (int i = 0; i < arr.Length; ++i) {
 
                 var item = arr[i];
                 if (item != null && item.tick < tick) {
@@ -281,7 +378,7 @@ namespace ME.ECS.StatesHistory {
 
                 }
 
-            }
+            }*/
 
             return state;
 
@@ -326,18 +423,18 @@ namespace ME.ECS.StatesHistory {
                 this.currentTick = tick;
                 state.tick = this.currentTick;
                 
-                if (tick > 0UL && this.currentTick % this.GetTicksPerState() == 0) {
-
-                    this.StoreState(tick);
-
-                }
-
             }
 
         }
 
         public void PlayEventsForTick(Tick tick) {
 
+            if (tick > 0UL && this.currentTick % this.GetTicksPerState() == 0) {
+
+                this.StoreState(tick);
+
+            }
+            
             SortedList<long, HistoryEvent> list;
             if (this.events.TryGetValue(tick, out list) == true) {
 
@@ -372,11 +469,13 @@ namespace ME.ECS.StatesHistory {
 
         private void Prewarm() {
 
+            this.states.BeginSet();
             for (uint i = 0; i < this.GetQueueCapacity(); ++i) {
                 
                 this.StoreState(i * this.GetTicksPerState());
                 
             }
+            this.states.EndSet();
 
         }
 
@@ -387,8 +486,10 @@ namespace ME.ECS.StatesHistory {
             var state = this.world.GetState();
             newState.CopyFrom(state);
             newState.tick = tick;
-            var oldState = this.states.Add(newState);
+
+            var oldState = this.states.Set(tick, newState, out var removeState);
             if (oldState != null) this.world.ReleaseState(ref oldState);
+            if (removeState != null) this.world.ReleaseState(ref removeState);
 
         }
 

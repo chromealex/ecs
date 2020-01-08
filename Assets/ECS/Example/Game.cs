@@ -15,7 +15,7 @@ public class Game : MonoBehaviour {
 
         if (Input.GetKeyDown(KeyCode.A) == true) {
 
-            WorldUtilities.CreateWorld(ref this.world, 0.2f);
+            WorldUtilities.CreateWorld(ref this.world, 0.033f);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
             var network = this.world.GetModule<NetworkModule>();
@@ -33,9 +33,12 @@ public class Game : MonoBehaviour {
 
         if (Input.GetKeyDown(KeyCode.Z) == true) {
 
-            WorldUtilities.CreateWorld(ref this.world, 0.05f);
+            WorldUtilities.CreateWorld(ref this.world, 1f);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
+            var network = this.world.GetModule<NetworkModule>();
+            this.testCallId = network.RegisterRPC(new System.Action<int, Vector3>(this.TestCall_RPC).Method);
+            network.RegisterObject(this, 1);
             
             this.world.SetState(this.world.CreateState());
             this.world.SetCapacity<Point>(100000);

@@ -6,6 +6,11 @@ using RPCId = System.Int32;
 
 namespace ME.ECS {
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
         private static int worldId = 0;
@@ -386,7 +391,10 @@ namespace ME.ECS {
             if (this.currentState != null && this.currentState != state) this.ReleaseState(ref this.currentState);
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: true);
-            
+
+            UnityEngine.Random.InitState(0);
+            state.randomState = UnityEngine.Random.state;
+
             if (this.resetState == null) this.SaveResetState();
 
         }

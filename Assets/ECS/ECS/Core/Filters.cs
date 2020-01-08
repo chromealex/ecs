@@ -1,9 +1,14 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace ME.ECS {
     
     public interface IFilter : IPoolableRecycle { }
+    
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class Filter<T> : IFilter where T : IEntity {
 
         private List<T> list;

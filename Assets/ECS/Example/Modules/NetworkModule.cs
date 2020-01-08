@@ -18,8 +18,13 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
 
     protected override void OnInitialize() {
 
+        var tr = new FakeTransporter();
+        //var seed = this.world.id;
+        //UnityEngine.Random.InitState(seed);
+        //tr.randomState = UnityEngine.Random.Range(0, 1000);
+        
         var instance = this as ME.ECS.Network.INetworkModule<State>;
-        instance.SetTransporter(new FakeTransporter());
+        instance.SetTransporter(tr);
         instance.SetSerializer(new FakeSerializer());
 
     }
@@ -32,15 +37,19 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
     private int sentCount;
     private int receivedCount;
 
+    public int randomState;
+
     public void Send(byte[] bytes) {
 
-        var frame = UnityEngine.Time.frameCount + UnityEngine.Random.Range(10, 100);
+        UnityEngine.Random.InitState(this.randomState);
+        var frame = UnityEngine.Time.frameCount + UnityEngine.Random.Range(10, 200);
         while (this.buffers.ContainsKey(frame) == true) {
 
             ++frame;
 
         }
         
+        //UnityEngine.Debug.Log("Transporter Send: " + frame);
         this.buffers.Add(frame, bytes);
         ++this.sentCount;
 
@@ -52,6 +61,7 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
 
             if (UnityEngine.Time.frameCount >= item.Key) {
 
+                //UnityEngine.Debug.Log("Transporter Receive: " + item.Key);
                 var buffer = item.Value;
                 this.buffers.Remove(item.Key);
                 ++this.receivedCount;

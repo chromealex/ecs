@@ -6,7 +6,7 @@ public class StatesHistoryModule : ME.ECS.StatesHistory.StatesHistoryModule<Stat
 
     protected override uint GetQueueCapacity() {
 
-        return 20u;
+        return 5u;
 
     }
 

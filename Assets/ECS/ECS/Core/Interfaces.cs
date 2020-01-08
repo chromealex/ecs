@@ -1,4 +1,5 @@
-﻿using EntityId = System.Int32;
+﻿#define _STATES_HISTORY_MODULE_SUPPORT
+using EntityId = System.Int32;
 using Tick = System.UInt64;
 
 namespace ME.ECS {
@@ -13,6 +14,7 @@ namespace ME.ECS {
         void OnDeconstruct();
         
         void AdvanceTick(TState state, float deltaTime);
+        void Update(TState state, float deltaTime);
 
     }
 
@@ -58,18 +60,20 @@ namespace ME.ECS {
         float GetTickTime();
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
-        Tick GetTick();
-
         void Simulate(double time);
-        void Simulate(Tick tick);
+        
+        #if STATES_HISTORY_MODULE_SUPPORT
+        Tick GetTick();
+        void Simulate(Tick toTick);
+        void Simulate(Tick from, Tick to);
+        void SetPreviousTick(Tick tick);
+        #endif
 
     }
 
     public interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
 
-        void SetStatesHistoryModule(StatesHistory.StatesHistoryModule<TState> module);
-
-        void UpdateEntityCache<TEntity>(TEntity data) where TEntity : IEntity;
+        void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
         
         void SetCapacity<T>(int capacity) where T : IEntity;
         int GetCapacity<T>() where T : IEntity;
@@ -84,12 +88,22 @@ namespace ME.ECS {
         void SetState(TState state);
         TState GetState();
 
+        void SaveResetState();
+        TState GetResetState();
         TState CreateState();
         void ReleaseState(ref TState state);
         
-        Entity AddEntity<T>(T data, bool updateFilters = true) where T : IEntity;
+        Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity;
         void RemoveEntity<T>(T data) where T : IEntity;
         void RemoveEntity(Entity entity);
+        
+        #if STATES_HISTORY_MODULE_SUPPORT
+        void SetStatesHistoryModule(StatesHistory.IStatesHistoryModule<TState> module);
+        #endif
+        
+        #if STATES_HISTORY_MODULE_SUPPORT
+        void SetNetworkModule(Network.INetworkModule<TState> module);
+        #endif
         
         TModule GetModule<TModule>() where TModule : IModuleBase;
         bool AddModule<TModule>() where TModule : class, IModule<TState>, new();
@@ -105,6 +119,7 @@ namespace ME.ECS {
         void AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : IEntity;
         bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : IEntity;
         void RemoveComponents(Entity entity);
+        void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase;
         void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
 
         TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : IEntity;

@@ -1,17 +1,49 @@
 ﻿
+using System.Linq;
+
 namespace ME.ECS {
 
-    public static class PoolArray {
+    public static class PoolArray<T> {
 
-        public static T[] Spawn<T>(int length) {
-            
-            return new T[length];
+        private static System.Collections.Generic.Dictionary<int, PoolInternalBase> pools = new System.Collections.Generic.Dictionary<int, PoolInternalBase>();
+
+        public static T[] Spawn(int length) {
+
+            T[] result;
+            PoolInternalBase pool;
+            if (PoolArray<T>.pools.TryGetValue(length, out pool) == true) {
+
+                result = (T[])pool.Spawn();
+
+            } else {
+
+                pool = new PoolInternalBase(() => new T[length], null);
+                result = (T[])pool.Spawn();
+                PoolArray<T>.pools.Add(length, pool);
+
+            }
+
+            return result;
             
         }
 
-        public static void Recycle<T>(ref T[] buffer) {
+        public static void Recycle(ref T[] buffer) {
 
-            buffer = null;
+            var length = buffer.Length;
+            PoolInternalBase pool;
+            if (PoolArray<T>.pools.TryGetValue(length, out pool) == true) {
+
+                pool.Recycle(buffer);
+                buffer = null;
+
+            } else {
+                
+                pool = new PoolInternalBase(() => new T[length], null);
+                pool.Recycle(buffer);
+                buffer = null;
+                PoolArray<T>.pools.Add(length, pool);
+                
+            }
 
         }
 

@@ -38,6 +38,10 @@ public class PointsSystem : ISystem<State> {
         var jobHandle = job.Schedule(state.points.Count, 64);
         jobHandle.Complete();
         
+        this.world.RemoveComponents<IncreaseUnitsOnce>(Entity.Create<Point>(1));
+        
     }
+
+    void ISystem<State>.Update(State state, float deltaTime) { }
 
 }

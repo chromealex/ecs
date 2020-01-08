@@ -51,6 +51,48 @@ namespace ME.ECS.Tests {
         }
 
         [Test]
+        public void AddEvent() {
+
+            // Initialize
+            var world = TestsHelper.CreateWorld();
+            world.AddModule<StatesHistoryModule>();
+
+            // Adding default items
+            world.AddSystem<PointsSystem>();
+            var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
+            var entityToRemove = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
+            world.AddComponent<Point, IncreaseUnits>(entity);
+            world.AddComponent<Point, IncreaseUnits>(entityToRemove);
+            // Save reset state
+            world.SaveResetState();
+
+            // Rewind to 100th tick
+            ((IWorldBase)world).Simulate(100);
+
+            // Add events
+            var history = world.GetModule<StatesHistoryModule>();
+            history.BeginAddEvents();
+            {
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() { tick = 0L, order = 0, localOrder = 1 });
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() { tick = 0L, order = 0, localOrder = 2 });
+
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() { tick = 10L, order = 0, localOrder = 3 });
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() { tick = 10L, order = 0, localOrder = 4 });
+
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() { tick = 20L, order = 0, localOrder = 5 });
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() { tick = 20L, order = 0, localOrder = 6 });
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() { tick = 20L, order = 0, localOrder = 7 });
+            }
+            history.EndAddEvents();
+
+            // Do regular update
+            world.Update(0.01f);
+            
+            TestsHelper.ReleaseWorld(ref world);
+
+        }
+
+        [Test]
         public void CopyState() {
             
             // Initialize
@@ -90,6 +132,7 @@ namespace ME.ECS.Tests {
             
             // Restore state
             world.SetState((State)savedState);
+            ((IWorldBase)world).Simulate(savedState.tick);
 
             Assert.IsTrue(((State)savedState).points.Count == 1);
             Assert.IsTrue(((State)savedState).pointComponents.Count == 1);

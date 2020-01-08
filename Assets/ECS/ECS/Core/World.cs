@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using EntityId = System.Int32;
 using Tick = System.UInt64;
+using RPCId = System.Int32;
 
 namespace ME.ECS {
 
     public class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
+        private TState resetState;
         private TState currentState;
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
@@ -20,11 +22,11 @@ namespace ME.ECS {
         
         private float tickTime;
         private double timeSinceStart;
-        private StatesHistory.StatesHistoryModule<TState> statesHistoryModule;
 
         public World() {
 
             this.currentState = null;
+            this.resetState = null;
             
         }
 
@@ -40,6 +42,12 @@ namespace ME.ECS {
 
         }
 
+        void IWorldBase.Simulate(double time) {
+
+            this.timeSinceStart = time;
+
+        }
+        
         double IWorldBase.GetTimeSinceStart() {
 
             return this.timeSinceStart;
@@ -49,6 +57,14 @@ namespace ME.ECS {
         void IWorldBase.SetTimeSinceStart(double time) {
 
             this.timeSinceStart = time;
+
+        }
+        
+        #if STATES_HISTORY_MODULE_SUPPORT
+        private StatesHistory.IStatesHistoryModule<TState> statesHistoryModule;
+        public void SetStatesHistoryModule(StatesHistory.IStatesHistoryModule<TState> module) {
+
+            this.statesHistoryModule = module;
 
         }
 
@@ -63,24 +79,22 @@ namespace ME.ECS {
             return default(Tick);
 
         }
+        
+        void IWorldBase.Simulate(Tick toTick) {
 
-        public void SetStatesHistoryModule(StatesHistory.StatesHistoryModule<TState> module) {
-
-            this.statesHistoryModule = module;
-
-        }
-
-        void IWorldBase.Simulate(double time) {
-
-            this.timeSinceStart = time;
+            if (this.statesHistoryModule != null) this.statesHistoryModule.SetTick(toTick);
 
         }
+        #endif
 
-        void IWorldBase.Simulate(Tick tick) {
+        #if NETWORK_MODULE_SUPPORT
+        private Network.INetworkModule<TState> networkModule;
+        public void SetNetworkModule(Network.INetworkModule<TState> module) {
 
-            if (this.statesHistoryModule != null) this.statesHistoryModule.SetTick(tick);
+            this.networkModule = module;
 
         }
+        #endif
 
         void IPoolableSpawn.OnSpawn() {
             
@@ -96,6 +110,7 @@ namespace ME.ECS {
 
         void IPoolableRecycle.OnRecycle() {
             
+            this.ReleaseState(ref this.resetState);
             this.ReleaseState(ref this.currentState);
 
             for (int i = 0; i < this.systems.Count; ++i) {
@@ -288,6 +303,21 @@ namespace ME.ECS {
 
         }
 
+        public void SaveResetState() {
+
+            if (this.resetState != null) this.ReleaseState(ref this.resetState);
+            this.resetState = this.CreateState();
+            this.resetState.Initialize(this, freeze: true, restore: false);
+            this.resetState.CopyFrom(this.GetState());
+
+        }
+
+        public TState GetResetState() {
+
+            return this.resetState;
+
+        }
+
         public TState CreateState() {
 
             var state = PoolClass<TState>.Spawn();
@@ -299,6 +329,7 @@ namespace ME.ECS {
 
         public void ReleaseState(ref TState state) {
 
+            UnityEngine.Debug.LogWarning(UnityEngine.Time.frameCount + " Release state: " + state.tick);
             state.entityId = default;
             state.tick = default;
             PoolClass<TState>.Recycle(ref state);
@@ -307,16 +338,18 @@ namespace ME.ECS {
 
         public void SetState(TState state) {
 
+            UnityEngine.Debug.Log(UnityEngine.Time.frameCount + " World SetState(): " + state.tick);
+            
             this.entitiesCache.Clear();
             this.entitiesDirectCache.Clear();
             this.filtersCache.Clear();
             this.componentsCache.Clear();
 
-            if (this.currentState != null) this.ReleaseState(ref this.currentState);
+            if (this.currentState != null && this.currentState != state) this.ReleaseState(ref this.currentState);
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: true);
-
-            ((IWorldBase)this).Simulate(state.tick);
+            
+            if (this.resetState == null) this.SaveResetState();
 
         }
 
@@ -332,7 +365,7 @@ namespace ME.ECS {
 
         }
 
-        public void UpdateEntityCache<T>(T data) where T : IEntity {
+        public void UpdateEntityCache<T>(T data) where T : struct, IEntity {
 
             if (this.entitiesDirectCache.ContainsKey(data.entity.id) == true) {
 
@@ -346,7 +379,7 @@ namespace ME.ECS {
 
         }
 
-        public Entity AddEntity<T>(T data, bool updateFilters = true) where T : IEntity {
+        public Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity {
 
             if (data.entity.id == 0) data.entity = this.CreateNewEntity<T>();
 
@@ -453,6 +486,7 @@ namespace ME.ECS {
 
                 if (instanceValidate.CouldBeAdded() == false) {
 
+                    UnityEngine.Debug.LogError("Couldn't add new module `" + instanceValidate + "`(" + nameof(TModule) + ") because of CouldBeAdded() returns false.");
                     instance.world = null;
                     PoolModules.Recycle(ref instance);
                     return false;
@@ -628,6 +662,14 @@ namespace ME.ECS {
 
         }
 
+        private Tick prevTick;
+        public void SetPreviousTick(Tick tick) {
+
+            this.prevTick = tick;
+            //UnityEngine.Debug.Log("SetPreviousTick: " + tick);
+
+        }
+
         public void Update(float deltaTime) {
 
             var state = this.GetState();
@@ -635,7 +677,7 @@ namespace ME.ECS {
             Worlds<TState>.currentWorld = this;
             Worlds<TState>.currentState = state;
 
-            var prevTick = state.tick;
+            this.prevTick = state.tick;
             this.timeSinceStart += deltaTime;
 
             for (int i = 0, count = this.modules.Count; i < count; ++i) {
@@ -645,24 +687,47 @@ namespace ME.ECS {
             }
 
             var currentTick = state.tick;
-            if (prevTick > currentTick) {
+            this.Simulate(this.prevTick, currentTick);
 
-                ((IWorldBase)this).Simulate(currentTick);
+            for (int i = 0, count = this.systems.Count; i < count; ++i) {
+                
+                this.systems[i].Update(state, deltaTime);
+                
+            }
+            
+        }
+
+        public void Simulate(Tick from, Tick to) {
+            
+            if (from > to) {
+
+                UnityEngine.Debug.LogError( UnityEngine.Time.frameCount + " From: " + from + ", To: " + to);
+                //((IWorldBase)this).Simulate(currentTick);
                 return;
 
             }
 
+            var state = this.GetState();
+            
             var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
-            for (Tick tick = prevTick + 1; tick <= currentTick; ++tick) {
+            for (Tick tick = from + 1; tick <= to; ++tick) {
 
+                state.tick = tick;
+                //UnityEngine.Debug.Log("Begin tick: " + tick);
+                #if STATES_HISTORY_MODULE_SUPPORT
+                if (this.statesHistoryModule != null) this.statesHistoryModule.PlayEventsForTick(tick);
+                #endif
+                
                 for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
                     this.systems[i].AdvanceTick(state, fixedDeltaTime);
 
                 }
+                
+                //UnityEngine.Debug.Log("End tick: " + tick);
 
             }
-
+            
         }
 
         /// <summary>
@@ -742,6 +807,22 @@ namespace ME.ECS {
         }
 
         /// <summary>
+        /// Remove all components with type from certain entity
+        /// </summary>
+        /// <param name="entity"></param>
+        public void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase {
+            
+            var code = WorldUtilities.GetKey(entity);
+            IComponents componentsContainer;
+            if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
+                
+                componentsContainer.RemoveAll<TComponent>();
+                
+            }
+
+        }
+
+        /// <summary>
         /// Remove all components with type TComponent from all entities
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
@@ -761,6 +842,19 @@ namespace ME.ECS {
 
         public static IWorld<TState> currentWorld;
         public static TState currentState;
+
+    }
+
+    public static class MathUtils {
+
+        public static long GetKey(int a1, int a2) {
+            
+            long b = a2;
+            b <<= 32;
+            b |= (uint)a1;
+            return b;
+            
+        }
 
     }
 

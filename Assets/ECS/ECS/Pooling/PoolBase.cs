@@ -52,6 +52,16 @@ namespace ME.ECS {
 
 	    }
 
+	    public virtual void Prewarm(int count) {
+
+		    for (int i = 0; i < count; ++i) {
+
+			    this.Recycle(this.Spawn());
+
+		    }
+
+	    }
+
 	    public virtual object Spawn() {
 		    
 		    object item = null;

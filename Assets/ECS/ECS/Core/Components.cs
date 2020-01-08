@@ -149,8 +149,18 @@ namespace ME.ECS {
         }
 
         public void CopyFrom(Components<TEntity, TState> other) {
-            
-            if (this.dic != null) PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Recycle(ref this.dic);
+
+            if (this.dic != null) {
+
+                foreach (var item in this.dic) {
+
+                    //PoolComponents.Recycle(item.Value);
+                    PoolList<IComponent<TState, TEntity>>.Recycle(item.Value);
+
+                }
+                PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Recycle(ref this.dic);
+                
+            }
             this.dic = PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Spawn(this.capacity);
             foreach (var item in other.dic) {
                 

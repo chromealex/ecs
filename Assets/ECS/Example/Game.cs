@@ -118,11 +118,16 @@ public class Game : MonoBehaviour {
     }
 
     public void TestCall_RPC(int p1, Vector3 p2) {
-        
-        //Debug.LogError("Called: " + p1 + "; " + p2);
-        //this.world.AddComponent<Point, IncreaseUnits>(Entity.Create<Point>(1));
-        this.world.AddComponent<Point, IncreaseUnitsOnce>(Entity.Create<Point>(1));
-        
+
+        var count = this.world.GetRandomRange(1, 5);
+        for (int i = 0; i < count; ++i) {
+
+            //Debug.LogError("Called: " + p1 + "; " + p2);
+            //this.world.AddComponent<Point, IncreaseUnits>(Entity.Create<Point>(1));
+            this.world.AddComponent<Point, IncreaseUnitsOnce>(Entity.Create<Point>(1));
+
+        }
+
     }
 
 }

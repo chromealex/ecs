@@ -12,7 +12,7 @@ public class StatesHistoryModule : ME.ECS.StatesHistory.StatesHistoryModule<Stat
 
     protected override uint GetTicksPerState() {
 
-        return 100u;
+        return 20u;
 
     }
 

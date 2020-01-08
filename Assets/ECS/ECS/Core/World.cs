@@ -9,7 +9,7 @@ namespace ME.ECS {
     public class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
         private static int worldId = 0;
-        
+
         internal static class EntitiesCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
 
             internal static Dictionary<long, T> data = new Dictionary<long, T>(100);
@@ -21,7 +21,7 @@ namespace ME.ECS {
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
-        private readonly int id;
+        public int id { get; private set; }
 
         // State cache:
         private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
@@ -39,6 +39,33 @@ namespace ME.ECS {
 
             this.id = ++World<TState>.worldId;
 
+        }
+
+        public int GetRandomRange(int from, int to) {
+
+            UnityEngine.Random.state = this.currentState.randomState;
+            var result = UnityEngine.Random.Range(from, to);
+            this.currentState.randomState = UnityEngine.Random.state;
+            return result;
+
+        }
+
+        public float GetRandomRange(float from, float to) {
+
+            UnityEngine.Random.state = this.currentState.randomState;
+            var result = UnityEngine.Random.Range(from, to);
+            this.currentState.randomState = UnityEngine.Random.state;
+            return result;
+
+        }
+
+        public float GetRandomValue() {
+
+            UnityEngine.Random.state = this.currentState.randomState;
+            var result = UnityEngine.Random.value;
+            this.currentState.randomState = UnityEngine.Random.state;
+            return result;
+            
         }
 
         void IWorldBase.SetTickTime(float tickTime) {

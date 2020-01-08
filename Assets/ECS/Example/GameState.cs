@@ -1,11 +1,13 @@
 ﻿using ME.ECS;
 using EntityId = System.Int32;
 using Tick = System.UInt64;
+using RandomState = UnityEngine.Random.State;
 
 public class State : IState<State> {
 
     public EntityId entityId { get; set; }
     public Tick tick { get; set; }
+    public RandomState randomState { get; set; }
 
     public Filter<Point> points;
     public Filter<Unit> units;
@@ -24,10 +26,11 @@ public class State : IState<State> {
     }
 
     void IState<State>.CopyFrom(State other) {
-
+        
         this.entityId = other.entityId;
         this.tick = other.tick;
-        
+        this.randomState = other.randomState;
+
         this.points.CopyFrom(other.points);
         this.units.CopyFrom(other.units);
         

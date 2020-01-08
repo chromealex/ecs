@@ -144,6 +144,10 @@ namespace ME.ECS.StatesHistory {
 
         }
 
+        /// <summary>
+        /// System will copy current state every N ticks
+        /// </summary>
+        /// <returns></returns>
         protected virtual uint GetTicksPerState() {
 
             return 100u;

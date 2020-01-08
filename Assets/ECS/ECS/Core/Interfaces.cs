@@ -1,6 +1,7 @@
 ﻿#define _STATES_HISTORY_MODULE_SUPPORT
 using EntityId = System.Int32;
 using Tick = System.UInt64;
+using RandomState = UnityEngine.Random.State;
 
 namespace ME.ECS {
 
@@ -30,6 +31,7 @@ namespace ME.ECS {
 
         EntityId entityId { get; set; }
         Tick tick { get; set; }
+        RandomState randomState { get; set; }
 
         void Initialize(IWorld<T> world, bool freeze, bool restore);
         void CopyFrom(T other);
@@ -73,6 +75,12 @@ namespace ME.ECS {
 
     public interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
 
+        int id { get; }
+
+        int GetRandomRange(int from, int to);
+        float GetRandomRange(float from, float to);
+        float GetRandomValue();
+        
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
         
         void SetCapacity<T>(int capacity) where T : IEntity;

@@ -25,19 +25,27 @@ public class PointsSystem : ISystem<State> {
 
     void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 
-        /*var world = this.world;
-        for (int i = 0, count = state.points.Count; i < count; ++i) {
+        var count = state.points.Count;
+        if (count < 100) {
 
-            state.points[i] = world.RunComponents(state.points[i], deltaTime, i);
+            for (int i = 0; i < count; ++i) {
 
-        }*/
+                var data = this.world.RunComponents(state.points[i], deltaTime, i);
+                state.points[i] = data;
+                Worlds<State>.currentWorld.UpdateEntityCache(data);
 
-        var job = new TestJob() {
-            deltaTime = deltaTime
-        };
-        var jobHandle = job.Schedule(state.points.Count, 64);
-        jobHandle.Complete();
-        
+            }
+
+        } else {
+
+            var job = new TestJob() {
+                deltaTime = deltaTime
+            };
+            var jobHandle = job.Schedule(state.points.Count, 64);
+            jobHandle.Complete();
+
+        }
+
         this.world.RemoveComponents<IncreaseUnitsOnce>(Entity.Create<Point>(1));
         
     }

@@ -4,20 +4,52 @@ namespace ME.ECS {
 
     public static class PoolComponents {
 
-	    private static PoolInternalBase pool = new PoolInternalBase(null, null);
+	    private static Dictionary<int, PoolInternalBase> pool = new Dictionary<int, PoolInternalBase>();
 	    
 	    public static T Spawn<T>() where T : class, IComponentBase, new() {
-            
-		    var obj = PoolComponents.pool.Spawn();
-		    if (obj == null) return new T();
-		    return (T)obj;
+
+		    var key = WorldUtilities.GetKey<T>();
+		    PoolInternalBase pool;
+		    if (PoolComponents.pool.TryGetValue(key, out pool) == true) {
+
+			    var obj = pool.Spawn();
+			    if (obj != null) return (T)obj;
+
+		    } else {
+                
+			    pool = new PoolInternalBase(null, null);
+			    var obj = (T)pool.Spawn();
+			    PoolComponents.pool.Add(key, pool);
+			    if (obj != null) return obj;
+
+		    }
+
+		    return new T();
 
 	    }
 
-	    public static void Recycle<T>(ref T component) where T : class, IComponentBase {
+	    public static void Recycle<T>(ref T system) where T : class, IComponentBase {
 
-		    PoolComponents.pool.Recycle(component);
-		    component = null;
+		    PoolComponents.Recycle(system);
+		    system = null;
+
+	    }
+
+	    public static void Recycle<T>(T system) where T : class, IComponentBase {
+
+		    var key = WorldUtilities.GetKey<T>();
+		    PoolInternalBase pool;
+		    if (PoolComponents.pool.TryGetValue(key, out pool) == true) {
+
+			    pool.Recycle(system);
+                
+		    } else {
+                
+			    pool = new PoolInternalBase(null, null);
+			    pool.Recycle(system);
+			    PoolComponents.pool.Add(key, pool);
+                
+		    }
 
 	    }
 
@@ -28,12 +60,7 @@ namespace ME.ECS {
 			    PoolComponents.Recycle(list[i]);
 			    
 		    }
-
-	    }
-
-	    public static void Recycle<T>(T component) where T : class, IComponentBase {
-
-		    PoolComponents.pool.Recycle(component);
+		    list.Clear();
 
 	    }
 

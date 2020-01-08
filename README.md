@@ -13,4 +13,5 @@ ME.ECS - it's ECS implementation for Unity Engine with full state automatic roll
 # Upcoming plans
 1. Implement automatic states history with rollback system <b>(90% done)</b>
 2. Decrease initialization time and memory allocs <b>(30% done)</b>
-3. Rendering system
+3. Random module to generate random numbers
+4. Rendering system

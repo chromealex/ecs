@@ -11,6 +11,6 @@ ME.ECS - it's ECS implementation for Unity Engine with full state automatic reco
 - for one tick: 0b alloc, 0.1ms
 
 # Upcoming plans
-1. Implement automatic states history with recovering system
-2. Decrease initialization time and memory allocs
+1. Implement automatic states history with rollback system (90% done)
+2. Decrease initialization time and memory allocs (30% done)
 3. Rendering system

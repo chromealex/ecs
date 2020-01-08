@@ -94,8 +94,8 @@ namespace ME.ECS {
         void ReleaseState(ref TState state);
         
         Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity;
-        void RemoveEntity<T>(T data) where T : IEntity;
-        void RemoveEntity(Entity entity);
+        void RemoveEntity<T>(T data) where T : struct, IEntity;
+        void RemoveEntity<T>(Entity entity) where T : struct, IEntity;
         
         #if STATES_HISTORY_MODULE_SUPPORT
         void SetStatesHistoryModule(StatesHistory.IStatesHistoryModule<TState> module);

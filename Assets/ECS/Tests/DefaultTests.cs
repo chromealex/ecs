@@ -42,7 +42,7 @@ namespace ME.ECS.Tests {
             Assert.IsTrue(state.points.Count == 1);
             Assert.IsTrue(state.pointComponents.Count == 1);
             
-            world.RemoveEntity(entity);
+            world.RemoveEntity<Point>(entity);
             Assert.IsTrue(state.points.Count == 0);
             Assert.IsTrue(state.pointComponents.Count == 0);
             
@@ -111,7 +111,7 @@ namespace ME.ECS.Tests {
             Assert.IsTrue(state.units.Count == 0);
             Assert.IsTrue(state.pointComponents.Count == 2);
             
-            world.RemoveEntity(entityToRemove);
+            world.RemoveEntity<Point>(entityToRemove);
             Assert.IsTrue(state.points.Count == 1);
             Assert.IsTrue(state.pointComponents.Count == 1);
             

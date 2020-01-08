@@ -8,15 +8,24 @@ namespace ME.ECS {
 
     public class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
+        private static int worldId = 0;
+        
+        internal static class EntitiesCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
+
+            internal static Dictionary<long, T> data = new Dictionary<long, T>(100);
+
+        }
+
         private TState resetState;
         private TState currentState;
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
+        private readonly int id;
 
         // State cache:
         private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
-        private Dictionary<EntityId, IEntity> entitiesDirectCache;
+        //private Dictionary<EntityId, IEntity> entitiesDirectCache;
         private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
         private Dictionary<int, IComponents> componentsCache; // key = typeof(T:IData), value = list of T:Components
         
@@ -27,7 +36,9 @@ namespace ME.ECS {
 
             this.currentState = null;
             this.resetState = null;
-            
+
+            this.id = ++World<TState>.worldId;
+
         }
 
         void IWorldBase.SetTickTime(float tickTime) {
@@ -101,7 +112,7 @@ namespace ME.ECS {
             this.systems = PoolList<ISystem<TState>>.Spawn(100);
             this.modules = PoolList<IModule<TState>>.Spawn(100);
             this.entitiesCache = PoolDictionary<int, IList>.Spawn(100);
-            this.entitiesDirectCache = PoolDictionary<EntityId, IEntity>.Spawn(100);
+            //this.entitiesDirectCache = PoolDictionary<EntityId, IEntity>.Spawn(100);
             this.filtersCache = PoolDictionary<int, IList>.Spawn(100);
             this.componentsCache = PoolDictionary<int, IComponents>.Spawn(100);
             this.capacityCache = PoolDictionary<int, int>.Spawn(100);
@@ -130,19 +141,19 @@ namespace ME.ECS {
             PoolList<IModule<TState>>.Recycle(ref this.modules);
             
             PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
-            PoolDictionary<EntityId, IEntity>.Recycle(ref this.entitiesDirectCache);
+            //PoolDictionary<EntityId, IEntity>.Recycle(ref this.entitiesDirectCache);
             PoolDictionary<int, IList>.Recycle(ref this.filtersCache);
             PoolDictionary<int, IComponents>.Recycle(ref this.componentsCache);
             PoolDictionary<int, int>.Recycle(ref this.capacityCache);
 
         }
 
-        public bool GetEntityData<T>(EntityId entityId, out T data) where T : IEntity {
+        public bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity {
 
-            IEntity internalData;
-            if (this.entitiesDirectCache.TryGetValue(entityId, out internalData) == true) {
+            T internalData;
+            if (EntitiesCache<TState, T>.data.TryGetValue(MathUtils.GetKey(this.id, entityId), out internalData) == true) {
 
-                data = (T)internalData;
+                data = internalData;
                 return true;
 
             }
@@ -329,7 +340,7 @@ namespace ME.ECS {
 
         public void ReleaseState(ref TState state) {
 
-            UnityEngine.Debug.LogWarning(UnityEngine.Time.frameCount + " Release state: " + state.tick);
+            //UnityEngine.Debug.LogWarning(UnityEngine.Time.frameCount + " Release state: " + state.tick);
             state.entityId = default;
             state.tick = default;
             PoolClass<TState>.Recycle(ref state);
@@ -338,10 +349,10 @@ namespace ME.ECS {
 
         public void SetState(TState state) {
 
-            UnityEngine.Debug.Log(UnityEngine.Time.frameCount + " World SetState(): " + state.tick);
+            //UnityEngine.Debug.Log(UnityEngine.Time.frameCount + " World SetState(): " + state.tick);
             
             this.entitiesCache.Clear();
-            this.entitiesDirectCache.Clear();
+            //this.entitiesDirectCache.Clear();
             this.filtersCache.Clear();
             this.componentsCache.Clear();
 
@@ -367,13 +378,14 @@ namespace ME.ECS {
 
         public void UpdateEntityCache<T>(T data) where T : struct, IEntity {
 
-            if (this.entitiesDirectCache.ContainsKey(data.entity.id) == true) {
+            var key = MathUtils.GetKey(this.id, data.entity.id);
+            if (EntitiesCache<TState, T>.data.ContainsKey(key) == true) {
 
-                this.entitiesDirectCache[data.entity.id] = data;
-                
+                EntitiesCache<TState, T>.data[key] = data;
+
             } else {
                 
-                this.entitiesDirectCache.Add(data.entity.id, data);
+                EntitiesCache<TState, T>.data.Add(key, data);
                 
             }
 
@@ -409,9 +421,10 @@ namespace ME.ECS {
 
         }
 
-        public void RemoveEntity<T>(T data) where T : IEntity {
+        public void RemoveEntity<T>(T data) where T : struct, IEntity {
 
-            this.entitiesDirectCache.Remove(data.entity.id);
+            var key = MathUtils.GetKey(this.id, data.entity.id);
+            EntitiesCache<TState, T>.data.Remove(key);
             
             var code = WorldUtilities.GetKey(data);
             IList list;
@@ -424,9 +437,10 @@ namespace ME.ECS {
             
         }
 
-        public void RemoveEntity(Entity entity) {
+        public void RemoveEntity<T>(Entity entity) where T : struct, IEntity {
 
-            if (this.entitiesDirectCache.Remove(entity.id) == true) {
+            var key = MathUtils.GetKey(this.id, entity.id);
+            if (EntitiesCache<TState, T>.data.Remove(key) == true) {
 
                 var code = WorldUtilities.GetKey(entity);
                 IList list;

@@ -18,7 +18,7 @@ public class Game : MonoBehaviour {
             WorldUtilities.CreateWorld(ref this.world, 0.033f);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
-            var network = this.world.GetModule<NetworkModule>();
+            var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
             this.testCallId = network.RegisterRPC(new System.Action<int, Vector3>(this.TestCall_RPC).Method);
             network.RegisterObject(this, 1);
 
@@ -36,7 +36,7 @@ public class Game : MonoBehaviour {
             WorldUtilities.CreateWorld(ref this.world, 1f);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
-            var network = this.world.GetModule<NetworkModule>();
+            var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
             this.testCallId = network.RegisterRPC(new System.Action<int, Vector3>(this.TestCall_RPC).Method);
             network.RegisterObject(this, 1);
             
@@ -125,8 +125,6 @@ public class Game : MonoBehaviour {
         var count = this.world.GetRandomRange(1, 5);
         for (int i = 0; i < count; ++i) {
 
-            //Debug.LogError("Called: " + p1 + "; " + p2);
-            //this.world.AddComponent<Point, IncreaseUnits>(Entity.Create<Point>(1));
             this.world.AddComponent<Point, IncreaseUnitsOnce>(Entity.Create<Point>(1));
 
         }

@@ -49,4 +49,17 @@ public class State : IState<State> {
 
     }
 
+    /*public override string ToString() {
+
+        var str = "Points: \n";
+        for (int i = 0; i < this.points.Count; ++i) {
+
+            str += this.points[i].unitsCount.ToString() + "\n";
+
+        }
+
+        return str;
+
+    }*/
+
 }

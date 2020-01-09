@@ -56,24 +56,16 @@ namespace ME.ECS {
 
     }
 
-    public interface IWorldBase {
+    public partial interface IWorldBase {
 
         void SetTickTime(float tickTime);
         float GetTickTime();
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
-        void Simulate(double time);
         
-        #if STATES_HISTORY_MODULE_SUPPORT
-        Tick GetTick();
-        void Simulate(Tick toTick);
-        void Simulate(Tick from, Tick to);
-        void SetPreviousTick(Tick tick);
-        #endif
-
     }
 
-    public interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
+    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
 
         int id { get; }
 
@@ -104,14 +96,6 @@ namespace ME.ECS {
         Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity;
         void RemoveEntity<T>(T data) where T : struct, IEntity;
         void RemoveEntity<T>(Entity entity) where T : struct, IEntity;
-        
-        #if STATES_HISTORY_MODULE_SUPPORT
-        void SetStatesHistoryModule(StatesHistory.IStatesHistoryModule<TState> module);
-        #endif
-        
-        #if STATES_HISTORY_MODULE_SUPPORT
-        void SetNetworkModule(Network.INetworkModule<TState> module);
-        #endif
         
         TModule GetModule<TModule>() where TModule : IModuleBase;
         bool AddModule<TModule>() where TModule : class, IModule<TState>, new();

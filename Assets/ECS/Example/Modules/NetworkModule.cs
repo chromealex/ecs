@@ -19,11 +19,11 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
     protected override void OnInitialize() {
 
         var tr = new FakeTransporter();
-        //var seed = this.world.id;
-        //UnityEngine.Random.InitState(seed);
-        //tr.randomState = UnityEngine.Random.Range(0, 1000);
+        var seed = this.world.id;
+        UnityEngine.Random.InitState(seed);
+        tr.randomState = UnityEngine.Random.Range(0, 1000);
         
-        var instance = this as ME.ECS.Network.INetworkModule<State>;
+        var instance = (ME.ECS.Network.INetworkModuleBase)this;
         instance.SetTransporter(tr);
         instance.SetSerializer(new FakeSerializer());
 

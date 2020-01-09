@@ -11,7 +11,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
+    public partial class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
         private static int worldId = 0;
 
@@ -85,12 +85,6 @@ namespace ME.ECS {
 
         }
 
-        void IWorldBase.Simulate(double time) {
-
-            this.timeSinceStart = time;
-
-        }
-        
         double IWorldBase.GetTimeSinceStart() {
 
             return this.timeSinceStart;
@@ -103,42 +97,6 @@ namespace ME.ECS {
 
         }
         
-        #if STATES_HISTORY_MODULE_SUPPORT
-        private StatesHistory.IStatesHistoryModule<TState> statesHistoryModule;
-        public void SetStatesHistoryModule(StatesHistory.IStatesHistoryModule<TState> module) {
-
-            this.statesHistoryModule = module;
-
-        }
-
-        public Tick GetTick() {
-
-            if (this.statesHistoryModule != null) {
-
-                return this.statesHistoryModule.GetTick();
-
-            }
-
-            return default(Tick);
-
-        }
-        
-        void IWorldBase.Simulate(Tick toTick) {
-
-            if (this.statesHistoryModule != null) this.statesHistoryModule.SetTick(toTick);
-
-        }
-        #endif
-
-        #if NETWORK_MODULE_SUPPORT
-        private Network.INetworkModule<TState> networkModule;
-        public void SetNetworkModule(Network.INetworkModule<TState> module) {
-
-            this.networkModule = module;
-
-        }
-        #endif
-
         void IPoolableSpawn.OnSpawn() {
             
             this.systems = PoolList<ISystem<TState>>.Spawn(100);
@@ -763,9 +721,7 @@ namespace ME.ECS {
 
                 state.tick = tick;
                 //UnityEngine.Debug.Log("Begin tick: " + tick);
-                #if STATES_HISTORY_MODULE_SUPPORT
-                if (this.statesHistoryModule != null) this.statesHistoryModule.PlayEventsForTick(tick);
-                #endif
+                this.PlayPluginsForTick(tick);
                 
                 for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
@@ -778,6 +734,30 @@ namespace ME.ECS {
             }
             
         }
+
+        private void PlayPluginsForTick(Tick tick) {
+            
+            this.PlayPlugin1ForTick(tick);
+            this.PlayPlugin2ForTick(tick);
+            this.PlayPlugin3ForTick(tick);
+            this.PlayPlugin4ForTick(tick);
+            this.PlayPlugin5ForTick(tick);
+            this.PlayPlugin6ForTick(tick);
+            this.PlayPlugin7ForTick(tick);
+            this.PlayPlugin8ForTick(tick);
+            this.PlayPlugin9ForTick(tick);
+            
+        }
+
+        partial void PlayPlugin1ForTick(Tick tick);
+        partial void PlayPlugin2ForTick(Tick tick);
+        partial void PlayPlugin3ForTick(Tick tick);
+        partial void PlayPlugin4ForTick(Tick tick);
+        partial void PlayPlugin5ForTick(Tick tick);
+        partial void PlayPlugin6ForTick(Tick tick);
+        partial void PlayPlugin7ForTick(Tick tick);
+        partial void PlayPlugin8ForTick(Tick tick);
+        partial void PlayPlugin9ForTick(Tick tick);
 
         /// <summary>
         /// Add component for current entity only (create component data)

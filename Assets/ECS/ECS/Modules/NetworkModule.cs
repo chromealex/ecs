@@ -1,6 +1,27 @@
 #if STATES_HISTORY_MODULE_SUPPORT && NETWORK_MODULE_SUPPORT
 using RPCId = System.Int32;
 
+namespace ME.ECS {
+
+    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
+
+        void SetNetworkModule(Network.INetworkModule<TState> module);
+
+    }
+
+    public partial class World<TState> where TState : class, IState<TState>, new() {
+
+        private Network.INetworkModule<TState> networkModule;
+        public void SetNetworkModule(Network.INetworkModule<TState> module) {
+
+            this.networkModule = module;
+
+        }
+        
+    }
+
+}
+
 namespace ME.ECS.Network {
 
     [System.Flags]
@@ -31,15 +52,20 @@ namespace ME.ECS.Network {
 
     }
 
-    public interface INetworkModule<TState> : IModule<TState> where TState : class, IState<TState> {
-
+    public interface INetworkModuleBase : IModuleBase {
+        
         void SetTransporter(ITransporter transporter);
         void SetSerializer(ISerializer serializer);
         
         RPCId RegisterRPC(System.Reflection.MethodInfo methodInfo);
+        bool RegisterObject(object obj, int objId, int groupId = 0);
 
         int GetEventsSentCount();
         int GetEventsReceivedCount();
+
+    }
+
+    public interface INetworkModule<TState> : INetworkModuleBase, IModule<TState> where TState : class, IState<TState> {
 
     }
 
@@ -98,13 +124,13 @@ namespace ME.ECS.Network {
             
         }
 
-        void INetworkModule<TState>.SetTransporter(ITransporter transporter) {
+        void INetworkModuleBase.SetTransporter(ITransporter transporter) {
 
             this.transporter = transporter;
 
         }
 
-        void INetworkModule<TState>.SetSerializer(ISerializer serializer) {
+        void INetworkModuleBase.SetSerializer(ISerializer serializer) {
 
             this.serializer = serializer;
 
@@ -130,11 +156,18 @@ namespace ME.ECS.Network {
 
         }
 
-        public void RegisterObject(object obj, int objId, int groupId = 0) {
+        public bool RegisterObject(object obj, int objId, int groupId = 0) {
             
             var key = MathUtils.GetKey(objId, groupId);
-            this.keyToObjects.Add(key, obj);
-            this.objectToKey.Add(obj, new Key() { objId = objId, groupId = groupId });
+            if (this.keyToObjects.ContainsKey(key) == false) {
+
+                this.keyToObjects.Add(key, obj);
+                this.objectToKey.Add(obj, new Key() { objId = objId, groupId = groupId });
+                return true;
+
+            }
+
+            return false;
 
         }
 

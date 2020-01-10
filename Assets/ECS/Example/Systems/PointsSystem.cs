@@ -32,7 +32,7 @@ public class PointsSystem : ISystem<State> {
 
                 var data = this.world.RunComponents(state.points[i], deltaTime, i);
                 state.points[i] = data;
-                Worlds<State>.currentWorld.UpdateEntityCache(data);
+                this.world.UpdateEntityCache(data);
 
             }
 

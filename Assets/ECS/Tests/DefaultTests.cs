@@ -18,6 +18,8 @@ namespace ME.ECS.Tests {
             world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             world.AddComponent<Point, IncreaseUnits>(entity);
+            // Save reset state
+            world.SaveResetState();
 
             var state = world.GetState();
             Assert.IsTrue(state.points.Count == 1);
@@ -37,6 +39,8 @@ namespace ME.ECS.Tests {
             world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             world.AddComponent<Point, IncreaseUnits>(entity);
+            // Save reset state
+            world.SaveResetState();
 
             var state = world.GetState();
             Assert.IsTrue(state.points.Count == 1);
@@ -48,6 +52,115 @@ namespace ME.ECS.Tests {
             
             TestsHelper.ReleaseWorld(ref world);
             
+        }
+
+        private IWorld<State> worldTemp;
+        [Test(Description = "StatesHistory::StoreState() consistency check")]
+        public void StatesHistory() {
+            
+            // Initialize
+            var world = TestsHelper.CreateWorld(1f);
+            this.worldTemp = world;
+            world.AddModule<StatesHistoryModule>();
+            world.AddModule<NetworkModule>();
+            var history = world.GetModule<StatesHistoryModule>();
+
+            var network = world.GetModule<ME.ECS.Network.INetworkModuleBase>();
+            var testCallId = network.RegisterRPC(new System.Action(this.TestCall_RPC).Method);
+            network.RegisterObject(this, 1);
+            
+            // Adding default items
+            world.AddSystem<PointsSystem>();
+            var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
+            world.AddComponent<Point, IncreaseUnitsOnce>(entity);
+            // Save reset state
+            world.SaveResetState();
+
+            { // Test body
+                
+                // Do regular update
+                world.Update(100f);
+
+                Point data;
+                if (world.GetEntityData(entity.id, out data) == true) {
+
+                    Assert.IsTrue(data.unitsCount == 2f);
+
+                } else {
+                    
+                    Assert.Fail();
+                    
+                }
+                
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() {
+                    tick = 0L, order = 0, localOrder = 1,
+                    objId = 1,
+                    groupId = 0,
+                    rpcId = testCallId,
+                });
+
+                if (world.GetEntityData(entity.id, out data) == true) {
+
+                    Assert.IsTrue(data.unitsCount == 3f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+
+                } else {
+                    
+                    Assert.Fail();
+                    
+                }
+
+                // Do regular update
+                world.Update(100f);
+
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() {
+                    tick = 100L, order = 0, localOrder = 1,
+                    objId = 1,
+                    groupId = 0,
+                    rpcId = testCallId,
+                });
+
+                if (world.GetEntityData(entity.id, out data) == true) {
+
+                    Assert.IsTrue(data.unitsCount == 4f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+
+                } else {
+                    
+                    Assert.Fail();
+                    
+                }
+
+                // Do regular update
+                world.Update(100f);
+
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() {
+                    tick = 200L, order = 0, localOrder = 1,
+                    objId = 1,
+                    groupId = 0,
+                    rpcId = testCallId,
+                });
+
+                if (world.GetEntityData(entity.id, out data) == true) {
+
+                    Assert.IsTrue(data.unitsCount == 5f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+
+                } else {
+                    
+                    Assert.Fail();
+                    
+                }
+                
+                Debug.Log(world.GetTick());
+
+            }
+
+            TestsHelper.ReleaseWorld(ref world);
+
+        }
+
+        public void TestCall_RPC() {
+
+            this.worldTemp.AddComponent<Point, IncreaseUnitsOnce>(Entity.Create<Point>(1));
+
         }
 
         [Test]

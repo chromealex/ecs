@@ -10,7 +10,6 @@ namespace ME.ECS {
         Tick GetTick();
         void Simulate(double time);
         void Simulate(Tick toTick);
-        void Simulate(Tick from, Tick to);
         void SetPreviousTick(Tick tick);
 
     }

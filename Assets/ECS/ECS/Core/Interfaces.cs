@@ -38,7 +38,10 @@ namespace ME.ECS {
 
     }
 
-    public interface IModuleBase { }
+    public interface IModuleBase {
+        
+    }
+    
     public interface IModule<TState> : IModuleBase where TState : class, IState<TState> {
 
         IWorld<TState> world { get; set; }
@@ -63,6 +66,8 @@ namespace ME.ECS {
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
         
+        void Simulate(Tick from, Tick to);
+
     }
 
     public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {

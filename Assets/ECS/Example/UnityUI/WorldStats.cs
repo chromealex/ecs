@@ -20,7 +20,13 @@ public class WorldStats : MonoBehaviour {
             var eventsSentCount = networkModule.GetEventsSentCount();
             var eventsReceivedCount = networkModule.GetEventsReceivedCount();
 
-            this.text.text = "Tick: " + tick.ToString() + "\nTime: " + time.ToString() + "\nEvents Added: " + eventsAddedCount.ToString() + "\nSent: " + eventsSentCount.ToString() + "\nReceived: " + eventsReceivedCount.ToString();
+            this.text.text = "World Id: " + world.id.ToString() +
+                             "\nDT Multiplier: " + this.game.deltaTimeMultiplier.ToString() +
+                             "\nTick: " + tick.ToString() +
+                             "\nTime: " + time.ToString() +
+                             "\nEvents Added: " + eventsAddedCount.ToString() +
+                             "\nSent: " + eventsSentCount.ToString() +
+                             "\nReceived: " + eventsReceivedCount.ToString();
 
         }
 

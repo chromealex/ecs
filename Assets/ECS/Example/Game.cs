@@ -6,6 +6,7 @@ using ME.ECS;
 public class Game : MonoBehaviour {
 
     public World<State> world;
+    public float deltaTimeMultiplier = 1f;
     
     private IState<State> savedState;
 
@@ -113,7 +114,7 @@ public class Game : MonoBehaviour {
 
         if (this.world != null) {
 
-            var dt = Time.deltaTime;
+            var dt = Time.deltaTime * this.deltaTimeMultiplier;
             this.world.Update(dt);
 
         }

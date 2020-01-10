@@ -4,10 +4,10 @@ namespace ME.ECS.Tests {
 
     public static class TestsHelper {
 
-        public static World<State> CreateWorld() {
+        public static World<State> CreateWorld(float tickTime = 0.05f) {
             
             World<State> world = null;
-            WorldUtilities.CreateWorld(ref world, 0.05f);
+            WorldUtilities.CreateWorld(ref world, tickTime);
             world.SetState(world.CreateState());
 
             return world;

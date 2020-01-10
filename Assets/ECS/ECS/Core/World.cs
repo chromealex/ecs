@@ -717,7 +717,7 @@ namespace ME.ECS {
             var state = this.GetState();
             
             var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
-            for (Tick tick = from + 1; tick <= to; ++tick) {
+            for (Tick tick = from; tick < to; ++tick) {
 
                 state.tick = tick;
                 //UnityEngine.Debug.Log("Begin tick: " + tick);

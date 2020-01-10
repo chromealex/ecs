@@ -8,6 +8,7 @@ public class ApplyStateToView : MonoBehaviour {
     public int entityId;
     public TMPro.TMP_Text text;
 
+    private float prevUnitsCount;
     public void LateUpdate() {
 
         if (this.game != null && this.game.world != null) {
@@ -15,8 +16,13 @@ public class ApplyStateToView : MonoBehaviour {
             Point data;
             if (this.game.world.GetEntityData(this.entityId, out data) == true) {
 
-                this.text.text = data.unitsCount.ToString();
+                if (this.prevUnitsCount != data.unitsCount) {
+                
+                    this.text.text = data.unitsCount.ToString();
+                    this.prevUnitsCount = data.unitsCount;
 
+                }
+                
             }
 
         }

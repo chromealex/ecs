@@ -295,6 +295,13 @@ namespace ME.ECS.StatesHistory {
     #endif
     public abstract class StatesHistoryModule<TState> : IStatesHistoryModule<TState>, IModuleValidation where TState : class, IState<TState> {
 
+        private const int POOL_EVENTS_CAPACITY = 1000;
+        private const int POOL_HISTORY_SIZE = 100;
+        private const int POOL_HISTORY_CAPACITY = 2;
+
+        private const uint DEFAULT_QUEUE_CAPACITY = 10u;
+        private const uint DEFAULT_TICKS_PER_STATE = 100u;
+        
         private CircularQueue<TState> states;
         private Dictionary<Tick, SortedList<long, HistoryEvent>> events;
         private Tick currentTick;
@@ -311,8 +318,8 @@ namespace ME.ECS.StatesHistory {
         void IModule<TState>.OnConstruct() {
             
             this.states = new CircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
-            this.events = PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Spawn(1000);
-            PoolSortedList<int, HistoryEvent>.Prewarm(1000, 2);
+            this.events = PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
+            PoolSortedList<int, HistoryEvent>.Prewarm(StatesHistoryModule<TState>.POOL_HISTORY_SIZE, StatesHistoryModule<TState>.POOL_HISTORY_CAPACITY);
             
             this.world.SetStatesHistoryModule(this);
 
@@ -328,7 +335,7 @@ namespace ME.ECS.StatesHistory {
 
         protected virtual uint GetQueueCapacity() {
 
-            return 10u;
+            return StatesHistoryModule<TState>.DEFAULT_QUEUE_CAPACITY;
 
         }
 
@@ -338,7 +345,7 @@ namespace ME.ECS.StatesHistory {
         /// <returns></returns>
         protected virtual uint GetTicksPerState() {
 
-            return 100u;
+            return StatesHistoryModule<TState>.DEFAULT_TICKS_PER_STATE;
 
         }
 
@@ -371,7 +378,7 @@ namespace ME.ECS.StatesHistory {
         public void AddEvents(IList<HistoryEvent> historyEvents) {
             
             this.BeginAddEvents();
-            for (int i = 0; i < historyEvents.Count; ++i) this.AddEvent(historyEvents[i]);
+            for (int i = 0, count = historyEvents.Count; i < count; ++i) this.AddEvent(historyEvents[i]);
             this.EndAddEvents();
             
         }
@@ -396,7 +403,7 @@ namespace ME.ECS.StatesHistory {
 
             } else {
 
-                list = PoolSortedList<long, HistoryEvent>.Spawn(2);
+                list = PoolSortedList<long, HistoryEvent>.Spawn(StatesHistoryModule<TState>.POOL_HISTORY_CAPACITY);
                 list.Add(MathUtils.GetKey(historyEvent.order, historyEvent.localOrder), historyEvent);
                 this.events.Add(historyEvent.tick, list);
 

@@ -149,7 +149,7 @@ namespace ME.ECS.Tests {
                     
                 }
                 
-                Debug.Log(world.GetTick());
+                Assert.IsTrue(world.GetTick() == 300f);
 
             }
 

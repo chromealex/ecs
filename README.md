@@ -50,7 +50,10 @@ this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, incr
 this.world.AddSystem<InputSystem>();
 this.world.AddSystem<PointsSystem>();
 
-this.world.SaveResetState(); // Save current world state as a Reset State, it's very important to do after the scene loaded and all default entities are set.
+// Save current world state as a Reset State,
+// it's very important to do after the scene loaded
+// and all default entities are set.
+this.world.SaveResetState();
 ```
 
 ## Upcoming plans

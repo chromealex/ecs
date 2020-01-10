@@ -1,7 +1,7 @@
 # ME.ECS
 ME.ECS - it's ECS implementation for Unity Engine with full state automatic rollbacks.
 
-# Default Modules
+## Default Modules
 ### States History Module
 ##### Submodules: IEventRunner
 Store states checkpoints and all added events sorting by custom order. Can simulate world tick by tick to restore state with deterministic logic.
@@ -12,7 +12,7 @@ Store states checkpoints and all added events sorting by custom order. Can simul
 Send RPCs through any network transport implemented from the interface, serialize and deserialize data.
 By default is the EventRunner for StatesHistoryModule, just send all incoming events to the network and receive events from transport and send them into StatesHistoryModule.
 
-# How It Works
+## How It Works
 #### World
 The container for all components like modules, systems, etc.
 #### State
@@ -26,7 +26,7 @@ Entities are not the same like in a normal ECS architecture, in ME.ECS Entities 
 #### Components
 Components has no data, but has a small part of logic, working with a sertain Entity type.
 
-# Upcoming plans
+## Upcoming plans
 - Implement automatic states history with rollback system <b>(100% done)</b>
 - Decrease initialization time and memory allocs <b>(90% done)</b>
 - Random support to generate random numbers, store RandomState in game state <b>(100% done)</b>

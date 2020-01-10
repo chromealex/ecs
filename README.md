@@ -1,5 +1,7 @@
 # ME.ECS
 ME.ECS - it's ECS implementation for Unity Engine with full state automatic rollbacks.
+<br>
+<br>
 
 ## Default Modules
 ### States History Module
@@ -11,6 +13,8 @@ Store states checkpoints and all added events sorting by custom order. Can simul
 ##### Dependencies: StatesHistoryModule
 Send RPCs through any network transport implemented from the interface, serialize and deserialize data.
 By default is the EventRunner for StatesHistoryModule, just send all incoming events to the network and receive events from transport and send them into StatesHistoryModule.
+<br>
+<br>
 
 ## How It Works
 #### World
@@ -25,6 +29,29 @@ Systems are living inside of the determinism, but could implement two variants o
 Entities are not the same like in a normal ECS architecture, in ME.ECS Entities are structs of data without any methods.
 #### Components
 Components has no data, but has a small part of logic, working with a sertain Entity type.
+<br>
+<br>
+
+## World Initialization
+```csharp
+// Create new world
+WorldUtilities.CreateWorld(ref this.world, 0.033f); // Initialize new world with custom tick time
+this.world.AddModule<StatesHistoryModule>(); // Add custom states history module
+this.world.AddModule<NetworkModule>();       // Add custom network module
+
+// Initialize default state
+this.world.SetState(this.world.CreateState()); // Create new state and set it by default
+
+// Create default data
+this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
+this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
+
+// Add systems
+this.world.AddSystem<InputSystem>();
+this.world.AddSystem<PointsSystem>();
+
+this.world.SaveResetState(); // Save current world state as a Reset State, it's very important to do after the scene loaded and all default entities are set.
+```
 
 ## Upcoming plans
 - Implement automatic states history with rollback system <b>(100% done)</b>

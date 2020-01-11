@@ -12,14 +12,14 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
     
     protected override ME.ECS.Network.NetworkType GetNetworkType() {
 
-        return ME.ECS.Network.NetworkType.SendToNet;
+        return ME.ECS.Network.NetworkType.SendToNet | ME.ECS.Network.NetworkType.RunLocal;
 
     }
 
     public FakeTransporter transporter;
     protected override void OnInitialize() {
 
-        var tr = new FakeTransporter();
+        var tr = new FakeTransporter(this.GetNetworkType());
         var seed = this.world.id;
         UnityEngine.Random.InitState(seed);
         tr.randomState = UnityEngine.Random.Range(0, 1000);
@@ -49,13 +49,24 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
     private int receivedCount;
 
     public int randomState;
+    private ME.ECS.Network.NetworkType networkType;
+
+    public FakeTransporter(ME.ECS.Network.NetworkType networkType) {
+
+        this.networkType = networkType;
+
+    }
 
     public void Send(byte[] bytes) {
-
+        
         UnityEngine.Random.InitState(this.randomState);
         var frame = UnityEngine.Time.frameCount + UnityEngine.Random.Range(10, 200);
-        this.AddToBuffer(frame, bytes);
-        ++this.sentCount;
+        
+        if ((this.networkType & ME.ECS.Network.NetworkType.RunLocal) == 0) { // Run local if RunLocal flag is not set
+            
+            this.AddToBuffer(frame, bytes);
+            
+        }
 
         // Send event to connected world
         if (this.connectToWorldId > 0) {
@@ -65,6 +76,8 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
             networkModule.transporter.AddToBuffer(frame, bytes);
 
         }
+        
+        ++this.sentCount;
         
     }
 

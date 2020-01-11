@@ -341,6 +341,13 @@ namespace ME.ECS.Network {
                 if (bytes != null && bytes.Length > 0 && this.serializer != null) {
 
                     var evt = this.serializer.Deserialize(bytes);
+                    if ((this.GetNetworkType() & NetworkType.RunLocal) != 0 && evt.order == this.GetRPCOrder()) {
+
+                        // Skip events from local owner is it was run already
+                        return;
+
+                    }
+                    
                     //UnityEngine.Debug.Log(UnityEngine.Time.frameCount + " Received Data. CurrentTick: " + this.world.GetTick() + ", Evt: " + evt);
                     this.statesHistoryModule.AddEvent(evt);
 

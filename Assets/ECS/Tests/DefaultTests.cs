@@ -17,7 +17,7 @@ namespace ME.ECS.Tests {
             // Adding items
             world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
-            world.AddComponent<Point, IncreaseUnits>(entity);
+            world.AddComponent<Point, PointIncreaseUnits>(entity);
             // Save reset state
             world.SaveResetState();
 
@@ -38,7 +38,7 @@ namespace ME.ECS.Tests {
             // Adding items
             world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
-            world.AddComponent<Point, IncreaseUnits>(entity);
+            world.AddComponent<Point, PointIncreaseUnits>(entity);
             // Save reset state
             world.SaveResetState();
 
@@ -72,7 +72,7 @@ namespace ME.ECS.Tests {
             // Adding default items
             world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
-            world.AddComponent<Point, IncreaseUnitsOnce>(entity);
+            world.AddComponent<Point, PointIncreaseUnitsOnce>(entity);
             // Save reset state
             world.SaveResetState();
 
@@ -189,7 +189,7 @@ namespace ME.ECS.Tests {
 
         public void TestCall_RPC() {
 
-            this.worldTemp.AddComponent<Point, IncreaseUnitsOnce>(Entity.Create<Point>(1));
+            this.worldTemp.AddComponent<Point, PointIncreaseUnitsOnce>(Entity.Create<Point>(1));
 
         }
 
@@ -204,8 +204,8 @@ namespace ME.ECS.Tests {
             world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             var entityToRemove = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
-            world.AddComponent<Point, IncreaseUnits>(entity);
-            world.AddComponent<Point, IncreaseUnits>(entityToRemove);
+            world.AddComponent<Point, PointIncreaseUnits>(entity);
+            world.AddComponent<Point, PointIncreaseUnits>(entityToRemove);
             // Save reset state
             world.SaveResetState();
 
@@ -245,8 +245,8 @@ namespace ME.ECS.Tests {
             world.AddSystem<PointsSystem>();
             var entity = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
             var entityToRemove = world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
-            world.AddComponent<Point, IncreaseUnits>(entity);
-            world.AddComponent<Point, IncreaseUnits>(entityToRemove);
+            world.AddComponent<Point, PointIncreaseUnits>(entity);
+            world.AddComponent<Point, PointIncreaseUnits>(entityToRemove);
             
             // Save state
             var state = world.GetState();

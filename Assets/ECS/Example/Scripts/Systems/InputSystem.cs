@@ -31,8 +31,8 @@ public class InputSystem : ISystem<State> {
         
         if (Input.GetKeyDown(KeyCode.Q) == true) {
 
-            this.world.AddComponent<Point, IncreaseUnits>(Entity.Create<Point>(1));
-            this.world.AddComponent<Point, IncreaseUnits>(Entity.Create<Point>(2));
+            this.world.AddComponent<Point, PointIncreaseUnits>(Entity.Create<Point>(1));
+            this.world.AddComponent<Point, PointIncreaseUnits>(Entity.Create<Point>(2));
 
         }
 
@@ -54,11 +54,11 @@ public class InputSystem : ISystem<State> {
 
     private void TestEvent_RPC(int pointId, Color color, float moveSide) {
 
-        var componentColor = this.world.AddComponent<Point, SetColor>(Entity.Create<Point>(pointId));
+        var componentColor = this.world.AddComponent<Point, PointSetColor>(Entity.Create<Point>(pointId));
         componentColor.color = color;
 
-        var componentPos = this.world.AddComponent<Point, SetPosition>(Entity.Create<Point>(pointId));
-        componentPos.position = Vector3.left * moveSide;
+        var componentPos = this.world.AddComponent<Point, PointAddPositionDelta>(Entity.Create<Point>(pointId));
+        componentPos.positionDelta = Vector3.left * moveSide;
 
     }
 

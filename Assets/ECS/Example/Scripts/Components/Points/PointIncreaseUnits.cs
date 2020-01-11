@@ -1,6 +1,6 @@
 ﻿using ME.ECS;
 
-public class IncreaseUnits : IComponent<State, Point> {
+public class PointIncreaseUnits : IComponent<State, Point> {
 
     public Point AdvanceTick(State state, Point data, float deltaTime, int index) {
 
@@ -13,7 +13,7 @@ public class IncreaseUnits : IComponent<State, Point> {
 
 }
 
-public class IncreaseUnitsOnce : IComponent<State, Point> {
+public class PointIncreaseUnitsOnce : IComponent<State, Point> {
 
     public Point AdvanceTick(State state, Point data, float deltaTime, int index) {
 

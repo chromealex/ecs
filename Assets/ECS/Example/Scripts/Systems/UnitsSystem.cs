@@ -1,0 +1,57 @@
+using ME.ECS;
+using Unity.Jobs;
+
+public class UnitsSystem : ISystem<State> {
+
+    //[BurstCompile(CompileSynchronously = true, FloatMode = FloatMode.Deterministic, FloatPrecision = FloatPrecision.Standard)]
+    private struct TestJob : IJobParallelFor {
+
+        public float deltaTime;
+        
+        void IJobParallelFor.Execute(int index) {
+            
+            var data = Worlds<State>.currentWorld.RunComponents(Worlds<State>.currentState.units[index], this.deltaTime, index);
+            Point toData;
+            if (Worlds<State>.currentWorld.GetEntityData(data.pointTo.id, out toData) == true) {
+
+                if ((toData.position - data.position).sqrMagnitude <= 0.01f) {
+
+                    var from = data.pointFrom;
+                    var to = data.pointTo;
+                    data.pointTo = from;
+                    data.pointFrom = to;
+                    Worlds<State>.currentWorld.RemoveComponents<UnitFollowFromTo>(data.entity);
+                    var comp = Worlds<State>.currentWorld.AddComponent<Unit, UnitFollowFromTo>(data.entity);
+                    comp.@from = data.pointFrom;
+                    comp.to = data.pointTo;
+
+                }
+
+            }
+            Worlds<State>.currentState.units[index] = data;
+            Worlds<State>.currentWorld.UpdateEntityCache(data);
+
+        }
+
+    }
+
+    public IWorld<State> world { get; set; }
+
+    void ISystem<State>.OnConstruct() { }
+    void ISystem<State>.OnDeconstruct() { }
+
+    void ISystem<State>.AdvanceTick(State state, float deltaTime) {
+
+        var job = new TestJob() {
+            deltaTime = deltaTime
+        };
+        var j = (IJobParallelFor)job;
+        for (int i = 0; i < state.units.Count; ++i) j.Execute(i);
+        //var jobHandle = job.Schedule(state.units.Count, 64);
+        //jobHandle.Complete();
+
+    }
+
+    void ISystem<State>.Update(State state, float deltaTime) { }
+
+}

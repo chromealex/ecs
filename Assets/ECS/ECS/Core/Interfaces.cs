@@ -112,6 +112,8 @@ namespace ME.ECS {
         void RemoveSystem(ISystem<TState> instance);
         void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
 
+        bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity;
+        
         TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : struct, IEntity;
         TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : struct, IEntity;
         bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;

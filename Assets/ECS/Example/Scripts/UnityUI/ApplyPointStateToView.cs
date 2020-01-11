@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ApplyStateToView : MonoBehaviour {
+public class ApplyPointStateToView : MonoBehaviour {
 
     public Game game;
     public int entityId;

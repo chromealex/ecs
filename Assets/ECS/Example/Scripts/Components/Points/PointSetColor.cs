@@ -1,19 +1,19 @@
 using ME.ECS;
 
-public class SetPosition : IComponent<State, Point> {
+public class PointSetColor : IComponent<State, Point> {
 
-    public UnityEngine.Vector3 position;
+    public UnityEngine.Color color;
     
     public Point AdvanceTick(State state, Point data, float deltaTime, int index) {
 
-        data.position += this.position * deltaTime;
+        data.color = this.color;
         return data;
 
     }
 
     void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) {
 
-        this.position = ((SetPosition)other).position;
+        this.color = ((PointSetColor)other).color;
 
     }
     

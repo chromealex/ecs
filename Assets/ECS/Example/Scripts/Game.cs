@@ -20,7 +20,7 @@ public class Game : MonoBehaviour {
 
             // Loading level
             
-            WorldUtilities.CreateWorld(ref this.world, 0.033f, this.worldId);
+            WorldUtilities.CreateWorld(ref this.world, 0.133f, this.worldId);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
 
@@ -32,10 +32,18 @@ public class Game : MonoBehaviour {
             }
 
             this.world.SetState(this.world.CreateState());
-            this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, 3f), unitsCount = 99f, increaseRate = 1f });
-            this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, -3f), unitsCount = 1f, increaseRate = 1f });
+            var p1 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, 3f), unitsCount = 99f, increaseRate = 1f });
+            var p2 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, -3f), unitsCount = 1f, increaseRate = 1f });
+            { // Add unit
+                var unitSpeed = 1f;
+                var unit = this.world.AddEntity(new Unit() { position = new Vector3(0f, 0f, 0f), rotation = Quaternion.identity, speed = unitSpeed, pointFrom = p1, pointTo = p2 });
+                var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
+                followComponent.@from = p1;
+                followComponent.to = p2;
+            }
             this.world.AddSystem<InputSystem>();
             this.world.AddSystem<PointsSystem>();
+            this.world.AddSystem<UnitsSystem>();
             this.world.SaveResetState();
 
         }

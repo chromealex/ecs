@@ -2,6 +2,7 @@
 
 namespace ME.ECS {
     
+    [System.Serializable]
     public struct Entity {
 
         public EntityId id;

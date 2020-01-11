@@ -171,7 +171,8 @@ namespace ME.ECS {
             foreach (var item in other.dic) {
                 
                 var newList = PoolList<IComponent<TState, TEntity>>.Spawn(item.Value.Capacity);
-                for (int i = 0; i < item.Value.Count; ++i) {
+                //UnityEngine.Debug.Log("CopyState for " + typeof(TEntity) + ", list: " + newList.Count + " << " + item.Value.Count);
+                for (int i = 0, count = item.Value.Count; i < count; ++i) {
 
                     var element = item.Value[i];
                     var comp = (IComponent<TState, TEntity>)PoolComponents.Spawn(element.GetType());
@@ -180,8 +181,8 @@ namespace ME.ECS {
                     newList.Add(comp);
 
                 }
+                //UnityEngine.Debug.Log("Result: " + newList.Count);
 
-                newList.AddRange(item.Value);
                 this.dic.Add(item.Key, newList);
                 
             }

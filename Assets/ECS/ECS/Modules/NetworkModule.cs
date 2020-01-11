@@ -1,4 +1,5 @@
 #if STATES_HISTORY_MODULE_SUPPORT && NETWORK_MODULE_SUPPORT
+using Tick = System.UInt64;
 using RPCId = System.Int32;
 
 namespace ME.ECS {
@@ -58,7 +59,12 @@ namespace ME.ECS.Network {
         void SetSerializer(ISerializer serializer);
         
         RPCId RegisterRPC(System.Reflection.MethodInfo methodInfo);
+        void RegisterRPC(RPCId rpcId, System.Reflection.MethodInfo methodInfo);
+        bool UnRegisterRPC(RPCId rpcId);
+
         bool RegisterObject(object obj, int objId, int groupId = 0);
+        bool UnRegisterObject(object obj, int objId);
+        bool UnRegisterGroup(int groupId);
 
         int GetEventsSentCount();
         int GetEventsReceivedCount();
@@ -73,6 +79,12 @@ namespace ME.ECS.Network {
 
         public int objId;
         public int groupId;
+
+    }
+
+    public class RegisterObjectMissingException : System.Exception {
+
+        public RegisterObjectMissingException(object instance, RPCId rpcId) : base("[NetworkModule] Object " + instance + " could not send RPC with id " + rpcId + " because RegisterObject() call should run before this call.") {}
 
     }
 
@@ -171,11 +183,83 @@ namespace ME.ECS.Network {
 
         }
 
+        public bool UnRegisterObject(object obj, int objId) {
+
+            foreach (var item in this.objectToKey) {
+
+                if (item.Key == obj) {
+
+                    var keyData = item.Value;
+                    var key = MathUtils.GetKey(keyData.objId, keyData.groupId);
+                    var found = this.keyToObjects.Remove(key);
+                    if (found == true) {
+
+                        this.objectToKey.Remove(obj);
+                        return true;
+
+                    }
+
+                }
+
+            }
+
+            return false;
+
+        }
+
+        public bool UnRegisterGroup(int groupId) {
+
+            var foundAny = false;
+            var newObjectToKey = PoolDictionary<object, Key>.Spawn(100);
+            foreach (var item in this.objectToKey) {
+
+                if (item.Value.groupId == groupId) {
+
+                    var keyData = item.Value;
+                    var key = MathUtils.GetKey(keyData.objId, keyData.groupId);
+                    var foundInside = false;
+                    object obj;
+                    if (this.keyToObjects.TryGetValue(key, out obj) == true) {
+
+                        var found = this.keyToObjects.Remove(key);
+                        if (found == true) {
+
+                            foundInside = true;
+                            foundAny = true;
+
+                        }
+
+                    }
+
+                    if (foundInside == false) newObjectToKey.Add(item.Key, item.Value);
+                    
+                }
+
+            }
+            PoolDictionary<object, Key>.Recycle(ref this.objectToKey);
+            this.objectToKey = newObjectToKey;
+
+            return foundAny;
+            
+        }
+
+        public bool UnRegisterRPC(RPCId rpcId) {
+
+            return this.registry.Remove(rpcId);
+
+        }
+
         public RPCId RegisterRPC(System.Reflection.MethodInfo methodInfo) {
 
-            this.registry.Add(++this.rpcId, methodInfo);
+            this.RegisterRPC(++this.rpcId, methodInfo);
             return this.rpcId;
 
+        }
+
+        public void RegisterRPC(RPCId rpcId, System.Reflection.MethodInfo methodInfo) {
+
+            this.registry.Add(rpcId, methodInfo);
+            
         }
 
         protected virtual int GetRPCOrder() {
@@ -222,8 +306,12 @@ namespace ME.ECS.Network {
 
                 }
 
+            } else {
+
+                throw new RegisterObjectMissingException(instance, rpcId);
+
             }
-            
+
         }
 
         void StatesHistory.IEventRunner.RunEvent(StatesHistory.HistoryEvent historyEvent) {

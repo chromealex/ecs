@@ -42,7 +42,19 @@ namespace ME.ECS {
             this.currentState = null;
             this.resetState = null;
 
-            this.id = ++World<TState>.worldId;
+        }
+
+        public void SetId(int forcedWorldId = 0) {
+
+            if (forcedWorldId > 0) {
+
+                this.id = forcedWorldId;
+
+            } else {
+                
+                this.id = ++World<TState>.worldId;
+                
+            }
 
         }
 
@@ -669,14 +681,6 @@ namespace ME.ECS {
 
         }
 
-        private Tick prevTick;
-        public void SetPreviousTick(Tick tick) {
-
-            this.prevTick = tick;
-            //UnityEngine.Debug.Log("SetPreviousTick: " + tick);
-
-        }
-
         public void Update(float deltaTime) {
 
             var state = this.GetState();
@@ -684,7 +688,7 @@ namespace ME.ECS {
             Worlds<TState>.currentWorld = this;
             Worlds<TState>.currentState = state;
 
-            this.prevTick = state.tick;
+            var prevTick = state.tick;
             this.timeSinceStart += deltaTime;
 
             for (int i = 0, count = this.modules.Count; i < count; ++i) {
@@ -693,8 +697,7 @@ namespace ME.ECS {
                 
             }
 
-            var currentTick = state.tick;
-            this.Simulate(this.prevTick, currentTick);
+            this.Simulate(prevTick + 1, state.tick + 1);
 
             for (int i = 0, count = this.systems.Count; i < count; ++i) {
                 
@@ -716,6 +719,7 @@ namespace ME.ECS {
 
             var state = this.GetState();
             
+            //UnityEngine.Debug.LogError("Simulate[" + this.id + "]: " + from + " >> " + to);
             var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
             for (Tick tick = from; tick < to; ++tick) {
 
@@ -735,6 +739,7 @@ namespace ME.ECS {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void PlayPluginsForTick(Tick tick) {
             
             this.PlayPlugin1ForTick(tick);
@@ -871,11 +876,39 @@ namespace ME.ECS {
 
         public static IWorld<TState> currentWorld;
         public static TState currentState;
+        
+        private static Dictionary<int, IWorld<TState>> cache = new Dictionary<int, IWorld<TState>>();
+
+        public static IWorld<TState> GetWorld(int id) {
+
+            IWorld<TState> world;
+            if (Worlds<TState>.cache.TryGetValue(id, out world) == true) {
+
+                return world;
+                
+            }
+
+            return null;
+
+        }
+
+        public static void Register(IWorld<TState> world) {
+            
+            Worlds<TState>.cache.Add(world.id, world);
+            
+        }
+        
+        public static void UnRegister(IWorld<TState> world) {
+            
+            Worlds<TState>.cache.Remove(world.id);
+            
+        }
 
     }
 
     public static class MathUtils {
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static long GetKey(int a1, int a2) {
             
             long b = a2;
@@ -889,44 +922,54 @@ namespace ME.ECS {
 
     public static class WorldUtilities {
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Release<T>(ref Filter<T> filter) where T : IEntity {
             
             PoolClass<Filter<T>>.Recycle(ref filter);
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Release<TEntity, TState>(ref Components<TEntity, TState> components) where TState : class, IState<TState>, new() where TEntity : IEntity {
             
             PoolClass<Components<TEntity, TState>>.Recycle(ref components);
             
         }
 
-        public static void CreateWorld<TState>(ref World<TState> worldRef, float tickTime) where TState : class, IState<TState>, new() {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void CreateWorld<TState>(ref World<TState> worldRef, float tickTime, int forcedWorldId = 0) where TState : class, IState<TState>, new() {
 
             if (worldRef != null) WorldUtilities.ReleaseWorld(ref worldRef);
             worldRef = PoolClass<World<TState>>.Spawn();
+            worldRef.SetId(forcedWorldId);
             ((IWorldBase)worldRef).SetTickTime(tickTime);
+            Worlds<TState>.Register(worldRef);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void ReleaseWorld<TState>(ref World<TState> world) where TState : class, IState<TState>, new() {
 
+            Worlds<TState>.UnRegister(world);
             PoolClass<World<TState>>.Recycle(ref world);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int GetKey<T>() {
 
             return typeof(T).GetHashCode();
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int GetKey<T>(T data) where T : IEntity {
 
             return data.entity.typeId;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int GetKey(Entity data) {
 
             return data.typeId;

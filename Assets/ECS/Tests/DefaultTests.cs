@@ -151,6 +151,36 @@ namespace ME.ECS.Tests {
                 
                 Assert.IsTrue(world.GetTick() == 300f);
 
+                history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() {
+                    tick = 500L, order = 0, localOrder = 1,
+                    objId = 1,
+                    groupId = 0,
+                    rpcId = testCallId,
+                });
+
+                if (world.GetEntityData(entity.id, out data) == true) {
+
+                    Assert.IsTrue(data.unitsCount == 5f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+
+                } else {
+                    
+                    Assert.Fail();
+                    
+                }
+
+                // Do regular update
+                world.Update(300f);
+
+                if (world.GetEntityData(entity.id, out data) == true) {
+
+                    Assert.IsTrue(data.unitsCount == 6f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+
+                } else {
+                    
+                    Assert.Fail();
+                    
+                }
+
             }
 
             TestsHelper.ReleaseWorld(ref world);

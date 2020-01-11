@@ -6,7 +6,7 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
 
     protected override int GetRPCOrder() {
 
-        return 0;
+        return this.world.id;
 
     }
     
@@ -16,6 +16,7 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
 
     }
 
+    public FakeTransporter transporter;
     protected override void OnInitialize() {
 
         var tr = new FakeTransporter();
@@ -27,12 +28,22 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
         instance.SetTransporter(tr);
         instance.SetSerializer(new FakeSerializer());
 
+        this.transporter = tr;
+
+    }
+
+    public void SetWorldConnection(int connectToWorldId) {
+
+        this.transporter.connectToWorldId = connectToWorldId;
+
     }
 
 }
 
 public class FakeTransporter : ME.ECS.Network.ITransporter {
 
+    public int connectToWorldId;
+    
     private System.Collections.Generic.Dictionary<int, byte[]> buffers = new System.Collections.Generic.Dictionary<int, byte[]>();
     private int sentCount;
     private int receivedCount;
@@ -43,6 +54,22 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
 
         UnityEngine.Random.InitState(this.randomState);
         var frame = UnityEngine.Time.frameCount + UnityEngine.Random.Range(10, 200);
+        this.AddToBuffer(frame, bytes);
+        ++this.sentCount;
+
+        // Send event to connected world
+        if (this.connectToWorldId > 0) {
+
+            var connectedWorld = ME.ECS.Worlds<State>.GetWorld(this.connectToWorldId);
+            var networkModule = connectedWorld.GetModule<NetworkModule>();
+            networkModule.transporter.AddToBuffer(frame, bytes);
+
+        }
+        
+    }
+
+    private void AddToBuffer(int frame, byte[] bytes) {
+        
         while (this.buffers.ContainsKey(frame) == true) {
 
             ++frame;
@@ -51,8 +78,7 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
         
         //UnityEngine.Debug.Log("Transporter Send: " + frame);
         this.buffers.Add(frame, bytes);
-        ++this.sentCount;
-
+        
     }
 
     public byte[] Receive() {

@@ -36,6 +36,7 @@ public class WorldStats : MonoBehaviour {
 
             this.text.text = "World Id: " + world.id.ToString() +
                              "\nDT Multiplier: " + this.game.deltaTimeMultiplier.ToString() +
+                             "\nConnected World: " + this.game.worldConnectionId.ToString() +
                              "\nTick: " + tick.ToString() +
                              "\nTime: " + time.ToString() +
                              "\nEvents Added: " + eventsAddedCount.ToString() +

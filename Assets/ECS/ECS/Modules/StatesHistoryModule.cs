@@ -10,7 +10,6 @@ namespace ME.ECS {
         Tick GetTick();
         void Simulate(double time);
         void Simulate(Tick toTick);
-        void SetPreviousTick(Tick tick);
 
     }
 
@@ -366,8 +365,7 @@ namespace ME.ECS.StatesHistory {
 
             if (this.beginAddEvents == true) {
                 
-                this.world.SetPreviousTick(this.beginAddEventsTick);
-                this.world.Simulate(this.currentTick);
+                this.world.Simulate(0, this.currentTick);
                 
             }
             

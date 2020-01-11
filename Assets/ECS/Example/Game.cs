@@ -5,23 +5,29 @@ using ME.ECS;
 
 public class Game : MonoBehaviour {
 
-    public World<State> world;
+    public int worldId;
+    public int worldConnectionId;
     public float deltaTimeMultiplier = 1f;
     
+    public World<State> world;
     private IState<State> savedState;
 
-    private RPCId testCallId;
-    
     public void Update() {
 
-        if (Input.GetKeyDown(KeyCode.A) == true) {
+        if (Input.GetKeyDown(KeyCode.A) == true && this.world == null) {
 
-            WorldUtilities.CreateWorld(ref this.world, 0.033f);
+            // Loading level
+            
+            WorldUtilities.CreateWorld(ref this.world, 0.033f, this.worldId);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
-            var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
-            this.testCallId = network.RegisterRPC(new System.Action<int, Vector3>(this.TestCall_RPC).Method);
-            network.RegisterObject(this, 1);
+
+            if (this.worldConnectionId > 0) {
+
+                var network = this.world.GetModule<NetworkModule>();
+                network.SetWorldConnection(this.worldConnectionId);
+
+            }
 
             this.world.SetState(this.world.CreateState());
             this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
@@ -32,15 +38,21 @@ public class Game : MonoBehaviour {
 
         }
 
-        if (Input.GetKeyDown(KeyCode.Z) == true) {
+        if (Input.GetKeyDown(KeyCode.Z) == true && this.world == null) {
 
-            WorldUtilities.CreateWorld(ref this.world, 1f);
+            // Loading level
+            
+            WorldUtilities.CreateWorld(ref this.world, 1f, this.worldId);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
-            var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
-            this.testCallId = network.RegisterRPC(new System.Action<int, Vector3>(this.TestCall_RPC).Method);
-            network.RegisterObject(this, 1);
             
+            if (this.worldConnectionId > 0) {
+
+                var network = this.world.GetModule<NetworkModule>();
+                network.SetWorldConnection(this.worldConnectionId);
+
+            }
+
             this.world.SetState(this.world.CreateState());
             this.world.SetCapacity<Point>(100000);
             for (int i = 0; i < 100000; ++i) {
@@ -53,65 +65,6 @@ public class Game : MonoBehaviour {
 
         }
 
-        if (Input.GetKeyDown(KeyCode.R) == true) {
-            
-            var newState = (IState<State>)this.world.CreateState();
-            newState.Initialize(this.world, freeze: true, restore: false);
-            newState.CopyFrom((State)this.savedState);
-            this.world.SetState((State)newState);
-            ((IWorldBase)this.world).Simulate(newState.tick);
-
-        }
-
-        if (Input.GetKeyDown(KeyCode.P) == true) {
-
-            var historyModule = this.world.GetModule<StatesHistoryModule>();
-            var state = historyModule.GetStateBeforeTick(this.world.GetTick());
-            Debug.Log("Tick: " + this.world.GetTick() + ", State Tick: " + state.tick);
-
-        }
-
-        if (Input.GetKey(KeyCode.F) == true) {
-
-            var networkModule = this.world.GetModule<NetworkModule>();
-            networkModule.RPC(this, this.testCallId, 1, Vector3.one);
-            
-            /*
-            var historyModule = this.world.GetModule<StatesHistoryModule>();
-            
-            var evt = new ME.ECS.StatesHistory.HistoryEvent() {
-                tick = (ulong)Random.Range(0, this.world.GetTick()),
-                order = 0,
-                id = 123,
-            };
-            historyModule.AddEvent(evt);
-            Debug.Log("Add Event for tick: " + evt.tick + ", order: " + evt.order + ", method: " + evt.id);
-            */
-
-        }
-
-        if (Input.GetKeyDown(KeyCode.T) == true) {
-
-            /*var historyModule = this.world.GetModule<StatesHistoryModule>();
-            var evt = new ME.ECS.StatesHistory.HistoryEvent() {
-                tick = 0UL,
-                order = 0,
-            };
-            historyModule.AddEvent(evt);
-            Debug.Log("Add Event for tick: " + evt.tick + ", order: " + evt.order + ", method: " + evt.id);
-            */
-
-        }
-
-        if (Input.GetKeyDown(KeyCode.S) == true) {
-            
-            var state = this.world.GetState();
-            this.savedState = this.world.CreateState();
-            this.savedState.Initialize(this.world, freeze: true, restore: false);
-            this.savedState.CopyFrom(state);
-            
-        }
-
         if (this.world != null) {
 
             var dt = Time.deltaTime * this.deltaTimeMultiplier;
@@ -121,14 +74,10 @@ public class Game : MonoBehaviour {
 
     }
 
-    public void TestCall_RPC(int p1, Vector3 p2) {
+    public void AddEventUIButtonClick() {
 
-        var count = this.world.GetRandomRange(1, 5);
-        for (int i = 0; i < count; ++i) {
-
-            this.world.AddComponent<Point, IncreaseUnitsOnce>(Entity.Create<Point>(1));
-
-        }
+        var input = this.world.GetSystem<InputSystem>();
+        input.AddEventUIButtonClick();
 
     }
 

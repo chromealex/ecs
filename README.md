@@ -17,6 +17,7 @@ By default is the EventRunner for StatesHistoryModule, just send all incoming ev
 <br>
 
 ## How It Works
+![](Readme/HowItWorks.png?raw=true "How It Works")
 #### World
 The container for all components like modules, systems, etc.
 #### State

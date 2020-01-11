@@ -656,7 +656,7 @@ namespace ME.ECS {
 
         }
         
-        public TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : IEntity {
+        public TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : struct, IEntity {
 
             var code = WorldUtilities.GetKey(data);
             IComponents componentsContainer;
@@ -770,10 +770,10 @@ namespace ME.ECS {
         /// <param name="entity"></param>
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
-        public void AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : IEntity {
+        public TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : struct, IEntity {
 
             var data = PoolComponents.Spawn<TComponent>();
-            this.AddComponent<TEntity, TComponent>(entity, (IComponent<TState, TEntity>)data);
+            return this.AddComponent<TEntity, TComponent>(entity, (IComponent<TState, TEntity>)data);
 
         }
 
@@ -784,7 +784,7 @@ namespace ME.ECS {
         /// <param name="data"></param>
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
-        public void AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : IEntity {
+        public TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : struct, IEntity {
 
             var code = WorldUtilities.GetKey(entity);
             IComponents components;
@@ -801,6 +801,8 @@ namespace ME.ECS {
 
             }
 
+            return (TComponent)data;
+
         }
 
         /// <summary>
@@ -810,7 +812,7 @@ namespace ME.ECS {
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
         /// <returns></returns>
-        public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : IEntity {
+        public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity {
 
             var code = WorldUtilities.GetKey(entity);
             IComponents components;
@@ -930,7 +932,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release<TEntity, TState>(ref Components<TEntity, TState> components) where TState : class, IState<TState>, new() where TEntity : IEntity {
+        public static void Release<TEntity, TState>(ref Components<TEntity, TState> components) where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
             
             PoolClass<Components<TEntity, TState>>.Recycle(ref components);
             
@@ -959,6 +961,13 @@ namespace ME.ECS {
         public static int GetKey<T>() {
 
             return typeof(T).GetHashCode();
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int GetKey(System.Type type) {
+
+            return type.GetHashCode();
 
         }
 

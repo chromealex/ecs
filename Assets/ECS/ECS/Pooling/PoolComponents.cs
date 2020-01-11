@@ -32,6 +32,28 @@ namespace ME.ECS {
 		    return new T();
 
 	    }
+	    
+	    public static object Spawn(System.Type type) {
+
+		    var key = WorldUtilities.GetKey(type);
+		    PoolInternalBase pool;
+		    if (PoolComponents.pool.TryGetValue(key, out pool) == true) {
+
+			    var obj = pool.Spawn();
+			    if (obj != null) return obj;
+
+		    } else {
+                
+			    pool = new PoolInternalBase(null, null);
+			    var obj = pool.Spawn();
+			    PoolComponents.pool.Add(key, pool);
+			    if (obj != null) return obj;
+
+		    }
+
+		    return null;
+
+	    }
 
 	    public static void Recycle<T>(ref T system) where T : class, IComponentBase {
 

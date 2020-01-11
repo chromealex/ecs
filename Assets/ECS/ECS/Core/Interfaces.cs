@@ -112,14 +112,14 @@ namespace ME.ECS {
         void RemoveSystem(ISystem<TState> instance);
         void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
 
-        void AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : IEntity;
-        void AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : IEntity;
-        bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : IEntity;
+        TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : struct, IEntity;
+        TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : struct, IEntity;
+        bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;
         void RemoveComponents(Entity entity);
         void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase;
         void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
 
-        TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : IEntity;
+        TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
 
         void Update(float deltaTime);
 
@@ -136,6 +136,7 @@ namespace ME.ECS {
     public interface IComponent<T, TData> : IComponentBase where T : IStateBase where TData : IEntity {
 
         TData AdvanceTick(T state, TData data, float deltaTime, int index);
+        void CopyFrom(IComponent<T, TData> other);
 
     }
 

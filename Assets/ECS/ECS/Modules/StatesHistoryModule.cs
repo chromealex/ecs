@@ -95,6 +95,19 @@ namespace ME.ECS.StatesHistory {
 
         }
 
+        public void Recycle(IWorld<T> world) {
+
+            foreach (var item in this.data) {
+
+                var st = item.Value;
+                world.ReleaseState(ref st);
+                
+            }
+            
+            PoolDictionary<Tick, T>.Recycle(ref this.data);
+
+        }
+
         public T Get(Tick tick) {
 
             Tick nearestTick = tick - tick % this.ticksPerState;
@@ -323,8 +336,27 @@ namespace ME.ECS.StatesHistory {
             this.world.SetStatesHistoryModule(this);
 
         }
-        
-        void IModule<TState>.OnDeconstruct() { }
+
+        void IModule<TState>.OnDeconstruct() {
+            
+            this.world.SetStatesHistoryModule(null);
+            
+            foreach (var item in this.events) {
+
+                for (int i = 0; i < item.Value.Count; ++i) {
+
+                    var val = item.Value[i];
+                    PoolArray<object>.Recycle(ref val.parameters);
+                    
+                }
+
+            }
+            PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Recycle(ref this.events);
+
+            this.states.Recycle(this.world);
+            this.states = null;
+
+        }
 
         void IStatesHistoryModule<TState>.SetEventRunner(IEventRunner eventRunner) {
 
@@ -356,7 +388,7 @@ namespace ME.ECS.StatesHistory {
 
         public void BeginAddEvents() {
 
-            this.beginAddEventsTick = this.currentTick;
+            this.beginAddEventsTick = 0UL;
             this.beginAddEvents = true;
 
         }
@@ -365,7 +397,7 @@ namespace ME.ECS.StatesHistory {
 
             if (this.beginAddEvents == true) {
                 
-                this.world.Simulate(0, this.currentTick);
+                this.world.Simulate(this.beginAddEventsTick, this.currentTick);
                 
             }
             
@@ -429,8 +461,16 @@ namespace ME.ECS.StatesHistory {
                     //this.world.SetPreviousTick(historyState.tick);
                     this.world.Simulate(historyState.tick, targetTick);
                         
+                } else {
+
+                    if (this.beginAddEventsTick > historyState.tick) {
+
+                        this.beginAddEventsTick = historyState.tick;
+
+                    }
+
                 }
-                    
+
             } else {
                     
                 // Previous state was not found - need to rewind from initial state
@@ -442,8 +482,16 @@ namespace ME.ECS.StatesHistory {
                     //this.world.SetPreviousTick(resetState.tick);
                     this.world.Simulate(resetState.tick, targetTick);
                         
-                }
+                } else {
                     
+                    if (this.beginAddEventsTick > resetState.tick) {
+
+                        this.beginAddEventsTick = resetState.tick;
+
+                    }
+
+                }
+
                 //throw new StateNotFoundException("Tick: " + searchTick);
 
             }

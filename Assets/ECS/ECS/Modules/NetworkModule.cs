@@ -362,7 +362,6 @@ namespace ME.ECS.Network {
             var arr = PoolArray<object>.Spawn(1);
             arr[0] = p1;
             this.CallRPC(instance, rpcId, arr);
-            PoolArray<object>.Recycle(ref arr);
             
         }
 
@@ -372,8 +371,7 @@ namespace ME.ECS.Network {
             arr[0] = p1;
             arr[1] = p2;
             this.CallRPC(instance, rpcId, arr);
-            PoolArray<object>.Recycle(ref arr);
-
+            
         }
 
         public void RPC<T1, T2, T3>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3) where T1 : struct where T2 : struct where T3 : struct {
@@ -383,8 +381,7 @@ namespace ME.ECS.Network {
             arr[1] = p2;
             arr[2] = p3;
             this.CallRPC(instance, rpcId, arr);
-            PoolArray<object>.Recycle(ref arr);
-
+            
         }
 
         public void RPC<T1, T2, T3, T4>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4) where T1 : struct where T2 : struct where T3 : struct where T4 : struct {
@@ -395,8 +392,7 @@ namespace ME.ECS.Network {
             arr[2] = p3;
             arr[3] = p4;
             this.CallRPC(instance, rpcId, arr);
-            PoolArray<object>.Recycle(ref arr);
-
+            
         }
 
     }

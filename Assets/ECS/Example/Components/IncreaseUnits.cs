@@ -8,7 +8,9 @@ public class IncreaseUnits : IComponent<State, Point> {
         return data;
 
     }
-    
+
+    void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) {}
+
 }
 
 public class IncreaseUnitsOnce : IComponent<State, Point> {
@@ -19,5 +21,7 @@ public class IncreaseUnitsOnce : IComponent<State, Point> {
         return data;
 
     }
+    
+    void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) {}
     
 }

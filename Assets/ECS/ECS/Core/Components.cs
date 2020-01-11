@@ -15,7 +15,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Components<TEntity, TState> : IComponents where TEntity : IEntity where TState : IStateBase {
+    public class Components<TEntity, TState> : IComponents where TEntity : struct, IEntity where TState : IStateBase {
 
         private Dictionary<EntityId, List<IComponent<TState, TEntity>>> dic;
         private bool freeze;
@@ -159,17 +159,28 @@ namespace ME.ECS {
 
                 foreach (var item in this.dic) {
 
-                    //PoolComponents.Recycle(item.Value);
+                    PoolComponents.Recycle(item.Value);
                     PoolList<IComponent<TState, TEntity>>.Recycle(item.Value);
 
                 }
                 PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Recycle(ref this.dic);
                 
             }
+            
             this.dic = PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Spawn(this.capacity);
             foreach (var item in other.dic) {
                 
                 var newList = PoolList<IComponent<TState, TEntity>>.Spawn(item.Value.Capacity);
+                for (int i = 0; i < item.Value.Count; ++i) {
+
+                    var element = item.Value[i];
+                    var comp = (IComponent<TState, TEntity>)PoolComponents.Spawn(element.GetType());
+                    if (comp == null) comp = (IComponent<TState, TEntity>)System.Activator.CreateInstance(element.GetType());
+                    comp.CopyFrom(element);
+                    newList.Add(comp);
+
+                }
+
                 newList.AddRange(item.Value);
                 this.dic.Add(item.Key, newList);
                 

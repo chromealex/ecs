@@ -8,6 +8,8 @@ public class Game : MonoBehaviour {
     public int worldId;
     public int worldConnectionId;
     public float deltaTimeMultiplier = 1f;
+    public Color playerColor;
+    public float moveSide;
     
     public World<State> world;
     private IState<State> savedState;
@@ -30,8 +32,8 @@ public class Game : MonoBehaviour {
             }
 
             this.world.SetState(this.world.CreateState());
-            this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
-            this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
+            this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, 3f), unitsCount = 99f, increaseRate = 1f });
+            this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, -3f), unitsCount = 1f, increaseRate = 1f });
             this.world.AddSystem<InputSystem>();
             this.world.AddSystem<PointsSystem>();
             this.world.SaveResetState();
@@ -56,7 +58,7 @@ public class Game : MonoBehaviour {
             this.world.SetState(this.world.CreateState());
             this.world.SetCapacity<Point>(100000);
             for (int i = 0; i < 100000; ++i) {
-                this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f }, updateFilters: false);
+                this.world.AddEntity(new Point() { position = Vector3.zero, unitsCount = 99f, increaseRate = 1f }, updateFilters: false);
             }
             this.world.UpdateFilters<Point>();
             this.world.AddSystem<InputSystem>();
@@ -74,10 +76,10 @@ public class Game : MonoBehaviour {
 
     }
 
-    public void AddEventUIButtonClick() {
+    public void AddEventUIButtonClick(int pointId) {
 
         var input = this.world.GetSystem<InputSystem>();
-        input.AddEventUIButtonClick();
+        input.AddEventUIButtonClick(pointId, this.playerColor, this.moveSide);
 
     }
 

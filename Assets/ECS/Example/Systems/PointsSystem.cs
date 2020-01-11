@@ -46,7 +46,9 @@ public class PointsSystem : ISystem<State> {
 
         }
 
-        this.world.RemoveComponents<IncreaseUnitsOnce>(Entity.Create<Point>(1));
+        this.world.RemoveComponents<IncreaseUnitsOnce>();
+        this.world.RemoveComponents<SetColor>();
+        this.world.RemoveComponents<SetPosition>();
         
     }
 

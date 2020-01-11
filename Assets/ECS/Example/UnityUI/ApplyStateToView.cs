@@ -7,8 +7,16 @@ public class ApplyStateToView : MonoBehaviour {
     public Game game;
     public int entityId;
     public TMPro.TMP_Text text;
+    public Renderer cubeRenderer;
 
     private float prevUnitsCount;
+
+    public void Start() {
+        
+        this.cubeRenderer.sharedMaterial = new Material(this.cubeRenderer.material);
+        
+    }
+
     public void LateUpdate() {
 
         if (this.game != null && this.game.world != null) {
@@ -22,7 +30,10 @@ public class ApplyStateToView : MonoBehaviour {
                     this.prevUnitsCount = data.unitsCount;
 
                 }
-                
+
+                this.cubeRenderer.sharedMaterial.color = data.color;
+                this.cubeRenderer.transform.localPosition = data.position;
+
             }
 
         }

@@ -45,10 +45,9 @@ public class UnitsSystem : ISystem<State> {
         var job = new TestJob() {
             deltaTime = deltaTime
         };
-        var j = (IJobParallelFor)job;
-        for (int i = 0; i < state.units.Count; ++i) j.Execute(i);
-        //var jobHandle = job.Schedule(state.units.Count, 64);
-        //jobHandle.Complete();
+        
+        var jobHandle = job.Schedule(state.units.Count, 64);
+        jobHandle.Complete();
 
     }
 

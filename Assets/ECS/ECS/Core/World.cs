@@ -15,7 +15,7 @@ namespace ME.ECS {
 
         private static int worldId = 0;
 
-        internal static class EntitiesCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
+        internal static class EntitiesDirectCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
 
             internal static Dictionary<long, T> data = new Dictionary<long, T>(100);
 
@@ -153,7 +153,7 @@ namespace ME.ECS {
         public bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity {
 
             T internalData;
-            if (EntitiesCache<TState, T>.data.TryGetValue(MathUtils.GetKey(this.id, entityId), out internalData) == true) {
+            if (EntitiesDirectCache<TState, T>.data.TryGetValue(MathUtils.GetKey(this.id, entityId), out internalData) == true) {
 
                 data = internalData;
                 return true;
@@ -384,13 +384,13 @@ namespace ME.ECS {
         public void UpdateEntityCache<T>(T data) where T : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, data.entity.id);
-            if (EntitiesCache<TState, T>.data.ContainsKey(key) == true) {
+            if (EntitiesDirectCache<TState, T>.data.ContainsKey(key) == true) {
 
-                EntitiesCache<TState, T>.data[key] = data;
+                EntitiesDirectCache<TState, T>.data[key] = data;
 
             } else {
                 
-                EntitiesCache<TState, T>.data.Add(key, data);
+                EntitiesDirectCache<TState, T>.data.Add(key, data);
                 
             }
 
@@ -429,7 +429,7 @@ namespace ME.ECS {
         public void RemoveEntity<T>(T data) where T : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, data.entity.id);
-            EntitiesCache<TState, T>.data.Remove(key);
+            EntitiesDirectCache<TState, T>.data.Remove(key);
             
             var code = WorldUtilities.GetKey(data);
             IList list;
@@ -445,7 +445,7 @@ namespace ME.ECS {
         public void RemoveEntity<T>(Entity entity) where T : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, entity.id);
-            if (EntitiesCache<TState, T>.data.Remove(key) == true) {
+            if (EntitiesDirectCache<TState, T>.data.Remove(key) == true) {
 
                 var code = WorldUtilities.GetKey(entity);
                 IList list;
@@ -719,7 +719,7 @@ namespace ME.ECS {
 
             var state = this.GetState();
             
-            //UnityEngine.Debug.LogError("Simulate[" + this.id + "]: " + from + " >> " + to);
+            //UnityEngine.Debug.LogWarning("Simulate[" + this.id + "]: " + from + " >> " + to);
             var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
             for (Tick tick = from; tick < to; ++tick) {
 
@@ -852,7 +852,7 @@ namespace ME.ECS {
             IComponents componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
                 
-                componentsContainer.RemoveAll<TComponent>();
+                componentsContainer.RemoveAll<TComponent>(entity);
                 
             }
 

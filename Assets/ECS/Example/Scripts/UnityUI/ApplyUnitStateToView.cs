@@ -7,6 +7,7 @@ public class ApplyUnitStateToView : MonoBehaviour {
     public Game game;
     public int entityId;
     public Renderer cubeRenderer;
+    public float lerpSpeed = 3f;
 
     public void Start() {
         
@@ -21,9 +22,10 @@ public class ApplyUnitStateToView : MonoBehaviour {
             Unit data;
             if (this.game.world.GetEntityData(this.entityId, out data) == true) {
 
+                var dt = Time.deltaTime;
                 var tr = this.cubeRenderer.transform;
-                tr.localPosition = data.position;
-                tr.localRotation = data.rotation;
+                tr.localPosition = Vector3.Lerp(tr.localPosition, data.position, dt * this.lerpSpeed);
+                tr.localRotation = Quaternion.Lerp(tr.localRotation, data.rotation, dt * this.lerpSpeed);
                 
             }
 

@@ -6,6 +6,7 @@ namespace ME.ECS {
     public interface IComponents : IPoolableRecycle {
 
         void RemoveAll(Entity entity);
+        void RemoveAll<TComponent>(Entity entity) where TComponent : class, IComponentBase;
         void RemoveAll<TComponent>() where TComponent : class, IComponentBase;
 
     }
@@ -53,12 +54,12 @@ namespace ME.ECS {
 
         }
 
-        public void RemoveAll<TComponent>() where TComponent : class, IComponentBase {
+        public void RemoveAll<TComponent>(Entity entity) where TComponent : class, IComponentBase {
+            
+            List<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
 
-            foreach (var item in this.dic) {
-
-                var list = item.Value;
-                for (int i = 0; i < list.Count; ++i) {
+                for (int i = 0, count = list.Count; i < count; ++i) {
 
                     var listItem = list[i];
                     if (listItem is TComponent listItemComponent) {
@@ -66,6 +67,30 @@ namespace ME.ECS {
                         PoolComponents.Recycle(listItemComponent);
                         list.RemoveAt(i);
                         --i;
+                        --count;
+
+                    }
+                    
+                }
+
+            }
+            
+        }
+
+        public void RemoveAll<TComponent>() where TComponent : class, IComponentBase {
+
+            foreach (var item in this.dic) {
+
+                var list = item.Value;
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    var listItem = list[i];
+                    if (listItem is TComponent listItemComponent) {
+                        
+                        PoolComponents.Recycle(listItemComponent);
+                        list.RemoveAt(i);
+                        --i;
+                        --count;
 
                     }
                     

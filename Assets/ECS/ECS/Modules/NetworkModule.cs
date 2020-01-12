@@ -357,6 +357,12 @@ namespace ME.ECS.Network {
 
         }
 
+        public void RPC(object instance, RPCId rpcId) {
+
+            this.CallRPC(instance, rpcId, null);
+            
+        }
+
         public void RPC<T1>(object instance, RPCId rpcId, T1 p1) where T1 : struct {
 
             var arr = PoolArray<object>.Spawn(1);

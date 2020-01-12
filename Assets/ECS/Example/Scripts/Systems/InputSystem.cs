@@ -6,11 +6,13 @@ public class InputSystem : ISystem<State> {
 
     public IWorld<State> world { get; set; }
     private RPCId testEventCallId;
+    private RPCId createUnitCallId;
 
     void ISystem<State>.OnConstruct() {
         
         var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
         this.testEventCallId = network.RegisterRPC(new System.Action<int, Color, float>(this.TestEvent_RPC).Method);
+        this.createUnitCallId = network.RegisterRPC(new System.Action(this.CreateUnit_RPC).Method);
         network.RegisterObject(this, 1);
 
     }
@@ -49,6 +51,25 @@ public class InputSystem : ISystem<State> {
         
         var networkModule = this.world.GetModule<NetworkModule>();
         networkModule.RPC(this, this.testEventCallId, pointId, color, moveSide);
+        
+    }
+
+    public void AddUnitButtonClick() {
+        
+        var networkModule = this.world.GetModule<NetworkModule>();
+        networkModule.RPC(this, this.createUnitCallId);
+
+    }
+
+    private void CreateUnit_RPC() {
+
+        var p1 = Entity.Create<Point>(1);
+        var p2 = Entity.Create<Point>(2);
+            
+        var unit = this.world.AddEntity(new Unit() { position = Vector3.zero, speed = this.world.GetRandomRange(0.5f, 1.5f), pointFrom = p1, pointTo = p2 });
+        var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
+        followComponent.@from = p1;
+        followComponent.to = p2;
         
     }
 

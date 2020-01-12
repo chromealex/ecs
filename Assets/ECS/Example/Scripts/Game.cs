@@ -64,13 +64,14 @@ public class Game : MonoBehaviour {
             }
 
             this.world.SetState(this.world.CreateState());
-            this.world.SetCapacity<Point>(100000);
-            for (int i = 0; i < 100000; ++i) {
+            this.world.SetCapacity<Point>(1000000);
+            for (int i = 0; i < 1000000; ++i) {
                 this.world.AddEntity(new Point() { position = Vector3.zero, unitsCount = 99f, increaseRate = 1f }, updateFilters: false);
             }
             this.world.UpdateFilters<Point>();
             this.world.AddSystem<InputSystem>();
             this.world.AddSystem<PointsSystem>();
+            this.world.AddSystem<UnitsSystem>();
             this.world.SaveResetState();
 
         }
@@ -89,6 +90,13 @@ public class Game : MonoBehaviour {
         var input = this.world.GetSystem<InputSystem>();
         input.AddEventUIButtonClick(pointId, this.playerColor, this.moveSide);
 
+    }
+
+    public void AddUnitButtonClick() {
+        
+        var input = this.world.GetSystem<InputSystem>();
+        input.AddUnitButtonClick();
+        
     }
 
 }

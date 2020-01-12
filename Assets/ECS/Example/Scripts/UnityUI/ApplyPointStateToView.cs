@@ -8,6 +8,7 @@ public class ApplyPointStateToView : MonoBehaviour {
     public int entityId;
     public TMPro.TMP_Text text;
     public Renderer cubeRenderer;
+    public float lerpSpeed = 3f;
 
     private float prevUnitsCount;
 
@@ -31,8 +32,10 @@ public class ApplyPointStateToView : MonoBehaviour {
 
                 }
 
+                var dt = Time.deltaTime;
+                var tr = this.cubeRenderer.transform;
                 this.cubeRenderer.sharedMaterial.color = data.color;
-                this.cubeRenderer.transform.localPosition = data.position;
+                tr.localPosition = Vector3.Lerp(tr.localPosition, data.position, dt * this.lerpSpeed);
 
             }
 

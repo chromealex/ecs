@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.unity.burst": "1.1.2",
-    "com.unity.collab-proxy": "1.2.16",
+    "com.unity.collections": "0.1.1-preview",
     "com.unity.ext.nunit": "1.0.0",
     "com.unity.ide.rider": "1.0.8",
     "com.unity.ide.vscode": "1.0.7",

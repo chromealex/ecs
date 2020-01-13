@@ -32,9 +32,9 @@ Modules are living out of the determinism, runing according on world time.
 #### Systems
 Systems are living inside of the determinism, but could implement two variants of Deterministic and Non-Deterministic logic (for example user inputs).
 #### Entities
-Entities are not the same like in a normal ECS architecture, in ME.ECS Entities are structs of data without any methods.
+Entities are not the same like in a normal ECS architecture, in ME.ECS Entities are structs of data without any methods (Data Containers).
 #### Components
-Components has no data, but has a small part of logic, working with a sertain Entity type.
+Components like a functions has some data to apply on tick, working with a certain Entity type.
 <br>
 <br>
 

@@ -435,6 +435,7 @@ MonoBehaviour:
   entityId: 2
   text: {fileID: 67267281}
   cubeRenderer: {fileID: 1709425525}
+  lerpSpeed: 3
 --- !u!1 &80035111
 GameObject:
   m_ObjectHideFlags: 0
@@ -1482,7 +1483,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 395487258}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_Children: []
   m_Father: {fileID: 2083166762}
@@ -1767,6 +1768,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldId: 4
   worldConnectionId: 3
+  dropPercent: 2
   deltaTimeMultiplier: 1
   playerColor: {r: 1, g: 0, b: 0.8074565, a: 1}
   moveSide: -5
@@ -2761,6 +2763,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldId: 2
   worldConnectionId: 1
+  dropPercent: 5
   deltaTimeMultiplier: 1
   playerColor: {r: 0, g: 0.43311167, b: 1, a: 1}
   moveSide: -5
@@ -3081,7 +3084,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 807512691}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -3000}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
   m_LocalScale: {x: 0.29999998, y: 0.29999998, z: 0.29999998}
   m_Children: []
   m_Father: {fileID: 454549114}
@@ -3371,6 +3374,7 @@ MonoBehaviour:
   entityId: 1
   text: {fileID: 847640774}
   cubeRenderer: {fileID: 1133821109}
+  lerpSpeed: 3
 --- !u!1 &926098367
 GameObject:
   m_ObjectHideFlags: 0
@@ -4168,7 +4172,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1079527873}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -200, y: 0, z: -1000}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
   m_LocalScale: {x: 0.29999998, y: 0.29999998, z: 0.29999998}
   m_Children: []
   m_Father: {fileID: 770091047}
@@ -5073,6 +5077,7 @@ MonoBehaviour:
   entityId: 1
   text: {fileID: 1134649831}
   cubeRenderer: {fileID: 801311288}
+  lerpSpeed: 3
 --- !u!1 &1166321208
 GameObject:
   m_ObjectHideFlags: 0
@@ -5237,6 +5242,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldId: 3
   worldConnectionId: 4
+  dropPercent: 2
   deltaTimeMultiplier: 1
   playerColor: {r: 0.55580986, g: 1, b: 0, a: 1}
   moveSide: 5
@@ -5714,6 +5720,7 @@ MonoBehaviour:
   entityId: 1
   text: {fileID: 1288377677}
   cubeRenderer: {fileID: 2055742230}
+  lerpSpeed: 3
 --- !u!1 &1465555924
 GameObject:
   m_ObjectHideFlags: 0
@@ -6069,6 +6076,7 @@ MonoBehaviour:
   entityId: 1
   text: {fileID: 1480927427}
   cubeRenderer: {fileID: 2095412894}
+  lerpSpeed: 3
 --- !u!1 &1482310857
 GameObject:
   m_ObjectHideFlags: 0
@@ -6752,7 +6760,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1701007212}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -2000}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
   m_LocalScale: {x: 0.29999998, y: 0.29999998, z: 0.29999998}
   m_Children: []
   m_Father: {fileID: 1181779646}
@@ -7863,6 +7871,7 @@ MonoBehaviour:
   entityId: 2
   text: {fileID: 2003441806}
   cubeRenderer: {fileID: 645019775}
+  lerpSpeed: 3
 --- !u!1 &2013638765
 GameObject:
   m_ObjectHideFlags: 0
@@ -8085,6 +8094,7 @@ MonoBehaviour:
   entityId: 2
   text: {fileID: 2013638767}
   cubeRenderer: {fileID: 735342188}
+  lerpSpeed: 3
 --- !u!1 &2047762446
 GameObject:
   m_ObjectHideFlags: 0
@@ -8666,6 +8676,7 @@ MonoBehaviour:
   entityId: 2
   text: {fileID: 2081074331}
   cubeRenderer: {fileID: 1643778685}
+  lerpSpeed: 3
 --- !u!1 &2083166760
 GameObject:
   m_ObjectHideFlags: 0
@@ -8697,6 +8708,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldId: 1
   worldConnectionId: 2
+  dropPercent: 10
   deltaTimeMultiplier: 1
   playerColor: {r: 1, g: 0, b: 0, a: 1}
   moveSide: 5

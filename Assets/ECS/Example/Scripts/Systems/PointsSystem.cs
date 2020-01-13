@@ -30,10 +30,6 @@ public class PointsSystem : ISystem<State> {
         };
         var jobHandle = job.Schedule(state.points.Count, 64);
         jobHandle.Complete();
-
-        this.world.RemoveComponents<PointIncreaseUnitsOnce>();
-        this.world.RemoveComponents<PointSetColor>();
-        this.world.RemoveComponents<PointAddPositionDelta>();
         
     }
 

@@ -7,6 +7,8 @@ public class Game : MonoBehaviour {
 
     public int worldId;
     public int worldConnectionId;
+    [Range(0, 100)]
+    public int dropPercent;
     public float deltaTimeMultiplier = 1f;
     public Color playerColor;
     public float moveSide;
@@ -28,19 +30,20 @@ public class Game : MonoBehaviour {
 
                 var network = this.world.GetModule<NetworkModule>();
                 network.SetWorldConnection(this.worldConnectionId);
+                network.SetDropPercent(this.dropPercent);
 
             }
 
             this.world.SetState(this.world.CreateState());
             var p1 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, 3f), unitsCount = 99f, increaseRate = 1f });
             var p2 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, -3f), unitsCount = 1f, increaseRate = 1f });
-            { // Add unit
+            /*{ // Add unit
                 var unitSpeed = 1f;
                 var unit = this.world.AddEntity(new Unit() { position = new Vector3(0f, 0f, 0f), rotation = Quaternion.identity, speed = unitSpeed, pointFrom = p1, pointTo = p2 });
                 var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
                 followComponent.@from = p1;
                 followComponent.to = p2;
-            }
+            }*/
             this.world.AddSystem<InputSystem>();
             this.world.AddSystem<PointsSystem>();
             this.world.AddSystem<UnitsSystem>();
@@ -60,6 +63,7 @@ public class Game : MonoBehaviour {
 
                 var network = this.world.GetModule<NetworkModule>();
                 network.SetWorldConnection(this.worldConnectionId);
+                network.SetDropPercent(this.dropPercent);
 
             }
 
@@ -95,7 +99,7 @@ public class Game : MonoBehaviour {
     public void AddUnitButtonClick() {
         
         var input = this.world.GetSystem<InputSystem>();
-        input.AddUnitButtonClick();
+        input.AddUnitButtonClick(this.playerColor);
         
     }
 

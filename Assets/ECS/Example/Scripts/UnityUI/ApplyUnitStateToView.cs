@@ -24,6 +24,7 @@ public class ApplyUnitStateToView : MonoBehaviour {
 
                 var dt = Time.deltaTime;
                 var tr = this.cubeRenderer.transform;
+                this.cubeRenderer.sharedMaterial.color = data.color;
                 tr.localPosition = Vector3.Lerp(tr.localPosition, data.position, dt * this.lerpSpeed);
                 tr.localRotation = Quaternion.Lerp(tr.localRotation, data.rotation, dt * this.lerpSpeed);
                 

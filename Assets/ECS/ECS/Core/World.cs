@@ -21,6 +21,12 @@ namespace ME.ECS {
 
         }
 
+        internal static class EntitiesCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
+
+            internal static Dictionary<long, T> data = new Dictionary<long, T>(100);
+
+        }
+
         private TState resetState;
         private TState currentState;
         private List<ISystem<TState>> systems;
@@ -733,6 +739,8 @@ namespace ME.ECS {
 
                 }
                 
+                this.RemoveComponents<IComponentOnceBase>();
+
                 //UnityEngine.Debug.Log("End tick: " + tick);
 
             }

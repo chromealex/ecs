@@ -12,7 +12,7 @@ public class InputSystem : ISystem<State> {
         
         var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
         this.testEventCallId = network.RegisterRPC(new System.Action<int, Color, float>(this.TestEvent_RPC).Method);
-        this.createUnitCallId = network.RegisterRPC(new System.Action(this.CreateUnit_RPC).Method);
+        this.createUnitCallId = network.RegisterRPC(new System.Action<Color>(this.CreateUnit_RPC).Method);
         network.RegisterObject(this, 1);
 
     }
@@ -54,23 +54,26 @@ public class InputSystem : ISystem<State> {
         
     }
 
-    public void AddUnitButtonClick() {
+    public void AddUnitButtonClick(Color color) {
         
         var networkModule = this.world.GetModule<NetworkModule>();
-        networkModule.RPC(this, this.createUnitCallId);
+        networkModule.RPC(this, this.createUnitCallId, color);
 
     }
 
-    private void CreateUnit_RPC() {
+    private void CreateUnit_RPC(Color color) {
 
         var p1 = Entity.Create<Point>(1);
         var p2 = Entity.Create<Point>(2);
-            
+        
         var unit = this.world.AddEntity(new Unit() { position = Vector3.zero, speed = this.world.GetRandomRange(0.5f, 1.5f), pointFrom = p1, pointTo = p2 });
         var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
         followComponent.@from = p1;
         followComponent.to = p2;
-        
+
+        var setColor = this.world.AddComponent<Unit, UnitSetColor>(unit);
+        setColor.color = color;
+
     }
 
     private void TestEvent_RPC(int pointId, Color color, float moveSide) {

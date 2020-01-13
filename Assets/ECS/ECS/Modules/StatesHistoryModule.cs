@@ -247,6 +247,8 @@ namespace ME.ECS.StatesHistory {
         /// </summary>
         public object[] parameters;
 
+        public bool storeInHistory;
+
         public override string ToString() {
             
             return "Tick: " + this.tick + ", Order: " + this.order + ", LocalOrder: " + this.localOrder + ", objId: " + this.objId + ", groupId: " + this.groupId + ", rpcId: " + this.rpcId + ", parameters: " + (this.parameters != null ? this.parameters.Length : 0);
@@ -280,6 +282,8 @@ namespace ME.ECS.StatesHistory {
         void AddEvents(IList<HistoryEvent> historyEvents);
         void AddEvent(HistoryEvent historyEvent);
 
+        int GetStateHash(IState<TState> state);
+        
         void BeginAddEvents();
         void EndAddEvents();
 
@@ -297,6 +301,8 @@ namespace ME.ECS.StatesHistory {
         void Simulate(Tick currentTick, Tick targetTick);
         
         int GetEventsAddedCount();
+
+        void SetSyncHash(Tick tick, int hash);
 
     }
 
@@ -460,7 +466,7 @@ namespace ME.ECS.StatesHistory {
                         
                     //this.world.SetPreviousTick(historyState.tick);
                     this.world.Simulate(historyState.tick, targetTick);
-                        
+
                 } else {
 
                     if (this.beginAddEventsTick > historyState.tick) {
@@ -496,6 +502,38 @@ namespace ME.ECS.StatesHistory {
 
             }
             
+        }
+
+        private System.Collections.Generic.Dictionary<Tick, int> syncHash = new System.Collections.Generic.Dictionary<Tick, int>();
+
+        public void SetSyncHash(Tick tick, int hash) {
+            
+            if (this.syncHash.ContainsKey(tick) == false) this.syncHash.Add(tick, hash);
+            
+        }
+        
+        private void CheckHash(Tick tick) {
+
+            int hash;
+            if (this.syncHash.TryGetValue(tick, out hash) == true) {
+
+                var state = this.GetStateBeforeTick(tick);
+                if (state == null) state = this.world.GetResetState();
+                var localHash = this.GetStateHash(state);
+                if (localHash != hash) {
+
+                    UnityEngine.Debug.LogError(this.world.id + " Remote Hash: " + hash + ", Local Hash: " + localHash);
+
+                }
+
+            }
+
+        }
+
+        public int GetStateHash(IState<TState> state) {
+
+            return state.entityId ^ (int)state.tick ^ state.GetHash();
+
         }
 
         public TState GetStateBeforeTick(Tick tick) {
@@ -587,6 +625,8 @@ namespace ME.ECS.StatesHistory {
                 }
 
             }
+
+            this.CheckHash(tick);
 
         }
 

@@ -15,6 +15,12 @@ public class State : IState<State> {
     public Components<Point, State> pointComponents;
     public Components<Unit, State> unitComponents;
 
+    int IStateBase.GetHash() {
+
+        return this.pointComponents.Count ^ this.unitComponents.Count;
+
+    }
+
     void IState<State>.Initialize(IWorld<State> world, bool freeze, bool restore) {
 
         world.Register(ref this.points, freeze, restore);

@@ -13,7 +13,7 @@ public class PointIncreaseUnits : IComponent<State, Point> {
 
 }
 
-public class PointIncreaseUnitsOnce : IComponent<State, Point> {
+public class PointIncreaseUnitsOnce : IComponentOnce<State, Point> {
 
     public Point AdvanceTick(State state, Point data, float deltaTime, int index) {
 

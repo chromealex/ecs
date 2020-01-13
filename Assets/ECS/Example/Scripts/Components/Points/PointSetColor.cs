@@ -1,6 +1,6 @@
 using ME.ECS;
 
-public class PointSetColor : IComponent<State, Point> {
+public class PointSetColor : IComponentOnce<State, Point> {
 
     public UnityEngine.Color color;
     

@@ -13,7 +13,7 @@ namespace ME.ECS {
 
         void OnConstruct();
         void OnDeconstruct();
-        
+
         void AdvanceTick(TState state, float deltaTime);
         void Update(TState state, float deltaTime);
 
@@ -25,7 +25,11 @@ namespace ME.ECS {
 
     }
 
-    public interface IStateBase { }
+    public interface IStateBase {
+
+        int GetHash();
+
+    }
 
     public interface IState<T> : IStateBase, IPoolableRecycle where T : class, IState<T> {
 
@@ -38,10 +42,8 @@ namespace ME.ECS {
 
     }
 
-    public interface IModuleBase {
-        
-    }
-    
+    public interface IModuleBase { }
+
     public interface IModule<TState> : IModuleBase where TState : class, IState<TState> {
 
         IWorld<TState> world { get; set; }
@@ -65,7 +67,7 @@ namespace ME.ECS {
         float GetTickTime();
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
-        
+
         void Simulate(Tick from, Tick to);
 
     }
@@ -77,9 +79,9 @@ namespace ME.ECS {
         int GetRandomRange(int from, int to);
         float GetRandomRange(float from, float to);
         float GetRandomValue();
-        
+
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
-        
+
         void SetCapacity<T>(int capacity) where T : IEntity;
         int GetCapacity<T>() where T : IEntity;
         int GetCapacity<T>(int code);
@@ -89,7 +91,7 @@ namespace ME.ECS {
 
         void UpdateFilters<T>() where T : IEntity;
         void UpdateFilters<T>(int code) where T : IEntity;
-        
+
         void SetState(TState state);
         TState GetState();
 
@@ -97,11 +99,11 @@ namespace ME.ECS {
         TState GetResetState();
         TState CreateState();
         void ReleaseState(ref TState state);
-        
+
         Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity;
         void RemoveEntity<T>(T data) where T : struct, IEntity;
         void RemoveEntity<T>(Entity entity) where T : struct, IEntity;
-        
+
         TModule GetModule<TModule>() where TModule : IModuleBase;
         bool AddModule<TModule>() where TModule : class, IModule<TState>, new();
         void RemoveModules<TModule>() where TModule : class, IModule<TState>, new();
@@ -113,7 +115,7 @@ namespace ME.ECS {
         void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
 
         bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity;
-        
+
         TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : struct, IEntity;
         TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : struct, IEntity;
         bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;
@@ -135,10 +137,18 @@ namespace ME.ECS {
 
     public interface IComponentBase { }
 
+    public interface IComponentOnceBase : IComponentBase { }
+
     public interface IComponent<T, TData> : IComponentBase where T : IStateBase where TData : IEntity {
 
         TData AdvanceTick(T state, TData data, float deltaTime, int index);
         void CopyFrom(IComponent<T, TData> other);
+
+    }
+
+    public interface IComponentOnce<T, TData> : IComponent<T, TData>, IComponentOnceBase where T : IStateBase where TData : IEntity {
+
+        
 
     }
 

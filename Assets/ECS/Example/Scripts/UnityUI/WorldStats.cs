@@ -41,7 +41,9 @@ public class WorldStats : MonoBehaviour {
                              "\nTime: " + time.ToString() +
                              "\nEvents Added: " + eventsAddedCount.ToString() +
                              "\nSent: " + eventsSentCount.ToString() +
-                             "\nReceived: " + eventsReceivedCount.ToString();
+                             "\nReceived: " + eventsReceivedCount.ToString() +
+                             "\nSyncTick: " + networkModule.GetSyncTick().ToString() +
+                             "\nSyncTickSent: " + networkModule.GetSyncSentTick().ToString();
 
         }
 

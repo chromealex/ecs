@@ -38,19 +38,33 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
 
     }
 
+    public void SetDropPercent(int dropPercent) {
+
+        this.transporter.dropPercent = dropPercent;
+
+    }
+
 }
 
 public class FakeTransporter : ME.ECS.Network.ITransporter {
 
+    private struct Buffer {
+
+        public float delay;
+        public byte[] data;
+
+    }
+
     public int connectToWorldId;
+    public int dropPercent;
     
-    private System.Collections.Generic.Dictionary<int, byte[]> buffers = new System.Collections.Generic.Dictionary<int, byte[]>();
+    private readonly System.Collections.Generic.Queue<Buffer> buffers = new System.Collections.Generic.Queue<Buffer>();
+    private readonly ME.ECS.Network.NetworkType networkType;
     private int sentCount;
     private int receivedCount;
-
     public int randomState;
-    private ME.ECS.Network.NetworkType networkType;
-
+    private double ping;
+    
     public FakeTransporter(ME.ECS.Network.NetworkType networkType) {
 
         this.networkType = networkType;
@@ -60,12 +74,21 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
     public void Send(byte[] bytes) {
         
         UnityEngine.Random.InitState(this.randomState);
-        var frame = UnityEngine.Time.frameCount + UnityEngine.Random.Range(10, 200);
+        this.randomState = UnityEngine.Random.Range(0, 10000);
+        var delay = UnityEngine.Random.Range(0.01f, 0.05f);
+        var rnd = UnityEngine.Random.Range(0, 100);
+        var isDrop = (rnd < this.dropPercent);
         
-        if ((this.networkType & ME.ECS.Network.NetworkType.RunLocal) == 0) { // Run local if RunLocal flag is not set
+        if ((this.networkType & ME.ECS.Network.NetworkType.RunLocal) == 0) { // Add to local buffer if RunLocal flag is not set
             
-            this.AddToBuffer(frame, bytes);
+            this.AddToBuffer(delay, bytes);
             
+        }
+
+        if (isDrop == true) {
+
+            delay += UnityEngine.Random.Range(1f, 2f);
+
         }
 
         // Send event to connected world
@@ -73,7 +96,7 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
 
             var connectedWorld = ME.ECS.Worlds<State>.GetWorld(this.connectToWorldId);
             var networkModule = connectedWorld.GetModule<NetworkModule>();
-            networkModule.transporter.AddToBuffer(frame, bytes);
+            networkModule.transporter.AddToBuffer(delay, bytes);
 
         }
         
@@ -81,35 +104,42 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
         
     }
 
-    private void AddToBuffer(int frame, byte[] bytes) {
-        
-        while (this.buffers.ContainsKey(frame) == true) {
+    private void AddToBuffer(float delay, byte[] bytes) {
 
-            ++frame;
-
-        }
-        
-        //UnityEngine.Debug.Log("Transporter Send: " + frame);
-        this.buffers.Add(frame, bytes);
+        this.buffers.Enqueue(new Buffer() {
+            delay = delay,
+            data = bytes,
+        });
         
     }
 
+    private Buffer currentBuffer;
+    private float waitTime = -1f;
     public byte[] Receive() {
 
-        foreach (var item in this.buffers) {
+        if (this.waitTime >= 0f) {
 
-            if (UnityEngine.Time.frameCount >= item.Key) {
+            this.waitTime -= UnityEngine.Time.deltaTime;
+            if (this.waitTime <= 0f) {
 
-                //UnityEngine.Debug.Log("Transporter Receive: " + item.Key);
-                var buffer = item.Value;
-                this.buffers.Remove(item.Key);
                 ++this.receivedCount;
-                return buffer;
+                this.waitTime = -1f;
+                return this.currentBuffer.data;
 
             }
 
+            return null;
+
         }
 
+        if (this.buffers.Count > 0) {
+        
+            var buffer = this.buffers.Dequeue();
+            this.currentBuffer = buffer;
+            this.waitTime = this.currentBuffer.delay;
+
+        }
+        
         return null;
 
     }

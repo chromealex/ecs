@@ -1,6 +1,6 @@
 using ME.ECS;
 
-public class PointAddPositionDelta : IComponent<State, Point> {
+public class PointAddPositionDelta : IComponentOnce<State, Point> {
 
     public UnityEngine.Vector3 positionDelta;
     

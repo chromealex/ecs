@@ -67,5 +67,6 @@ this.world.SaveResetState();
 - Decrease initialization time and memory allocs <b>(90% done)</b>
 - Random support to generate random numbers, store RandomState in game state <b>(100% done)</b>
 - Add full game example <b>(80% done)</b>
-- Add auto sync on packets drop <b>(0% done)</b>
+- Add auto sync on packets drop (TCP) <b>(100% done)</b>
+- Add auto sync on packets drop (UDP) <b>(20% done)</b>
 - Rendering system <b>(0% done)</b>

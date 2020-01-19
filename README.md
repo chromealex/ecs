@@ -4,7 +4,8 @@ ME.ECS - it's ECS implementation for Unity Engine with full state automatic roll
 <br>
 
 ### Demo
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/WR4ohL_FtRs/0.jpg)](https://www.youtube.com/watch?v=WR4ohL_FtRs)
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/360PyjjjZTE/0.jpg)](https://www.youtube.com/watch?v=360PyjjjZTE)
 
 (Click image to play)
 
@@ -32,9 +33,9 @@ Modules are living out of the determinism, runing according on world time.
 #### Systems
 Systems are living inside of the determinism, but could implement two variants of Deterministic and Non-Deterministic logic (for example user inputs).
 #### Entities
-Entities are not the same like in a normal ECS architecture, in ME.ECS Entities are structs of data without any methods.
+Entities are not the same like in a normal ECS architecture, in ME.ECS Entities are structs of data without any methods (Data Containers).
 #### Components
-Components has no data, but has a small part of logic, working with a sertain Entity type.
+Components like a functions has some data to apply on tick, working with a certain Entity type.
 <br>
 <br>
 
@@ -67,5 +68,6 @@ this.world.SaveResetState();
 - Decrease initialization time and memory allocs <b>(90% done)</b>
 - Random support to generate random numbers, store RandomState in game state <b>(100% done)</b>
 - Add full game example <b>(80% done)</b>
-- Add auto sync on packets drop <b>(0% done)</b>
+- Add auto sync on packets drop (TCP) <b>(100% done)</b>
+- Add auto sync on packets drop (UDP) <b>(20% done)</b>
 - Rendering system <b>(0% done)</b>

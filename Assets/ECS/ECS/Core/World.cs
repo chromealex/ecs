@@ -367,6 +367,12 @@ namespace ME.ECS {
 
         }
 
+        public bool HasResetState() {
+
+            return this.resetState != null;
+
+        }
+
         public void SaveResetState() {
 
             if (this.resetState != null) WorldUtilities.ReleaseState(ref this.resetState);
@@ -397,8 +403,6 @@ namespace ME.ECS {
 
             UnityEngine.Random.InitState(0);
             state.randomState = UnityEngine.Random.state;
-
-            if (this.resetState == null) this.SaveResetState();
 
         }
 

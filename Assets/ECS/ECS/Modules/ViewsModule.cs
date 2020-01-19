@@ -217,7 +217,7 @@ namespace ME.ECS {
         public void InstantiateView(ViewId sourceId, Entity entity) {
 
             // Called by tick system
-            if (this.world.HasStep(WorldStep.LogicTick) == false) {
+            if (this.world.HasStep(WorldStep.LogicTick) == false && this.world.HasResetState() == true) {
 
                 throw new OutOfStateException();
 
@@ -236,7 +236,7 @@ namespace ME.ECS {
         public void DestroyView(ref View<TEntity> instance) {
 
             // Called by tick system
-            if (this.world.HasStep(WorldStep.LogicTick) == false) {
+            if (this.world.HasStep(WorldStep.LogicTick) == false && this.world.HasResetState() == true) {
 
                 throw new OutOfStateException();
 

@@ -69,6 +69,9 @@ namespace ME.ECS {
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
 
+        bool HasResetState();
+        void SaveResetState();
+        
         WorldStep GetCurrentStep();
         bool HasStep(WorldStep step);
 
@@ -101,7 +104,6 @@ namespace ME.ECS {
         void SetState(TState state);
         TState GetState();
         
-        void SaveResetState();
         TState GetResetState();
 
         Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity;

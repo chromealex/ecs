@@ -4,7 +4,7 @@ using RPCId = System.Int32;
 
 namespace ME.ECS {
 
-    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
+    public partial interface IWorld<TState> where TState : class, IState<TState> {
 
         void SetNetworkModule(Network.INetworkModule<TState> module);
 
@@ -374,7 +374,11 @@ namespace ME.ECS.Network {
 
         }
 
-        public void Update(TState state, float deltaTime) {
+        void IModule<TState>.AdvanceTick(TState state, float deltaTime) {
+            
+        }
+
+        void IModule<TState>.Update(TState state, float deltaTime) {
 
             this.localOrderIndex = 0;
 
@@ -455,18 +459,21 @@ namespace ME.ECS.Network {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SystemRPC(object instance, RPCId rpcId, params object[] parameters) {
 
             this.CallRPC(instance, rpcId, false, parameters);
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC(object instance, RPCId rpcId) {
 
             this.CallRPC(instance, rpcId, true, null);
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1>(object instance, RPCId rpcId, T1 p1) where T1 : struct {
 
             var arr = PoolArray<object>.Spawn(1);
@@ -475,6 +482,7 @@ namespace ME.ECS.Network {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1, T2>(object instance, RPCId rpcId, T1 p1, T2 p2) where T1 : struct where T2 : struct {
 
             var arr = PoolArray<object>.Spawn(2);
@@ -484,6 +492,7 @@ namespace ME.ECS.Network {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1, T2, T3>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3) where T1 : struct where T2 : struct where T3 : struct {
 
             var arr = PoolArray<object>.Spawn(3);
@@ -494,6 +503,7 @@ namespace ME.ECS.Network {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1, T2, T3, T4>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4) where T1 : struct where T2 : struct where T3 : struct where T4 : struct {
 
             var arr = PoolArray<object>.Spawn(4);

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using EntityId = System.Int32;
 using RPCId = System.Int32;
+using ViewId = System.UInt64; 
 using ME.ECS;
 
 public class Game : MonoBehaviour {
@@ -12,9 +13,17 @@ public class Game : MonoBehaviour {
     public float deltaTimeMultiplier = 1f;
     public Color playerColor;
     public float moveSide;
+
+    public GameObject unitSource;
+    public GameObject unitSource2;
+    public GameObject pointSource;
     
     public World<State> world;
     private IState<State> savedState;
+
+    private ViewId pointViewSourceId;
+    private ViewId unitViewSourceId;
+    private ViewId unitViewSourceId2;
 
     public void Update() {
 
@@ -34,16 +43,18 @@ public class Game : MonoBehaviour {
 
             }
 
-            this.world.SetState(this.world.CreateState());
-            var p1 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, 3f), unitsCount = 99f, increaseRate = 1f });
-            var p2 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, -3f), unitsCount = 1f, increaseRate = 1f });
-            /*{ // Add unit
-                var unitSpeed = 1f;
-                var unit = this.world.AddEntity(new Unit() { position = new Vector3(0f, 0f, 0f), rotation = Quaternion.identity, speed = unitSpeed, pointFrom = p1, pointTo = p2 });
-                var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
-                followComponent.@from = p1;
-                followComponent.to = p2;
-            }*/
+            this.world.SetState(WorldUtilities.CreateState<State>());
+
+            this.pointViewSourceId = this.world.RegisterViewSource<Point>(this.pointSource);
+            this.unitViewSourceId = this.world.RegisterViewSource<Unit>(this.unitSource);
+            this.unitViewSourceId2 = this.world.RegisterViewSource<Unit>(this.unitSource2);
+            
+            var p1 = this.world.AddEntity(new Point() { position = this.transform.position + new Vector3(0f, 0f, 3f), unitsCount = 99f, increaseRate = 1f });
+            var p2 = this.world.AddEntity(new Point() { position = this.transform.position + new Vector3(0f, 0f, -3f), unitsCount = 1f, increaseRate = 1f });
+            
+            this.world.InstantiateView<Point>(this.pointViewSourceId, p1);
+            this.world.InstantiateView<Point>(this.pointViewSourceId, p2);
+
             this.world.AddSystem<InputSystem>();
             this.world.AddSystem<PointsSystem>();
             this.world.AddSystem<UnitsSystem>();
@@ -67,7 +78,7 @@ public class Game : MonoBehaviour {
 
             }
 
-            this.world.SetState(this.world.CreateState());
+            this.world.SetState(WorldUtilities.CreateState<State>());
             this.world.SetCapacity<Point>(1000000);
             for (int i = 0; i < 1000000; ++i) {
                 this.world.AddEntity(new Point() { position = Vector3.zero, unitsCount = 99f, increaseRate = 1f }, updateFilters: false);
@@ -99,7 +110,7 @@ public class Game : MonoBehaviour {
     public void AddUnitButtonClick() {
         
         var input = this.world.GetSystem<InputSystem>();
-        input.AddUnitButtonClick(this.playerColor);
+        input.AddUnitButtonClick(this.playerColor, this.unitViewSourceId, this.unitViewSourceId2);
         
     }
 

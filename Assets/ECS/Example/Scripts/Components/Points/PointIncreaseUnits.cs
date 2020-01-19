@@ -2,10 +2,9 @@
 
 public class PointIncreaseUnits : IComponent<State, Point> {
 
-    public Point AdvanceTick(State state, Point data, float deltaTime, int index) {
+    public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
 
         data.unitsCount += data.increaseRate * deltaTime;
-        return data;
 
     }
 
@@ -15,10 +14,9 @@ public class PointIncreaseUnits : IComponent<State, Point> {
 
 public class PointIncreaseUnitsOnce : IComponentOnce<State, Point> {
 
-    public Point AdvanceTick(State state, Point data, float deltaTime, int index) {
+    public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
 
         data.unitsCount += data.increaseRate * deltaTime;
-        return data;
 
     }
     

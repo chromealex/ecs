@@ -8,7 +8,7 @@ namespace ME.ECS.Tests {
             
             World<State> world = null;
             WorldUtilities.CreateWorld(ref world, tickTime);
-            world.SetState(world.CreateState());
+            world.SetState(WorldUtilities.CreateState<State>());
 
             return world;
 

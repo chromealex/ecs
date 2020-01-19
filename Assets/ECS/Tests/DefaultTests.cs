@@ -258,20 +258,20 @@ namespace ME.ECS.Tests {
             Assert.IsTrue(state.points.Count == 1);
             Assert.IsTrue(state.pointComponents.Count == 1);
             
-            var savedState = (IState<State>)world.CreateState();
+            var savedState = (IState<State>)WorldUtilities.CreateState<State>();
             savedState.Initialize(world, freeze: true, restore: false);
             
             Assert.IsTrue(state.points.Count == 1);
             Assert.IsTrue(state.pointComponents.Count == 1);
             {
-                var dic = TestsHelper.GetValue<Dictionary<int, IComponents>>(world, "componentsCache");
+                var dic = TestsHelper.GetValue<Dictionary<int, IComponentsBase>>(world, "componentsCache");
                 Assert.IsTrue(dic.Count == 2);
             }
             
             savedState.CopyFrom(state);
             
             world.Update(1f);
-            world.ReleaseState(ref state);
+            WorldUtilities.ReleaseState(ref state);
             
             // Restore state
             world.SetState((State)savedState);
@@ -291,7 +291,7 @@ namespace ME.ECS.Tests {
             }
 
             {
-                var dic = TestsHelper.GetValue<Dictionary<int, IComponents>>(world, "componentsCache");
+                var dic = TestsHelper.GetValue<Dictionary<int, IComponentsBase>>(world, "componentsCache");
                 Assert.IsTrue(dic.Count == 2);
             }
 

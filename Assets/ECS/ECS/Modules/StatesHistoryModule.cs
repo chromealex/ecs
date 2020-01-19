@@ -79,39 +79,39 @@ namespace ME.ECS.StatesHistory {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class CircularQueue<T> where T : class, IState<T> {
+    public class CircularQueue<TState> where TState : class, IState<TState>, new() {
 
-        private Dictionary<Tick, T> data;
+        private Dictionary<Tick, TState> data;
         private readonly uint capacity;
         private readonly uint ticksPerState;
         private bool beginSet;
 
         public CircularQueue(uint ticksPerState, uint capacity) {
 
-            this.data = PoolDictionary<Tick, T>.Spawn((int)capacity);
+            this.data = PoolDictionary<Tick, TState>.Spawn((int)capacity);
             this.capacity = capacity;
             this.ticksPerState = ticksPerState;
             this.beginSet = false;
 
         }
 
-        public void Recycle(IWorld<T> world) {
+        public void Recycle() {
 
             foreach (var item in this.data) {
 
                 var st = item.Value;
-                world.ReleaseState(ref st);
+                WorldUtilities.ReleaseState(ref st);
                 
             }
             
-            PoolDictionary<Tick, T>.Recycle(ref this.data);
+            PoolDictionary<Tick, TState>.Recycle(ref this.data);
 
         }
 
-        public T Get(Tick tick) {
+        public TState Get(Tick tick) {
 
             Tick nearestTick = tick - tick % this.ticksPerState;
-            T state;
+            TState state;
             if (this.data.TryGetValue(nearestTick, out state) == true) {
 
                 return state;
@@ -134,12 +134,10 @@ namespace ME.ECS.StatesHistory {
             
         }
 
-        public void Set(IWorld<T> world, Tick tick, T data) {
-
-            T result;
-
+        private void RemoveAllTillTick(Tick tick) {
+            
             // Remove all records after this tick
-            var dic = PoolDictionary<Tick, T>.Spawn((int)this.capacity);
+            var dic = PoolDictionary<Tick, TState>.Spawn((int)this.capacity);
             foreach (var item in this.data) {
 
                 if (item.Key < tick) {
@@ -149,15 +147,24 @@ namespace ME.ECS.StatesHistory {
                 } else {
 
                     var st = item.Value;
-                    world.ReleaseState(ref st);
+                    WorldUtilities.ReleaseState(ref st);
                     
                 }
 
             }
             this.data.Clear();
-            PoolDictionary<Tick, T>.Recycle(ref this.data);
+            PoolDictionary<Tick, TState>.Recycle(ref this.data);
             this.data = dic;
+
+        }
+
+        public void Set(Tick tick, TState data) {
+
+            TState result;
             
+            this.RemoveAllTillTick(tick);
+
+            // Remove oldest state
             var nearestTick = (long)(tick - tick % this.ticksPerState);
             var oldestTick = nearestTick - this.ticksPerState * this.capacity;
             if (oldestTick < 0L) oldestTick = 0L;
@@ -167,18 +174,19 @@ namespace ME.ECS.StatesHistory {
                 if (this.data.TryGetValue(key, out result) == true) {
 
                     // we've found oldest-tick record - need to remove it
-                    world.ReleaseState(ref result);
+                    WorldUtilities.ReleaseState(ref result);
                     this.data.Remove(key);
 
                 }
 
             }
 
+            //
             var searchTick = (Tick)nearestTick;
             if (this.data.TryGetValue(searchTick, out result) == true) {
 
                 this.data[searchTick] = data;
-                world.ReleaseState(ref result);
+                WorldUtilities.ReleaseState(ref result);
                 return;
 
             } else {
@@ -189,20 +197,12 @@ namespace ME.ECS.StatesHistory {
 
             if (this.beginSet == false && this.data.Count > this.capacity) {
 
-                /*foreach (var item in this.data) {
-                    
-                    UnityEngine.Debug.Log("Item: " + item.Key + ": " + item.Value);
-                    
-                }
-
                 throw new OutOfBoundsException("CircularQueue is out of bounds."+
-                                               " Count: " + this.data.Count +
-                                               ", Capacity: " + this.capacity +
-                                               ", SourceTick: " + tick +
-                                               ", NearestTick: " + nearestTick +
-                                               ", OldestTick: " + oldestTick);*/
-                
-                UnityEngine.Debug.Log("CircularQueue is out of bounds: " + this.capacity + " : " + this.data.Count);
+                                               " Count: " + this.data.Count.ToString() +
+                                               ", Capacity: " + this.capacity.ToString() +
+                                               ", SourceTick: " + tick.ToString() +
+                                               ", NearestTick: " + nearestTick.ToString() +
+                                               ", OldestTick: " + oldestTick.ToString());
                 
             }
 
@@ -311,7 +311,7 @@ namespace ME.ECS.StatesHistory {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public abstract class StatesHistoryModule<TState> : IStatesHistoryModule<TState>, IModuleValidation where TState : class, IState<TState> {
+    public abstract class StatesHistoryModule<TState> : IStatesHistoryModule<TState>, IModuleValidation where TState : class, IState<TState>, new() {
 
         private const int POOL_EVENTS_CAPACITY = 1000;
         private const int POOL_HISTORY_SIZE = 100;
@@ -359,7 +359,7 @@ namespace ME.ECS.StatesHistory {
             }
             PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Recycle(ref this.events);
 
-            this.states.Recycle(this.world);
+            this.states.Recycle();
             this.states = null;
 
         }
@@ -591,7 +591,11 @@ namespace ME.ECS.StatesHistory {
 
         }
 
-        public void Update(TState state, float deltaTime) {
+        void IModule<TState>.AdvanceTick(TState state, float deltaTime) {
+            
+        }
+
+        void IModule<TState>.Update(TState state, float deltaTime) {
 
             this.ValidatePrewarm();
             
@@ -674,13 +678,13 @@ namespace ME.ECS.StatesHistory {
             }*/
 
             {
-                var newState = this.world.CreateState();
+                var newState = WorldUtilities.CreateState<TState>();
                 newState.Initialize(this.world, freeze: true, restore: false);
                 var state = this.world.GetState();
                 newState.CopyFrom(state);
                 newState.tick = tick;
 
-                this.states.Set(this.world, tick, newState);
+                this.states.Set(tick, newState);
             }
 
         }

@@ -27,15 +27,15 @@ namespace ME.ECS {
 
     public interface IStateBase {
 
+        EntityId entityId { get; set; }
+        Tick tick { get; set; }
+        RandomState randomState { get; set; }
+
         int GetHash();
 
     }
 
     public interface IState<T> : IStateBase, IPoolableRecycle where T : class, IState<T> {
-
-        EntityId entityId { get; set; }
-        Tick tick { get; set; }
-        RandomState randomState { get; set; }
 
         void Initialize(IWorld<T> world, bool freeze, bool restore);
         void CopyFrom(T other);
@@ -52,6 +52,7 @@ namespace ME.ECS {
         void OnDeconstruct();
 
         void Update(TState state, float deltaTime);
+        void AdvanceTick(TState state, float deltaTime);
 
     }
 
@@ -68,7 +69,12 @@ namespace ME.ECS {
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
 
+        WorldStep GetCurrentStep();
+        bool HasStep(WorldStep step);
+
         void Simulate(Tick from, Tick to);
+
+        TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
 
     }
 
@@ -94,17 +100,19 @@ namespace ME.ECS {
 
         void SetState(TState state);
         TState GetState();
-
+        
         void SaveResetState();
         TState GetResetState();
-        TState CreateState();
-        void ReleaseState(ref TState state);
 
         Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity;
-        void RemoveEntity<T>(T data) where T : struct, IEntity;
+        void RemoveEntities<T>(T data) where T : struct, IEntity;
         void RemoveEntity<T>(Entity entity) where T : struct, IEntity;
+        bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
+        void ForEachEntity<TEntity>(System.Collections.Generic.List<TEntity> output) where TEntity : struct, IEntity;
 
+        System.Collections.Generic.List<TModule> GetModules<TModule>(System.Collections.Generic.List<TModule> output) where TModule : IModuleBase;
         TModule GetModule<TModule>() where TModule : IModuleBase;
+        bool HasModule<TModule>() where TModule : class, IModule<TState>;
         bool AddModule<TModule>() where TModule : class, IModule<TState>, new();
         void RemoveModules<TModule>() where TModule : class, IModule<TState>, new();
 
@@ -118,12 +126,14 @@ namespace ME.ECS {
 
         TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : struct, IEntity;
         TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : struct, IEntity;
+        TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
+        void ForEachComponent<TEntity, TComponent>(Entity entity, System.Collections.Generic.List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
         bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;
         void RemoveComponents(Entity entity);
         void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase;
         void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
 
-        TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
+        void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
 
         void Update(float deltaTime);
 
@@ -139,16 +149,18 @@ namespace ME.ECS {
 
     public interface IComponentOnceBase : IComponentBase { }
 
-    public interface IComponent<T, TData> : IComponentBase where T : IStateBase where TData : IEntity {
+    public interface IComponent<TState, TEntity> : IComponentBase where TState : IStateBase where TEntity : IEntity {
 
-        TData AdvanceTick(T state, TData data, float deltaTime, int index);
-        void CopyFrom(IComponent<T, TData> other);
+        void AdvanceTick(TState state, ref TEntity data, float deltaTime, int index);
+        void CopyFrom(IComponent<TState, TEntity> other);
 
     }
 
-    public interface IComponentOnce<T, TData> : IComponent<T, TData>, IComponentOnceBase where T : IStateBase where TData : IEntity {
+    public interface IComponentOnce<TState, TEntity> : IComponent<TState, TEntity>, IComponentOnceBase where TState : IStateBase where TEntity : IEntity {}
 
-        
+    public interface IComponentPredicate<in TComponent> where TComponent : IComponentBase {
+
+        bool Execute(TComponent data);
 
     }
 

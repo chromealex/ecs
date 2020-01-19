@@ -3,20 +3,35 @@ using EntityId = System.Int32;
 
 namespace ME.ECS {
 
-    public interface IComponents : IPoolableRecycle {
+    public interface IComponentsBase { }
+
+    public interface IComponents<TState> : IComponentsBase, IPoolableRecycle where TState : class, IState<TState> {
 
         void RemoveAll(Entity entity);
         void RemoveAll<TComponent>(Entity entity) where TComponent : class, IComponentBase;
         void RemoveAll<TComponent>() where TComponent : class, IComponentBase;
 
+        void RemoveAllPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
+
     }
-    
+
+    public static class ComponentExtensions {
+
+        public static bool GetEntityData<TState, TEntity, TEntitySource>(this IComponent<TState, TEntitySource> _, EntityId entityId, out TEntity data) where TEntity : struct, IEntity where TEntitySource : struct, IEntity where TState : class, IState<TState> {
+
+            var world = Worlds<TState>.currentWorld;
+            return world.GetEntityData(entityId, out data);
+
+        }
+
+    }
+
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Components<TEntity, TState> : IComponents where TEntity : struct, IEntity where TState : IStateBase {
+    public class Components<TEntity, TState> : IComponents<TState> where TEntity : struct, IEntity where TState : class, IState<TState> {
 
         private Dictionary<EntityId, List<IComponent<TState, TEntity>>> dic;
         private bool freeze;
@@ -52,6 +67,33 @@ namespace ME.ECS {
 
             }
 
+        }
+
+        public void RemoveAllPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
+            
+            List<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    var listItem = list[i];
+                    if (listItem is TComponent listItemComponent) {
+
+                        if (predicate.Execute(listItemComponent) == true) {
+
+                            PoolComponents.Recycle(listItemComponent);
+                            list.RemoveAt(i);
+                            --i;
+                            --count;
+
+                        }
+
+                    }
+                    
+                }
+
+            }
+            
         }
 
         public void RemoveAll<TComponent>(Entity entity) where TComponent : class, IComponentBase {
@@ -125,6 +167,38 @@ namespace ME.ECS {
                 list.Add(data);
                 this.dic.Add(entity.id, list);
                 
+            }
+
+        }
+
+        public TComponent GetFirst<TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> {
+            
+            List<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    if (list[i] is TComponent item) return item;
+
+                }
+
+            }
+
+            return null;
+
+        }
+
+        public void ForEach<TComponent>(Entity entity, List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> {
+            
+            List<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    if (list[i] is TComponent item) output.Add(item);
+
+                }
+
             }
 
         }

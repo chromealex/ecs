@@ -11,5 +11,6 @@ public struct Unit : IEntity {
     public float speed;
     public Entity pointFrom;
     public Entity pointTo;
+    public int lifes;
 
 }

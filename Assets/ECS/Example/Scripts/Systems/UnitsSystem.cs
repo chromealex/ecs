@@ -10,7 +10,8 @@ public class UnitsSystem : ISystem<State> {
         
         void IJobParallelFor.Execute(int index) {
             
-            var data = Worlds<State>.currentWorld.RunComponents(Worlds<State>.currentState.units[index], this.deltaTime, index);
+            var data = Worlds<State>.currentState.units[index];
+            data = Worlds<State>.currentWorld.RunComponents(data, this.deltaTime, index);
             Point toData;
             if (Worlds<State>.currentWorld.GetEntityData(data.pointTo.id, out toData) == true) {
 
@@ -24,6 +25,8 @@ public class UnitsSystem : ISystem<State> {
                     var comp = Worlds<State>.currentWorld.AddComponent<Unit, UnitFollowFromTo>(data.entity);
                     comp.@from = data.pointFrom;
                     comp.to = data.pointTo;
+
+                    --data.lifes;
 
                 }
 
@@ -49,6 +52,16 @@ public class UnitsSystem : ISystem<State> {
         var jobHandle = job.Schedule(state.units.Count, 64);
         jobHandle.Complete();
 
+        for (int i = state.units.Count - 1; i >= 0; --i) {
+
+            if (state.units[i].lifes <= 0) {
+
+                this.world.RemoveEntity<Unit>(state.units[i].entity);
+
+            }
+
+        }
+        
     }
 
     void ISystem<State>.Update(State state, float deltaTime) { }

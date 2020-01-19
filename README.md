@@ -22,6 +22,11 @@ By default is the EventRunner for StatesHistoryModule, just send all incoming ev
 <br>
 <br>
 
+### Views Module
+Synchronizing current world state to views. Automatically destroy and create views (with pools), sync with current entities state and process all ticks correctly to restore visual state even objects already destroyed for long time ago.
+<br>
+<br>
+
 ## How It Works
 ![](Readme/HowItWorks.png?raw=true "How It Works")
 #### World
@@ -39,27 +44,57 @@ Components like a functions has some data to apply on tick, working with a certa
 <br>
 <br>
 
-## World Initialization
+## 1. World Initialization
 ```csharp
-// Create new world
-WorldUtilities.CreateWorld(ref this.world, 0.033f); // Initialize new world with custom tick time
+// Initialize new world with custom tick time and custom world id
+// If customWorldId ignored - it will setup automatically
+WorldUtilities.CreateWorld(ref this.world, 0.133f, [customWorldId]);
 this.world.AddModule<StatesHistoryModule>(); // Add custom states history module
 this.world.AddModule<NetworkModule>();       // Add custom network module
+```
 
-// Initialize default state
-this.world.SetState(this.world.CreateState()); // Create new state and set it by default
+## 2. State Initialization
+```csharp
+// Create new state and set it by default
+this.world.SetState(WorldUtilities.CreateState<State>());
+this.world.SetState(this.world.CreateState()); 
+```
 
-// Create default data
-this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 99f, increaseRate = 1f });
-this.world.AddEntity(new Point() { position = Vector3.one, unitsCount = 1f, increaseRate = 1f });
+## 3. Register Prefabs
+```csharp
+this.pointViewSourceId = this.world.RegisterViewSource<Point>(this.pointSource);
+this.unitViewSourceId = this.world.RegisterViewSource<Unit>(this.unitSource);
+...
+```
 
-// Add systems
+## 4. Create Entities with Data
+```csharp
+// Create default data for all players at this level
+var p1 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, 3f), unitsCount = 99f, increaseRate = 1f });
+var p2 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, -3f), unitsCount = 1f, increaseRate = 1f });
+```
+
+## 5. Instantiate Views (Don't worry, you can call Instantiate on any thread)
+```csharp
+// Attach views onto entities
+// You can attach any count of views on each entity, but here are some limitations - for now you couldn't attach one source twice, only different sources for one entity allowed.
+this.world.InstantiateView<Point>(this.pointViewSourceId, p1);
+this.world.InstantiateView<Point>(this.pointViewSourceId, p2);
+```
+
+## 6. Add Systems
+```csharp
+// Add custom systems
 this.world.AddSystem<InputSystem>();
 this.world.AddSystem<PointsSystem>();
+this.world.AddSystem<UnitsSystem>();
+```
 
-// Save current world state as a Reset State,
-// it's very important to do after the scene loaded
-// and all default entities are set.
+## 7. Save Reset State
+```csharp
+// Save current world state as a Reset State.
+// It's very important to do after the scene loaded and all default entities were set.
+// Sure after that you could run any of API methods, but be sure you call them through RPC calls.
 this.world.SaveResetState();
 ```
 
@@ -70,4 +105,5 @@ this.world.SaveResetState();
 - Add full game example <b>(80% done)</b>
 - Add auto sync on packets drop (TCP) <b>(100% done)</b>
 - Add auto sync on packets drop (UDP) <b>(20% done)</b>
+- Views module <b>(100% done)</b>
 - Rendering system <b>(0% done)</b>

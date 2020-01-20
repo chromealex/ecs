@@ -316,12 +316,14 @@ namespace ME.ECS.StatesHistory {
         private const int POOL_EVENTS_CAPACITY = 1000;
         private const int POOL_HISTORY_SIZE = 100;
         private const int POOL_HISTORY_CAPACITY = 2;
+        private const int POOL_SYNCHASH_CAPACITY = 10;
 
         private const uint DEFAULT_QUEUE_CAPACITY = 10u;
         private const uint DEFAULT_TICKS_PER_STATE = 100u;
         
         private CircularQueue<TState> states;
         private Dictionary<Tick, SortedList<long, HistoryEvent>> events;
+        private Dictionary<Tick, int> syncHash;
         private Tick currentTick;
         private Tick maxTick;
         private bool prewarmed;
@@ -337,6 +339,7 @@ namespace ME.ECS.StatesHistory {
             
             this.states = new CircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
             this.events = PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
+            this.syncHash = PoolDictionary<Tick, int>.Spawn(StatesHistoryModule<TState>.POOL_SYNCHASH_CAPACITY);
             PoolSortedList<int, HistoryEvent>.Prewarm(StatesHistoryModule<TState>.POOL_HISTORY_SIZE, StatesHistoryModule<TState>.POOL_HISTORY_CAPACITY);
             
             this.world.SetStatesHistoryModule(this);
@@ -358,6 +361,7 @@ namespace ME.ECS.StatesHistory {
 
             }
             PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Recycle(ref this.events);
+            PoolDictionary<Tick, int>.Recycle(ref this.syncHash);
 
             this.states.Recycle();
             this.states = null;
@@ -503,8 +507,6 @@ namespace ME.ECS.StatesHistory {
             }
             
         }
-
-        private System.Collections.Generic.Dictionary<Tick, int> syncHash = new System.Collections.Generic.Dictionary<Tick, int>();
 
         public void SetSyncHash(Tick tick, int hash) {
             

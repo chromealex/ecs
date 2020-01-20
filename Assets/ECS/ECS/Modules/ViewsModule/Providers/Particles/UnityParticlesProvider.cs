@@ -8,6 +8,7 @@ namespace ME.ECS {
     public partial interface IWorld<TState> where TState : class, IState<TState> {
 
         ViewId RegisterViewSource<TEntity>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity;
+        ViewId RegisterViewSource<TEntity, TProvider>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider;
         void InstantiateView<TEntity>(ParticleViewSourceBase prefab, Entity entity) where TEntity : struct, IEntity;
 
     }
@@ -15,9 +16,16 @@ namespace ME.ECS {
     public partial class World<TState> where TState : class, IState<TState>, new() {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ViewId RegisterViewSource<TEntity, TProvider>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider {
+
+            return this.RegisterViewSource<TEntity, TProvider>(prefab.GetSource<TEntity>());
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource<TEntity>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity {
 
-            return this.RegisterViewSource(prefab.GetSource<TEntity>());
+            return this.RegisterViewSource<TEntity, UnityParticlesProvider>(prefab.GetSource<TEntity>());
 
         }
 
@@ -33,6 +41,7 @@ namespace ME.ECS {
     public abstract class ParticleViewBase {
 
         public UnityEngine.ParticleSystem.Particle particleData;
+        public int particleIndex;
         public ParticleSystemItem itemData;
         
     }
@@ -60,7 +69,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(ParticleViewSourceBase prefab) {
 
-            return this.RegisterViewSource(prefab.GetSource<TEntity>());
+            return this.RegisterViewSource<UnityParticlesProvider>(prefab.GetSource<TEntity>());
 
         }
 
@@ -79,28 +88,51 @@ namespace ME.ECS {
 
         public UnityEngine.Mesh mesh;
         public UnityEngine.Material material;
+        
+        // runtime
         public UnityEngine.ParticleSystem ps;
+        public int index;
 
     }
 
     public class UnityParticlesProvider<TEntity> : ViewsProvider<TEntity> where TEntity : struct, IEntity {
 
-        private System.Collections.Generic.Dictionary<long, ParticleSystemItem> psItems = new System.Collections.Generic.Dictionary<long, ParticleSystemItem>();
-        private PoolInternalBase pool = new PoolInternalBase(null, null);
+        private readonly System.Collections.Generic.Dictionary<long, ParticleSystemItem> psItems = new System.Collections.Generic.Dictionary<long, ParticleSystemItem>();
+        private readonly PoolInternalBase pool = new PoolInternalBase(null, null);
+        private UnityEngine.ParticleSystem.Particle[] particles;
+        private int maxParticles = 1000;
 
-        private ParticleSystemItem Validate(IView<TEntity> prefab) {
+        private ParticleSystemItem Validate(IView<TEntity> prefab, out long key) {
 
             // Create PS if doesn't exists
             var source = (ParticleViewBase)prefab;
-            var key = MathUtils.GetKey(source.itemData.material.GetInstanceID(), source.itemData.mesh.GetInstanceID());
+            key = MathUtils.GetKey(source.itemData.material.GetInstanceID(), source.itemData.mesh.GetInstanceID());
             ParticleSystemItem psItem;
             if (this.psItems.TryGetValue(key, out psItem) == false) {
                 
                 psItem = source.itemData;
                 
                 var particleSystem = new UnityEngine.GameObject("PS-Render", typeof(UnityEngine.ParticleSystem)).GetComponent<UnityEngine.ParticleSystem>();
+                particleSystem.Stop();
+                
+                var main = particleSystem.main;
+                main.duration = float.MaxValue;
+                main.loop = false;
+                main.prewarm = false;
+                main.playOnAwake = false;
+                main.startLifetime = float.MaxValue;
+                main.startSpeed = 0f;
+                main.maxParticles = 100000;
+                main.ringBufferMode = UnityEngine.ParticleSystemRingBufferMode.PauseUntilReplaced;
+                main.simulationSpace = UnityEngine.ParticleSystemSimulationSpace.World;
+                
+                var trigger = particleSystem.trigger;
+                trigger.enabled = true;
+                trigger.inside = UnityEngine.ParticleSystemOverlapAction.Ignore;
+
                 var emission = particleSystem.emission;
                 emission.enabled = false;
+                
                 var shape = particleSystem.shape;
                 shape.enabled = false;
 
@@ -113,6 +145,8 @@ namespace ME.ECS {
                 psItem.ps = particleSystem;
                 this.psItems.Add(key, psItem);
                 
+                particleSystem.Play();
+                
             }
 
             return psItem;
@@ -121,11 +155,25 @@ namespace ME.ECS {
 
         public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {
 
-            var psItem = this.Validate(prefab);
+            long key;
+            var psItem = this.Validate(prefab, out key);
             psItem.ps.Emit(1);
+            var particleIndex = psItem.index;//psItem.ps.particleCount - 1;
+            ++psItem.index;
+            this.psItems[key] = psItem;
+
+            if (psItem.ps.particleCount > this.maxParticles) this.maxParticles = psItem.ps.particleCount;
             
             var obj = this.pool.Spawn();
-            if (obj == null) obj = System.Activator.CreateInstance(prefab.GetType());
+            if (obj == null) {
+                
+                obj = (ParticleViewBase)System.Activator.CreateInstance(prefab.GetType());
+                
+            }
+
+            var particleViewBase = (ParticleViewBase)obj;
+            particleViewBase.particleIndex = particleIndex;
+            particleViewBase.itemData = psItem;
             
             return (IView<TEntity>)obj;
 
@@ -133,18 +181,75 @@ namespace ME.ECS {
 
         public override void Destroy(ref IView<TEntity> instance) {
 
+            var view = (ParticleViewBase)instance;
+            view.particleData.startSize = 0f;
+            
             this.pool.Recycle(instance);
             instance = null;
 
         }
 
+        private void ValidateParticles() {
+
+            if (this.particles == null || this.particles.Length < this.maxParticles) {
+                
+                this.particles = new UnityEngine.ParticleSystem.Particle[this.maxParticles];
+                
+            }
+
+        }
+
+        public override void Update(System.Collections.Generic.List<IView<TEntity>> list, float deltaTime) {
+
+            this.ValidateParticles();
+
+            var count = list.Count;
+            foreach (var item in this.psItems) {
+
+                var psItem = item.Value;
+                var ps = psItem.ps;
+                //ps.GetParticles(this.particles, this.maxParticles);
+                for (int i = 0; i < count; ++i) {
+
+                    var view = (ParticleViewBase)list[i];
+                    view.particleData.remainingLifetime = float.MaxValue;
+                    view.particleData.startLifetime = float.MaxValue;
+                    this.particles[i] = view.particleData;
+
+                }
+                ps.SetParticles(this.particles, count, 0);
+
+            }
+
+            /*
+            for (int i = 0, count = list.Count; i < count; ++i) {
+
+                var particleViewBase = (ParticleViewBase)list[i];
+                var ps = particleViewBase.itemData.ps;
+                if (ps.isPlaying == false) ps.Play();
+                var particlesCount = ps.GetParticles(this.particles, this.maxParticles);
+                particleViewBase.particleData.remainingLifetime = float.MaxValue;
+                particleViewBase.particleData.startLifetime = float.MaxValue;
+                this.particles[particleViewBase.particleIndex] = particleViewBase.particleData;
+                ps.SetParticles(this.particles, particlesCount, 0);
+
+            }*/
+
+        }
+
     }
 
-    public class UnityParticlesProvider : IViewsProvider {
+    public struct UnityParticlesProvider : IViewsProvider {
 
-        public void RegisterEntityType<TState, TEntity>(IViewModule<TState, TEntity> module) where TState : class, IState<TState> where TEntity : struct, IEntity {
+        public IViewsProvider<TEntity> Create<TEntity>() where TEntity : struct, IEntity {
 
-            module.RegisterProvider<UnityParticlesProvider<TEntity>>();
+            return PoolClass<UnityParticlesProvider<TEntity>>.Spawn();
+
+        }
+
+        public void Destroy<TEntity>(IViewsProvider<TEntity> instance) where TEntity : struct, IEntity {
+
+            PoolClass<UnityParticlesProvider<TEntity>>.Recycle((UnityParticlesProvider<TEntity>)instance);
 
         }
 

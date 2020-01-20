@@ -90,7 +90,7 @@ public class InputSystem : ISystem<State> {
             p1Position = data.position;
         }
 
-        var unit = this.world.AddEntity(new Unit() { position = p1Position, lifes = 1, speed = this.world.GetRandomRange(0.5f, 1.5f), pointFrom = p1, pointTo = p2 });
+        var unit = this.world.AddEntity(new Unit() { position = p1Position, scale = Vector3.one * 0.3f, lifes = 1, speed = this.world.GetRandomRange(0.5f, 1.5f), pointFrom = p1, pointTo = p2 });
         var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
         followComponent.@from = p1;
         followComponent.to = p2;

@@ -8,6 +8,7 @@ public struct Unit : IEntity {
     public Vector3 position;
     public Color color;
     public Quaternion rotation;
+    public Vector3 scale;
     public float speed;
     public Entity pointFrom;
     public Entity pointTo;

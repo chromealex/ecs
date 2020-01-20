@@ -7,6 +7,7 @@ public struct Point : IEntity {
 
     public Color color;
     public Vector3 position;
+    public Vector3 scale;
     public float increaseRate;
     public float unitsCount;
     

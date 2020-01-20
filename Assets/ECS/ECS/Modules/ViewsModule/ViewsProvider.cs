@@ -6,7 +6,8 @@ namespace ME.ECS {
 
     public interface IViewsProvider {
 
-        void RegisterEntityType<TState, TEntity>(IViewModule<TState, TEntity> module) where TState : class, IState<TState> where TEntity : struct, IEntity;
+        IViewsProvider<TEntity> Create<TEntity>() where TEntity : struct, IEntity;
+        void Destroy<TEntity>(IViewsProvider<TEntity> instance) where TEntity : struct, IEntity;
 
     }
 
@@ -17,12 +18,16 @@ namespace ME.ECS {
         IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId);
         void Destroy(ref IView<TEntity> instance);
 
+        void Update(System.Collections.Generic.List<IView<TEntity>> list, float deltaTime);
+
     }
 
     public abstract class ViewsProvider<TEntity> : IViewsProvider<TEntity> where TEntity : struct, IEntity {
     
         public abstract IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId);
         public abstract void Destroy(ref IView<TEntity> instance);
+
+        public virtual void Update(System.Collections.Generic.List<IView<TEntity>> list, float deltaTime) {}
 
     }
 

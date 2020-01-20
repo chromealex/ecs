@@ -18,11 +18,13 @@ public class ApplyUnitStateParticle : ParticleView<Unit> {
 
             this.particleData.position = data.position;
             this.particleData.rotation3D = data.rotation.eulerAngles;
-            
+            this.particleData.startSize3D = data.scale;
+
         } else {
 
             this.particleData.position = Vector3.Lerp(this.particleData.position, data.position, deltaTime * this.lerpSpeed);
             this.particleData.rotation3D = Quaternion.Slerp(Quaternion.Euler(this.particleData.rotation3D), data.rotation, deltaTime * this.lerpSpeed).eulerAngles;
+            this.particleData.startSize3D = Vector3.Lerp(this.particleData.startSize3D, data.scale, deltaTime * this.lerpSpeed);
             
         }
         

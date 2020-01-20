@@ -58,7 +58,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 113d34b0eaa3e49d985f194b205e32bb, type: 2}
+  - {fileID: 2100000, guid: 8e88c1b6a2edf4dd1852c02cf6eda7fe, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -92,6 +92,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data:
+    particleIndex: 0
+    itemData:
+      mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+      material: {fileID: 2100000, guid: 8e88c1b6a2edf4dd1852c02cf6eda7fe, type: 2}
+      ps: {fileID: 0}
+      index: 0
     lerpSpeed: 3
   filters:
   - {fileID: 201435987506025185}

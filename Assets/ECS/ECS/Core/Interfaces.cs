@@ -64,6 +64,8 @@ namespace ME.ECS {
 
     public partial interface IWorldBase {
 
+        int id { get; }
+
         void SetTickTime(float tickTime);
         float GetTickTime();
         double GetTimeSinceStart();
@@ -82,8 +84,6 @@ namespace ME.ECS {
     }
 
     public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
-
-        int id { get; }
 
         int GetRandomRange(int from, int to);
         float GetRandomRange(float from, float to);

@@ -17,10 +17,12 @@ public class ApplyPointStateParticle : ParticleView<Point> {
         if (immediately == true) {
 
             this.particleData.position = data.position;
+            this.particleData.startSize3D = data.scale;
             
         } else {
 
             this.particleData.position = Vector3.Lerp(this.particleData.position, data.position, deltaTime * this.lerpSpeed);
+            this.particleData.startSize3D = data.scale;
             
         }
         

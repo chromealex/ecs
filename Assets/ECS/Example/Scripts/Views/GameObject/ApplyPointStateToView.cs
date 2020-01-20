@@ -39,10 +39,12 @@ public class ApplyPointStateToView : MonoBehaviourView<Point> {
         if (immediately == true) {
             
             tr.position = data.position;
-            
+            tr.localScale = data.scale;
+
         } else {
             
             tr.position = Vector3.Lerp(tr.position, data.position, deltaTime * this.lerpSpeed);
+            tr.localScale = data.scale;
             
         }
         

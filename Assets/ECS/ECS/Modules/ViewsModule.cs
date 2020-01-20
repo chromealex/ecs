@@ -23,10 +23,10 @@ namespace ME.ECS {
 
     public partial interface IWorld<TState> where TState : class, IState<TState> {
         
-        ViewId RegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity;
+        ViewId RegisterViewSource<TEntity, TProvider>(IView<TEntity> prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider;
         bool UnRegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity;
 
-        void AddViewsProvider<TProvider>() where TProvider : class, IViewsProvider, new();
+        //void AddViewsProvider<TProvider>() where TProvider : class, IViewsProvider, new();
         void InstantiateView<TEntity>(ViewId prefab, Entity entity) where TEntity : struct, IEntity;
         void InstantiateView<TEntity>(IView<TEntity> prefab, Entity entity) where TEntity : struct, IEntity;
         void DestroyView<TEntity>(ref IView<TEntity> instance) where TEntity : struct, IEntity;
@@ -35,13 +35,13 @@ namespace ME.ECS {
 
     public partial class World<TState> where TState : class, IState<TState>, new() {
 
-        private IViewsProvider viewsProvider;
+        /*private IViewsProvider viewsProvider;
         
         public void AddViewsProvider<TProvider>() where TProvider : class, IViewsProvider, new() {
 
             if (this.viewsProvider == null) this.viewsProvider = PoolClass<TProvider>.Spawn();
             
-        }
+        }*/
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         partial void DestroyEntityPlugin1<TEntity>(Entity entity) where TEntity : struct, IEntity {
@@ -58,9 +58,9 @@ namespace ME.ECS {
 
                 if (this.AddModule<ViewsModule<TState, TEntity>>() == true) {
 
-                    var module = this.GetModule<ViewsModule<TState, TEntity>>();
+                    /*var module = this.GetModule<ViewsModule<TState, TEntity>>();
                     module.SetProvider(this.viewsProvider);
-                    module.GetProvider().RegisterEntityType(module);
+                    module.GetProvider().RegisterEntityType(module);*/
                     
                 }
 
@@ -77,10 +77,10 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity {
+        public ViewId RegisterViewSource<TEntity, TProvider>(IView<TEntity> prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider {
             
             var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
-            return viewsModule.RegisterViewSource(prefab);
+            return viewsModule.RegisterViewSource<TProvider>(prefab);
 
         }
 
@@ -112,19 +112,14 @@ namespace ME.ECS {
 
     public interface IViewModuleBase : IModuleBase {
 
-        bool SetProvider(IViewsProvider provider);
-
     }
 
     public partial interface IViewModule<TState, TEntity> : IViewModuleBase, IModule<TState> where TState : class, IState<TState> where TEntity : struct, IEntity {
 
-        IViewModule<TState, TEntity> RegisterProvider<TProvider>() where TProvider : class, IViewsProvider<TEntity>, new();
-        IViewModule<TState, TEntity> UnRegisterProvider<TProvider>() where TProvider : class, IViewsProvider<TEntity>, new();
-
         void Register(IView<TEntity> instance);
         void UnRegister(IView<TEntity> instance);
 
-        ViewId RegisterViewSource(IView<TEntity> prefab);
+        ViewId RegisterViewSource<TProvider>(IView<TEntity> prefab) where TProvider : struct, IViewsProvider;
         bool UnRegisterViewSource(IView<TEntity> prefab);
         
         void InstantiateView(IView<TEntity> prefab, Entity entity);
@@ -140,6 +135,7 @@ namespace ME.ECS {
     #endif
     public partial class ViewsModule<TState, TEntity> : IViewModule<TState, TEntity> where TState : class, IState<TState> where TEntity : struct, IEntity {
 
+        private const int REGISTRY_PROVIDERS_CAPACITY = 100;
         private const int REGISTRY_CAPACITY = 100;
         private const int VIEWS_CAPACITY = 1000;
         private const int INTERNAL_ENTITIES_CACHE_CAPACITY = 100;
@@ -194,12 +190,12 @@ namespace ME.ECS {
         }
 
         private List<IView<TEntity>> list;
+        private Dictionary<ViewId, IViewsProvider> registryPrefabToProviderBase;
+        private Dictionary<ViewId, IViewsProvider<TEntity>> registryPrefabToProvider;
         private Dictionary<IView<TEntity>, ViewId> registryPrefabToId;
         private Dictionary<ViewId, IView<TEntity>> registryIdToPrefab;
         private ViewId viewSourceIdRegistry;
         private ViewId viewIdRegistry;
-        private IViewsProvider<TEntity> internalProvider;
-        private IViewsProvider provider;
         
         public IWorld<TState> world { get; set; }
 
@@ -209,54 +205,19 @@ namespace ME.ECS {
             this.registryPrefabToId = PoolDictionary<IView<TEntity>, ViewId>.Spawn(ViewsModule<TState, TEntity>.REGISTRY_CAPACITY);
             this.registryIdToPrefab = PoolDictionary<ViewId, IView<TEntity>>.Spawn(ViewsModule<TState, TEntity>.REGISTRY_CAPACITY);
 
+            this.registryPrefabToProvider = PoolDictionary<ViewId, IViewsProvider<TEntity>>.Spawn(ViewsModule<TState, TEntity>.REGISTRY_PROVIDERS_CAPACITY);
+            this.registryPrefabToProviderBase = PoolDictionary<ViewId, IViewsProvider>.Spawn(ViewsModule<TState, TEntity>.REGISTRY_PROVIDERS_CAPACITY);
+
         }
 
         void IModule<TState>.OnDeconstruct() {
             
+            PoolDictionary<ViewId, IViewsProvider<TEntity>>.Recycle(ref this.registryPrefabToProvider);
+            PoolDictionary<ViewId, IViewsProvider>.Recycle(ref this.registryPrefabToProviderBase);
+            
             PoolDictionary<ViewId, IView<TEntity>>.Recycle(ref this.registryIdToPrefab);
             PoolDictionary<IView<TEntity>, ViewId>.Recycle(ref this.registryPrefabToId);
             PoolList<IView<TEntity>>.Recycle(ref this.list);
-
-        }
-
-        public bool SetProvider(IViewsProvider provider) {
-
-            if (this.provider == null) {
-                
-                this.provider = provider;
-                return true;
-
-            }
-            
-            return false;
-
-        }
-
-        public IViewsProvider GetProvider() {
-
-            return this.provider;
-
-        }
-
-        public IViewModule<TState, TEntity> RegisterProvider<TProvider>() where TProvider : class, IViewsProvider<TEntity>, new() {
-
-            this.internalProvider = PoolClass<TProvider>.Spawn();
-
-            return this;
-
-        }
-
-        public IViewModule<TState, TEntity> UnRegisterProvider<TProvider>() where TProvider : class, IViewsProvider<TEntity>, new() {
-
-            if (this.internalProvider != null) {
-
-                var internalProvider = (TProvider)this.internalProvider;
-                PoolClass<TProvider>.Recycle(ref internalProvider);
-                this.internalProvider = null;
-
-            }
-            
-            return this;
 
         }
 
@@ -302,18 +263,6 @@ namespace ME.ECS {
             
             this.world.RemoveComponentsPredicate<ViewComponent, RemoveComponentViewPredicate>(instance.entity, predicate);
             
-            /*while (items.MoveNext() == true) {
-
-                var item = items.Current;
-                var viewInfo = item.component.viewInfo;
-                if (viewInfo.entity.id == instance.entity.id && viewInfo.prefabSourceId == instance.prefabSourceId) {
-                    
-                    item.Remove();
-                    
-                }
-
-            }*/
-
             instance = null;
 
         }
@@ -321,14 +270,19 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private IView<TEntity> SpawnView_INTERNAL(ViewInfo viewInfo) {
 
-            if (this.internalProvider == null) return null; 
-            
-            var instance = this.internalProvider.Spawn(this.GetViewSource(viewInfo.prefabSourceId), viewInfo.prefabSourceId);
-            instance.entity = viewInfo.entity;
-            instance.prefabSourceId = viewInfo.prefabSourceId;
-            this.Register(instance);
+            IViewsProvider<TEntity> provider;
+            if (this.registryPrefabToProvider.TryGetValue(viewInfo.prefabSourceId, out provider) == true) {
 
-            return instance;
+                var instance = provider.Spawn(this.GetViewSource(viewInfo.prefabSourceId), viewInfo.prefabSourceId);
+                instance.entity = viewInfo.entity;
+                instance.prefabSourceId = viewInfo.prefabSourceId;
+                this.Register(instance);
+
+                return instance;
+                
+            }
+
+            return null;
 
         }
 
@@ -336,7 +290,13 @@ namespace ME.ECS {
         private void RecycleView_INTERNAL(ref IView<TEntity> instance) {
 
             this.UnRegister(instance);
-            if (this.internalProvider != null) this.internalProvider.Destroy(ref instance);
+
+            IViewsProvider<TEntity> provider;
+            if (this.registryPrefabToProvider.TryGetValue(instance.prefabSourceId, out provider) == true) {
+
+                provider.Destroy(ref instance);
+                
+            }
 
         }
 
@@ -384,7 +344,7 @@ namespace ME.ECS {
 
         }
 
-        public ViewId RegisterViewSource(IView<TEntity> prefab) {
+        public ViewId RegisterViewSource<TProvider>(IView<TEntity> prefab) where TProvider : struct, IViewsProvider {
 
             if (this.world.HasStep(WorldStep.LogicTick) == true) {
 
@@ -402,6 +362,9 @@ namespace ME.ECS {
             ++this.viewSourceIdRegistry;
             this.registryPrefabToId.Add(prefab, this.viewSourceIdRegistry);
             this.registryIdToPrefab.Add(this.viewSourceIdRegistry, prefab);
+            this.registryPrefabToProvider.Add(this.viewSourceIdRegistry, new TProvider().Create<TEntity>());
+            this.registryPrefabToProviderBase.Add(this.viewSourceIdRegistry, new TProvider());
+
             return this.viewSourceIdRegistry;
 
         }
@@ -417,6 +380,9 @@ namespace ME.ECS {
             ViewId viewId;
             if (this.registryPrefabToId.TryGetValue(prefab, out viewId) == true) {
 
+                this.registryPrefabToProviderBase[viewId].Destroy(this.registryPrefabToProvider[viewId]);
+                this.registryPrefabToProviderBase.Remove(viewId);
+                this.registryPrefabToProvider.Remove(viewId);
                 this.registryPrefabToId.Remove(prefab);
                 return this.registryIdToPrefab.Remove(viewId);
                 
@@ -544,6 +510,13 @@ namespace ME.ECS {
                 
             }
             
+            // Update providers
+            foreach (var providerKv in this.registryPrefabToProvider) {
+                
+                providerKv.Value.Update(this.list, deltaTime);
+                
+            }
+
         }
         
     }

@@ -30,11 +30,13 @@ public class ApplyUnitStateToView : MonoBehaviourView<Unit> {
 
             tr.position = data.position;
             tr.rotation = data.rotation;
+            tr.localScale = data.scale;
 
         } else {
 
             tr.position = Vector3.Lerp(tr.position, data.position, deltaTime * this.lerpSpeed);
             tr.rotation = Quaternion.Slerp(tr.rotation, data.rotation, deltaTime * this.lerpSpeed);
+            tr.localScale = Vector3.Lerp(tr.localScale, data.scale, deltaTime * this.lerpSpeed);
 
         }
 

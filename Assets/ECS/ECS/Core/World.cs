@@ -608,10 +608,10 @@ namespace ME.ECS {
 
                 if (instanceValidate.CouldBeAdded() == false) {
 
-                    UnityEngine.Debug.LogError("Couldn't add new module `" + instanceValidate + "`(" + nameof(TModule) + ") because of CouldBeAdded() returns false.");
                     instance.world = null;
                     PoolModules.Recycle(ref instance);
-                    return false;
+                    throw new System.Exception("Couldn't add new module `" + instanceValidate + "`(" + nameof(TModule) + ") because of CouldBeAdded() returns false.");
+                    //return false;
                     
                 }
 

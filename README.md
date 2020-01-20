@@ -21,6 +21,7 @@ Send RPCs through any network transport implemented from the interface, serializ
 By default is the EventRunner for StatesHistoryModule, just send all incoming events to the network and receive events from transport and send them into StatesHistoryModule.
 
 ### Views Module
+##### Submodules: IViewsProvider
 Synchronizing current world state to views. Automatically destroy and create views (with pools), sync with current entities state and process all ticks correctly to restore visual state even objects already destroyed for long time ago.
 <br>
 <br>
@@ -50,7 +51,6 @@ Components like a functions has some data to apply on tick, working with a certa
 WorldUtilities.CreateWorld(ref this.world, 0.133f, [customWorldId]);
 this.world.AddModule<StatesHistoryModule>(); // Add custom states history module
 this.world.AddModule<NetworkModule>();       // Add custom network module
-this.world.AddViewsProvider<UnityGameObjectProvider>(); // Add views provider, for Unity it could be UnityGameObjectProvider
 ```
 
 #### 2. State Initialization
@@ -61,8 +61,12 @@ this.world.SetState(WorldUtilities.CreateState<State>());
 
 #### 3. Register Prefabs
 ```csharp
-this.pointViewSourceId = this.world.RegisterViewSource<Point>(this.pointSource);
-this.unitViewSourceId = this.world.RegisterViewSource<Unit>(this.unitSource);
+// Register point source prefab with custom views provider
+// GameObject (Will call Instantiate/Destroy)
+this.pointViewSourceId = this.world.RegisterViewSource<Point, UnityGameObjectProvider>(this.pointSource);
+// Register unit source prefab with custom views provider
+// Particles (Will draw particles instead of regular GameObjects)
+this.unitViewSourceId = this.world.RegisterViewSource<Unit, UnityParticlesProvider>(this.unitSource);
 ...
 ```
 

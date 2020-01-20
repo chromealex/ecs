@@ -30,17 +30,12 @@ namespace ME.ECS {
 
     public partial class World<TState> where TState : class, IState<TState>, new() {
 
+        private IViewsProvider viewsProvider;
+        
         public void AddViewsProvider<TProvider>() where TProvider : class, IViewsProvider, new() {
 
-            var list = PoolList<IViewModuleBase>.Spawn(10);
-            this.GetModules(list);
-            for (int i = 0, count = list.Count; i < count; ++i) {
-                
-                list[i].SetProvider(PoolClass<TProvider>.Spawn());
-                
-            }
-            PoolList<IViewModuleBase>.Recycle(ref list);
-
+            if (this.viewsProvider == null) this.viewsProvider = PoolClass<TProvider>.Spawn();
+            
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -59,8 +54,9 @@ namespace ME.ECS {
                 if (this.AddModule<ViewsModule<TState, TEntity>>() == true) {
 
                     var module = this.GetModule<ViewsModule<TState, TEntity>>();
+                    module.SetProvider(this.viewsProvider);
                     module.GetProvider().RegisterEntityType(module);
-
+                    
                 }
 
             }

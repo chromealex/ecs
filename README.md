@@ -65,19 +65,30 @@ this.unitViewSourceId = this.world.RegisterViewSource<Unit>(this.unitSource);
 ...
 ```
 
-#### 4. Create Entities with Data
+#### 4. Create Default Entities with Data
 ```csharp
 // Create default data for all players at this level
-var p1 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, 3f), unitsCount = 99f, increaseRate = 1f });
-var p2 = this.world.AddEntity(new Point() { position = new Vector3(0f, 0f, -3f), unitsCount = 1f, increaseRate = 1f });
+var p1 = this.world.AddEntity(new Point() {
+  position = new Vector3(0f, 0f, 3f),
+  unitsCount = 99f,
+  increaseRate = 1f
+});
+var p2 = this.world.AddEntity(new Point() {
+  position = new Vector3(0f, 0f, -3f),
+  unitsCount = 1f,
+  increaseRate = 1f
+});
+...
 ```
 
 #### 5. Instantiate Views (Don't worry, you can call Instantiate on any thread)
 ```csharp
 // Attach views onto entities
-// You can attach any count of views on each entity, but here are some limitations - for now you couldn't attach one source twice, only different sources for one entity allowed.
-this.world.InstantiateView<Point>(this.pointViewSourceId, p1);
-this.world.InstantiateView<Point>(this.pointViewSourceId, p2);
+// You can attach any count of views on each entity
+// But here are some limitations: for now you couldn't attach one source twice, only different sources for one entity allowed.
+this.world.InstantiateView<Point>(this.pointViewSourceId, p1);  // Add view with id pointViewSourceId onto p1 Entity
+this.world.InstantiateView<Point>(this.pointViewSourceId, p2);  // Add view with id pointViewSourceId onto p2 Entity
+...
 ```
 
 #### 6. Add Systems
@@ -86,6 +97,7 @@ this.world.InstantiateView<Point>(this.pointViewSourceId, p2);
 this.world.AddSystem<InputSystem>();
 this.world.AddSystem<PointsSystem>();
 this.world.AddSystem<UnitsSystem>();
+...
 ```
 
 #### 7. Save Reset State

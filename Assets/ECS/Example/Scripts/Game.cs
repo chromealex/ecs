@@ -34,6 +34,7 @@ public class Game : MonoBehaviour {
             WorldUtilities.CreateWorld(ref this.world, 0.133f, this.worldId);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
+            this.world.AddViewsProvider<UnityGameObjectProvider>();
 
             if (this.worldConnectionId > 0) {
 

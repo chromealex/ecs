@@ -287,12 +287,8 @@ namespace ME.ECS {
 
         public void Register<TEntity>(ref Filter<TEntity> filterRef, bool freeze, bool restore) where TEntity : struct, IEntity {
 
-            if (this.HasModule<ViewsModule<TState, TEntity>>() == false) {
-
-                this.AddModule<ViewsModule<TState, TEntity>>();
-
-            }
-
+            this.RegisterPluginsModuleForEntity<TEntity>();
+            
             var code = WorldUtilities.GetKey<TEntity>();
             var capacity = this.GetCapacity<TEntity>(code);
             if (filterRef == null) {
@@ -484,8 +480,7 @@ namespace ME.ECS {
                 IList list;
                 if (this.entitiesCache.TryGetValue(code, out list) == true) {
 
-                    var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
-                    viewsModule.DestroyAllViews(data.entity);
+                    this.DestroyEntityPlugins<TEntity>(data.entity);
                     ((List<TEntity>)list).Remove(data);
                     this.RemoveComponents(data.entity);
 
@@ -527,8 +522,7 @@ namespace ME.ECS {
 
                         if (((IEntity)list[i]).entity.id == entity.id) {
 
-                            var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
-                            viewsModule.DestroyAllViews(entity);
+                            this.DestroyEntityPlugins<TEntity>(entity);
                             list.RemoveAt(i);
                             this.RemoveComponents(entity);
                             break;
@@ -907,6 +901,56 @@ namespace ME.ECS {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void RegisterPluginsModuleForEntity<TEntity>() where TEntity : struct, IEntity {
+            
+            this.RegisterPlugin1ModuleForEntity<TEntity>();
+            this.RegisterPlugin2ModuleForEntity<TEntity>();
+            this.RegisterPlugin3ModuleForEntity<TEntity>();
+            this.RegisterPlugin4ModuleForEntity<TEntity>();
+            this.RegisterPlugin5ModuleForEntity<TEntity>();
+            this.RegisterPlugin6ModuleForEntity<TEntity>();
+            this.RegisterPlugin7ModuleForEntity<TEntity>();
+            this.RegisterPlugin8ModuleForEntity<TEntity>();
+            this.RegisterPlugin9ModuleForEntity<TEntity>();
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void DestroyEntityPlugins<TEntity>(Entity entity) where TEntity : struct, IEntity {
+            
+            this.DestroyEntityPlugin1<TEntity>(entity);
+            this.DestroyEntityPlugin2<TEntity>(entity);
+            this.DestroyEntityPlugin3<TEntity>(entity);
+            this.DestroyEntityPlugin4<TEntity>(entity);
+            this.DestroyEntityPlugin5<TEntity>(entity);
+            this.DestroyEntityPlugin6<TEntity>(entity);
+            this.DestroyEntityPlugin7<TEntity>(entity);
+            this.DestroyEntityPlugin8<TEntity>(entity);
+            this.DestroyEntityPlugin9<TEntity>(entity);
+
+        }
+
+        partial void DestroyEntityPlugin1<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        partial void DestroyEntityPlugin2<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        partial void DestroyEntityPlugin3<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        partial void DestroyEntityPlugin4<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        partial void DestroyEntityPlugin5<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        partial void DestroyEntityPlugin6<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        partial void DestroyEntityPlugin7<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        partial void DestroyEntityPlugin8<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        partial void DestroyEntityPlugin9<TEntity>(Entity entity) where TEntity : struct, IEntity;
+
+        partial void RegisterPlugin1ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        partial void RegisterPlugin2ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        partial void RegisterPlugin3ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        partial void RegisterPlugin4ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        partial void RegisterPlugin5ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        partial void RegisterPlugin6ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        partial void RegisterPlugin7ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        partial void RegisterPlugin8ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        partial void RegisterPlugin9ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        
         partial void PlayPlugin1ForTick(Tick tick);
         partial void PlayPlugin2ForTick(Tick tick);
         partial void PlayPlugin3ForTick(Tick tick);

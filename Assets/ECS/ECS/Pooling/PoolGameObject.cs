@@ -1,3 +1,4 @@
+#if VIEWS_MODULE_SUPPORT
 using System.Collections.Generic;
 using UnityEngine;
 using ViewId = System.UInt64;
@@ -66,3 +67,4 @@ namespace ME.ECS {
     }
 
 }
+#endif

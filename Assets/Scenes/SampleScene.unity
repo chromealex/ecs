@@ -1359,12 +1359,9 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 1, g: 0, b: 0.8074565, a: 1}
   moveSide: -5
-  unitSource: {fileID: 4210135071268562876, guid: 984fd4d99ea6f4c3aa20fcf3d6c697e0,
-    type: 3}
-  unitSource2: {fileID: 201435987506025188, guid: 289dd41642ed94500861777634de8588,
-    type: 3}
-  pointSource: {fileID: 573661692163205971, guid: ab92300c32f7749d4ae7e9a0433f74a5,
-    type: 3}
+  unitSource: {fileID: 0}
+  unitSource2: {fileID: 0}
+  pointSource: {fileID: 0}
 --- !u!4 &454549114
 Transform:
   m_ObjectHideFlags: 0
@@ -1886,11 +1883,11 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 0, g: 0.43311167, b: 1, a: 1}
   moveSide: -5
-  unitSource: {fileID: 4210135071268562876, guid: 984fd4d99ea6f4c3aa20fcf3d6c697e0,
+  unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
     type: 3}
-  unitSource2: {fileID: 201435987506025188, guid: 289dd41642ed94500861777634de8588,
+  unitSource2: {fileID: 9185774508740206016, guid: bfa11fdb5c27b478d806801a71e4fe4c,
     type: 3}
-  pointSource: {fileID: 573661692163205971, guid: ab92300c32f7749d4ae7e9a0433f74a5,
+  pointSource: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
     type: 3}
 --- !u!4 &770091047
 Transform:
@@ -3352,12 +3349,9 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 0.55580986, g: 1, b: 0, a: 1}
   moveSide: 5
-  unitSource: {fileID: 4210135071268562876, guid: 984fd4d99ea6f4c3aa20fcf3d6c697e0,
-    type: 3}
-  unitSource2: {fileID: 201435987506025188, guid: 289dd41642ed94500861777634de8588,
-    type: 3}
-  pointSource: {fileID: 573661692163205971, guid: ab92300c32f7749d4ae7e9a0433f74a5,
-    type: 3}
+  unitSource: {fileID: 0}
+  unitSource2: {fileID: 0}
+  pointSource: {fileID: 0}
 --- !u!4 &1181779646
 Transform:
   m_ObjectHideFlags: 0
@@ -5142,11 +5136,11 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 1, g: 0, b: 0, a: 1}
   moveSide: 5
-  unitSource: {fileID: 4210135071268562876, guid: 984fd4d99ea6f4c3aa20fcf3d6c697e0,
+  unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
     type: 3}
-  unitSource2: {fileID: 201435987506025188, guid: 289dd41642ed94500861777634de8588,
+  unitSource2: {fileID: 9185774508740206016, guid: bfa11fdb5c27b478d806801a71e4fe4c,
     type: 3}
-  pointSource: {fileID: 573661692163205971, guid: ab92300c32f7749d4ae7e9a0433f74a5,
+  pointSource: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
     type: 3}
 --- !u!4 &2083166762
 Transform:

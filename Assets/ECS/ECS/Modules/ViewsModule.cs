@@ -13,18 +13,23 @@ namespace ME.ECS {
 
     }
 
-    public interface IView<in T> : IViewBase where T : struct, IEntity {
+    public interface IView<T> : IViewBase where T : struct, IEntity {
 
-        void OnInitialize(T data);
-        void OnDeInitialize(T data);
-        void ApplyState(T data, float deltaTime, bool immediately);
+        void OnInitialize(in T data);
+        void OnDeInitialize(in T data);
+        void ApplyState(in T data, float deltaTime, bool immediately);
         
     }
 
     public partial interface IWorld<TState> where TState : class, IState<TState> {
+        
+        ViewId RegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity;
+        bool UnRegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity;
 
         void AddViewsProvider<TProvider>() where TProvider : class, IViewsProvider, new();
         void InstantiateView<TEntity>(ViewId prefab, Entity entity) where TEntity : struct, IEntity;
+        void InstantiateView<TEntity>(IView<TEntity> prefab, Entity entity) where TEntity : struct, IEntity;
+        void DestroyView<TEntity>(ref IView<TEntity> instance) where TEntity : struct, IEntity;
 
     }
 
@@ -64,10 +69,42 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool UnRegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity {
+            
+            var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
+            return viewsModule.UnRegisterViewSource(prefab);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ViewId RegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity {
+            
+            var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
+            return viewsModule.RegisterViewSource(prefab);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void InstantiateView<TEntity>(IView<TEntity> prefab, Entity entity) where TEntity : struct, IEntity {
+
+            var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
+            viewsModule.InstantiateView(prefab, entity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void InstantiateView<TEntity>(ViewId prefab, Entity entity) where TEntity : struct, IEntity {
 
             var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
             viewsModule.InstantiateView(prefab, entity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void DestroyView<TEntity>(ref IView<TEntity> instance) where TEntity : struct, IEntity {
+            
+            var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
+            viewsModule.DestroyView(ref instance);
             
         }
 

@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿//#define GAMEOBJECT_VIEWS_MODULE_SUPPORT
+#define PARTICLES_VIEWS_MODULE_SUPPORT
+using UnityEngine;
 using EntityId = System.Int32;
 using RPCId = System.Int32;
 using ViewId = System.UInt64; 
@@ -14,9 +16,15 @@ public class Game : MonoBehaviour {
     public Color playerColor;
     public float moveSide;
 
+    #if GAMEOBJECT_VIEWS_MODULE_SUPPORT
     public GameObject unitSource;
     public GameObject unitSource2;
     public GameObject pointSource;
+    #elif PARTICLES_VIEWS_MODULE_SUPPORT
+    public ParticleViewSourceBase unitSource;
+    public ParticleViewSourceBase unitSource2;
+    public ParticleViewSourceBase pointSource;
+    #endif
     
     public World<State> world;
     private IState<State> savedState;
@@ -34,7 +42,11 @@ public class Game : MonoBehaviour {
             WorldUtilities.CreateWorld(ref this.world, 0.133f, this.worldId);
             this.world.AddModule<StatesHistoryModule>();
             this.world.AddModule<NetworkModule>();
+            #if GAMEOBJECT_VIEWS_MODULE_SUPPORT
             this.world.AddViewsProvider<UnityGameObjectProvider>();
+            #elif PARTICLES_VIEWS_MODULE_SUPPORT
+            this.world.AddViewsProvider<UnityParticlesProvider>();
+            #endif
 
             if (this.worldConnectionId > 0) {
 

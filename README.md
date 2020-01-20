@@ -117,4 +117,7 @@ this.world.SaveResetState();
 - Add auto sync on packets drop (TCP) <b>(100% done)</b>
 - Add auto sync on packets drop (UDP) <b>(20% done)</b>
 - Views module <b>(100% done)</b>
+- Implement UnityGameObjectProvider <b>(100% done)</b>
+- Implement UnityParticlesProvider <b>(0% done)</b>
+- Add particle system simulation support on state change <b>(0% done)</b>
 - Rendering system <b>(0% done)</b>

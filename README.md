@@ -56,7 +56,6 @@ this.world.AddModule<NetworkModule>();       // Add custom network module
 ```csharp
 // Create new state and set it by default
 this.world.SetState(WorldUtilities.CreateState<State>());
-this.world.SetState(this.world.CreateState()); 
 ```
 
 #### 3. Register Prefabs

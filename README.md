@@ -50,6 +50,7 @@ Components like a functions has some data to apply on tick, working with a certa
 WorldUtilities.CreateWorld(ref this.world, 0.133f, [customWorldId]);
 this.world.AddModule<StatesHistoryModule>(); // Add custom states history module
 this.world.AddModule<NetworkModule>();       // Add custom network module
+this.world.AddViewsProvider<UnityGameObjectProvider>(); // Add views provider, for Unity it could be UnityGameObjectProvider
 ```
 
 #### 2. State Initialization

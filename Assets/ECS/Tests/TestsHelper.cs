@@ -1,7 +1,10 @@
 ﻿using NUnit.Framework;
 
-namespace ME.ECS.Tests {
+namespace ME.Example.Tests {
 
+    using ME.ECS;
+    using ME.Example.Game;
+    
     public static class TestsHelper {
 
         public static World<State> CreateWorld(float tickTime = 0.05f) {

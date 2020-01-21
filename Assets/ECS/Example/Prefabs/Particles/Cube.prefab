@@ -107,19 +107,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data:
-    particleIndex: 0
-    itemData:
-      mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-      material: {fileID: 2100000, guid: 8e88c1b6a2edf4dd1852c02cf6eda7fe, type: 2}
-      ps: {fileID: 0}
-      index: 0
+    items:
+    - itemData:
+        mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+        material: {fileID: 2100000, guid: 8e88c1b6a2edf4dd1852c02cf6eda7fe, type: 2}
+        localPosition: {x: 0, y: 0, z: 0}
+        localRotation: {x: -0, y: 0, z: 0}
+        localScale: {x: 1, y: 1, z: 1}
+    - itemData:
+        mesh: {fileID: 0}
+        material: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
+        localPosition: {x: 0, y: 3, z: 0}
+        localRotation: {x: 0, y: 0, z: 0}
+        localScale: {x: 1, y: 1, z: 1}
     lerpSpeed: 3
-  filters:
-  - {fileID: 573661692163205974}
-  - {fileID: 573661694060031784}
-  renderers:
-  - {fileID: 573661692163205973}
-  - {fileID: 573661694060031785}
 --- !u!1 &573661694060031781
 GameObject:
   m_ObjectHideFlags: 0

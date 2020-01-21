@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using ViewId = System.UInt64;
 
-namespace ME.ECS {
-
+namespace ME.ECS.Views {
+    
     public static class PoolGameObject {
 
         private static Dictionary<ViewId, Stack<Component>> prefabToInstances = new Dictionary<ViewId, Stack<Component>>();

@@ -5,6 +5,9 @@ using Tick = System.UInt64;
 
 namespace ME.ECS {
 
+    using ME.ECS.Views;
+    using ME.ECS.Views.Providers;
+    
     public partial interface IWorld<TState> where TState : class, IState<TState> {
 
         ViewId RegisterViewSource<TEntity>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity;
@@ -31,7 +34,7 @@ namespace ME.ECS {
                 return this.RegisterViewSource<TEntity, TProvider>(component);
 
             }
-            
+
             return 0UL;
 
         }
@@ -45,25 +48,21 @@ namespace ME.ECS {
                 this.InstantiateView(component, entity);
 
             }
-            
+
         }
 
     }
 
-    public abstract class MonoBehaviourView<TEntity> : UnityEngine.MonoBehaviour, IView<TEntity> where TEntity : struct, IEntity {
+}
 
-        public Entity entity { get; set; }
-        public ViewId prefabSourceId { get; set; }
+namespace ME.ECS.Views {
 
-        public virtual void OnInitialize(in TEntity data) { }
-        public virtual void OnDeInitialize(in TEntity data) { }
-        public abstract void ApplyState(in TEntity data, float deltaTime, bool immediately);
+    using ME.ECS.Views.Providers;
 
-    }
-    
     public partial interface IViewModule<TState, TEntity> where TState : class, IState<TState> where TEntity : struct, IEntity {
 
-        ViewId RegisterViewSource<TProvider>(UnityEngine.GameObject prefab) where TProvider : struct, IViewsProvider;
+        ViewId RegisterViewSource(UnityEngine.GameObject prefab);
+        void UnRegisterViewSource(UnityEngine.GameObject prefab);
         void InstantiateView(UnityEngine.GameObject prefab, Entity entity);
 
     }
@@ -71,9 +70,16 @@ namespace ME.ECS {
     public partial class ViewsModule<TState, TEntity> where TState : class, IState<TState> where TEntity : struct, IEntity {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TProvider>(UnityEngine.GameObject prefab) where TProvider : struct, IViewsProvider {
+        public ViewId RegisterViewSource(UnityEngine.GameObject prefab) {
 
-            return this.RegisterViewSource<TProvider>(prefab.GetComponent<MonoBehaviourView<TEntity>>());
+            return this.RegisterViewSource<UnityGameObjectProvider>(prefab.GetComponent<MonoBehaviourView<TEntity>>());
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void UnRegisterViewSource(UnityEngine.GameObject prefab) {
+
+            this.UnRegisterViewSource(prefab.GetComponent<MonoBehaviourView<TEntity>>());
 
         }
 
@@ -87,6 +93,24 @@ namespace ME.ECS {
 
     }
 
+}
+
+namespace ME.ECS.Views.Providers {
+
+    using ME.ECS;
+    using ME.ECS.Views;
+    
+    public abstract class MonoBehaviourView<TEntity> : UnityEngine.MonoBehaviour, IView<TEntity> where TEntity : struct, IEntity {
+
+        public Entity entity { get; set; }
+        public ViewId prefabSourceId { get; set; }
+
+        public virtual void OnInitialize(in TEntity data) { }
+        public virtual void OnDeInitialize(in TEntity data) { }
+        public abstract void ApplyState(in TEntity data, float deltaTime, bool immediately);
+
+    }
+    
     public class UnityGameObjectProvider<TEntity> : ViewsProvider<TEntity> where TEntity : struct, IEntity {
 
         public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {

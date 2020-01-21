@@ -1,19 +1,25 @@
 using ME.ECS;
 
-public class PointSetColor : IComponentOnce<State, Point> {
+namespace ME.Example.Game.Components {
 
-    public UnityEngine.Color color;
-    
-    public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
+    using ME.Example.Game.Entities;
 
-        data.color = this.color;
-        
+    public class PointSetColor : IComponentOnce<State, Point> {
+
+        public UnityEngine.Color color;
+
+        public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
+
+            data.color = this.color;
+
+        }
+
+        void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) {
+
+            this.color = ((PointSetColor)other).color;
+
+        }
+
     }
 
-    void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) {
-
-        this.color = ((PointSetColor)other).color;
-
-    }
-    
 }

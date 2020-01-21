@@ -1,53 +1,59 @@
 ﻿using UnityEngine;
-using ME.ECS;
 
-public class ApplyPointStateToView : MonoBehaviourView<Point> {
+namespace ME.Example.Game.Views {
 
-    public TMPro.TMP_Text text;
-    public Renderer cubeRenderer;
-    public float lerpSpeed = 3f;
+    using ME.ECS.Views.Providers;
+    using ME.Example.Game.Entities;
 
-    private float prevUnitsCount;
+    public class ApplyPointStateToView : MonoBehaviourView<Point> {
 
-    public override void OnInitialize(in Point data) {
-        
-        this.cubeRenderer.sharedMaterial = new Material(this.cubeRenderer.material);
-        
-        var tr = this.cubeRenderer.transform;
-        tr.position = data.position;
-        
-    }
+        public TMPro.TMP_Text text;
+        public Renderer cubeRenderer;
+        public float lerpSpeed = 3f;
 
-    public override void OnDeInitialize(in Point data) {
-        
-        Material.Destroy(this.cubeRenderer.sharedMaterial);
-        
-    }
+        private float prevUnitsCount;
 
-    public override void ApplyState(in Point data, float deltaTime, bool immediately) {
-        
-        if (this.prevUnitsCount != data.unitsCount) {
-        
-            this.text.text = data.unitsCount.ToString();
-            this.prevUnitsCount = data.unitsCount;
+        public override void OnInitialize(in Point data) {
 
-        }
+            this.cubeRenderer.sharedMaterial = new Material(this.cubeRenderer.material);
 
-        var tr = this.cubeRenderer.transform;
-        this.cubeRenderer.sharedMaterial.color = data.color;
-
-        if (immediately == true) {
-            
+            var tr = this.cubeRenderer.transform;
             tr.position = data.position;
-            tr.localScale = data.scale;
 
-        } else {
-            
-            tr.position = Vector3.Lerp(tr.position, data.position, deltaTime * this.lerpSpeed);
-            tr.localScale = data.scale;
-            
         }
-        
+
+        public override void OnDeInitialize(in Point data) {
+
+            Material.Destroy(this.cubeRenderer.sharedMaterial);
+
+        }
+
+        public override void ApplyState(in Point data, float deltaTime, bool immediately) {
+
+            if (this.prevUnitsCount != data.unitsCount) {
+
+                this.text.text = data.unitsCount.ToString();
+                this.prevUnitsCount = data.unitsCount;
+
+            }
+
+            var tr = this.cubeRenderer.transform;
+            this.cubeRenderer.sharedMaterial.color = data.color;
+
+            if (immediately == true) {
+
+                tr.position = data.position;
+                tr.localScale = data.scale;
+
+            } else {
+
+                tr.position = Vector3.Lerp(tr.position, data.position, deltaTime * this.lerpSpeed);
+                tr.localScale = data.scale;
+
+            }
+
+        }
+
     }
 
 }

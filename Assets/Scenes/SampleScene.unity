@@ -1883,7 +1883,7 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 0, g: 0.43311167, b: 1, a: 1}
   moveSide: -5
-  pointSourceGameObject: {fileID: 573661692163205971, guid: ab92300c32f7749d4ae7e9a0433f74a5,
+  pointSourceGameObject: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
     type: 3}
   unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
     type: 3}
@@ -5136,7 +5136,7 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 1, g: 0, b: 0, a: 1}
   moveSide: 5
-  pointSourceGameObject: {fileID: 573661692163205971, guid: ab92300c32f7749d4ae7e9a0433f74a5,
+  pointSourceGameObject: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
     type: 3}
   unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
     type: 3}

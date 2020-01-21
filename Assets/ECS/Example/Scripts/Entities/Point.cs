@@ -1,14 +1,18 @@
 ﻿using ME.ECS;
 using UnityEngine;
 
-public struct Point : IEntity {
+namespace ME.Example.Game.Entities {
 
-    public Entity entity { get; set; }
+    public struct Point : IEntity {
 
-    public Color color;
-    public Vector3 position;
-    public Vector3 scale;
-    public float increaseRate;
-    public float unitsCount;
-    
+        public Entity entity { get; set; }
+
+        public Color color;
+        public Vector3 position;
+        public Vector3 scale;
+        public float increaseRate;
+        public float unitsCount;
+
+    }
+
 }

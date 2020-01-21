@@ -1,33 +1,40 @@
 ﻿using UnityEngine;
-using ME.ECS;
 
-public class ApplyUnitStateToParticleView : ParticleViewSource<ApplyUnitStateParticle> {
+namespace ME.Example.Game.Views {
 
-}
+    using ME.ECS.Views.Providers;
+    using ME.Example.Game.Entities;
 
-[System.Serializable]
-public class ApplyUnitStateParticle : ParticleView<Unit> {
+    public class ApplyUnitStateToParticleView : ParticleViewSource<ApplyUnitStateParticle> { }
 
-    public float lerpSpeed = 3f;
-    
-    public override void ApplyState(in Unit data, float deltaTime, bool immediately) {
-        
-        this.particleData.startColor = data.color;
+    [System.Serializable]
+    public class ApplyUnitStateParticle : ParticleView<Unit> {
 
-        if (immediately == true) {
+        public float lerpSpeed = 3f;
 
-            this.particleData.position = data.position;
-            this.particleData.rotation3D = data.rotation.eulerAngles;
-            this.particleData.startSize3D = data.scale;
+        public override void ApplyState(in Unit data, float deltaTime, bool immediately) {
 
-        } else {
+            var rootData = this.rootData;
+            rootData.startColor = data.color;
 
-            this.particleData.position = Vector3.Lerp(this.particleData.position, data.position, deltaTime * this.lerpSpeed);
-            this.particleData.rotation3D = Quaternion.Slerp(Quaternion.Euler(this.particleData.rotation3D), data.rotation, deltaTime * this.lerpSpeed).eulerAngles;
-            this.particleData.startSize3D = Vector3.Lerp(this.particleData.startSize3D, data.scale, deltaTime * this.lerpSpeed);
-            
+            if (immediately == true) {
+
+                rootData.position = data.position;
+                rootData.rotation3D = data.rotation.eulerAngles;
+                rootData.startSize3D = data.scale;
+
+            } else {
+
+                rootData.position = Vector3.Lerp(rootData.position, data.position, deltaTime * this.lerpSpeed);
+                rootData.rotation3D = Quaternion.Slerp(Quaternion.Euler(rootData.rotation3D), data.rotation, deltaTime * this.lerpSpeed).eulerAngles;
+                rootData.startSize3D = Vector3.Lerp(rootData.startSize3D, data.scale, deltaTime * this.lerpSpeed);
+
+            }
+
+            this.rootData = rootData;
+
         }
-        
+
     }
 
 }

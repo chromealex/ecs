@@ -4,8 +4,14 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ME.ECS.Tests {
+namespace ME.Example.Tests {
 
+    using ME.Example.Game;
+    using ME.Example.Game.Systems;
+    using ME.Example.Game.Modules;
+    using ME.Example.Game.Components;
+    using ME.Example.Game.Entities;
+    
     public class DefaultTests {
 
         [Test]

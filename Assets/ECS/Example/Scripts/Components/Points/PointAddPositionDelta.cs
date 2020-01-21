@@ -1,19 +1,25 @@
 using ME.ECS;
 
-public class PointAddPositionDelta : IComponentOnce<State, Point> {
+namespace ME.Example.Game.Components {
 
-    public UnityEngine.Vector3 positionDelta;
+    using ME.Example.Game.Entities;
     
-    public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
+    public class PointAddPositionDelta : IComponentOnce<State, Point> {
 
-        data.position += this.positionDelta * deltaTime;
-        
+        public UnityEngine.Vector3 positionDelta;
+
+        public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
+
+            data.position += this.positionDelta * deltaTime;
+
+        }
+
+        void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) {
+
+            this.positionDelta = ((PointAddPositionDelta)other).positionDelta;
+
+        }
+
     }
 
-    void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) {
-
-        this.positionDelta = ((PointAddPositionDelta)other).positionDelta;
-
-    }
-    
 }

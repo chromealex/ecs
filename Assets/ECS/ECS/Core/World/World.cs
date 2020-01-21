@@ -50,27 +50,30 @@ namespace ME.ECS {
     #endif
     public partial class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
-        private static int worldId = 0;
+        private const int SYSTEMS_CAPACITY = 100;
+        private const int MODULES_CAPACITY = 100;
+        private const int ENTITIES_CACHE_CAPACITY = 100;
+        private const int FILTERS_CAPACITY = 100;
+        private const int COMPONENTS_CAPACITY = 100;
+        private const int CAPACITIES_CAPACITY = 100;
+        private const int ENTITIES_DIRECT_CACHE_CAPACITY = 100;
 
-        internal static class EntitiesDirectCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
+        private static class EntitiesDirectCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<long, T> data = new Dictionary<long, T>(100);
+            internal static Dictionary<long, T> data = new Dictionary<long, T>(World<TState>.ENTITIES_DIRECT_CACHE_CAPACITY);
 
         }
 
-        internal static class EntitiesCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
+        private static int registryWorldId = 0;
 
-            internal static Dictionary<long, T> data = new Dictionary<long, T>(100);
-
-        }
-
+        public int id { get; private set; }
+        
         private TState resetState;
         private TState currentState;
         private WorldStep currentStep;
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
-        public int id { get; private set; }
 
         // State cache:
         private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
@@ -97,9 +100,17 @@ namespace ME.ECS {
 
             } else {
                 
-                this.id = ++World<TState>.worldId;
+                this.id = ++World<TState>.registryWorldId;
                 
             }
+
+        }
+
+        public UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float radius) {
+            
+            UnityEngine.Random.state = this.currentState.randomState;
+            var spherePoint = UnityEngine.Random.insideUnitSphere * radius;
+            return spherePoint + center;
 
         }
 
@@ -153,16 +164,15 @@ namespace ME.ECS {
             this.timeSinceStart = time;
 
         }
-        
+
         void IPoolableSpawn.OnSpawn() {
             
-            this.systems = PoolList<ISystem<TState>>.Spawn(100);
-            this.modules = PoolList<IModule<TState>>.Spawn(100);
-            this.entitiesCache = PoolDictionary<int, IList>.Spawn(100);
-            //this.entitiesDirectCache = PoolDictionary<EntityId, IEntity>.Spawn(100);
-            this.filtersCache = PoolDictionary<int, IList>.Spawn(100);
-            this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(100);
-            this.capacityCache = PoolDictionary<int, int>.Spawn(100);
+            this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
+            this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
+            this.entitiesCache = PoolDictionary<int, IList>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
+            this.filtersCache = PoolDictionary<int, IList>.Spawn(World<TState>.FILTERS_CAPACITY);
+            this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
+            this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
 
         }
 
@@ -188,7 +198,6 @@ namespace ME.ECS {
             PoolList<IModule<TState>>.Recycle(ref this.modules);
             
             PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
-            //PoolDictionary<EntityId, IEntity>.Recycle(ref this.entitiesDirectCache);
             PoolDictionary<int, IList>.Recycle(ref this.filtersCache);
             PoolDictionary<int, IComponents<TState>>.Recycle(ref this.componentsCache);
             PoolDictionary<int, int>.Recycle(ref this.capacityCache);
@@ -428,15 +437,19 @@ namespace ME.ECS {
 
         public void UpdateEntityCache<T>(T data) where T : struct, IEntity {
 
-            var key = MathUtils.GetKey(this.id, data.entity.id);
-            if (EntitiesDirectCache<TState, T>.data.ContainsKey(key) == true) {
+            lock (EntitiesDirectCache<TState, T>.data) {
 
-                EntitiesDirectCache<TState, T>.data[key] = data;
+                var key = MathUtils.GetKey(this.id, data.entity.id);
+                if (EntitiesDirectCache<TState, T>.data.ContainsKey(key) == true) {
 
-            } else {
-                
-                EntitiesDirectCache<TState, T>.data.Add(key, data);
-                
+                    EntitiesDirectCache<TState, T>.data[key] = data;
+
+                } else {
+
+                    EntitiesDirectCache<TState, T>.data.Add(key, data);
+
+                }
+
             }
 
         }
@@ -1120,144 +1133,6 @@ namespace ME.ECS {
                 
             }
             
-        }
-
-    }
-
-    public static class Worlds {
-
-        public static IWorldBase currentWorld;
-
-    }
-
-    public static class Worlds<TState> where TState : class, IState<TState> {
-
-        public static IWorld<TState> currentWorld;
-        public static TState currentState;
-        
-        private static Dictionary<int, IWorld<TState>> cache = new Dictionary<int, IWorld<TState>>();
-
-        public static IWorld<TState> GetWorld(int id) {
-
-            IWorld<TState> world;
-            if (Worlds<TState>.cache.TryGetValue(id, out world) == true) {
-
-                return world;
-                
-            }
-
-            return null;
-
-        }
-
-        public static void Register(IWorld<TState> world) {
-            
-            Worlds<TState>.cache.Add(world.id, world);
-            
-        }
-        
-        public static void UnRegister(IWorld<TState> world) {
-            
-            Worlds<TState>.cache.Remove(world.id);
-            
-        }
-
-    }
-
-    public static class MathUtils {
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static long GetKey(int a1, int a2) {
-            
-            long b = a2;
-            b <<= 32;
-            b |= (uint)a1;
-            return b;
-            
-        }
-
-    }
-
-    public static class WorldUtilities {
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static TState CreateState<TState>() where TState : class, IStateBase, new() {
-
-            var state = PoolClass<TState>.Spawn();
-            state.entityId = default;
-            state.tick = default;
-            return state;
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void ReleaseState<TState>(ref TState state) where TState : class, IStateBase, new() {
-
-            state.entityId = default;
-            state.tick = default;
-            PoolClass<TState>.Recycle(ref state);
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release<T>(ref Filter<T> filter) where T : IEntity {
-            
-            PoolClass<Filter<T>>.Recycle(ref filter);
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release<TEntity, TState>(ref Components<TEntity, TState> components) where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
-            
-            PoolClass<Components<TEntity, TState>>.Recycle(ref components);
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void CreateWorld<TState>(ref World<TState> worldRef, float tickTime, int forcedWorldId = 0) where TState : class, IState<TState>, new() {
-
-            if (worldRef != null) WorldUtilities.ReleaseWorld(ref worldRef);
-            worldRef = PoolClass<World<TState>>.Spawn();
-            worldRef.SetId(forcedWorldId);
-            ((IWorldBase)worldRef).SetTickTime(tickTime);
-            Worlds<TState>.Register(worldRef);
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void ReleaseWorld<TState>(ref World<TState> world) where TState : class, IState<TState>, new() {
-
-            Worlds<TState>.UnRegister(world);
-            PoolClass<World<TState>>.Recycle(ref world);
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey<T>() {
-
-            return typeof(T).GetHashCode();
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey(System.Type type) {
-
-            return type.GetHashCode();
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey<T>(T data) where T : IEntity {
-
-            return data.entity.typeId;
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey(Entity data) {
-
-            return data.typeId;
-
         }
 
     }

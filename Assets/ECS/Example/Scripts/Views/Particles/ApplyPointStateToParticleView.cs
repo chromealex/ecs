@@ -1,31 +1,38 @@
 ﻿using UnityEngine;
-using ME.ECS;
 
-public class ApplyPointStateToParticleView : ParticleViewSource<ApplyPointStateParticle> {
+namespace ME.Example.Game.Views {
 
-}
+    using ME.ECS.Views.Providers;
+    using ME.Example.Game.Entities;
 
-[System.Serializable]
-public class ApplyPointStateParticle : ParticleView<Point> {
+    public class ApplyPointStateToParticleView : ParticleViewSource<ApplyPointStateParticle> { }
 
-    public float lerpSpeed = 3f;
+    [System.Serializable]
+    public class ApplyPointStateParticle : ParticleView<Point> {
 
-    public override void ApplyState(in Point data, float deltaTime, bool immediately) {
-        
-        this.particleData.startColor = data.color;
+        public float lerpSpeed = 3f;
 
-        if (immediately == true) {
+        public override void ApplyState(in Point data, float deltaTime, bool immediately) {
 
-            this.particleData.position = data.position;
-            this.particleData.startSize3D = data.scale;
-            
-        } else {
+            var rootData = this.rootData;
+            rootData.startColor = data.color;
 
-            this.particleData.position = Vector3.Lerp(this.particleData.position, data.position, deltaTime * this.lerpSpeed);
-            this.particleData.startSize3D = data.scale;
-            
+            if (immediately == true) {
+
+                rootData.position = data.position;
+                rootData.startSize3D = data.scale;
+
+            } else {
+
+                rootData.position = Vector3.Lerp(rootData.position, data.position, deltaTime * this.lerpSpeed);
+                rootData.startSize3D = data.scale;
+
+            }
+
+            this.rootData = rootData;
+
         }
-        
+
     }
 
 }

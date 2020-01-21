@@ -5,21 +5,8 @@ using ViewId = System.UInt64;
 using Tick = System.UInt64;
 
 namespace ME.ECS {
-
-    public interface IViewBase {
-        
-        Entity entity { get; set; }
-        ViewId prefabSourceId { get; set; }
-
-    }
-
-    public interface IView<T> : IViewBase where T : struct, IEntity {
-
-        void OnInitialize(in T data);
-        void OnDeInitialize(in T data);
-        void ApplyState(in T data, float deltaTime, bool immediately);
-        
-    }
+    
+    using ME.ECS.Views;
 
     public partial interface IWorld<TState> where TState : class, IState<TState> {
         
@@ -35,14 +22,6 @@ namespace ME.ECS {
 
     public partial class World<TState> where TState : class, IState<TState>, new() {
 
-        /*private IViewsProvider viewsProvider;
-        
-        public void AddViewsProvider<TProvider>() where TProvider : class, IViewsProvider, new() {
-
-            if (this.viewsProvider == null) this.viewsProvider = PoolClass<TProvider>.Spawn();
-            
-        }*/
-
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         partial void DestroyEntityPlugin1<TEntity>(Entity entity) where TEntity : struct, IEntity {
 
@@ -56,13 +35,7 @@ namespace ME.ECS {
 
             if (this.HasModule<ViewsModule<TState, TEntity>>() == false) {
 
-                if (this.AddModule<ViewsModule<TState, TEntity>>() == true) {
-
-                    /*var module = this.GetModule<ViewsModule<TState, TEntity>>();
-                    module.SetProvider(this.viewsProvider);
-                    module.GetProvider().RegisterEntityType(module);*/
-                    
-                }
+                this.AddModule<ViewsModule<TState, TEntity>>();
 
             }
 
@@ -108,6 +81,25 @@ namespace ME.ECS {
             
         }
 
+    }
+
+}
+
+namespace ME.ECS.Views {
+
+    public interface IViewBase {
+        
+        Entity entity { get; set; }
+        ViewId prefabSourceId { get; set; }
+
+    }
+
+    public interface IView<T> : IViewBase where T : struct, IEntity {
+
+        void OnInitialize(in T data);
+        void OnDeInitialize(in T data);
+        void ApplyState(in T data, float deltaTime, bool immediately);
+        
     }
 
     public interface IViewModuleBase : IModuleBase {

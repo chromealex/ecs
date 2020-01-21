@@ -68,7 +68,7 @@ this.pointViewSourceId = this.world.RegisterViewSource<Point, UnityGameObjectPro
 // Particles (Will draw particles instead of regular GameObjects)
 this.unitViewSourceId = this.world.RegisterViewSource<Unit, UnityParticlesProvider>(this.unitSource);
 // Register unit source prefab with auto views provider
-// Here provider should be choosed by unitSource2 type
+// Here provider should be choosen by unitSource2 type
 this.unitViewSourceId2 = this.world.RegisterViewSource<Unit>(this.unitSource2);
 ...
 ```

@@ -21,7 +21,7 @@ Send RPCs through any network transport implemented from the interface, serializ
 By default is the EventRunner for StatesHistoryModule, just send all incoming events to the network and receive events from transport and send them into StatesHistoryModule.
 
 ### Views Module
-##### Submodules: IViewsProvider
+##### Submodules: IViewsProvider (Implemented: GameObjectProvider, ParticlesProvider, DrawMeshProvider)
 Synchronizing current world state to views. Automatically destroy and create views (with pools), sync with current entities state and process all ticks correctly to restore visual state even objects already destroyed for a long time ago.
 <br>
 <br>
@@ -125,6 +125,7 @@ this.world.SaveResetState();
 - Add auto sync on packets drop (UDP) <b>(20% done)</b>
 - Views module <b>(100% done)</b>
 - Implement UnityGameObjectProvider <b>(100% done)</b>
-- Implement UnityParticlesProvider <b>(90% done)</b>
-- Add particle system simulation support on state change <b>(0% done)</b>
-- Rendering system <b>(0% done)</b>
+- Implement UnityParticlesProvider <b>(90% done)</b> - only MeshFilter/MeshRenderer support added
+- Implement UnityDrawMeshProvider <b>(90% done)</b> - only MeshFilter/MeshRenderer support added
+- Add particle system simulation support on state change <b>(100% done)</b>
+- Add multithreading in World class <b>(5% done)</b>

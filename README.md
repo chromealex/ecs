@@ -22,7 +22,7 @@ By default is the EventRunner for StatesHistoryModule, just send all incoming ev
 
 ### Views Module
 ##### Submodules: IViewsProvider
-Synchronizing current world state to views. Automatically destroy and create views (with pools), sync with current entities state and process all ticks correctly to restore visual state even objects already destroyed for long time ago.
+Synchronizing current world state to views. Automatically destroy and create views (with pools), sync with current entities state and process all ticks correctly to restore visual state even objects already destroyed for a long time ago.
 <br>
 <br>
 
@@ -67,6 +67,9 @@ this.pointViewSourceId = this.world.RegisterViewSource<Point, UnityGameObjectPro
 // Register unit source prefab with custom views provider
 // Particles (Will draw particles instead of regular GameObjects)
 this.unitViewSourceId = this.world.RegisterViewSource<Unit, UnityParticlesProvider>(this.unitSource);
+// Register unit source prefab with auto views provider
+// Here provider should be choosen by unitSource2 type
+this.unitViewSourceId2 = this.world.RegisterViewSource<Unit>(this.unitSource2);
 ...
 ```
 
@@ -122,6 +125,6 @@ this.world.SaveResetState();
 - Add auto sync on packets drop (UDP) <b>(20% done)</b>
 - Views module <b>(100% done)</b>
 - Implement UnityGameObjectProvider <b>(100% done)</b>
-- Implement UnityParticlesProvider <b>(0% done)</b>
+- Implement UnityParticlesProvider <b>(90% done)</b>
 - Add particle system simulation support on state change <b>(0% done)</b>
 - Rendering system <b>(0% done)</b>

@@ -58,7 +58,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 113d34b0eaa3e49d985f194b205e32bb, type: 2}
+  - {fileID: 2100000, guid: 2a0715ce41a004451a6e78afe67b7d24, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -91,5 +91,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8c0ebe3882ea49f0b46f30915da5eed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  particleSystemSimulation:
+    particleItems: []
   cubeRenderer: {fileID: 201435987506025184}
   lerpSpeed: 3

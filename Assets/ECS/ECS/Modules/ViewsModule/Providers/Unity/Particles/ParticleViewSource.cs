@@ -1,7 +1,7 @@
 ﻿
 namespace ME.ECS.Views.Providers {
 
-    public abstract class ParticleViewSourceBase : UnityEngine.MonoBehaviour {
+    public abstract class ParticleViewSourceBase : UnityEngine.MonoBehaviour, IDoValidate {
 
         public abstract IView<TEntity> GetSource<TEntity>() where TEntity : struct, IEntity;
 
@@ -14,12 +14,6 @@ namespace ME.ECS.Views.Providers {
 
             this.DoValidate();
             
-        }
-
-        public override string ToString() {
-
-            return string.Empty;
-
         }
 
     }
@@ -35,6 +29,8 @@ namespace ME.ECS.Views.Providers {
         }
 
         public override void DoValidate() {
+            
+            base.DoValidate();
             
             var filters = this.GetComponentsInChildren<UnityEngine.MeshFilter>(true);
             var renderers = this.GetComponentsInChildren<UnityEngine.Renderer>(true);

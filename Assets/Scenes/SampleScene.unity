@@ -1350,7 +1350,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 454549112}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd66c6dc5e27544319f1288591da2645, type: 3}
+  m_Script: {fileID: 11500000, guid: c7479464599b144369d45e60d5cb609b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   worldId: 4
@@ -1359,9 +1359,13 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 1, g: 0, b: 0.8074565, a: 1}
   moveSide: -5
-  pointSourceGameObject: {fileID: 0}
-  unitSource: {fileID: 0}
-  unitSource2: {fileID: 0}
+  spawnUnitsCount: 50
+  pointSourceGameObject: {fileID: 2105549586136035286, guid: ab92300c32f7749d4ae7e9a0433f74a5,
+    type: 3}
+  unitSource: {fileID: 4210135071268562874, guid: 984fd4d99ea6f4c3aa20fcf3d6c697e0,
+    type: 3}
+  unitSource2: {fileID: 201435987506025186, guid: 289dd41642ed94500861777634de8588,
+    type: 3}
 --- !u!4 &454549114
 Transform:
   m_ObjectHideFlags: 0
@@ -1874,7 +1878,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 770091045}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd66c6dc5e27544319f1288591da2645, type: 3}
+  m_Script: {fileID: 11500000, guid: c7479464599b144369d45e60d5cb609b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   worldId: 2
@@ -1883,11 +1887,12 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 0, g: 0.43311167, b: 1, a: 1}
   moveSide: -5
-  pointSourceGameObject: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
+  spawnUnitsCount: 50
+  pointSourceGameObject: {fileID: 2105549586136035286, guid: ab92300c32f7749d4ae7e9a0433f74a5,
     type: 3}
-  unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
+  unitSource: {fileID: 4210135071268562874, guid: 984fd4d99ea6f4c3aa20fcf3d6c697e0,
     type: 3}
-  unitSource2: {fileID: 9185774508740206016, guid: bfa11fdb5c27b478d806801a71e4fe4c,
+  unitSource2: {fileID: 201435987506025186, guid: 289dd41642ed94500861777634de8588,
     type: 3}
 --- !u!4 &770091047
 Transform:
@@ -3340,7 +3345,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1181779644}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd66c6dc5e27544319f1288591da2645, type: 3}
+  m_Script: {fileID: 11500000, guid: c7479464599b144369d45e60d5cb609b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   worldId: 3
@@ -3349,9 +3354,13 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 0.55580986, g: 1, b: 0, a: 1}
   moveSide: 5
-  pointSourceGameObject: {fileID: 0}
-  unitSource: {fileID: 0}
-  unitSource2: {fileID: 0}
+  spawnUnitsCount: 50
+  pointSourceGameObject: {fileID: 2105549586136035286, guid: ab92300c32f7749d4ae7e9a0433f74a5,
+    type: 3}
+  unitSource: {fileID: 4210135071268562874, guid: 984fd4d99ea6f4c3aa20fcf3d6c697e0,
+    type: 3}
+  unitSource2: {fileID: 201435987506025186, guid: 289dd41642ed94500861777634de8588,
+    type: 3}
 --- !u!4 &1181779646
 Transform:
   m_ObjectHideFlags: 0
@@ -5127,7 +5136,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2083166760}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd66c6dc5e27544319f1288591da2645, type: 3}
+  m_Script: {fileID: 11500000, guid: c7479464599b144369d45e60d5cb609b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   worldId: 1
@@ -5136,11 +5145,12 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 1, g: 0, b: 0, a: 1}
   moveSide: 5
-  pointSourceGameObject: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
+  spawnUnitsCount: 50
+  pointSourceGameObject: {fileID: 2105549586136035286, guid: ab92300c32f7749d4ae7e9a0433f74a5,
     type: 3}
-  unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
+  unitSource: {fileID: 4210135071268562874, guid: 984fd4d99ea6f4c3aa20fcf3d6c697e0,
     type: 3}
-  unitSource2: {fileID: 9185774508740206016, guid: bfa11fdb5c27b478d806801a71e4fe4c,
+  unitSource2: {fileID: 201435987506025186, guid: 289dd41642ed94500861777634de8588,
     type: 3}
 --- !u!4 &2083166762
 Transform:

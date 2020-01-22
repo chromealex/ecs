@@ -12,7 +12,9 @@ namespace ME.ECS {
 
         ViewId RegisterViewSource<TEntity>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity;
         ViewId RegisterViewSource<TEntity, TProvider>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider;
+        ViewId RegisterViewSource<TEntity>(MonoBehaviourViewBase prefab) where TEntity : struct, IEntity;
         void InstantiateView<TEntity>(UnityEngine.GameObject prefab, Entity entity) where TEntity : struct, IEntity;
+        void InstantiateView<TEntity>(MonoBehaviourViewBase prefab, Entity entity) where TEntity : struct, IEntity;
 
     }
 
@@ -40,6 +42,13 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ViewId RegisterViewSource<TEntity>(MonoBehaviourViewBase prefab) where TEntity : struct, IEntity {
+
+            return this.RegisterViewSource<TEntity, UnityGameObjectProvider>((IView<TEntity>)prefab);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void InstantiateView<TEntity>(UnityEngine.GameObject prefab, Entity entity) where TEntity : struct, IEntity {
 
             IView<TEntity> component;
@@ -48,6 +57,13 @@ namespace ME.ECS {
                 this.InstantiateView(component, entity);
 
             }
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void InstantiateView<TEntity>(MonoBehaviourViewBase prefab, Entity entity) where TEntity : struct, IEntity {
+
+            this.InstantiateView((IView<TEntity>)prefab, entity);
 
         }
 
@@ -99,8 +115,39 @@ namespace ME.ECS.Views.Providers {
 
     using ME.ECS;
     using ME.ECS.Views;
-    
-    public abstract class MonoBehaviourView<TEntity> : UnityEngine.MonoBehaviour, IView<TEntity> where TEntity : struct, IEntity {
+
+    public abstract class MonoBehaviourViewBase : UnityEngine.MonoBehaviour, IDoValidate {
+
+        public ParticleSystemSimulation particleSystemSimulation;
+
+        public void SimulateParticles(float time) {
+            
+            this.particleSystemSimulation.SimulateParticles(time);
+            
+        }
+
+        [UnityEngine.ContextMenu("Validate")]
+        public void DoValidate() {
+            
+            this.particleSystemSimulation.OnValidate(this.GetComponentsInChildren<UnityEngine.ParticleSystem>(true));
+            
+        }
+
+        public void OnValidate() {
+            
+            this.DoValidate();
+            
+        }
+
+        public override string ToString() {
+
+            return this.particleSystemSimulation.ToString();
+            
+        }
+
+    }
+
+    public abstract class MonoBehaviourView<TEntity> : MonoBehaviourViewBase, IView<TEntity> where TEntity : struct, IEntity {
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
@@ -113,6 +160,14 @@ namespace ME.ECS.Views.Providers {
     
     public class UnityGameObjectProvider<TEntity> : ViewsProvider<TEntity> where TEntity : struct, IEntity {
 
+        public override void OnConstruct() {
+
+        }
+
+        public override void OnDeconstruct() {
+            
+        }
+        
         public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {
 
             return PoolGameObject.Spawn((MonoBehaviourView<TEntity>)prefab, prefabSourceId);

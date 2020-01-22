@@ -99,7 +99,8 @@ namespace ME.ECS.Views {
         void OnInitialize(in T data);
         void OnDeInitialize(in T data);
         void ApplyState(in T data, float deltaTime, bool immediately);
-        
+        void SimulateParticles(float time);
+
     }
 
     public interface IViewModuleBase : IModuleBase {
@@ -117,6 +118,12 @@ namespace ME.ECS.Views {
         void InstantiateView(IView<TEntity> prefab, Entity entity);
         void InstantiateView(ViewId prefabSourceId, Entity entity);
         void DestroyView(ref IView<TEntity> instance);
+
+    }
+
+    public class ViewRegistryNotFoundException : System.Exception {
+
+        public ViewRegistryNotFoundException(ViewId sourceViewId) : base("[Views] View with id " + sourceViewId.ToString() + " not found in registry. Have you called RegisterViewSource()?") {}
 
     }
 
@@ -178,7 +185,8 @@ namespace ME.ECS.Views {
 
             public Entity entity;
             public ViewId prefabSourceId;
-            
+            public Tick creationTick;
+
         }
 
         private List<IView<TEntity>> list;
@@ -230,9 +238,16 @@ namespace ME.ECS.Views {
 
             }
 
+            if (this.registryIdToPrefab.ContainsKey(sourceId) == false) {
+
+                throw new ViewRegistryNotFoundException(sourceId);
+
+            }
+
             var viewInfo = new ViewInfo();
             viewInfo.entity = entity;
             viewInfo.prefabSourceId = sourceId;
+            viewInfo.creationTick = this.world.GetTick();
 
             var component = this.world.AddComponent<TEntity, ViewComponent>(entity);
             component.viewInfo = viewInfo;
@@ -354,7 +369,9 @@ namespace ME.ECS.Views {
             ++this.viewSourceIdRegistry;
             this.registryPrefabToId.Add(prefab, this.viewSourceIdRegistry);
             this.registryIdToPrefab.Add(this.viewSourceIdRegistry, prefab);
-            this.registryPrefabToProvider.Add(this.viewSourceIdRegistry, new TProvider().Create<TEntity>());
+            var provider = new TProvider().Create<TEntity>();
+            provider.OnConstruct();
+            this.registryPrefabToProvider.Add(this.viewSourceIdRegistry, provider);
             this.registryPrefabToProviderBase.Add(this.viewSourceIdRegistry, new TProvider());
 
             return this.viewSourceIdRegistry;
@@ -372,7 +389,9 @@ namespace ME.ECS.Views {
             ViewId viewId;
             if (this.registryPrefabToId.TryGetValue(prefab, out viewId) == true) {
 
-                this.registryPrefabToProviderBase[viewId].Destroy(this.registryPrefabToProvider[viewId]);
+                var provider = this.registryPrefabToProvider[viewId];
+                provider.OnDeconstruct();
+                this.registryPrefabToProviderBase[viewId].Destroy(provider);
                 this.registryPrefabToProviderBase.Remove(viewId);
                 this.registryPrefabToProvider.Remove(viewId);
                 this.registryPrefabToId.Remove(prefab);
@@ -463,7 +482,10 @@ namespace ME.ECS.Views {
                         // We need to create component view for entity
                         var instance = this.SpawnView_INTERNAL(component.viewInfo);
                         // Call ApplyState with deltaTime = current time offset
-                        instance.ApplyState(item, 0f, immediately: true);
+                        var dt = UnityEngine.Mathf.Max(0f, (this.world.GetTick() - component.viewInfo.creationTick) * this.world.GetTickTime());
+                        instance.ApplyState(item, dt, immediately: true);
+                        // Simulate particle systems
+                        instance.SimulateParticles(dt);
                         
                     }
 

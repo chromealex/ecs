@@ -22,16 +22,12 @@ namespace ME.Example.Game {
         public float moveSide;
         public int spawnUnitsCount = 10;
 
-        public ParticleViewSourceBase pointSourceGameObject;
-        public ParticleViewSourceBase unitSource;
-        public ParticleViewSourceBase unitSource2;
-        
         public World<State> world;
         private IState<State> savedState;
 
-        private ViewId pointViewSourceId;
-        private ViewId unitViewSourceId;
-        private ViewId unitViewSourceId2;
+        protected ViewId pointViewSourceId;
+        protected ViewId unitViewSourceId;
+        protected ViewId unitViewSourceId2;
 
         public void Update() {
 
@@ -52,11 +48,9 @@ namespace ME.Example.Game {
                 }
 
                 this.world.SetState(WorldUtilities.CreateState<State>());
-
-                this.pointViewSourceId = this.world.RegisterViewSource<Point>(this.pointSourceGameObject);
-                this.unitViewSourceId = this.world.RegisterViewSource<Unit>(this.unitSource);
-                this.unitViewSourceId2 = this.world.RegisterViewSource<Unit>(this.unitSource2);
                 
+                this.RegisterViewSources();
+
                 var p1 = this.world.AddEntity(new Point() { position = this.transform.position + new Vector3(0f, 0f, 3f), scale = Vector3.one, unitsCount = 99f, increaseRate = 1f });
                 var p2 = this.world.AddEntity(new Point() { position = this.transform.position + new Vector3(0f, 0f, -3f), scale = Vector3.one, unitsCount = 1f, increaseRate = 1f });
                 
@@ -77,6 +71,10 @@ namespace ME.Example.Game {
 
             }
 
+        }
+
+        public virtual void RegisterViewSources() {
+            
         }
 
         public void AddEventUIButtonClick(int pointId) {

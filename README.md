@@ -29,18 +29,32 @@ Synchronizing current world state to views. Automatically destroy and create vie
 
 ## How It Works
 ![](Readme/HowItWorks.png?raw=true "How It Works")
-#### World
+#### World (```IWorld<TState>```)
 The container for all components like modules, systems, etc.
-#### State
-User-side data storage. Just need to implement a couple of methods.
-#### Modules
-Modules are living out of the determinism, runing according on world time.
-#### Systems
-Systems are living inside of the determinism, but could implement two variants of Deterministic and Non-Deterministic logic (for example user inputs).
-#### Entities
-Entities are not the same like in a normal ECS architecture, in ME.ECS Entities are structs of data without any methods (Data Containers).
-#### Components
-Components like a functions has some data to apply on tick, working with a certain Entity type.
+You can store multiple worlds with different states, entities, components, modules and systems.
+
+#### State (```IState<TState>```)
+User-side data storage. Just need to implement a couple of methods:
+<br>
+```csharp
+int GetHash() // If possible returns the most unique hash
+void Initialize(IWorld<State> world, bool freeze, bool restore) // Register all filter and component storages in the world
+void CopyFrom(State other) // copies other state into current
+void OnRecycle() // return all used resources into pools
+```
+<br>
+
+#### Modules (```IModule<TState>```)
+Modules do visual update on the beginning of the frame and on the beginning of every tick.
+
+#### Systems (```ISystem<TState>```)
+Systems do visual update at the end of the frame and on the ending of every tick.
+
+#### Entities (```IEntity```)
+Entities are storing base data of your objects like position, rotation, user data, etc.
+
+#### Components (```IComponent<TEntity>```)
+Components are working with a certain Entity type and implements AdvanceTick (in which you can add logic of your tick) and CopyFrom. Or you can use components like a markers. Btw, you can use IComponentOnce interface to be sure all components removed at the end of current tick.
 <br>
 <br>
 

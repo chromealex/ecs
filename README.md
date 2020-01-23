@@ -6,7 +6,7 @@ In general ME.ECS should be used for multiplayer real-time strategy games games 
 
 ### Demo
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/360PyjjjZTE/0.jpg)](https://www.youtube.com/watch?v=360PyjjjZTE)
+[![](https://img.youtube.com/vi/360PyjjjZTE/0.jpg)](https://www.youtube.com/watch?v=360PyjjjZTE)
 
 (Click image to play)
 

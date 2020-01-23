@@ -132,5 +132,5 @@ this.world.SaveResetState();
 - Implement UnityParticlesProvider <b>(90% done)</b> - only MeshFilter/MeshRenderer support added
 - Implement UnityDrawMeshProvider <b>(90% done)</b> - only MeshFilter/MeshRenderer support added
 - Add particle system simulation support on state change <b>(100% done)</b>
-- Add multithreading support <b>(5% done)</b>
+- Add multithreading support <b>(15% done)</b>
 - Preformance refactoring <b>(70% done)</b>

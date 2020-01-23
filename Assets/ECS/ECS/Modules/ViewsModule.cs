@@ -258,7 +258,7 @@ namespace ME.ECS.Views {
 
             var component = this.world.AddComponent<TEntity, ViewComponent>(entity);
             component.viewInfo = viewInfo;
-
+            
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -573,11 +573,7 @@ namespace ME.ECS.Views {
             // Update providers
             foreach (var providerKv in this.registryPrefabToProvider) {
 
-                foreach (var item in this.list) {
-
-                    providerKv.Value.Update(item.Value, deltaTime);
-
-                }
+                providerKv.Value.Update(this.list, deltaTime);
 
             }
 

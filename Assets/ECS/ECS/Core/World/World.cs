@@ -58,9 +58,10 @@ namespace ME.ECS {
         private const int CAPACITIES_CAPACITY = 100;
         private const int ENTITIES_DIRECT_CACHE_CAPACITY = 100;
 
-        private static class EntitiesDirectCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
+        private static class EntitiesDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<long, T> dataByEntityId = new Dictionary<long, T>(World<TState>.ENTITIES_DIRECT_CACHE_CAPACITY);
+            internal static Dictionary<long, TEntity> dataByEntityId = new Dictionary<long, TEntity>(World<TState>.ENTITIES_DIRECT_CACHE_CAPACITY);
+            internal static Dictionary<int, List<TEntity>> entitiesList = new Dictionary<int, List<TEntity>>(4);
 
         }
 
@@ -76,8 +77,7 @@ namespace ME.ECS {
         private Dictionary<int, int> capacityCache;
 
         // State cache:
-        private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
-        //private Dictionary<EntityId, IEntity> entitiesDirectCache;
+        //private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
         private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
         private Dictionary<int, IComponents<TState>> componentsCache; // key = typeof(T:IData), value = list of T:Components
         
@@ -169,7 +169,7 @@ namespace ME.ECS {
             
             this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
-            this.entitiesCache = PoolDictionary<int, IList>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
+            //this.entitiesCache = PoolDictionary<int, IList>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
             this.filtersCache = PoolDictionary<int, IList>.Spawn(World<TState>.FILTERS_CAPACITY);
             this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
             this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
@@ -197,7 +197,7 @@ namespace ME.ECS {
             }
             PoolList<IModule<TState>>.Recycle(ref this.modules);
             
-            PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
+            //PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
             PoolDictionary<int, IList>.Recycle(ref this.filtersCache);
             PoolDictionary<int, IComponents<TState>>.Recycle(ref this.componentsCache);
             PoolDictionary<int, int>.Recycle(ref this.capacityCache);
@@ -347,24 +347,26 @@ namespace ME.ECS {
 
         }
 
-        public void UpdateFilters<T>() where T : IEntity {
+        public void UpdateFilters<TEntity>() where TEntity : struct, IEntity {
 
-            this.UpdateFilters<T>(WorldUtilities.GetKey<T>());
+            this.UpdateFilters<TEntity>(WorldUtilities.GetKey<TEntity>());
 
         }
 
-        public void UpdateFilters<T>(int code) where T : IEntity {
+        public void UpdateFilters<TEntity>(int code) where TEntity : struct, IEntity {
 
-            IList listEntities;
-            this.entitiesCache.TryGetValue(code, out listEntities);
+            List<TEntity> listEntities;
+            if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out listEntities) == true) {
 
-            IList listFilters;
-            if (this.filtersCache.TryGetValue(code, out listFilters) == true) {
+                IList listFilters;
+                if (this.filtersCache.TryGetValue(code, out listFilters) == true) {
 
-                for (int i = 0, count = listFilters.Count; i < count; ++i) {
+                    for (int i = 0, count = listFilters.Count; i < count; ++i) {
 
-                    var filter = (Filter<T>)listFilters[i];
-                    filter.SetData((List<T>)listEntities);
+                        var filter = (Filter<TEntity>)listFilters[i];
+                        filter.SetData(listEntities);
+
+                    }
 
                 }
 
@@ -397,7 +399,7 @@ namespace ME.ECS {
 
             //UnityEngine.Debug.Log(UnityEngine.Time.frameCount + " World SetState(): " + state.tick);
             
-            this.entitiesCache.Clear();
+            //this.entitiesCache.Clear();
             //this.entitiesDirectCache.Clear();
             this.filtersCache.Clear();
             this.componentsCache.Clear();
@@ -458,22 +460,22 @@ namespace ME.ECS {
 
             if (data.entity.id == 0) data.entity = this.CreateNewEntity<T>();
 
-            var code = WorldUtilities.GetKey(data);
-            IList list;
-            if (this.entitiesCache.TryGetValue(code, out list) == true) {
+            List<T> entitiesList;
+            if (EntitiesDirectCache<TState, T>.entitiesList.TryGetValue(this.id, out entitiesList) == false) {
 
-                ((List<T>)list).Add(data);
+                entitiesList = PoolList<T>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
+                entitiesList.Add(data);
+                EntitiesDirectCache<TState, T>.entitiesList.Add(this.id, entitiesList);
 
             } else {
-
-                list = PoolList<T>.Spawn(this.GetCapacity<T>(code));
-                ((List<T>)list).Add(data);
-                this.entitiesCache.Add(code, list);
-
+                
+                entitiesList.Add(data);
+                
             }
-
+            
             if (updateFilters == true) {
 
+                var code = WorldUtilities.GetKey(data);
                 this.UpdateFilters<T>(code);
 
             }
@@ -484,40 +486,14 @@ namespace ME.ECS {
 
         }
 
-        public void RemoveEntities<TEntity>(TEntity data) where TEntity : struct, IEntity {
-
-            var key = MathUtils.GetKey(this.id, data.entity.id);
-            if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
-
-                var code = WorldUtilities.GetKey(data);
-                IList list;
-                if (this.entitiesCache.TryGetValue(code, out list) == true) {
-
-                    this.DestroyEntityPlugins<TEntity>(data.entity);
-                    ((List<TEntity>)list).Remove(data);
-                    this.RemoveComponents(data.entity);
-
-                }
-
-            }
-
-        }
-
         public void ForEachEntity<TEntity>(List<TEntity> output) where TEntity : struct, IEntity {
 
             output.Clear();
-            
-            var code = WorldUtilities.GetKey<TEntity>();
-            IList list;
-            if (this.filtersCache.TryGetValue(code, out list) == true) {
-
-                var filters = (List<Filter<TEntity>>)list;
-                for (int i = 0, count = filters.Count; i < count; ++i) {
-                    
-                    output.AddRange(filters[i].GetData());
-                    
-                }
-
+            List<TEntity> listEntities;
+            if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out listEntities) == true) {
+                
+                output.AddRange(listEntities);
+                
             }
 
         }
@@ -529,18 +505,35 @@ namespace ME.ECS {
 
         }
 
+        public void RemoveEntities<TEntity>(TEntity data) where TEntity : struct, IEntity {
+
+            var key = MathUtils.GetKey(this.id, data.entity.id);
+            if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
+
+                List<TEntity> listEntities;
+                if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out listEntities) == true) {
+                
+                    this.DestroyEntityPlugins<TEntity>(data.entity);
+                    listEntities.Remove(data);
+                    this.RemoveComponents(data.entity);
+
+                }
+
+            }
+
+        }
+
         public void RemoveEntity<TEntity>(Entity entity) where TEntity : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, entity.id);
             if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
 
-                var code = WorldUtilities.GetKey(entity);
-                IList list;
-                if (this.entitiesCache.TryGetValue(code, out list) == true) {
-
+                List<TEntity> list;
+                if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out list) == true) {
+                    
                     for (int i = 0, count = list.Count; i < count; ++i) {
 
-                        if (((IEntity)list[i]).entity.id == entity.id) {
+                        if (list[i].entity.id == entity.id) {
 
                             this.DestroyEntityPlugins<TEntity>(entity);
                             list.RemoveAt(i);
@@ -550,7 +543,7 @@ namespace ME.ECS {
                         }
 
                     }
-
+                    
                 }
 
             }
@@ -795,13 +788,13 @@ namespace ME.ECS {
 
                 var item = (Components<TEntity, TState>)componentsContainer;
                 var dic = item.GetData();
-                List<IComponent<TState, TEntity>> components;
+                HashSet<IComponent<TState, TEntity>> components;
                 if (dic.TryGetValue(data.entity.id, out components) == true) {
 
-                    for (int j = 0, count = components.Count; j < count; ++j) {
-
-                        components[j].AdvanceTick(this.currentState, ref data, deltaTime, index);
-
+                    foreach (var listItem in components) {
+                        
+                        listItem.AdvanceTick(this.currentState, ref data, deltaTime, index);
+                        
                     }
 
                 }
@@ -818,33 +811,49 @@ namespace ME.ECS {
             
             var state = this.GetState();
             
+            // Setup current static variables
             Worlds.currentWorld = this;
             Worlds<TState>.currentWorld = this;
             Worlds<TState>.currentState = state;
 
+            // Update time
             var prevTick = state.tick;
             this.timeSinceStart += deltaTime;
             if (this.timeSinceStart < 0d) this.timeSinceStart = 0d;
 
+            ////////////////
             this.currentStep = WorldStep.ModulesVisualTick;
-            
-            for (int i = 0, count = this.modules.Count; i < count; ++i) {
-                
-                this.modules[i].Update(state, deltaTime);
-                
+            ////////////////
+            {
+
+                for (int i = 0, count = this.modules.Count; i < count; ++i) {
+
+                    this.modules[i].Update(state, deltaTime);
+
+                }
+
             }
-            
+
+            ////////////////
+            // Update Logic Tick
+            ////////////////
             this.Simulate(prevTick + 1, state.tick + 1);
 
+            ////////////////
             this.currentStep = WorldStep.SystemsVisualTick;
-            
-            for (int i = 0, count = this.systems.Count; i < count; ++i) {
-                
-                this.systems[i].Update(state, deltaTime);
-                
+            ////////////////
+            {
+
+                for (int i = 0, count = this.systems.Count; i < count; ++i) {
+
+                    this.systems[i].Update(state, deltaTime);
+
+                }
+
             }
-            
+            ////////////////
             this.currentStep = WorldStep.None;
+            ////////////////
             
         }
 
@@ -853,50 +862,63 @@ namespace ME.ECS {
             if (from > to) {
 
                 //UnityEngine.Debug.LogError( UnityEngine.Time.frameCount + " From: " + from + ", To: " + to);
-                //((IWorldBase)this).Simulate(currentTick);
                 return;
 
             }
 
             var state = this.GetState();
             
-            //UnityEngine.Debug.LogWarning("Simulate[" + this.id + "]: " + from + " >> " + to);
             var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
             for (Tick tick = from; tick < to; ++tick) {
 
                 state.tick = tick;
                 
+                ////////////////
                 this.currentStep = WorldStep.ModulesLogicTick;
-                
-                for (int i = 0, count = this.modules.Count; i < count; ++i) {
+                ////////////////
+                {
+                    
+                    for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
-                    this.modules[i].AdvanceTick(state, fixedDeltaTime);
+                        this.modules[i].AdvanceTick(state, fixedDeltaTime);
 
+                    }
+                    
                 }
-
+                ////////////////
                 this.currentStep = WorldStep.PluginsLogicTick;
-                
-                //UnityEngine.Debug.Log("Begin tick: " + tick);
-                this.PlayPluginsForTick(tick);
-                
+                ////////////////
+                {
+                    
+                    this.PlayPluginsForTick(tick);
+                    
+                }
+                ////////////////
                 this.currentStep = WorldStep.SystemsLogicTick;
-                
-                for (int i = 0, count = this.systems.Count; i < count; ++i) {
+                ////////////////
+                {
+                    
+                    for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
-                    this.systems[i].AdvanceTick(state, fixedDeltaTime);
+                        this.systems[i].AdvanceTick(state, fixedDeltaTime);
+
+                    }
 
                 }
-                
-                this.RemoveComponents<IComponentOnceBase>();
 
-                //UnityEngine.Debug.Log("End tick: " + tick);
+                this.RemoveComponentsOnce<IComponentOnceBase>();
 
             }
             
+            ////////////////
             this.currentStep = WorldStep.PluginsLogicSimulate;
-            
-            this.SimulatePluginsForTicks(from, to);
-            
+            ////////////////
+            {
+                
+                this.SimulatePluginsForTicks(from, to);
+                
+            }
+
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -1052,15 +1074,18 @@ namespace ME.ECS {
 
         public TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
 
+            var code = WorldUtilities.GetKey(entity);
+            IComponents<TState> components;
+            var result = false;
             lock (this.componentsCache) {
 
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> components;
-                if (this.componentsCache.TryGetValue(code, out components) == true) {
+                result = this.componentsCache.TryGetValue(code, out components);
+            
+            }
 
-                    return ((Components<TEntity, TState>)components).GetFirst<TComponent>(entity);
+            if (result == true) {
 
-                }
+                return ((Components<TEntity, TState>)components).GetFirst<TComponent>(entity);
 
             }
 
@@ -1070,16 +1095,19 @@ namespace ME.ECS {
 
         public void ForEachComponent<TEntity, TComponent>(Entity entity, List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
 
+            output.Clear();
+            var code = WorldUtilities.GetKey(entity);
+            IComponents<TState> components;
+            var result = false;
             lock (this.componentsCache) {
+                
+                result = this.componentsCache.TryGetValue(code, out components);
+                
+            }
 
-                output.Clear();
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> components;
-                if (this.componentsCache.TryGetValue(code, out components) == true) {
+            if (result == true) {
 
-                    ((Components<TEntity, TState>)components).ForEach(entity, output);
-
-                }
+                ((Components<TEntity, TState>)components).ForEach(entity, output);
 
             }
 
@@ -1111,20 +1139,49 @@ namespace ME.ECS {
         }
 
         /// <summary>
+        /// Check is component exists on entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
+        public bool HasComponentOnce<TEntity, TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> where TEntity : struct, IEntity {
+
+            lock (this.componentsCache) {
+
+                var code = WorldUtilities.GetKey(entity);
+                IComponents<TState> components;
+                if (this.componentsCache.TryGetValue(code, out components) == true) {
+
+                    return ((Components<TEntity, TState>)components).ContainsOnce<TComponent>(entity);
+
+                }
+
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
         /// Remove all components from certain entity
         /// </summary>
         /// <param name="entity"></param>
         public void RemoveComponents(Entity entity) {
 
+            var code = WorldUtilities.GetKey(entity);
+            IComponents<TState> componentsContainer;
+
+            bool result;
             lock (this.componentsCache) {
 
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> componentsContainer;
-                if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
+                result = this.componentsCache.TryGetValue(code, out componentsContainer);
 
-                    componentsContainer.RemoveAll(entity);
+            }
 
-                }
+            if (result == true) {
+
+                componentsContainer.RemoveAll(entity);
 
             }
 
@@ -1171,6 +1228,26 @@ namespace ME.ECS {
         }
 
         /// <summary>
+        /// Remove all components with type from certain entity
+        /// </summary>
+        /// <param name="entity"></param>
+        public void RemoveComponentsOnce<TComponent>(Entity entity) where TComponent : class, IComponentOnceBase {
+
+            lock (this.componentsCache) {
+
+                var code = WorldUtilities.GetKey(entity);
+                IComponents<TState> componentsContainer;
+                if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
+
+                    componentsContainer.RemoveAllOnce<TComponent>(entity);
+
+                }
+
+            }
+
+        }
+
+        /// <summary>
         /// Remove all components with type TComponent from all entities
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
@@ -1181,6 +1258,24 @@ namespace ME.ECS {
                 foreach (var components in this.componentsCache) {
 
                     components.Value.RemoveAll<TComponent>();
+
+                }
+
+            }
+
+        }
+
+        /// <summary>
+        /// Remove all components with type TComponent from all entities
+        /// </summary>
+        /// <typeparam name="TComponent"></typeparam>
+        public void RemoveComponentsOnce<TComponent>() where TComponent : class, IComponentOnceBase {
+
+            lock (this.componentsCache) {
+
+                foreach (var components in this.componentsCache) {
+
+                    components.Value.RemoveAllOnce<TComponent>();
 
                 }
 

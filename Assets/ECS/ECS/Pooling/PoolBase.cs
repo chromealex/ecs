@@ -62,6 +62,7 @@ namespace ME.ECS {
 
 	    }
 
+	    [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	    public virtual void Prewarm(int count) {
 
 		    for (int i = 0; i < count; ++i) {
@@ -72,6 +73,7 @@ namespace ME.ECS {
 
 	    }
 
+	    [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	    public virtual object Spawn() {
 		    
 		    object item = null;
@@ -97,6 +99,7 @@ namespace ME.ECS {
 
 	    }
 
+	    [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	    public virtual void Recycle(object instance) {
 		    
 		    if (this.desctructor != null) {

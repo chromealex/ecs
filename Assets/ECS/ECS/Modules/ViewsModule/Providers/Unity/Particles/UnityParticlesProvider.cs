@@ -122,9 +122,10 @@ namespace ME.ECS.Views.Providers {
                 this.items[0].particleData = value;
                 for (int i = 1; i < this.items.Length; ++i) {
 
-                    this.items[i].particleData.position = value.position + this.items[i].itemData.localPosition;
-                    this.items[i].particleData.rotation3D = value.rotation3D + this.items[i].itemData.localRotation;
-                    this.items[i].particleData.startSize3D = UnityEngine.Vector3.Scale(value.startSize3D, this.items[i].itemData.localScale);
+                    ref var item = ref this.items[i];
+                    item.particleData.position = value.position + item.itemData.localPosition;
+                    item.particleData.rotation3D = value.rotation3D + item.itemData.localRotation;
+                    item.particleData.startSize3D = UnityEngine.Vector3.Scale(value.startSize3D, item.itemData.localScale);
 
                 }
 
@@ -333,11 +334,10 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public override void Update(System.Collections.Generic.List<IView<TEntity>> list, float deltaTime) {
+        public override void Update(System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {
             
             this.ValidateParticles();
             
-            var count = list.Count;
             foreach (var item in this.psItems) {
                 
                 var k = 0;
@@ -345,23 +345,29 @@ namespace ME.ECS.Views.Providers {
                 var ps = psItem.ps;
                 psItem.psRenderer.mesh = psItem.GetMesh();
                 //ps.GetParticles(this.particles, this.maxParticles);
-                for (int i = 0; i < count; ++i) {
-                    
-                    var view = (ParticleViewBase)list[i];
-                    for (int j = 0; j < view.items.Length; ++j) {
-                        
-                        ref var element = ref view.items[j];
-                        if (element.itemData.ps == ps) {
+                foreach (var itemView in list) {
 
-                            element.particleData.remainingLifetime = float.MaxValue;
-                            element.particleData.startLifetime = float.MaxValue;
-                            this.particles[k++] = element.particleData;
+                    var itemsList = itemView.Value;
+                    var count = itemsList.Count;
+                    for (int i = 0; i < count; ++i) {
+                        
+                        var view = (ParticleViewBase)itemsList[i];
+                        for (int j = 0; j < view.items.Length; ++j) {
+                        
+                            ref var element = ref view.items[j];
+                            if (element.itemData.ps == ps) {
+
+                                element.particleData.remainingLifetime = float.MaxValue;
+                                element.particleData.startLifetime = float.MaxValue;
+                                this.particles[k++] = element.particleData;
+
+                            }
 
                         }
-
-                    }
                     
+                    }
                 }
+
                 ps.SetParticles(this.particles, k, 0);
                 
             }

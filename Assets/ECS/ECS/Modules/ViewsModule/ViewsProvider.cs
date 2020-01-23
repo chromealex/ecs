@@ -78,7 +78,7 @@ namespace ME.ECS.Views {
         IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId);
         void Destroy(ref IView<TEntity> instance);
 
-        void Update(System.Collections.Generic.List<IView<TEntity>> list, float deltaTime);
+        void Update(System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime);
 
     }
 
@@ -90,7 +90,7 @@ namespace ME.ECS.Views {
         public abstract IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId);
         public abstract void Destroy(ref IView<TEntity> instance);
 
-        public virtual void Update(System.Collections.Generic.List<IView<TEntity>> list, float deltaTime) {}
+        public virtual void Update(System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {}
 
     }
 

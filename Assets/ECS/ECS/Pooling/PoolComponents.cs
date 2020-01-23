@@ -91,6 +91,17 @@ namespace ME.ECS {
 
 	    }
 
+	    public static void Recycle<TComponent>(HashSet<TComponent> list) where TComponent : class, IComponentBase {
+
+		    foreach (var item in list) {
+			    
+			    PoolComponents.Recycle(item);
+			    
+		    }
+		    list.Clear();
+
+	    }
+
     }
 
 }

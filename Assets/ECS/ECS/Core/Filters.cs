@@ -23,6 +23,7 @@ namespace ME.ECS {
 
         public int Count {
 
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
 
                 return this.list.Count;
@@ -32,9 +33,11 @@ namespace ME.ECS {
         }
         
         public T this[int index] {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return this.list[index];
             }
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             set {
                 this.list[index] = value;
             }
@@ -60,12 +63,14 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public List<T> GetData() {
 
             return this.list;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetData(List<T> data) {
 
             if (this.freeze == false && data != null && this.list != data) {

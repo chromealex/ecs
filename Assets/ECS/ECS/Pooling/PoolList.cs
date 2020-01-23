@@ -3,6 +3,36 @@
 namespace ME.ECS {
 
 	#if ECS_COMPILE_IL2CPP_OPTIONS
+	[Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+	#endif
+	public static class PoolHashSet<TValue> {
+
+		private static PoolInternalBase pool = new PoolInternalBase(() => new HashSet<TValue>(), (x) => ((HashSet<TValue>)x).Clear());
+
+		public static HashSet<TValue> Spawn(int capacity = 0) {
+
+			return (HashSet<TValue>)PoolHashSet<TValue>.pool.Spawn();
+		    
+		}
+
+		public static void Recycle(ref List<TValue> dic) {
+
+			PoolHashSet<TValue>.pool.Recycle(dic);
+			dic = null;
+
+		}
+
+		public static void Recycle(HashSet<TValue> dic) {
+
+			PoolHashSet<TValue>.pool.Recycle(dic);
+
+		}
+
+	}
+
+	#if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]

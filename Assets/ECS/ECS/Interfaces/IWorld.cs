@@ -41,8 +41,8 @@ namespace ME.ECS {
         void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity;
         void Register<TEntity>(ref Filter<TEntity> filterRef, bool freeze, bool restore) where TEntity : struct, IEntity;
 
-        void UpdateFilters<T>() where T : IEntity;
-        void UpdateFilters<T>(int code) where T : IEntity;
+        void UpdateFilters<TEntity>() where TEntity : struct, IEntity;
+        void UpdateFilters<TEntity>(int code) where TEntity : struct, IEntity;
 
         void SetState(TState state);
         TState GetState();

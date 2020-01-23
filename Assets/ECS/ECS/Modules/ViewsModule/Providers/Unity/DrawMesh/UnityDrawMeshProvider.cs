@@ -298,40 +298,45 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public override void Update(System.Collections.Generic.List<IView<TEntity>> list, float deltaTime) {
+        public override void Update(System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {
             
             this.ValidateMatrices();
             
-            var count = list.Count;
             foreach (var item in this.psItems) {
                 
                 var k = 0;
                 var psItem = item.Value;
                 var mesh = psItem.GetMesh();
                 var material = psItem.material;
-                for (int i = 0; i < count; ++i) {
-                    
-                    var view = (DrawMeshViewBase)list[i];
-                    for (int j = 0; j < view.items.Length; ++j) {
-                        
-                        ref var element = ref view.items[j];
-                        if (element.itemData.GetMesh() == mesh && element.itemData.material == material) {
+                foreach (var itemView in list) {
 
-                            if (k >= this.maxMatrices) {
+                    var itemsList = itemView.Value;
+                    var count = itemsList.Count;
+                    for (int i = 0; i < count; ++i) {
 
-                                this.maxMatrices = k * 2;
-                                return;
-                                
+                        var view = (DrawMeshViewBase)itemsList[i];
+                        for (int j = 0; j < view.items.Length; ++j) {
+
+                            ref var element = ref view.items[j];
+                            if (element.itemData.GetMesh() == mesh && element.itemData.material == material) {
+
+                                if (k >= this.maxMatrices) {
+
+                                    this.maxMatrices = k * 2;
+                                    return;
+
+                                }
+
+                                this.matrices[k++] = element.drawMeshData.matrix;
+
                             }
-                            
-                            this.matrices[k++] = element.drawMeshData.matrix;
 
                         }
 
                     }
-                    
+
                 }
-                
+
                 if (mesh != null && material != null) UnityEngine.Graphics.DrawMeshInstanced(mesh, 0, psItem.material, this.matrices, k);
 
             }

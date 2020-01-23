@@ -7,9 +7,14 @@ namespace ME.ECS {
 
     public interface IComponents<TState> : IComponentsBase, IPoolableRecycle where TState : class, IState<TState> {
 
+        int Count { get; }
+        int CountOnce { get; }
+
         void RemoveAll(Entity entity);
         void RemoveAll<TComponent>(Entity entity) where TComponent : class, IComponentBase;
+        void RemoveAllOnce<TComponent>(Entity entity) where TComponent : class, IComponentOnceBase;
         void RemoveAll<TComponent>() where TComponent : class, IComponentBase;
+        void RemoveAllOnce<TComponent>() where TComponent : class, IComponentOnceBase;
 
         void RemoveAllPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
 
@@ -33,7 +38,16 @@ namespace ME.ECS {
     #endif
     public class Components<TEntity, TState> : IComponents<TState> where TEntity : struct, IEntity where TState : class, IState<TState> {
 
-        private Dictionary<EntityId, List<IComponent<TState, TEntity>>> dic;
+        private struct InternalComponentPredicateTrue<TComponent> : IComponentPredicate<TComponent> where TComponent : class, IComponentBase {
+
+            public bool Execute(TComponent data) {
+                return true;
+            }
+
+        }
+
+        private Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> dic;
+        private Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> dicOnce;
         private bool freeze;
         private int capacity;
 
@@ -42,11 +56,19 @@ namespace ME.ECS {
             foreach (var item in this.dic) {
                 
                 PoolComponents.Recycle(item.Value);
-                PoolList<IComponent<TState, TEntity>>.Recycle(item.Value);
+                PoolHashSet<IComponent<TState, TEntity>>.Recycle(item.Value);
                 
             }
-            PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Recycle(ref this.dic);
-            
+            PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Recycle(ref this.dic);
+
+            foreach (var item in this.dicOnce) {
+                
+                PoolComponents.Recycle(item.Value);
+                PoolHashSet<IComponent<TState, TEntity>>.Recycle(item.Value);
+                
+            }
+            PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Recycle(ref this.dicOnce);
+
             this.freeze = false;
             this.capacity = 0;
 
@@ -69,83 +91,123 @@ namespace ME.ECS {
 
         }
 
-        public void RemoveAllPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
-            
-            List<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+        public int CountOnce {
 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+            get {
 
-                    var listItem = list[i];
-                    if (listItem is TComponent listItemComponent) {
+                var count = 0;
+                foreach (var item in this.dicOnce) {
 
-                        if (predicate.Execute(listItemComponent) == true) {
+                    count += item.Value.Count;
 
-                            PoolComponents.Recycle(listItemComponent);
-                            list.RemoveAt(i);
-                            --i;
-                            --count;
-
-                        }
-
-                    }
-                    
                 }
 
+                return count;
+
+            }
+
+        }
+
+        public void RemoveAllPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
+            
+            HashSet<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                this.RemoveAll_INTERNAL<TComponent, TComponentPredicate>(list, predicate);
+                
             }
             
         }
 
         public void RemoveAll<TComponent>(Entity entity) where TComponent : class, IComponentBase {
             
-            List<IComponent<TState, TEntity>> list;
+            HashSet<IComponent<TState, TEntity>> list;
             if (this.dic.TryGetValue(entity.id, out list) == true) {
 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                this.RemoveAll_INTERNAL<TComponent>(list);
+                
+            }
+            
+        }
 
-                    var listItem = list[i];
-                    if (listItem is TComponent listItemComponent) {
-                        
-                        PoolComponents.Recycle(listItemComponent);
-                        list.RemoveAt(i);
-                        --i;
-                        --count;
+        public void RemoveAllOnce<TComponent>(Entity entity) where TComponent : class, IComponentOnceBase {
+            
+            HashSet<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
 
-                    }
-                    
-                }
-
+                this.RemoveAll_INTERNAL<TComponent>(list);
+                
             }
             
         }
 
         public void RemoveAll<TComponent>() where TComponent : class, IComponentBase {
 
-            foreach (var item in this.dic) {
+            this.RemoveAll_INTERNAL<TComponent>(this.dic);
+
+        }
+        
+        public void RemoveAllOnce<TComponent>() where TComponent : class, IComponentOnceBase {
+
+            this.RemoveAll_INTERNAL<TComponent>(this.dicOnce);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void RemoveAll_INTERNAL<TComponent>(Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> dic) where TComponent : class, IComponentBase {
+            
+            foreach (var item in dic) {
 
                 var list = item.Value;
-                for (int i = 0, count = list.Count; i < count; ++i) {
-
-                    var listItem = list[i];
-                    if (listItem is TComponent listItemComponent) {
-                        
-                        PoolComponents.Recycle(listItemComponent);
-                        list.RemoveAt(i);
-                        --i;
-                        --count;
-
-                    }
-                    
-                }
-
+                this.RemoveAll_INTERNAL<TComponent>(list);
+                
             }
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void RemoveAll_INTERNAL<TComponent>(HashSet<IComponent<TState, TEntity>> list) where TComponent : class, IComponentBase {
+            
+            this.RemoveAll_INTERNAL<TComponent, InternalComponentPredicateTrue<TComponent>>(list, new InternalComponentPredicateTrue<TComponent>());
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void RemoveAll_INTERNAL<TComponent, TComponentPredicate>(HashSet<IComponent<TState, TEntity>> list, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
+            
+            var ienum = list.GetEnumerator();
+            while (ienum.MoveNext() == true) {
+
+                var listItem = ienum.Current;
+                if (listItem is TComponent listItemComponent) {
+
+                    if (predicate.Execute(listItemComponent) == true) {
+                        
+                        PoolComponents.Recycle(listItemComponent);
+                        list.Remove(listItem);
+                        ienum.Dispose();
+                        ienum = list.GetEnumerator();
+
+                    }
+
+                }
+                    
+            }
+            ienum.Dispose();
+            
+        }
+
         public void RemoveAll(Entity entity) {
             
-            List<IComponent<TState, TEntity>> list;
+            HashSet<IComponent<TState, TEntity>> list;
             if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                PoolComponents.Recycle(list);
+                list.Clear();
+
+            }
+            
+            if (this.dicOnce.TryGetValue(entity.id, out list) == true) {
 
                 PoolComponents.Recycle(list);
                 list.Clear();
@@ -156,30 +218,63 @@ namespace ME.ECS {
 
         public void Add(Entity entity, IComponent<TState, TEntity> data) {
 
-            List<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            var dic = this.GetDictionary(data);
+            
+            HashSet<IComponent<TState, TEntity>> list;
+            if (dic.TryGetValue(entity.id, out list) == true) {
 
                 list.Add(data);
 
             } else {
 
-                list = PoolList<IComponent<TState, TEntity>>.Spawn(this.capacity);
+                list = PoolHashSet<IComponent<TState, TEntity>>.Spawn(this.capacity);
                 list.Add(data);
-                this.dic.Add(entity.id, list);
+                dic.Add(entity.id, list);
                 
+            }
+
+        }
+        
+        private Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> GetDictionary(IComponent<TState, TEntity> data) {
+
+            if (data is IComponentOnceBase) {
+
+                return this.dicOnce;
+
+            } else {
+
+                return this.dic;
+
             }
 
         }
 
         public TComponent GetFirst<TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> {
             
-            List<IComponent<TState, TEntity>> list;
+            HashSet<IComponent<TState, TEntity>> list;
             if (this.dic.TryGetValue(entity.id, out list) == true) {
 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                foreach (var listItem in list) {
+                    
+                    if (listItem is TComponent item) return item;
+                    
+                }
 
-                    if (list[i] is TComponent item) return item;
+            }
 
+            return null;
+
+        }
+
+        public TComponent GetFirstOnce<TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> {
+            
+            HashSet<IComponent<TState, TEntity>> list;
+            if (this.dicOnce.TryGetValue(entity.id, out list) == true) {
+
+                foreach (var listItem in list) {
+                    
+                    if (listItem is TComponent item) return item;
+                    
                 }
 
             }
@@ -190,30 +285,60 @@ namespace ME.ECS {
 
         public void ForEach<TComponent>(Entity entity, List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> {
             
-            List<IComponent<TState, TEntity>> list;
+            HashSet<IComponent<TState, TEntity>> list;
             if (this.dic.TryGetValue(entity.id, out list) == true) {
 
-                for (int i = 0, count = list.Count; i < count; ++i) {
-
-                    if (list[i] is TComponent item) output.Add(item);
-
+                foreach (var listItem in list) {
+                    
+                    if (listItem is TComponent item) output.Add(item);
+                    
                 }
 
             }
 
         }
 
-        public bool Contains<TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> {
+        public bool ContainsOnce<TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> {
 
-            List<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            HashSet<IComponent<TState, TEntity>> list;
+            if (this.dicOnce.TryGetValue(entity.id, out list) == true) {
 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                foreach (var listItem in list) {
 
-                    if (list[i] is TComponent) return true;
+                    if (listItem is TComponent) return true;
 
                 }
+                
+            }
+            
+            return false;
 
+        }
+
+        public bool ContainsOnce(Entity entity, IComponentOnce<TState, TEntity> data) {
+            
+            HashSet<IComponent<TState, TEntity>> list;
+            if (this.dicOnce.TryGetValue(entity.id, out list) == true) {
+
+                return list.Contains(data);
+
+            }
+
+            return false;
+
+        }
+
+        public bool Contains<TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> {
+
+            HashSet<IComponent<TState, TEntity>> list;
+            if (this.dic.TryGetValue(entity.id, out list) == true) {
+
+                foreach (var listItem in list) {
+
+                    if (listItem is TComponent) return true;
+
+                }
+                
             }
             
             return false;
@@ -222,7 +347,7 @@ namespace ME.ECS {
 
         public bool Contains(Entity entity, IComponent<TState, TEntity> data) {
             
-            List<IComponent<TState, TEntity>> list;
+            HashSet<IComponent<TState, TEntity>> list;
             if (this.dic.TryGetValue(entity.id, out list) == true) {
 
                 return list.Contains(data);
@@ -233,7 +358,7 @@ namespace ME.ECS {
 
         }
 
-        public Dictionary<EntityId, List<IComponent<TState, TEntity>>> GetData() {
+        public Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> GetData() {
 
             return this.dic;
 
@@ -242,7 +367,8 @@ namespace ME.ECS {
         public void Initialize(int capacity) {
 
             this.capacity = capacity;
-            this.dic = PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Spawn(capacity);
+            this.dic = PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Spawn(capacity);
+            this.dicOnce = PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Spawn(capacity);
 
         }
 
@@ -253,36 +379,42 @@ namespace ME.ECS {
         }
 
         public void CopyFrom(Components<TEntity, TState> other) {
+            
+            this.CopyFrom_INTERNAL(ref this.dic, other);
+            this.CopyFrom_INTERNAL(ref this.dicOnce, other);
+            
+        }
+        
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void CopyFrom_INTERNAL(ref Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> dic, Components<TEntity, TState> other) {
+            
+            if (dic != null) {
 
-            if (this.dic != null) {
-
-                foreach (var item in this.dic) {
+                foreach (var item in dic) {
 
                     PoolComponents.Recycle(item.Value);
-                    PoolList<IComponent<TState, TEntity>>.Recycle(item.Value);
+                    PoolHashSet<IComponent<TState, TEntity>>.Recycle(item.Value);
 
                 }
-                PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Recycle(ref this.dic);
+                PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Recycle(ref dic);
                 
             }
             
-            this.dic = PoolDictionary<EntityId, List<IComponent<TState, TEntity>>>.Spawn(this.capacity);
+            dic = PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Spawn(this.capacity);
             foreach (var item in other.dic) {
                 
-                var newList = PoolList<IComponent<TState, TEntity>>.Spawn(item.Value.Capacity);
+                var newList = PoolHashSet<IComponent<TState, TEntity>>.Spawn(item.Value.Count);
                 //UnityEngine.Debug.Log("CopyState for " + typeof(TEntity) + ", list: " + newList.Count + " << " + item.Value.Count);
-                for (int i = 0, count = item.Value.Count; i < count; ++i) {
-
-                    var element = item.Value[i];
+                foreach (var element in item.Value) {
+                    
                     var comp = (IComponent<TState, TEntity>)PoolComponents.Spawn(element.GetType());
                     if (comp == null) comp = (IComponent<TState, TEntity>)System.Activator.CreateInstance(element.GetType());
                     comp.CopyFrom(element);
                     newList.Add(comp);
-
+                    
                 }
-                //UnityEngine.Debug.Log("Result: " + newList.Count);
 
-                this.dic.Add(item.Key, newList);
+                dic.Add(item.Key, newList);
                 
             }
 

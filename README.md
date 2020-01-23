@@ -35,14 +35,12 @@ You can store multiple worlds with different states, entities, components, modul
 
 #### State (```IState<TState>```)
 User-side data storage. Just need to implement a couple of methods:
-<br>
 ```csharp
 int GetHash() // If possible returns the most unique hash
 void Initialize(IWorld<State> world, bool freeze, bool restore) // Register all filter and component storages in the world
 void CopyFrom(State other) // copies other state into current
 void OnRecycle() // return all used resources into pools
 ```
-<br>
 
 #### Modules (```IModule<TState>```)
 Modules do visual update on the beginning of the frame and on the beginning of every tick.

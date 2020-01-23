@@ -55,7 +55,7 @@ namespace ME.Example.Game.Systems {
                 deltaTime = deltaTime
             };
 
-            var jobHandle = job.Schedule(state.units.Count, 64);
+            var jobHandle = job.Schedule(state.units.Count, 1000);
             jobHandle.Complete();
 
             for (int i = state.units.Count - 1; i >= 0; --i) {

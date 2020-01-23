@@ -44,6 +44,9 @@ Components like a functions has some data to apply on tick, working with a certa
 <br>
 <br>
 
+## Update
+![](Readme/UpdateTick.png?raw=true "Update Tick")
+
 ## Example
 #### 1. World Initialization
 ```csharp

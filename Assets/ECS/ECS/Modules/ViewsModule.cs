@@ -189,7 +189,7 @@ namespace ME.ECS.Views {
 
         }
 
-        private List<IView<TEntity>> list;
+        private Dictionary<EntityId, List<IView<TEntity>>> list;
         private Dictionary<ViewId, IViewsProvider> registryPrefabToProviderBase;
         private Dictionary<ViewId, IViewsProvider<TEntity>> registryPrefabToProvider;
         private Dictionary<IView<TEntity>, ViewId> registryPrefabToId;
@@ -201,7 +201,7 @@ namespace ME.ECS.Views {
 
         void IModule<TState>.OnConstruct() {
 
-            this.list = PoolList<IView<TEntity>>.Spawn(ViewsModule<TState, TEntity>.VIEWS_CAPACITY);
+            this.list = PoolDictionary<EntityId, List<IView<TEntity>>>.Spawn(ViewsModule<TState, TEntity>.VIEWS_CAPACITY);
             this.registryPrefabToId = PoolDictionary<IView<TEntity>, ViewId>.Spawn(ViewsModule<TState, TEntity>.REGISTRY_CAPACITY);
             this.registryIdToPrefab = PoolDictionary<ViewId, IView<TEntity>>.Spawn(ViewsModule<TState, TEntity>.REGISTRY_CAPACITY);
 
@@ -217,7 +217,14 @@ namespace ME.ECS.Views {
             
             PoolDictionary<ViewId, IView<TEntity>>.Recycle(ref this.registryIdToPrefab);
             PoolDictionary<IView<TEntity>, ViewId>.Recycle(ref this.registryPrefabToId);
-            PoolList<IView<TEntity>>.Recycle(ref this.list);
+
+            foreach (var item in this.list) {
+                
+                PoolList<IView<TEntity>>.Recycle(item.Value);
+                
+            }
+
+            PoolDictionary<EntityId, List<IView<TEntity>>>.Recycle(ref this.list);
 
         }
 
@@ -309,15 +316,17 @@ namespace ME.ECS.Views {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void DestroyAllViews(Entity entity) {
-            
-            for (int i = 0, count = this.list.Count; i < count; ++i) {
 
-                var view = this.list[i];
-                if (view.entity.id == entity.id) {
+            List<IView<TEntity>> list;
+            if (this.list.TryGetValue(entity.id, out list) == true) {
 
+                for (int i = 0, count = list.Count; i < count; ++i) {
+                    
+                    var view = list[i];
                     this.DestroyView(ref view);
-
+                    
                 }
+                list.Clear();
 
             }
 
@@ -406,7 +415,19 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Register(IView<TEntity> instance) {
 
-            this.list.Add(instance);
+            List<IView<TEntity>> list;
+            if (this.list.TryGetValue(instance.entity.id, out list) == true) {
+                
+                list.Add(instance);
+                
+            } else {
+                
+                list = PoolList<IView<TEntity>>.Spawn(100);
+                list.Add(instance);
+                this.list.Add(instance.entity.id, list);
+                
+            }
+
             instance.OnInitialize(this.GetData(instance));
 
         }
@@ -415,8 +436,14 @@ namespace ME.ECS.Views {
         public void UnRegister(IView<TEntity> instance) {
             
             instance.OnDeInitialize(this.GetData(instance));
-            this.list.Remove(instance);
             
+            List<IView<TEntity>> list;
+            if (this.list.TryGetValue(instance.entity.id, out list) == true) {
+
+                list.Remove(instance);
+
+            }
+
         }
 
         private TEntity GetData(IViewBase view) {
@@ -434,36 +461,43 @@ namespace ME.ECS.Views {
 
         void IModule<TState>.AdvanceTick(TState state, float deltaTime) {}
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool IsRenderingNow(ref ViewInfo viewInfo) {
-            
-            // Iterate all current view instances
-            for (int i = 0, count = this.list.Count; i < count; ++i) {
 
-                var viewInstance = this.list[i];
-                // Does view exists?
-                if (viewInstance.entity.id == viewInfo.entity.id && viewInstance.prefabSourceId == viewInfo.prefabSourceId) {
-                            
-                    // View exists
-                    return true;
+            List<IView<TEntity>> list;
+            if (this.list.TryGetValue(viewInfo.entity.id, out list) == true) {
+                
+                // Iterate all current view instances
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    var viewInstance = list[i];
+                    // Does view exists?
+                    if (viewInstance.prefabSourceId == viewInfo.prefabSourceId) {
+                        
+                        // View exists
+                        return true;
+
+                    }
 
                 }
-
+                
             }
-
+            
             return false;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void RestoreViews() {
             
-            var entitiesList = PoolList<EntityId>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_ENTITIES_CACHE_CAPACITY);
+            var aliveEntities = PoolDictionary<EntityId, byte>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_ENTITIES_CACHE_CAPACITY);
             var allEntities = PoolList<TEntity>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_ALL_ENTITIES_CACHE_CAPACITY);
             this.world.ForEachEntity(allEntities);
             for (int j = 0, jCount = allEntities.Count; j < jCount; ++j) {
                 
                 // For each entity in state
                 var item = allEntities[j];
-                entitiesList.Add(item.entity.id);
+                aliveEntities.Add(item.entity.id, 0);
 
                 // For each view component
                 var components = PoolList<ViewComponent>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_COMPONENTS_CACHE_CAPACITY);
@@ -496,19 +530,26 @@ namespace ME.ECS.Views {
             
             // Iterate all current view instances
             // Search for views that doesn't represent any entity and destroy them
-            for (int i = 0, count = this.list.Count; i < count; ++i) {
+            foreach (var item in this.list) {
+
+                if (aliveEntities.ContainsKey(item.Key) == false) {
+
+                    var list = item.Value;
+                    for (int i = 0, count = list.Count; i < count; ++i) {
                 
-                var instance = this.list[i];
-                if (entitiesList.Contains(instance.entity.id) == false) {
+                        var instance = list[i];
+                        this.RecycleView_INTERNAL(ref instance);
+                        --i;
+                        --count;
 
-                    this.RecycleView_INTERNAL(ref instance);
-                    --i;
-                    --count;
-
+                    }
+                    list.Clear();
+                    
                 }
 
             }
-            PoolList<EntityId>.Recycle(ref entitiesList);
+            
+            PoolDictionary<EntityId, byte>.Recycle(ref aliveEntities);
             PoolList<TEntity>.Recycle(ref allEntities);
 
         }
@@ -516,19 +557,28 @@ namespace ME.ECS.Views {
         void IModule<TState>.Update(TState state, float deltaTime) {
 
             this.RestoreViews();
-            
-            for (int i = 0, count = this.list.Count; i < count; ++i) {
+
+            foreach (var item in this.list) {
+
+                var list = item.Value;
+                for (int i = 0, count = list.Count; i < count; ++i) {
                 
-                var instance = this.list[i];
-                instance.ApplyState(this.GetData(instance), deltaTime, immediately: false);
+                    var instance = list[i];
+                    instance.ApplyState(this.GetData(instance), deltaTime, immediately: false);
                 
+                }
+
             }
-            
+
             // Update providers
             foreach (var providerKv in this.registryPrefabToProvider) {
-                
-                providerKv.Value.Update(this.list, deltaTime);
-                
+
+                foreach (var item in this.list) {
+
+                    providerKv.Value.Update(item.Value, deltaTime);
+
+                }
+
             }
 
         }

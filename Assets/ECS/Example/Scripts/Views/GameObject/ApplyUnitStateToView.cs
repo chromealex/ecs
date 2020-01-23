@@ -9,13 +9,15 @@ namespace ME.Example.Game.Views {
 
         public Renderer cubeRenderer;
         public float lerpSpeed = 3f;
+        private MaterialPropertyBlock materialPropBlock;
+        private Transform tr;
 
         public override void OnInitialize(in Unit data) {
 
-            this.cubeRenderer.sharedMaterial = new Material(this.cubeRenderer.material);
-
-            var tr = this.cubeRenderer.transform;
-            tr.position = data.position;
+            this.materialPropBlock = new MaterialPropertyBlock();
+            
+            this.tr = this.cubeRenderer.transform;
+            this.tr.position = data.position;
 
         }
 
@@ -27,20 +29,20 @@ namespace ME.Example.Game.Views {
 
         public override void ApplyState(in Unit data, float deltaTime, bool immediately) {
 
-            var tr = this.cubeRenderer.transform;
-            this.cubeRenderer.sharedMaterial.color = data.color;
-
+            this.materialPropBlock.SetColor("_Color", data.color);
+            this.cubeRenderer.SetPropertyBlock(this.materialPropBlock);
+            
             if (immediately == true) {
 
-                tr.position = data.position;
-                tr.rotation = data.rotation;
-                tr.localScale = data.scale;
+                this.tr.position = data.position;
+                this.tr.rotation = data.rotation;
+                this.tr.localScale = data.scale;
 
             } else {
 
-                tr.position = Vector3.Lerp(tr.position, data.position, deltaTime * this.lerpSpeed);
-                tr.rotation = Quaternion.Slerp(tr.rotation, data.rotation, deltaTime * this.lerpSpeed);
-                tr.localScale = Vector3.Lerp(tr.localScale, data.scale, deltaTime * this.lerpSpeed);
+                this.tr.position = Vector3.Lerp(this.tr.position, data.position, deltaTime * this.lerpSpeed);
+                this.tr.rotation = Quaternion.Slerp(this.tr.rotation, data.rotation, deltaTime * this.lerpSpeed);
+                this.tr.localScale = Vector3.Lerp(this.tr.localScale, data.scale, deltaTime * this.lerpSpeed);
 
             }
 

@@ -60,7 +60,7 @@ namespace ME.ECS {
 
         private static class EntitiesDirectCache<TStateInner, T> where T : struct, IEntity where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<long, T> data = new Dictionary<long, T>(World<TState>.ENTITIES_DIRECT_CACHE_CAPACITY);
+            internal static Dictionary<long, T> dataByEntityId = new Dictionary<long, T>(World<TState>.ENTITIES_DIRECT_CACHE_CAPACITY);
 
         }
 
@@ -207,7 +207,7 @@ namespace ME.ECS {
         public bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity {
 
             T internalData;
-            if (EntitiesDirectCache<TState, T>.data.TryGetValue(MathUtils.GetKey(this.id, entityId), out internalData) == true) {
+            if (EntitiesDirectCache<TState, T>.dataByEntityId.TryGetValue(MathUtils.GetKey(this.id, entityId), out internalData) == true) {
 
                 data = internalData;
                 return true;
@@ -437,16 +437,16 @@ namespace ME.ECS {
 
         public void UpdateEntityCache<T>(T data) where T : struct, IEntity {
 
-            lock (EntitiesDirectCache<TState, T>.data) {
+            lock (EntitiesDirectCache<TState, T>.dataByEntityId) {
 
                 var key = MathUtils.GetKey(this.id, data.entity.id);
-                if (EntitiesDirectCache<TState, T>.data.ContainsKey(key) == true) {
+                if (EntitiesDirectCache<TState, T>.dataByEntityId.ContainsKey(key) == true) {
 
-                    EntitiesDirectCache<TState, T>.data[key] = data;
-
+                    EntitiesDirectCache<TState, T>.dataByEntityId[key] = data;
+                    
                 } else {
 
-                    EntitiesDirectCache<TState, T>.data.Add(key, data);
+                    EntitiesDirectCache<TState, T>.dataByEntityId.Add(key, data);
 
                 }
 
@@ -487,7 +487,7 @@ namespace ME.ECS {
         public void RemoveEntities<TEntity>(TEntity data) where TEntity : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, data.entity.id);
-            if (EntitiesDirectCache<TState, TEntity>.data.Remove(key) == true) {
+            if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
 
                 var code = WorldUtilities.GetKey(data);
                 IList list;
@@ -506,10 +506,17 @@ namespace ME.ECS {
         public void ForEachEntity<TEntity>(List<TEntity> output) where TEntity : struct, IEntity {
 
             output.Clear();
-            foreach (var item in EntitiesDirectCache<TState, TEntity>.data) {
+            
+            var code = WorldUtilities.GetKey<TEntity>();
+            IList list;
+            if (this.filtersCache.TryGetValue(code, out list) == true) {
 
-                var element = item.Value;
-                if (item.Key == MathUtils.GetKey(this.id, element.entity.id)) output.Add(element);
+                var filters = (List<Filter<TEntity>>)list;
+                for (int i = 0, count = filters.Count; i < count; ++i) {
+                    
+                    output.AddRange(filters[i].GetData());
+                    
+                }
 
             }
 
@@ -518,14 +525,14 @@ namespace ME.ECS {
         public bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity {
             
             var key = MathUtils.GetKey(this.id, entityId);
-            return EntitiesDirectCache<TState, TEntity>.data.ContainsKey(key);
+            return EntitiesDirectCache<TState, TEntity>.dataByEntityId.ContainsKey(key);
 
         }
 
         public void RemoveEntity<TEntity>(Entity entity) where TEntity : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, entity.id);
-            if (EntitiesDirectCache<TState, TEntity>.data.Remove(key) == true) {
+            if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
 
                 var code = WorldUtilities.GetKey(entity);
                 IList list;

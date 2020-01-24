@@ -151,6 +151,7 @@ namespace ME.ECS.Views.Providers {
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
+        public Tick creationTick { get; set; }
 
         public virtual void OnInitialize(in TEntity data) { }
         public virtual void OnDeInitialize(in TEntity data) { }

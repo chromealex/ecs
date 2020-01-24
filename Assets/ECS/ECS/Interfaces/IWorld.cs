@@ -53,7 +53,7 @@ namespace ME.ECS {
         void RemoveEntities<T>(T data) where T : struct, IEntity;
         void RemoveEntity<T>(Entity entity) where T : struct, IEntity;
         bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
-        void ForEachEntity<TEntity>(System.Collections.Generic.List<TEntity> output) where TEntity : struct, IEntity;
+        bool ForEachEntity<TEntity>(out System.Collections.Generic.List<TEntity> output) where TEntity : struct, IEntity;
 
         System.Collections.Generic.List<TModule> GetModules<TModule>(System.Collections.Generic.List<TModule> output) where TModule : IModuleBase;
         TModule GetModule<TModule>() where TModule : IModuleBase;

@@ -91,6 +91,7 @@ namespace ME.ECS.Views {
         
         Entity entity { get; set; }
         ViewId prefabSourceId { get; set; }
+        Tick creationTick { get; set; }
 
     }
 
@@ -138,7 +139,6 @@ namespace ME.ECS.Views {
         private const int REGISTRY_CAPACITY = 100;
         private const int VIEWS_CAPACITY = 1000;
         private const int INTERNAL_ENTITIES_CACHE_CAPACITY = 100;
-        private const int INTERNAL_ALL_ENTITIES_CACHE_CAPACITY = 1000;
         private const int INTERNAL_COMPONENTS_CACHE_CAPACITY = 10;
         
         /// <summary>
@@ -181,15 +181,35 @@ namespace ME.ECS.Views {
     
         }
 
-        private struct ViewInfo {
+        private struct ViewInfo : System.IEquatable<ViewInfo> {
 
             public Entity entity;
             public ViewId prefabSourceId;
             public Tick creationTick;
 
+            public override int GetHashCode() {
+                
+                return this.entity.id ^ (int)this.prefabSourceId ^ (int)this.creationTick;
+                
+            }
+            
+            public override bool Equals(object obj) {
+                
+                return this.Equals((ViewInfo)obj);
+                
+            }
+
+            public bool Equals(ViewInfo p) {
+                
+                return this.creationTick == p.creationTick && this.entity.id == p.entity.id && this.prefabSourceId == p.prefabSourceId;
+                
+            }
+
         }
 
         private Dictionary<EntityId, List<IView<TEntity>>> list;
+        private Dictionary<EntityId, Dictionary<ViewId, List<IView<TEntity>>>> listDic;
+        private HashSet<ViewInfo> rendering;
         private Dictionary<ViewId, IViewsProvider> registryPrefabToProviderBase;
         private Dictionary<ViewId, IViewsProvider<TEntity>> registryPrefabToProvider;
         private Dictionary<IView<TEntity>, ViewId> registryPrefabToId;
@@ -202,6 +222,8 @@ namespace ME.ECS.Views {
         void IModule<TState>.OnConstruct() {
 
             this.list = PoolDictionary<EntityId, List<IView<TEntity>>>.Spawn(ViewsModule<TState, TEntity>.VIEWS_CAPACITY);
+            this.listDic = PoolDictionary<EntityId, Dictionary<ViewId, List<IView<TEntity>>>>.Spawn(ViewsModule<TState, TEntity>.VIEWS_CAPACITY);
+            this.rendering = PoolHashSet<ViewInfo>.Spawn(ViewsModule<TState, TEntity>.VIEWS_CAPACITY);
             this.registryPrefabToId = PoolDictionary<IView<TEntity>, ViewId>.Spawn(ViewsModule<TState, TEntity>.REGISTRY_CAPACITY);
             this.registryIdToPrefab = PoolDictionary<ViewId, IView<TEntity>>.Spawn(ViewsModule<TState, TEntity>.REGISTRY_CAPACITY);
 
@@ -217,13 +239,26 @@ namespace ME.ECS.Views {
             
             PoolDictionary<ViewId, IView<TEntity>>.Recycle(ref this.registryIdToPrefab);
             PoolDictionary<IView<TEntity>, ViewId>.Recycle(ref this.registryPrefabToId);
+            
+            PoolHashSet<ViewInfo>.Recycle(ref this.rendering);
+
+            foreach (var item in this.listDic) {
+
+                foreach (var itemView in item.Value) {
+                
+                    PoolList<IView<TEntity>>.Recycle(itemView.Value);
+                
+                }
+                PoolDictionary<ViewId, List<IView<TEntity>>>.Recycle(item.Value);
+
+            }
+            PoolDictionary<EntityId, Dictionary<ViewId, List<IView<TEntity>>>>.Recycle(ref this.listDic);
 
             foreach (var item in this.list) {
                 
                 PoolList<IView<TEntity>>.Recycle(item.Value);
                 
             }
-
             PoolDictionary<EntityId, List<IView<TEntity>>>.Recycle(ref this.list);
 
         }
@@ -290,6 +325,7 @@ namespace ME.ECS.Views {
                 var instance = provider.Spawn(this.GetViewSource(viewInfo.prefabSourceId), viewInfo.prefabSourceId);
                 instance.entity = viewInfo.entity;
                 instance.prefabSourceId = viewInfo.prefabSourceId;
+                instance.creationTick = viewInfo.creationTick;
                 this.Register(instance);
 
                 return instance;
@@ -428,6 +464,37 @@ namespace ME.ECS.Views {
                 
             }
 
+            Dictionary<ViewId, List<IView<TEntity>>> dic;
+            if (this.listDic.TryGetValue(instance.entity.id, out dic) == true) {
+
+                if (dic.TryGetValue(instance.prefabSourceId, out list) == true) {
+                    
+                    list.Add(instance);
+                    
+                } else {
+                    
+                    list = PoolList<IView<TEntity>>.Spawn(1);
+                    list.Add(instance);
+                    dic.Add(instance.prefabSourceId, list);
+                    
+                }
+
+            } else {
+
+                dic = PoolDictionary<ViewId, List<IView<TEntity>>>.Spawn(100);
+                list = PoolList<IView<TEntity>>.Spawn(1);
+                list.Add(instance);
+                dic.Add(instance.prefabSourceId, list);
+                this.listDic.Add(instance.entity.id, dic);
+
+            }
+
+            var viewInfo = new ViewInfo();
+            viewInfo.entity = instance.entity;
+            viewInfo.prefabSourceId = instance.prefabSourceId;
+            viewInfo.creationTick = instance.creationTick;
+            this.rendering.Add(viewInfo);
+
             instance.OnInitialize(this.GetData(instance));
 
         }
@@ -443,7 +510,23 @@ namespace ME.ECS.Views {
                 list.Remove(instance);
 
             }
+            
+            Dictionary<ViewId, List<IView<TEntity>>> dic;
+            if (this.listDic.TryGetValue(instance.entity.id, out dic) == true) {
 
+                if (dic.TryGetValue(instance.prefabSourceId, out list) == true) {
+
+                    list.Remove(instance);
+
+                }
+
+            }
+
+            var viewInfo = new ViewInfo();
+            viewInfo.entity = instance.entity;
+            viewInfo.prefabSourceId = instance.prefabSourceId;
+            this.rendering.Remove(viewInfo);
+            
         }
 
         private TEntity GetData(IViewBase view) {
@@ -463,27 +546,22 @@ namespace ME.ECS.Views {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool IsRenderingNow(ref ViewInfo viewInfo) {
+            
+            return this.rendering.Contains(viewInfo);
+            /*
+            Dictionary<ViewId, List<IView<TEntity>>> dic;
+            if (this.listDic.TryGetValue(viewInfo.entity.id, out dic) == true) {
 
-            List<IView<TEntity>> list;
-            if (this.list.TryGetValue(viewInfo.entity.id, out list) == true) {
-                
-                // Iterate all current view instances
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                List<IView<TEntity>> list;
+                if (dic.TryGetValue(viewInfo.prefabSourceId, out list) == true) {
 
-                    var viewInstance = list[i];
-                    // Does view exists?
-                    if (viewInstance.prefabSourceId == viewInfo.prefabSourceId) {
-                        
-                        // View exists
-                        return true;
-
-                    }
+                    return list.Count > 0;
 
                 }
-                
+
             }
-            
-            return false;
+
+            return false;*/
 
         }
 
@@ -491,43 +569,47 @@ namespace ME.ECS.Views {
         private void RestoreViews() {
             
             var aliveEntities = PoolDictionary<EntityId, byte>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_ENTITIES_CACHE_CAPACITY);
-            var allEntities = PoolList<TEntity>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_ALL_ENTITIES_CACHE_CAPACITY);
-            this.world.ForEachEntity(allEntities);
-            for (int j = 0, jCount = allEntities.Count; j < jCount; ++j) {
-                
-                // For each entity in state
-                var item = allEntities[j];
-                aliveEntities.Add(item.entity.id, 0);
+            List<TEntity> allEntities;
+            if (this.world.ForEachEntity(out allEntities) == true) {
 
-                // For each view component
-                var components = PoolList<ViewComponent>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_COMPONENTS_CACHE_CAPACITY);
-                this.world.ForEachComponent<TEntity, ViewComponent>(item.entity, components);
-                for (int k = 0, kCount = components.Count; k < kCount; ++k) {
+                for (int j = 0, jCount = allEntities.Count; j < jCount; ++j) {
 
-                    var component = components[k];
-                    
-                    var isRenderingNow = this.IsRenderingNow(ref component.viewInfo);
-                    if (isRenderingNow == true) {
-                        
-                        // All is fine, we have rendering component view for entity
-                        
-                    } else {
-                        
-                        // We need to create component view for entity
-                        var instance = this.SpawnView_INTERNAL(component.viewInfo);
-                        // Call ApplyState with deltaTime = current time offset
-                        var dt = UnityEngine.Mathf.Max(0f, (this.world.GetTick() - component.viewInfo.creationTick) * this.world.GetTickTime());
-                        instance.ApplyState(item, dt, immediately: true);
-                        // Simulate particle systems
-                        instance.SimulateParticles(dt);
-                        
+                    // For each entity in state
+                    var item = allEntities[j];
+                    aliveEntities.Add(item.entity.id, 0);
+
+                    // For each view component
+                    var components = PoolList<ViewComponent>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_COMPONENTS_CACHE_CAPACITY);
+                    this.world.ForEachComponent<TEntity, ViewComponent>(item.entity, components);
+                    for (int k = 0, kCount = components.Count; k < kCount; ++k) {
+
+                        var component = components[k];
+
+                        var isRenderingNow = this.IsRenderingNow(ref component.viewInfo);
+                        if (isRenderingNow == true) {
+
+                            // All is fine, we have rendering component view for entity
+
+                        } else {
+
+                            // We need to create component view for entity
+                            var instance = this.SpawnView_INTERNAL(component.viewInfo);
+                            // Call ApplyState with deltaTime = current time offset
+                            var dt = UnityEngine.Mathf.Max(0f, (this.world.GetTick() - component.viewInfo.creationTick) * this.world.GetTickTime());
+                            instance.ApplyState(item, dt, immediately: true);
+                            // Simulate particle systems
+                            instance.SimulateParticles(dt);
+
+                        }
+
                     }
 
+                    PoolList<ViewComponent>.Recycle(ref components);
+
                 }
-                PoolList<ViewComponent>.Recycle(ref components);
 
             }
-            
+
             // Iterate all current view instances
             // Search for views that doesn't represent any entity and destroy them
             foreach (var item in this.list) {
@@ -550,7 +632,6 @@ namespace ME.ECS.Views {
             }
             
             PoolDictionary<EntityId, byte>.Recycle(ref aliveEntities);
-            PoolList<TEntity>.Recycle(ref allEntities);
 
         }
 

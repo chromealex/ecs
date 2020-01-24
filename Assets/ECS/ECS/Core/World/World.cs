@@ -486,15 +486,19 @@ namespace ME.ECS {
 
         }
 
-        public void ForEachEntity<TEntity>(List<TEntity> output) where TEntity : struct, IEntity {
+        public bool ForEachEntity<TEntity>(out List<TEntity> output) where TEntity : struct, IEntity {
 
-            output.Clear();
+            output = null;
+            
             List<TEntity> listEntities;
             if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out listEntities) == true) {
                 
-                output.AddRange(listEntities);
-                
+                output = listEntities;
+                return true;
+
             }
+
+            return false;
 
         }
 

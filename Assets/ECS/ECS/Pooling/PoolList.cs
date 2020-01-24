@@ -17,7 +17,7 @@ namespace ME.ECS {
 		    
 		}
 
-		public static void Recycle(ref List<TValue> dic) {
+		public static void Recycle(ref HashSet<TValue> dic) {
 
 			PoolHashSet<TValue>.pool.Recycle(dic);
 			dic = null;

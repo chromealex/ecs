@@ -107,7 +107,29 @@ namespace ME.ECS.Views.Providers {
             
         }
 
-        public UnityEngine.ParticleSystem.Particle rootData {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ref UnityEngine.ParticleSystem.Particle GetRootData() {
+            
+            return ref this.items[0].particleData;
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void SetRootData(ref UnityEngine.ParticleSystem.Particle data) {
+            
+            this.items[0].particleData = data;
+            for (int i = 1; i < this.items.Length; ++i) {
+
+                ref var item = ref this.items[i];
+                item.particleData.position = data.position + item.itemData.localPosition;
+                item.particleData.rotation3D = data.rotation3D + item.itemData.localRotation;
+                item.particleData.startSize3D = UnityEngine.Vector3.Scale(data.startSize3D, item.itemData.localScale);
+
+            }
+            
+        }
+
+        /*public UnityEngine.ParticleSystem.Particle rootData {
             
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
@@ -130,7 +152,7 @@ namespace ME.ECS.Views.Providers {
                 }
 
             }
-        }
+        }*/
 
         public void SetItems(UnityEngine.Vector3 rootPosition, UnityEngine.Vector3 rootRotation, UnityEngine.Vector3 rootScale, UnityEngine.MeshFilter[] filters, UnityEngine.Renderer[] renderers) {
             
@@ -164,6 +186,7 @@ namespace ME.ECS.Views.Providers {
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
+        public Tick creationTick { get; set; }
 
         public virtual void OnInitialize(in TEntity data) { }
         public virtual void OnDeInitialize(in TEntity data) { }

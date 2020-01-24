@@ -28,6 +28,12 @@ namespace ME.ECS {
 
 	    }
 
+	    public static void Recycle(Dictionary<TKey, TValue> dic) {
+
+		    PoolDictionary<TKey, TValue>.pool.Recycle(dic);
+
+	    }
+
     }
 
 }

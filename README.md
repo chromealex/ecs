@@ -24,6 +24,9 @@ By default is the EventRunner for StatesHistoryModule, just send all incoming ev
 ### Views Module
 ##### Submodules: IViewsProvider (Implemented: GameObjectProvider, ParticlesProvider, DrawMeshProvider)
 Synchronizing current world state to views. Automatically destroy and create views (with pools), sync with current entities state and process all ticks correctly to restore visual state even objects already destroyed for a long time ago.
+
+### FPS Module
+Module just show FPS/FPSMax/FPSMin in world viewer.
 <br>
 <br>
 

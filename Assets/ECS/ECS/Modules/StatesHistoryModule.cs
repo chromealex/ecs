@@ -352,12 +352,13 @@ namespace ME.ECS.StatesHistory {
             
             foreach (var item in this.events) {
 
-                for (int i = 0; i < item.Value.Count; ++i) {
+                foreach (var hItem in item.Value) {
 
-                    var val = item.Value[i];
+                    var val = hItem.Value;
                     PoolArray<object>.Recycle(ref val.parameters);
-                    
+
                 }
+                item.Value.Clear();
 
             }
             PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Recycle(ref this.events);
@@ -691,6 +692,19 @@ namespace ME.ECS.StatesHistory {
 
         }
 
+        public override string ToString() {
+
+            var eventsCount = 0;
+            foreach (var item in this.events) {
+
+                eventsCount += item.Value.Count;
+
+            }
+
+            return "<b>Events:</b> " + eventsCount.ToString() + ", <b>Events Added: </b>" + this.statEventsAdded.ToString();
+            
+        }
+        
     }
 
 }

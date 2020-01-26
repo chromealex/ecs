@@ -8,6 +8,13 @@ namespace ME.ECS {
 
         int id { get; }
 
+        EntityId GetLastEntityId();
+        
+        void SetSystemState(ISystemBase system, ModuleState state);
+        ModuleState GetSystemState(ISystemBase system);
+        void SetModuleState(IModuleBase module, ModuleState state);
+        ModuleState GetModuleState(IModuleBase module);
+        
         void SetTickTime(float tickTime);
         float GetTickTime();
         double GetTimeSinceStart();

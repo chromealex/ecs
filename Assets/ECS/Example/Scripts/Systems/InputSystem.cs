@@ -32,7 +32,7 @@ namespace ME.Example.Game.Systems {
 
         }
 
-        void ISystem<State>.AdvanceTick(State state, float deltaTime) { }
+        void ISystem<State>.AdvanceTick(State state, float deltaTime) {}
 
         private ulong savedTick;
 

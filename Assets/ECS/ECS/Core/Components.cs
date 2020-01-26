@@ -364,6 +364,12 @@ namespace ME.ECS {
 
         }
 
+        public Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> GetDataOnce() {
+
+            return this.dicOnce;
+
+        }
+
         public void Initialize(int capacity) {
 
             this.capacity = capacity;

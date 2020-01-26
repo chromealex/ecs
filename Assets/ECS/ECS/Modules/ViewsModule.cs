@@ -106,6 +106,8 @@ namespace ME.ECS.Views {
 
     public interface IViewModuleBase : IModuleBase {
 
+        System.Collections.IDictionary GetData();
+
     }
 
     public partial interface IViewModule<TState, TEntity> : IViewModuleBase, IModule<TState> where TState : class, IState<TState> where TEntity : struct, IEntity {
@@ -260,6 +262,12 @@ namespace ME.ECS.Views {
                 
             }
             PoolDictionary<EntityId, List<IView<TEntity>>>.Recycle(ref this.list);
+
+        }
+
+        System.Collections.IDictionary IViewModuleBase.GetData() {
+
+            return this.list;
 
         }
 
@@ -659,7 +667,20 @@ namespace ME.ECS.Views {
             }
 
         }
-        
+
+        public override string ToString() {
+
+            var renderersCount = 0;
+            foreach (var ren in this.list) {
+
+                renderersCount += ren.Value.Count;
+
+            }
+
+            return "<b>Alive Views:</b> " + renderersCount.ToString() + ", <b>Entities Type:</b> " + typeof(TEntity).ToString();
+            
+        }
+
     }
 
 }

@@ -31,6 +31,15 @@ namespace ME.ECS {
 
     }
 
+    [System.Flags]
+    public enum ModuleState : byte {
+
+        AllActive = 0x0,
+        VisualInactive = 0x1,
+        LogicInactive = 0x2,
+
+    }
+
     public class InStateException : System.Exception {
 
         public InStateException() : base("[World] Could not perform action because current step is in state (" + Worlds.currentWorld.GetCurrentStep().ToString() + ").") {}
@@ -76,6 +85,9 @@ namespace ME.ECS {
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
 
+        private List<ModuleState> statesSystems;
+        private List<ModuleState> statesModules;
+        
         // State cache:
         //private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
         private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
@@ -89,6 +101,60 @@ namespace ME.ECS {
             this.currentState = null;
             this.resetState = null;
             this.currentStep = WorldStep.None;
+
+        }
+
+        public EntityId GetLastEntityId() {
+
+            return this.GetState().entityId;
+
+        }
+
+        public void SetSystemState(ISystemBase system, ModuleState state) {
+            
+            var index = this.systems.IndexOf((ISystem<TState>)system);
+            if (index >= 0) {
+
+                this.statesSystems[index] = state;
+
+            }
+            
+        }
+        
+        public ModuleState GetSystemState(ISystemBase system) {
+
+            var index = this.systems.IndexOf((ISystem<TState>)system);
+            if (index >= 0) {
+
+                return this.statesSystems[index];
+
+            }
+
+            return ModuleState.AllActive;
+
+        }
+
+        public void SetModuleState(IModuleBase module, ModuleState state) {
+            
+            var index = this.modules.IndexOf((IModule<TState>)module);
+            if (index >= 0) {
+
+                this.statesModules[index] = state;
+
+            }
+            
+        }
+        
+        public ModuleState GetModuleState(IModuleBase module) {
+
+            var index = this.modules.IndexOf((IModule<TState>)module);
+            if (index >= 0) {
+
+                return this.statesModules[index];
+
+            }
+
+            return ModuleState.AllActive;
 
         }
 
@@ -169,6 +235,8 @@ namespace ME.ECS {
             
             this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
+            this.statesSystems = PoolList<ModuleState>.Spawn(World<TState>.SYSTEMS_CAPACITY);
+            this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
             //this.entitiesCache = PoolDictionary<int, IList>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
             this.filtersCache = PoolDictionary<int, IList>.Spawn(World<TState>.FILTERS_CAPACITY);
             this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
@@ -196,6 +264,9 @@ namespace ME.ECS {
 
             }
             PoolList<IModule<TState>>.Recycle(ref this.modules);
+            
+            PoolList<ModuleState>.Recycle(ref this.statesModules);
+            PoolList<ModuleState>.Recycle(ref this.statesSystems);
             
             //PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
             PoolDictionary<int, IList>.Recycle(ref this.filtersCache);
@@ -635,6 +706,7 @@ namespace ME.ECS {
             }
             
             this.modules.Add(instance);
+            this.statesModules.Add(ModuleState.AllActive);
             instance.OnConstruct();
 
             return true;
@@ -654,6 +726,7 @@ namespace ME.ECS {
 
                     PoolModules.Recycle(tModule);
                     this.modules.RemoveAt(i);
+                    this.statesModules.RemoveAt(i);
                     module.OnDeconstruct();
                     --i;
                     --count;
@@ -673,20 +746,13 @@ namespace ME.ECS {
 
             var instance = PoolSystems.Spawn<TSystem>();
             instance.world = this;
-            if (instance is ISystemValidation instanceValidate) {
+            if (this.AddSystem(instance) == false) {
 
-                if (instanceValidate.CouldBeAdded() == false) {
-
-                    instance.world = null;
-                    PoolSystems.Recycle(ref instance);
-                    return false;
-                    
-                }
+                instance.world = null;
+                PoolSystems.Recycle(ref instance);
+                return false;
 
             }
-            
-            this.systems.Add(instance);
-            instance.OnConstruct();
 
             return true;
 
@@ -712,6 +778,7 @@ namespace ME.ECS {
             }
             
             this.systems.Add(instance);
+            this.statesSystems.Add(ModuleState.AllActive);
             instance.OnConstruct();
 
             return true;
@@ -725,10 +792,16 @@ namespace ME.ECS {
         /// <param name="instance"></param>
         public void RemoveSystem(ISystem<TState> instance) {
 
-            instance.world = null;
-            this.systems.Remove(instance);
-            instance.OnDeconstruct();
-
+            var idx = this.systems.IndexOf(instance);
+            if (idx >= 0) {
+                
+                instance.world = null;
+                this.systems.RemoveAt(idx);
+                this.statesSystems.RemoveAt(idx);
+                instance.OnDeconstruct();
+                
+            }
+            
         }
 
         /// <summary>
@@ -766,6 +839,7 @@ namespace ME.ECS {
 
                     PoolSystems.Recycle(tSystem);
                     this.systems.RemoveAt(i);
+                    this.statesSystems.RemoveAt(i);
                     system.OnDeconstruct();
                     --i;
                     --count;
@@ -791,21 +865,72 @@ namespace ME.ECS {
             if (result == true) {
 
                 var item = (Components<TEntity, TState>)componentsContainer;
-                var dic = item.GetData();
-                HashSet<IComponent<TState, TEntity>> components;
-                if (dic.TryGetValue(data.entity.id, out components) == true) {
+                {
+                    var dic = item.GetData();
+                    HashSet<IComponent<TState, TEntity>> components;
+                    if (dic.TryGetValue(data.entity.id, out components) == true) {
 
-                    foreach (var listItem in components) {
-                        
-                        listItem.AdvanceTick(this.currentState, ref data, deltaTime, index);
-                        
+                        foreach (var listItem in components) {
+
+                            listItem.AdvanceTick(this.currentState, ref data, deltaTime, index);
+
+                        }
+
                     }
+                }
+                {
+                    var dic = item.GetDataOnce();
+                    HashSet<IComponent<TState, TEntity>> components;
+                    if (dic.TryGetValue(data.entity.id, out components) == true) {
 
+                        foreach (var listItem in components) {
+
+                            listItem.AdvanceTick(this.currentState, ref data, deltaTime, index);
+
+                        }
+
+                    }
                 }
 
             }
 
             return data;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private bool IsModuleActive(int index) {
+
+            var step = this.currentStep;
+            if ((step & WorldStep.LogicTick) != 0) {
+
+                return (this.statesModules[index] & ModuleState.LogicInactive) == 0;
+
+            } else if ((step & WorldStep.VisualTick) != 0) {
+
+                return (this.statesModules[index] & ModuleState.VisualInactive) == 0;
+
+            }
+
+            return false;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private bool IsSystemActive(int index) {
+
+            var step = this.currentStep;
+            if ((step & WorldStep.LogicTick) != 0) {
+
+                return (this.statesSystems[index] & ModuleState.LogicInactive) == 0;
+
+            } else if ((step & WorldStep.VisualTick) != 0) {
+
+                return (this.statesSystems[index] & ModuleState.VisualInactive) == 0;
+
+            }
+
+            return false;
 
         }
 
@@ -832,7 +957,7 @@ namespace ME.ECS {
 
                 for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
-                    this.modules[i].Update(state, deltaTime);
+                    if (this.IsModuleActive(i) == true) this.modules[i].Update(state, deltaTime);
 
                 }
 
@@ -850,7 +975,7 @@ namespace ME.ECS {
 
                 for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
-                    this.systems[i].Update(state, deltaTime);
+                    if (this.IsSystemActive(i) == true) this.systems[i].Update(state, deltaTime);
 
                 }
 
@@ -884,7 +1009,7 @@ namespace ME.ECS {
                     
                     for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
-                        this.modules[i].AdvanceTick(state, fixedDeltaTime);
+                        if (this.IsModuleActive(i) == true) this.modules[i].AdvanceTick(state, fixedDeltaTime);
 
                     }
                     
@@ -904,7 +1029,7 @@ namespace ME.ECS {
                     
                     for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
-                        this.systems[i].AdvanceTick(state, fixedDeltaTime);
+                        if (this.IsSystemActive(i) == true) this.systems[i].AdvanceTick(state, fixedDeltaTime);
 
                     }
 

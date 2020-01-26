@@ -36,6 +36,7 @@ namespace ME.Example.Game {
                 // Loading level
                 
                 WorldUtilities.CreateWorld(ref this.world, 0.133f, this.worldId);
+                this.world.AddModule<FPSModule>();
                 this.world.AddModule<StatesHistoryModule>();
                 this.world.AddModule<NetworkModule>();
                 
@@ -70,6 +71,12 @@ namespace ME.Example.Game {
                 this.world.Update(dt);
 
             }
+
+        }
+
+        public void OnDestroy() {
+
+            WorldUtilities.ReleaseWorld(ref this.world);
 
         }
 

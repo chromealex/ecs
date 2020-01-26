@@ -1,7 +1,7 @@
 namespace ME.Example.Game.Modules {
 
     /// <summary>
-    /// We need to implement our own NetworkModule class without any logic just to catch our State type into ECS.Network
+    /// We need to implement our own NetworkModule class without any logic just to catch your State type into ECS.Network
     /// You can use some overrides to setup history config for your project
     /// </summary>
     public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
@@ -64,7 +64,9 @@ namespace ME.Example.Game.Modules {
         private readonly System.Collections.Generic.Queue<Buffer> buffers = new System.Collections.Generic.Queue<Buffer>();
         private readonly ME.ECS.Network.NetworkType networkType;
         private int sentCount;
+        private int sentBytesCount;
         private int receivedCount;
+        private int receivedBytesCount;
         public int randomState;
         private double ping;
 
@@ -103,6 +105,7 @@ namespace ME.Example.Game.Modules {
 
             }
 
+            this.sentBytesCount += bytes.Length;
             ++this.sentCount;
 
         }
@@ -126,6 +129,7 @@ namespace ME.Example.Game.Modules {
                 this.waitTime -= UnityEngine.Time.deltaTime;
                 if (this.waitTime <= 0f) {
 
+                    this.receivedBytesCount += this.currentBuffer.data.Length;
                     ++this.receivedCount;
                     this.waitTime = -1f;
                     return this.currentBuffer.data;
@@ -154,10 +158,22 @@ namespace ME.Example.Game.Modules {
 
         }
 
+        public int GetEventsBytesSentCount() {
+
+            return this.sentBytesCount;
+
+        }
+
         public int GetEventsReceivedCount() {
 
             return this.receivedCount;
 
+        }
+
+        public int GetEventsBytesReceivedCount() {
+            
+            return this.receivedBytesCount;
+            
         }
 
     }

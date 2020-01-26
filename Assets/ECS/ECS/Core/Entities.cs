@@ -22,6 +22,12 @@ namespace ME.ECS {
 
         }
 
+        public override string ToString() {
+            
+            return "Entity Id: " + this.id.ToString() + " (type: " + this.typeId.ToString() + ")";
+            
+        }
+
     }
 
 }

@@ -5,6 +5,7 @@ namespace ME.ECS {
     public static class Worlds {
 
         public static IWorldBase currentWorld;
+        public static readonly List<IWorldBase> registeredWorlds = new List<IWorldBase>();
 
     }
 
@@ -30,12 +31,14 @@ namespace ME.ECS {
 
         public static void Register(IWorld<TState> world) {
             
+            Worlds.registeredWorlds.Add(world);
             Worlds<TState>.cache.Add(world.id, world);
             
         }
         
         public static void UnRegister(IWorld<TState> world) {
             
+            Worlds.registeredWorlds.Remove(world);
             Worlds<TState>.cache.Remove(world.id);
             
         }

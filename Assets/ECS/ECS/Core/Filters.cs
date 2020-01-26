@@ -1,8 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace ME.ECS {
-    
-    public interface IFilter : IPoolableRecycle { }
+
+    public interface IFilter : IPoolableRecycle {
+
+        int Count { get; }
+        IList GetData();
+
+    }
     
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
@@ -70,6 +76,12 @@ namespace ME.ECS {
 
         }
 
+        IList IFilter.GetData() {
+
+            return this.list;
+
+        }
+
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetData(List<T> data) {
 
@@ -80,6 +92,12 @@ namespace ME.ECS {
 
             }
 
+        }
+
+        public override string ToString() {
+            
+            return "Entities Count: " + this.list.Count.ToString();
+            
         }
 
     }

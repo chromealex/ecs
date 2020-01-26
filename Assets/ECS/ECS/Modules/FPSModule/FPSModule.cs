@@ -6,7 +6,14 @@ using Tick = System.UInt64;
 
 namespace ME.ECS {
 
-    public interface IFPSModuleBase {}
+    public interface IFPSModuleBase {
+
+        int fps { get; set; }
+        int minFps { get; set; }
+        int maxFps { get; set; }
+        int targetFps { get; set; }
+
+    }
 
     public interface IFPSModule<TState> : IFPSModuleBase, IModule<TState> where TState : class, IState<TState> {
 
@@ -21,10 +28,10 @@ namespace ME.ECS {
 
         private float timeElapsed;
         private int framesElapsed;
-        private int fps;
-        private int minFps;
-        private int maxFps;
-        private int targetFps;
+        public int fps { get; set; }
+        public int minFps { get; set; }
+        public int maxFps { get; set; }
+        public int targetFps { get; set; }
         
         public IWorld<TState> world { get; set; }
 
@@ -61,12 +68,6 @@ namespace ME.ECS {
                 this.timeElapsed -= checkTime;
 
             }
-
-        }
-
-        public override string ToString() {
-
-            return "<b>FPS:</b> " + this.fps.ToString() + ", <b>Max FPS:</b> " + this.maxFps.ToString() + ", <b>Min FPS:</b> " + this.minFps.ToString() + ", <b>Target FPS:</b> " + this.targetFps.ToString();
 
         }
 

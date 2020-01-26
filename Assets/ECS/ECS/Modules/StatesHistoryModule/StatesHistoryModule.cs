@@ -277,18 +277,12 @@ namespace ME.ECS.StatesHistory {
 
     }
 
-    public interface IStatesHistoryModule<TState> : IModule<TState> where TState : class, IState<TState> {
+    public interface IStatesHistoryModuleBase {
 
-        void AddEvents(IList<HistoryEvent> historyEvents);
-        void AddEvent(HistoryEvent historyEvent);
-
-        int GetStateHash(IState<TState> state);
-        
         void BeginAddEvents();
         void EndAddEvents();
 
-        Tick GetTickByTime(double seconds);
-        TState GetStateBeforeTick(Tick tick);
+        System.Collections.IDictionary GetData();
 
         Tick GetTick();
         void SetTick(Tick tick);
@@ -300,9 +294,21 @@ namespace ME.ECS.StatesHistory {
 
         void Simulate(Tick currentTick, Tick targetTick);
         
+        void SetSyncHash(Tick tick, int hash);
+
         int GetEventsAddedCount();
 
-        void SetSyncHash(Tick tick, int hash);
+    }
+
+    public interface IStatesHistoryModule<TState> : IStatesHistoryModuleBase, IModule<TState> where TState : class, IState<TState> {
+
+        void AddEvents(IList<HistoryEvent> historyEvents);
+        void AddEvent(HistoryEvent historyEvent);
+
+        int GetStateHash(IState<TState> state);
+        
+        Tick GetTickByTime(double seconds);
+        TState GetStateBeforeTick(Tick tick);
 
     }
 
@@ -369,7 +375,7 @@ namespace ME.ECS.StatesHistory {
 
         }
 
-        void IStatesHistoryModule<TState>.SetEventRunner(IEventRunner eventRunner) {
+        void IStatesHistoryModuleBase.SetEventRunner(IEventRunner eventRunner) {
 
             this.eventRunner = eventRunner;
 
@@ -637,6 +643,12 @@ namespace ME.ECS.StatesHistory {
 
         }
 
+        public System.Collections.IDictionary GetData() {
+
+            return this.events;
+
+        }
+
         public void RunEvent(HistoryEvent historyEvent) {
             
             //UnityEngine.Debug.LogError("Run event tick: " + historyEvent.tick + ", method: " + historyEvent.id);
@@ -692,19 +704,6 @@ namespace ME.ECS.StatesHistory {
 
         }
 
-        public override string ToString() {
-
-            var eventsCount = 0;
-            foreach (var item in this.events) {
-
-                eventsCount += item.Value.Count;
-
-            }
-
-            return "<b>Events:</b> " + eventsCount.ToString() + ", <b>Events Added: </b>" + this.statEventsAdded.ToString();
-            
-        }
-        
     }
 
 }

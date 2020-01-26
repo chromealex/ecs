@@ -107,6 +107,8 @@ namespace ME.ECS.Views {
     public interface IViewModuleBase : IModuleBase {
 
         System.Collections.IDictionary GetData();
+        System.Collections.IDictionary GetViewSourceData();
+        IViewsProviderBase GetViewSourceProvider(ViewId viewSourceId);
 
     }
 
@@ -127,6 +129,44 @@ namespace ME.ECS.Views {
     public class ViewRegistryNotFoundException : System.Exception {
 
         public ViewRegistryNotFoundException(ViewId sourceViewId) : base("[Views] View with id " + sourceViewId.ToString() + " not found in registry. Have you called RegisterViewSource()?") {}
+
+    }
+
+    public interface IViewComponent {
+
+        ref ViewInfo GetViewInfo();
+
+    }
+
+    public struct ViewInfo : System.IEquatable<ViewInfo> {
+
+        public Entity entity;
+        public ViewId prefabSourceId;
+        public Tick creationTick;
+
+        public override int GetHashCode() {
+                
+            return this.entity.id ^ (int)this.prefabSourceId ^ (int)this.creationTick;
+                
+        }
+            
+        public override bool Equals(object obj) {
+                
+            return this.Equals((ViewInfo)obj);
+                
+        }
+
+        public bool Equals(ViewInfo p) {
+                
+            return this.creationTick == p.creationTick && this.entity.id == p.entity.id && this.prefabSourceId == p.prefabSourceId;
+                
+        }
+
+        public override string ToString() {
+                
+            return this.entity.ToString() + "\nPrefab Source Id: " + this.prefabSourceId.ToString() + "\nCreation Tick: " + this.creationTick.ToString();
+                
+        }
 
     }
 
@@ -168,42 +208,22 @@ namespace ME.ECS.Views {
         /// <summary>
         /// Private component class to describe Views
         /// </summary>
-        private class ViewComponent : IComponent<TState, TEntity> {
+        private class ViewComponent : IComponent<TState, TEntity>, IViewComponent {
 
             public ViewInfo viewInfo;
-        
+
             public void AdvanceTick(TState state, ref TEntity data, float deltaTime, int index) {}
+
+            public ref ViewInfo GetViewInfo() {
+
+                return ref this.viewInfo;
+
+            }
 
             void IComponent<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
 
                 var otherView = (ViewComponent)other;
                 this.viewInfo = otherView.viewInfo;
-                
-            }
-    
-        }
-
-        private struct ViewInfo : System.IEquatable<ViewInfo> {
-
-            public Entity entity;
-            public ViewId prefabSourceId;
-            public Tick creationTick;
-
-            public override int GetHashCode() {
-                
-                return this.entity.id ^ (int)this.prefabSourceId ^ (int)this.creationTick;
-                
-            }
-            
-            public override bool Equals(object obj) {
-                
-                return this.Equals((ViewInfo)obj);
-                
-            }
-
-            public bool Equals(ViewInfo p) {
-                
-                return this.creationTick == p.creationTick && this.entity.id == p.entity.id && this.prefabSourceId == p.prefabSourceId;
                 
             }
 
@@ -268,6 +288,25 @@ namespace ME.ECS.Views {
         System.Collections.IDictionary IViewModuleBase.GetData() {
 
             return this.list;
+
+        }
+
+        System.Collections.IDictionary IViewModuleBase.GetViewSourceData() {
+
+            return this.registryIdToPrefab;
+
+        }
+
+        IViewsProviderBase IViewModuleBase.GetViewSourceProvider(ViewId viewSourceId) {
+
+            IViewsProvider<TEntity> provider;
+            if (this.registryPrefabToProvider.TryGetValue(viewSourceId, out provider) == true) {
+
+                return provider;
+
+            }
+
+            return null;
 
         }
 
@@ -666,19 +705,6 @@ namespace ME.ECS.Views {
 
             }
 
-        }
-
-        public override string ToString() {
-
-            var renderersCount = 0;
-            foreach (var ren in this.list) {
-
-                renderersCount += ren.Value.Count;
-
-            }
-
-            return "<b>Alive Views:</b> " + renderersCount.ToString() + ", <b>Entities Type:</b> " + typeof(TEntity).ToString();
-            
         }
 
     }

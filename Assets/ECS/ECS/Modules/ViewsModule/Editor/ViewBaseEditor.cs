@@ -1,3 +1,4 @@
+#if VIEWS_MODULE_SUPPORT
 using UnityEditor;
 using ME.ECS.Views;
 
@@ -63,3 +64,4 @@ namespace ME.ECSEditor {
     }
 
 }
+#endif

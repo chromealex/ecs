@@ -68,12 +68,14 @@ namespace ME.ECS.Views {
 
     }
 
-    public interface IViewsProviderBase { }
-
-    public interface IViewsProvider<TEntity> : IViewsProviderBase where TEntity : struct, IEntity {
-
+    public interface IViewsProviderBase {
+        
         void OnConstruct();
         void OnDeconstruct();
+
+    }
+
+    public interface IViewsProvider<TEntity> : IViewsProviderBase where TEntity : struct, IEntity {
 
         IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId);
         void Destroy(ref IView<TEntity> instance);

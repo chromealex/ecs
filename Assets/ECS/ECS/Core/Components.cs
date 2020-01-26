@@ -1,9 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using EntityId = System.Int32;
 
 namespace ME.ECS {
 
-    public interface IComponentsBase { }
+    public interface IComponentsBase {
+
+        IDictionary GetData();
+        IDictionary GetDataOnce();
+
+    }
 
     public interface IComponents<TState> : IComponentsBase, IPoolableRecycle where TState : class, IState<TState> {
 
@@ -365,6 +371,18 @@ namespace ME.ECS {
         }
 
         public Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> GetDataOnce() {
+
+            return this.dicOnce;
+
+        }
+
+        IDictionary IComponentsBase.GetData() {
+
+            return this.dic;
+
+        }
+
+        IDictionary IComponentsBase.GetDataOnce() {
 
             return this.dicOnce;
 

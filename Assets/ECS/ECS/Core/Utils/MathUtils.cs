@@ -2,6 +2,22 @@ namespace ME.ECS {
 
     public static class MathUtils {
 
+        public static string SecondsToString(double seconds) {
+            
+            var parts = new System.Collections.Generic.List<string>();
+            System.Action<int, string, string> add = (val, unit, format) => { if (val > 0) parts.Add(val.ToString(format) + unit); };
+            var t = System.TimeSpan.FromSeconds(seconds);
+
+            add(t.Days, "d", "#");
+            add(t.Hours, "h", "#");
+            add(t.Minutes, "m", "#");
+            add(t.Seconds, "s", "#");
+            add(t.Milliseconds, "ms", "000");
+
+            return string.Join(" ", parts);
+            
+        }
+
         public static string BytesCountToString(int count) {
             
             string[] sizes = { "B", "KB", "MB", "GB", "TB", "PB" };

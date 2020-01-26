@@ -69,8 +69,14 @@ namespace ME.ECS.Network {
         bool UnRegisterObject(object obj, int objId);
         bool UnRegisterGroup(int groupId);
 
+        int GetRegistryCount();
+        
+        double GetPing();
+
         int GetEventsSentCount();
+        int GetEventsBytesSentCount();
         int GetEventsReceivedCount();
+        int GetEventsBytesReceivedCount();
 
     }
 
@@ -144,6 +150,12 @@ namespace ME.ECS.Network {
             
         }
 
+        public double GetPing() {
+
+            return this.ping;
+
+        }
+
         private void Sync_RPC(Tick tick, int hash) {
 
             this.statesHistoryModule.SetSyncHash(tick, hash);
@@ -189,11 +201,31 @@ namespace ME.ECS.Network {
             return this.transporter.GetEventsSentCount();
 
         }
-        
+
+        public int GetEventsBytesSentCount() {
+
+            if (this.transporter == null) return 0;
+            return this.transporter.GetEventsBytesSentCount();
+
+        }
+
         public int GetEventsReceivedCount() {
 
             if (this.transporter == null) return 0;
             return this.transporter.GetEventsReceivedCount();
+
+        }
+
+        public int GetEventsBytesReceivedCount() {
+
+            if (this.transporter == null) return 0;
+            return this.transporter.GetEventsBytesReceivedCount();
+
+        }
+
+        public int GetRegistryCount() {
+
+            return this.registry.Count;
 
         }
 
@@ -513,26 +545,6 @@ namespace ME.ECS.Network {
             arr[2] = p3;
             arr[3] = p4;
             this.CallRPC(instance, rpcId, true, arr);
-            
-        }
-
-        public override string ToString() {
-
-            var rpcCount = this.registry.Count.ToString();
-            var ping = this.ping.ToString("###0.000ms");
-            var eventsSent = this.transporter.GetEventsSentCount().ToString();
-            
-            var eventsBytesSent = this.transporter.GetEventsBytesSentCount();
-            var eventsBytesSentStr = MathUtils.BytesCountToString(eventsBytesSent);
-
-            var eventsBytesReceived = this.transporter.GetEventsBytesReceivedCount();
-            var eventsBytesReceivedStr = MathUtils.BytesCountToString(eventsBytesReceived);
-
-            return "<b>Registered RPCs:</b> " + rpcCount + "\n" + 
-                   "<b>Ping:</b> " + ping + "\n" +
-                   "<b>Events Sent: </b>" + eventsSent + "\n" +
-                   "<b>Sent: </b>" + eventsBytesSentStr + "\n" +
-                   "<b>Received: </b>" + eventsBytesReceivedStr;
             
         }
 

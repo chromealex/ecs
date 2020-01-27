@@ -25,6 +25,9 @@ namespace ME.Example.Game {
         public World<State> world;
         private IState<State> savedState;
 
+        public Vector3 p1Position = new Vector3(0f, 0f, 3f);
+        public Vector3 p2Position = new Vector3(0f, 0f, -3f);
+        
         protected ViewId pointViewSourceId;
         protected ViewId unitViewSourceId;
         protected ViewId unitViewSourceId2;
@@ -52,8 +55,8 @@ namespace ME.Example.Game {
                 
                 this.RegisterViewSources();
 
-                var p1 = this.world.AddEntity(new Point() { position = this.transform.position + new Vector3(0f, 0f, 3f), scale = Vector3.one, unitsCount = 99f, increaseRate = 1f });
-                var p2 = this.world.AddEntity(new Point() { position = this.transform.position + new Vector3(0f, 0f, -3f), scale = Vector3.one, unitsCount = 1f, increaseRate = 1f });
+                var p1 = this.world.AddEntity(new Point() { position = this.transform.position + this.p1Position, scale = Vector3.one });
+                var p2 = this.world.AddEntity(new Point() { position = this.transform.position + this.p2Position, scale = Vector3.one });
                 
                 this.world.InstantiateView<Point>(this.pointViewSourceId, p1);
                 this.world.InstantiateView<Point>(this.pointViewSourceId, p2);
@@ -84,14 +87,14 @@ namespace ME.Example.Game {
             
         }
 
-        public void AddEventUIButtonClick(int pointId) {
+        public virtual void AddEventUIButtonClick(int pointId) {
 
             var input = this.world.GetSystem<InputSystem>();
             input.AddEventUIButtonClick(pointId, this.playerColor, this.moveSide);
 
         }
 
-        public void AddUnitButtonClick() {
+        public virtual void AddUnitButtonClick() {
             
             var input = this.world.GetSystem<InputSystem>();
             input.AddUnitButtonClick(this.playerColor, this.spawnUnitsCount, this.unitViewSourceId, this.unitViewSourceId2);

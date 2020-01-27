@@ -16,7 +16,7 @@ namespace ME.ECSEditor {
             var dataCount = 0;
             foreach (System.Collections.DictionaryEntry ren in this.target.GetData()) {
 
-                dataCount += ((System.Collections.IList)ren.Value).Count;
+                dataCount += ((System.Collections.Generic.SortedList<long, HistoryEvent>)ren.Value).Count;
 
             }
             

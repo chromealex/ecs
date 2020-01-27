@@ -404,28 +404,28 @@ namespace ME.ECS {
 
         public void CopyFrom(Components<TEntity, TState> other) {
             
-            this.CopyFrom_INTERNAL(ref this.dic, other);
-            this.CopyFrom_INTERNAL(ref this.dicOnce, other);
+            this.CopyFrom_INTERNAL(ref this.dic, other.dic);
+            this.CopyFrom_INTERNAL(ref this.dicOnce, other.dicOnce);
             
         }
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void CopyFrom_INTERNAL(ref Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> dic, Components<TEntity, TState> other) {
+        private void CopyFrom_INTERNAL(ref Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> dicDest, Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> dicSource) {
             
-            if (dic != null) {
+            if (dicDest != null) {
 
-                foreach (var item in dic) {
+                foreach (var item in dicDest) {
 
                     PoolComponents.Recycle(item.Value);
                     PoolHashSet<IComponent<TState, TEntity>>.Recycle(item.Value);
 
                 }
-                PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Recycle(ref dic);
+                PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Recycle(ref dicDest);
                 
             }
             
-            dic = PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Spawn(this.capacity);
-            foreach (var item in other.dic) {
+            dicDest = PoolDictionary<EntityId, HashSet<IComponent<TState, TEntity>>>.Spawn(this.capacity);
+            foreach (var item in dicSource) {
                 
                 var newList = PoolHashSet<IComponent<TState, TEntity>>.Spawn(item.Value.Count);
                 //UnityEngine.Debug.Log("CopyState for " + typeof(TEntity) + ", list: " + newList.Count + " << " + item.Value.Count);
@@ -438,7 +438,7 @@ namespace ME.ECS {
                     
                 }
 
-                dic.Add(item.Key, newList);
+                dicDest.Add(item.Key, newList);
                 
             }
 

@@ -61,11 +61,12 @@ namespace ME.ECS {
 
         private const int SYSTEMS_CAPACITY = 100;
         private const int MODULES_CAPACITY = 100;
-        private const int ENTITIES_CACHE_CAPACITY = 100;
+        private const int ENTITIES_CACHE_CAPACITY = 1000;
         private const int FILTERS_CAPACITY = 100;
+        private const int MARKERS_CAPACITY = 10;
         private const int COMPONENTS_CAPACITY = 100;
         private const int CAPACITIES_CAPACITY = 100;
-        private const int ENTITIES_DIRECT_CACHE_CAPACITY = 100;
+        private const int ENTITIES_DIRECT_CACHE_CAPACITY = 1000;
 
         private static class EntitiesDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
 
@@ -84,6 +85,7 @@ namespace ME.ECS {
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
+        private Dictionary<int, IMarker> markers; // These markers are storing out of state
 
         private List<ModuleState> statesSystems;
         private List<ModuleState> statesModules;
@@ -241,10 +243,13 @@ namespace ME.ECS {
             this.filtersCache = PoolDictionary<int, IList>.Spawn(World<TState>.FILTERS_CAPACITY);
             this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
             this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
+            this.markers = PoolDictionary<int, IMarker>.Spawn(World<TState>.MARKERS_CAPACITY);
 
         }
 
         void IPoolableRecycle.OnRecycle() {
+            
+            PoolDictionary<int, IMarker>.Recycle(ref this.markers);
             
             WorldUtilities.ReleaseState(ref this.resetState);
             WorldUtilities.ReleaseState(ref this.currentState);
@@ -980,6 +985,9 @@ namespace ME.ECS {
                 }
 
             }
+            
+            this.RemoveMarkers();
+            
             ////////////////
             this.currentStep = WorldStep.None;
             ////////////////
@@ -1149,6 +1157,62 @@ namespace ME.ECS {
         partial void SimulatePlugin7ForTicks(Tick from, Tick to);
         partial void SimulatePlugin8ForTicks(Tick from, Tick to);
         partial void SimulatePlugin9ForTicks(Tick from, Tick to);
+
+        public void RemoveMarkers() {
+
+            foreach (var item in this.markers) {
+                
+                PoolMarkers.Recycle(item.Value);
+                
+            }
+            this.markers.Clear();
+
+        }
+
+        public TMarker AddMarker<TMarker>() where TMarker : class, IMarker, new() {
+
+            var key = WorldUtilities.GetKey(typeof(TMarker));
+            IMarker instance;
+            if (this.markers.TryGetValue(key, out instance) == false) {
+
+                instance = PoolMarkers.Spawn<TMarker>();
+                this.markers.Add(key, instance);
+
+            }
+
+            return (TMarker)instance;
+
+        }
+
+        public TMarker GetMarker<TMarker>() where TMarker : class, IMarker, new() {
+            
+            var key = WorldUtilities.GetKey(typeof(TMarker));
+            IMarker instance;
+            if (this.markers.TryGetValue(key, out instance) == false) {
+
+                return null;
+
+            }
+
+            return (TMarker)instance;
+
+        }
+
+        public bool RemoveMarker<TMarker>() where TMarker : class, IMarker, new() {
+            
+            var key = WorldUtilities.GetKey(typeof(TMarker));
+            IMarker instance;
+            if (this.markers.TryGetValue(key, out instance) == true) {
+                
+                PoolMarkers.Recycle<TMarker>((TMarker)instance);
+                this.markers.Remove(key);
+                return true;
+
+            }
+
+            return false;
+
+        }
 
         /// <summary>
         /// Add component for current entity only (create component data)

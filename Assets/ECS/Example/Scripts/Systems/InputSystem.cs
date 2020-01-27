@@ -67,7 +67,7 @@ namespace ME.Example.Game.Systems {
                 }
 
             }
-
+            
         }
 
         public void AddEventUIButtonClick(int pointId, Color color, float moveSide) {

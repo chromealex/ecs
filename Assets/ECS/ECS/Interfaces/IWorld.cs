@@ -39,6 +39,10 @@ namespace ME.ECS {
         float GetRandomRange(float from, float to);
         float GetRandomValue();
 
+        TMarker AddMarker<TMarker>() where TMarker : class, IMarker, new();
+        TMarker GetMarker<TMarker>() where TMarker : class, IMarker, new();
+        bool RemoveMarker<TMarker>() where TMarker : class, IMarker, new();
+
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
 
         void SetCapacity<T>(int capacity) where T : IEntity;

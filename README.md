@@ -56,6 +56,9 @@ Entities are storing base data of your objects like position, rotation, user dat
 
 #### Components (```IComponent<TEntity>```)
 Components are working with a certain Entity type and implements AdvanceTick (in which you can add logic of your tick) and CopyFrom. Or you can use components like a markers. Btw, you can use IComponentOnce interface to be sure all components removed at the end of current tick.
+
+#### Markers (```IMarker```)
+Markers needed to implement UI events or something that doesn't exist in game state.
 <br>
 <br>
 

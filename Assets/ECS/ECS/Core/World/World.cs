@@ -77,8 +77,8 @@ namespace ME.ECS {
 
         private static class MarkersDirectCache<TStateInner, TMarker> where TMarker : struct, IMarker where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<int, TMarker> data = new Dictionary<int, TMarker>(World<TState>.MARKERS_CAPACITY);
-            
+            internal static Dictionary<int, List<TMarker>> data = new Dictionary<int, List<TMarker>>(World<TState>.MARKERS_CAPACITY);
+
         }
 
         private static int registryWorldId = 0;
@@ -91,13 +91,12 @@ namespace ME.ECS {
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
-        private HashSet<IDictionary> markers;
+        private Dictionary<int, IList> markers;
 
         private List<ModuleState> statesSystems;
         private List<ModuleState> statesModules;
         
         // State cache:
-        //private Dictionary<int, IList> entitiesCache; // key = typeof(T:IData), value = list of T:IData
         private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
         private Dictionary<int, IComponents<TState>> componentsCache; // key = typeof(T:IData), value = list of T:Components
         
@@ -251,13 +250,13 @@ namespace ME.ECS {
             this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
             this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
 
-            this.markers = PoolHashSet<IDictionary>.Spawn(World<TState>.MARKERS_CAPACITY);
+            this.markers = PoolDictionary<int, IList>.Spawn(4);
 
         }
 
         void IPoolableRecycle.OnRecycle() {
             
-            PoolHashSet<IDictionary>.Recycle(ref this.markers);
+            PoolDictionary<int, IList>.Recycle(ref this.markers);
             
             WorldUtilities.ReleaseState(ref this.resetState);
             WorldUtilities.ReleaseState(ref this.currentState);
@@ -300,6 +299,18 @@ namespace ME.ECS {
 
             data = default(T);
             return false;
+
+        }
+
+        int IWorldBase.GetStateHash() {
+
+            if (this.statesHistoryModule != null) {
+
+                return this.statesHistoryModule.GetStateHash(this.GetState());
+
+            }
+
+            return this.currentState.GetHash();
 
         }
 
@@ -1170,10 +1181,11 @@ namespace ME.ECS {
 
         private void RemoveMarkers() {
 
-            foreach (var item in this.markers) {
-                
-                item.Clear();
-                
+            IList markersCache;
+            if (this.markers.TryGetValue(this.id, out markersCache) == true) {
+
+                markersCache.Clear();
+
             }
 
         }
@@ -1181,17 +1193,29 @@ namespace ME.ECS {
         public bool AddMarker<TMarker>(TMarker markerData) where TMarker : struct, IMarker {
 
             var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            if (this.markers.Contains(cache) == false) this.markers.Add(cache);
-            
-            if (cache.ContainsKey(this.id) == false) {
-                
-                cache.Add(this.id, markerData);
-                return true;
 
+            List<TMarker> list;
+            if (cache.TryGetValue(this.id, out list) == true) {
+                
+                list.Add(markerData);
+                
             } else {
 
-                cache[this.id] = markerData;
+                list = PoolList<TMarker>.Spawn(World<TState>.MARKERS_CAPACITY);
+                list.Add(markerData);
+                cache.Add(this.id, list);
 
+            }
+
+            IList markersList;
+            if (this.markers.TryGetValue(this.id, out markersList) == true) {
+
+                this.markers[this.id] = cache[this.id];
+                
+            } else {
+                
+                this.markers.Add(this.id, cache[this.id]);
+                
             }
 
             return false;
@@ -1200,10 +1224,19 @@ namespace ME.ECS {
 
         public bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker {
             
+            marker = default;
+            
             var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            if (cache.TryGetValue(this.id, out marker) == true) {
+            List<TMarker> list;
+            if (cache.TryGetValue(this.id, out list) == true) {
 
-                return true;
+                var cnt = list.Count;
+                if (cnt > 0) {
+                    
+                    marker = list[cnt - 1];
+                    return true;
+
+                }
 
             }
 

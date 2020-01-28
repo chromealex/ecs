@@ -221,6 +221,8 @@ namespace ME.ECS.Views {
 
             }
 
+            void IPoolableRecycle.OnRecycle() {}
+
             void IComponent<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
 
                 var otherView = (ViewComponent)other;

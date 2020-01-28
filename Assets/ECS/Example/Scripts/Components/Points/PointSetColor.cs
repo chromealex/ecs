@@ -14,6 +14,8 @@ namespace ME.Example.Game.Components {
 
         }
 
+        void IPoolableRecycle.OnRecycle() {}
+
         void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) {
 
             this.color = ((PointSetColor)other).color;

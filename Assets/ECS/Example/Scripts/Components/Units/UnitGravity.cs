@@ -19,6 +19,8 @@ namespace ME.Example.Game.Components {
 
         }
 
+        void IPoolableRecycle.OnRecycle() {}
+
         void IComponent<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
 
             var otherUnit = ((UnitGravity)other);

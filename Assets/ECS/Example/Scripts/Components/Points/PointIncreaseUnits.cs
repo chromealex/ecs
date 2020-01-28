@@ -12,6 +12,8 @@ namespace ME.Example.Game.Components {
 
         }
 
+        void IPoolableRecycle.OnRecycle() {}
+
         void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) { }
 
     }
@@ -23,6 +25,8 @@ namespace ME.Example.Game.Components {
             data.unitsCount += data.increaseRate * deltaTime;
 
         }
+
+        void IPoolableRecycle.OnRecycle() {}
 
         void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) { }
 

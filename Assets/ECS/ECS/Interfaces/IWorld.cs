@@ -14,6 +14,8 @@ namespace ME.ECS {
         ModuleState GetSystemState(ISystemBase system);
         void SetModuleState(IModuleBase module, ModuleState state);
         ModuleState GetModuleState(IModuleBase module);
+
+        int GetStateHash();
         
         void SetTickTime(float tickTime);
         float GetTickTime();

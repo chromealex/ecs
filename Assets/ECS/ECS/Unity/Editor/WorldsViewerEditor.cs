@@ -647,7 +647,7 @@ namespace ME.ECSEditor {
 
                         GUILayoutExt.Padding(4f, () => {
 
-                            GUILayoutExt.FoldOut(ref worldEditor.foldout, worldEditor.ToString(), () => {
+                            GUILayoutExt.FoldOut(ref worldEditor.foldout, worldEditor.ToString() + " (Hash: " + worldEditor.world.GetStateHash() + ")", () => {
 
                                 GUILayoutExt.Box(2f, 4f, () => {
 

@@ -20,10 +20,10 @@ namespace ME.Example.Game.Systems {
 
         }
 
-        public IWorld<State> world { get; set; }
+        IWorld<State> ISystem<State>.world { get; set; }
 
-        void ISystem<State>.OnConstruct() { }
-        void ISystem<State>.OnDeconstruct() { }
+        void ISystemBase.OnConstruct() { }
+        void ISystemBase.OnDeconstruct() { }
 
         void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 

@@ -1,0 +1,21 @@
+﻿using ME.ECS;
+
+namespace #NAMESPACE# {
+
+    using TState = #STATENAME#;
+    
+    public class #SCRIPTNAME# : ISystem<TState> {
+        
+        IWorld<TState> ISystem<TState>.world { get; set; }
+        
+        void ISystemBase.OnConstruct() {}
+        
+        void ISystemBase.OnDeconstruct() {}
+        
+        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {}
+        
+        void ISystem<TState>.Update(TState state, float deltaTime) {}
+        
+    }
+    
+}

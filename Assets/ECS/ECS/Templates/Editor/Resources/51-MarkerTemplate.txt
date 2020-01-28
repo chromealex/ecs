@@ -1,0 +1,11 @@
+﻿using ME.ECS;
+
+namespace #NAMESPACE# {
+    
+    public struct #SCRIPTNAME# : IMarker {
+        
+        
+        
+    }
+    
+}

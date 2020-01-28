@@ -13,6 +13,8 @@ namespace ME.Example.Game {
         public Tick tick { get; set; }
         public RandomState randomState { get; set; }
 
+        public UnityEngine.Vector3 worldPosition;
+        
         public Filter<Point> points;
         public Filter<Unit> units;
 
@@ -41,6 +43,8 @@ namespace ME.Example.Game {
             this.tick = other.tick;
             this.randomState = other.randomState;
 
+            this.worldPosition = other.worldPosition;
+            
             this.points.CopyFrom(other.points);
             this.units.CopyFrom(other.units);
 

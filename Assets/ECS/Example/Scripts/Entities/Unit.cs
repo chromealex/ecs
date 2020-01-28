@@ -14,7 +14,7 @@ namespace ME.Example.Game.Entities {
         public float speed;
         public Entity pointFrom;
         public Entity pointTo;
-        public int lifes;
+        public float lifes;
 
     }
 

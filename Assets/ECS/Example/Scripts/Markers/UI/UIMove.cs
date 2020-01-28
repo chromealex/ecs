@@ -5,7 +5,7 @@ namespace ME.Example.Game.Components.UI {
     using ME.ECS;
     using ME.Example.Game.Entities;
     
-    public class UIMove : IMarker {
+    public struct UIMove : IMarker {
 
         public int pointId;
         public Color color;

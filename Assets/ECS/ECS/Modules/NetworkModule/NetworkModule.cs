@@ -121,7 +121,7 @@ namespace ME.ECS.Network {
         
         public IWorld<TState> world { get; set; }
 
-        void IModule<TState>.OnConstruct() {
+        void IModuleBase.OnConstruct() {
 
             this.keyToObjects = PoolDictionary<long, object>.Spawn(100);
             this.objectToKey = PoolDictionary<object, Key>.Spawn(100);
@@ -140,7 +140,7 @@ namespace ME.ECS.Network {
 
         }
 
-        void IModule<TState>.OnDeconstruct() {
+        void IModuleBase.OnDeconstruct() {
             
             this.UnRegisterObject(this, -1);
 
@@ -544,6 +544,19 @@ namespace ME.ECS.Network {
             arr[1] = p2;
             arr[2] = p3;
             arr[3] = p4;
+            this.CallRPC(instance, rpcId, true, arr);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void RPC<T1, T2, T3, T4, T5>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4, T5 p5) where T1 : struct where T2 : struct where T3 : struct where T4 : struct where T5 : struct {
+
+            var arr = PoolArray<object>.Spawn(5);
+            arr[0] = p1;
+            arr[1] = p2;
+            arr[2] = p3;
+            arr[3] = p4;
+            arr[4] = p5;
             this.CallRPC(instance, rpcId, true, arr);
             
         }

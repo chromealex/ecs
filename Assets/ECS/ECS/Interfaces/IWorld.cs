@@ -39,9 +39,10 @@ namespace ME.ECS {
         float GetRandomRange(float from, float to);
         float GetRandomValue();
 
-        TMarker AddMarker<TMarker>() where TMarker : class, IMarker, new();
-        TMarker GetMarker<TMarker>() where TMarker : class, IMarker, new();
-        bool RemoveMarker<TMarker>() where TMarker : class, IMarker, new();
+        bool AddMarker<TMarker>(TMarker marker) where TMarker : struct, IMarker;
+        bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker;
+        bool HasMarker<TMarker>() where TMarker : struct, IMarker;
+        bool RemoveMarker<TMarker>() where TMarker : struct, IMarker;
 
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
 
@@ -62,7 +63,7 @@ namespace ME.ECS {
 
         Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity;
         void RemoveEntities<T>(T data) where T : struct, IEntity;
-        void RemoveEntity<T>(Entity entity) where T : struct, IEntity;
+        bool RemoveEntity<T>(Entity entity) where T : struct, IEntity;
         bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
         bool ForEachEntity<TEntity>(out System.Collections.Generic.List<TEntity> output) where TEntity : struct, IEntity;
 

@@ -1,0 +1,16 @@
+﻿using ME.ECS;
+
+namespace #NAMESPACE# {
+    
+    using TState = #STATENAME#;
+    using TEntity = ENTITY_TYPE_HERE;
+    
+    public class #SCRIPTNAME# : IComponentOnce<TState, TEntity> {
+        
+        void IComponent<TState, TEntity>.AdvanceTick(TState state, ref TEntity data, float deltaTime, int index) {}
+        
+        void IComponent<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {}
+        
+    }
+    
+}

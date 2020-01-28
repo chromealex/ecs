@@ -122,28 +122,26 @@ namespace ME.ECS.Views.Providers {
             
         }
 
-        public DrawMeshData rootData {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ref DrawMeshData GetRootData() {
             
-            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            get {
+            return ref this.items[0].drawMeshData;
+            
+        }
 
-                return this.items[0].drawMeshData;
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void SetRootData(ref DrawMeshData data) {
+            
+            this.items[0].drawMeshData = data;
+            for (int i = 1; i < this.items.Length; ++i) {
+
+                ref var item = ref this.items[i];
+                item.drawMeshData.position = data.position + item.itemData.localPosition;
+                item.drawMeshData.rotation = data.rotation + item.itemData.localRotation;
+                item.drawMeshData.scale = UnityEngine.Vector3.Scale(data.scale, item.itemData.localScale);
 
             }
             
-            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            set {
-
-                this.items[0].drawMeshData = value;
-                for (int i = 1; i < this.items.Length; ++i) {
-
-                    this.items[i].drawMeshData.position = value.position + this.items[i].itemData.localPosition;
-                    this.items[i].drawMeshData.rotation = value.rotation + this.items[i].itemData.localRotation;
-                    this.items[i].drawMeshData.scale = UnityEngine.Vector3.Scale(value.scale, this.items[i].itemData.localScale);
-
-                }
-
-            }
         }
 
         public void SetItems(UnityEngine.Vector3 rootPosition, UnityEngine.Vector3 rootRotation, UnityEngine.Vector3 rootScale, UnityEngine.MeshFilter[] filters, UnityEngine.Renderer[] renderers) {

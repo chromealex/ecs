@@ -341,7 +341,7 @@ namespace ME.ECS.StatesHistory {
 
         public IWorld<TState> world { get; set; }
 
-        void IModule<TState>.OnConstruct() {
+        void IModuleBase.OnConstruct() {
             
             this.states = new CircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
             this.events = PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
@@ -352,7 +352,7 @@ namespace ME.ECS.StatesHistory {
 
         }
 
-        void IModule<TState>.OnDeconstruct() {
+        void IModuleBase.OnDeconstruct() {
             
             this.world.SetStatesHistoryModule(null);
             

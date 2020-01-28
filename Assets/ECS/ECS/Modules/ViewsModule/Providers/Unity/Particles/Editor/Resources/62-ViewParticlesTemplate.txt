@@ -1,0 +1,25 @@
+﻿using ME.ECS;
+
+namespace #NAMESPACE# {
+    
+    using ME.ECS.Views.Providers;
+    using TEntity = ENTITY_TYPE_HERE;
+    
+    public class #SCRIPTNAME# : ParticleViewSource<Apply#SCRIPTNAME#StateParticle> { }
+    
+    [System.Serializable]
+    public class Apply#SCRIPTNAME#StateParticle : ParticleView<TEntity> {
+        
+        public override void ApplyState(in TEntity data, float deltaTime, bool immediately) {
+            
+            ref var rootData = ref this.GetRootData();
+            
+            
+            
+            this.SetRootData(ref rootData);
+            
+        }
+        
+    }
+    
+}

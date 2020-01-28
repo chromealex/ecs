@@ -35,7 +35,7 @@ namespace ME.ECS {
         
         public IWorld<TState> world { get; set; }
 
-        void IModule<TState>.OnConstruct() {
+        void IModuleBase.OnConstruct() {
 
             UnityEngine.Application.targetFrameRate = 120;
             this.minFps = int.MaxValue;
@@ -45,7 +45,7 @@ namespace ME.ECS {
 
         }
 
-        void IModule<TState>.OnDeconstruct() {
+        void IModuleBase.OnDeconstruct() {
 
         }
 

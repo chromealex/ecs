@@ -11,9 +11,9 @@ namespace ME.Example.Game.Components {
         public void AdvanceTick(State state, ref Unit data, float deltaTime, int index) {
 
             data.position.y -= this.gravity * deltaTime;
-            if (data.position.y <= 0f) {
+            if (data.position.y <= state.worldPosition.y) {
 
-                data.position.y = 0f;
+                data.position.y = state.worldPosition.y;
 
             }
 

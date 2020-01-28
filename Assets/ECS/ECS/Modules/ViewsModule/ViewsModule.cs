@@ -241,7 +241,7 @@ namespace ME.ECS.Views {
         
         public IWorld<TState> world { get; set; }
 
-        void IModule<TState>.OnConstruct() {
+        void IModuleBase.OnConstruct() {
 
             this.list = PoolDictionary<EntityId, List<IView<TEntity>>>.Spawn(ViewsModule<TState, TEntity>.VIEWS_CAPACITY);
             this.rendering = PoolHashSet<ViewInfo>.Spawn(ViewsModule<TState, TEntity>.VIEWS_CAPACITY);
@@ -253,7 +253,7 @@ namespace ME.ECS.Views {
 
         }
 
-        void IModule<TState>.OnDeconstruct() {
+        void IModuleBase.OnDeconstruct() {
             
             PoolDictionary<ViewId, IViewsProvider<TEntity>>.Recycle(ref this.registryPrefabToProvider);
             PoolDictionary<ViewId, IViewsProvider>.Recycle(ref this.registryPrefabToProviderBase);
@@ -394,11 +394,11 @@ namespace ME.ECS.Views {
                 for (int i = 0, count = list.Count; i < count; ++i) {
                     
                     var view = list[i];
-                    this.UnRegister_INTERNAL(view, removeFromList: false);
+                    //this.UnRegister_INTERNAL(view, removeFromList: false);
                     this.DestroyView(ref view);
                     
                 }
-                list.Clear();
+                //list.Clear();
 
             }
 
@@ -545,7 +545,6 @@ namespace ME.ECS.Views {
 
         }
 
-
         private TEntity GetData(IViewBase view) {
             
             TEntity data;
@@ -623,7 +622,6 @@ namespace ME.ECS.Views {
                     for (int i = 0, count = list.Count; i < count; ++i) {
                 
                         var instance = list[i];
-                        UnityEngine.Debug.Log("RecycleView: " + instance.entity.id);
                         this.RecycleView_INTERNAL(ref instance);
                         --i;
                         --count;

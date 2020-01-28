@@ -75,6 +75,12 @@ namespace ME.ECS {
 
         }
 
+        private static class MarkersDirectCache<TStateInner, TMarker> where TMarker : struct, IMarker where TStateInner : class, IState<TState> {
+
+            internal static Dictionary<int, TMarker> data = new Dictionary<int, TMarker>(World<TState>.MARKERS_CAPACITY);
+            
+        }
+
         private static int registryWorldId = 0;
 
         public int id { get; private set; }
@@ -85,7 +91,7 @@ namespace ME.ECS {
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
-        private Dictionary<int, IMarker> markers; // These markers are storing out of state
+        private HashSet<IDictionary> markers;
 
         private List<ModuleState> statesSystems;
         private List<ModuleState> statesModules;
@@ -178,6 +184,7 @@ namespace ME.ECS {
             
             UnityEngine.Random.state = this.currentState.randomState;
             var spherePoint = UnityEngine.Random.insideUnitSphere * radius;
+            this.currentState.randomState = UnityEngine.Random.state;
             return spherePoint + center;
 
         }
@@ -243,13 +250,14 @@ namespace ME.ECS {
             this.filtersCache = PoolDictionary<int, IList>.Spawn(World<TState>.FILTERS_CAPACITY);
             this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
             this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
-            this.markers = PoolDictionary<int, IMarker>.Spawn(World<TState>.MARKERS_CAPACITY);
+
+            this.markers = PoolHashSet<IDictionary>.Spawn(World<TState>.MARKERS_CAPACITY);
 
         }
 
         void IPoolableRecycle.OnRecycle() {
             
-            PoolDictionary<int, IMarker>.Recycle(ref this.markers);
+            PoolHashSet<IDictionary>.Recycle(ref this.markers);
             
             WorldUtilities.ReleaseState(ref this.resetState);
             WorldUtilities.ReleaseState(ref this.currentState);
@@ -603,7 +611,7 @@ namespace ME.ECS {
 
         }
 
-        public void RemoveEntity<TEntity>(Entity entity) where TEntity : struct, IEntity {
+        public bool RemoveEntity<TEntity>(Entity entity) where TEntity : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, entity.id);
             if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
@@ -618,7 +626,7 @@ namespace ME.ECS {
                             this.DestroyEntityPlugins<TEntity>(entity);
                             list.RemoveAt(i);
                             this.RemoveComponents(entity);
-                            break;
+                            return true;
 
                         }
 
@@ -627,6 +635,8 @@ namespace ME.ECS {
                 }
 
             }
+
+            return false;
 
         }
         
@@ -1158,60 +1168,61 @@ namespace ME.ECS {
         partial void SimulatePlugin8ForTicks(Tick from, Tick to);
         partial void SimulatePlugin9ForTicks(Tick from, Tick to);
 
-        public void RemoveMarkers() {
+        private void RemoveMarkers() {
 
             foreach (var item in this.markers) {
                 
-                PoolMarkers.Recycle(item.Value);
+                item.Clear();
                 
             }
-            this.markers.Clear();
 
         }
 
-        public TMarker AddMarker<TMarker>() where TMarker : class, IMarker, new() {
+        public bool AddMarker<TMarker>(TMarker markerData) where TMarker : struct, IMarker {
 
-            var key = WorldUtilities.GetKey(typeof(TMarker));
-            IMarker instance;
-            if (this.markers.TryGetValue(key, out instance) == false) {
-
-                instance = PoolMarkers.Spawn<TMarker>();
-                this.markers.Add(key, instance);
-
-            }
-
-            return (TMarker)instance;
-
-        }
-
-        public TMarker GetMarker<TMarker>() where TMarker : class, IMarker, new() {
+            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
+            if (this.markers.Contains(cache) == false) this.markers.Add(cache);
             
-            var key = WorldUtilities.GetKey(typeof(TMarker));
-            IMarker instance;
-            if (this.markers.TryGetValue(key, out instance) == false) {
-
-                return null;
-
-            }
-
-            return (TMarker)instance;
-
-        }
-
-        public bool RemoveMarker<TMarker>() where TMarker : class, IMarker, new() {
-            
-            var key = WorldUtilities.GetKey(typeof(TMarker));
-            IMarker instance;
-            if (this.markers.TryGetValue(key, out instance) == true) {
+            if (cache.ContainsKey(this.id) == false) {
                 
-                PoolMarkers.Recycle<TMarker>((TMarker)instance);
-                this.markers.Remove(key);
+                cache.Add(this.id, markerData);
+                return true;
+
+            } else {
+
+                cache[this.id] = markerData;
+
+            }
+
+            return false;
+
+        }
+
+        public bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker {
+            
+            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
+            if (cache.TryGetValue(this.id, out marker) == true) {
+
                 return true;
 
             }
 
             return false;
 
+        }
+
+        public bool HasMarker<TMarker>() where TMarker : struct, IMarker {
+            
+            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
+            return cache.ContainsKey(this.id);
+
+        }
+
+        public bool RemoveMarker<TMarker>() where TMarker : struct, IMarker {
+            
+            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
+            return cache.Remove(this.id);
+            
         }
 
         /// <summary>

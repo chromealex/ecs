@@ -14,7 +14,7 @@ namespace ME.Example.Game.Views {
 
         public override void ApplyState(in Point data, float deltaTime, bool immediately) {
 
-            var rootData = this.rootData;
+            ref var rootData = ref this.GetRootData();
 
             if (immediately == true) {
 
@@ -28,7 +28,7 @@ namespace ME.Example.Game.Views {
 
             }
 
-            this.rootData = rootData;
+            this.SetRootData(ref rootData);
 
         }
 

@@ -9,7 +9,7 @@ namespace ME.Example.Game.Systems {
     public class UnitsSystem : ISystem<State> {
 
         //[BurstCompile(CompileSynchronously = true, FloatMode = FloatMode.Deterministic, FloatPrecision = FloatPrecision.Standard)]
-        private struct TestJob : IJobParallelFor {
+        /*private struct TestJob : IJobParallelFor {
 
             public float deltaTime;
 
@@ -42,21 +42,50 @@ namespace ME.Example.Game.Systems {
 
             }
 
-        }
+        }*/
 
         public IWorld<State> world { get; set; }
 
-        void ISystem<State>.OnConstruct() { }
-        void ISystem<State>.OnDeconstruct() { }
+        void ISystemBase.OnConstruct() { }
+        void ISystemBase.OnDeconstruct() { }
 
         void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 
-            var job = new TestJob() {
+            /*var job = new TestJob() {
                 deltaTime = deltaTime
             };
 
             var jobHandle = job.Schedule(state.units.Count, 1000);
-            jobHandle.Complete();
+            jobHandle.Complete();*/
+
+            for (int index = state.units.Count - 1; index >= 0; --index) {
+                
+                var data = Worlds<State>.currentState.units[index];
+                data = Worlds<State>.currentWorld.RunComponents(data, deltaTime, index);
+                Point toData;
+                if (Worlds<State>.currentWorld.GetEntityData(data.pointTo.id, out toData) == true) {
+
+                    if ((toData.position - data.position).sqrMagnitude <= 0.01f) {
+
+                        var from = data.pointFrom;
+                        var to = data.pointTo;
+                        data.pointTo = from;
+                        data.pointFrom = to;
+                        Worlds<State>.currentWorld.RemoveComponents<UnitFollowFromTo>(data.entity);
+                        var comp = Worlds<State>.currentWorld.AddComponent<Unit, UnitFollowFromTo>(data.entity);
+                        comp.@from = data.pointFrom;
+                        comp.to = data.pointTo;
+
+                        --data.lifes;
+
+                    }
+
+                }
+
+                Worlds<State>.currentState.units[index] = data;
+                Worlds<State>.currentWorld.UpdateEntityCache(data);
+                
+            }
 
             for (int i = state.units.Count - 1; i >= 0; --i) {
 

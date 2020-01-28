@@ -15,7 +15,7 @@ namespace ME.Example.Game.Systems {
         private RPCId testEventCallId;
         private RPCId createUnitCallId;
 
-        void ISystem<State>.OnConstruct() {
+        void ISystemBase.OnConstruct() {
 
             var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
             this.testEventCallId = network.RegisterRPC(new System.Action<int, Color, float>(this.TestEvent_RPC).Method);
@@ -24,7 +24,7 @@ namespace ME.Example.Game.Systems {
 
         }
 
-        void ISystem<State>.OnDeconstruct() {
+        void ISystemBase.OnDeconstruct() {
 
             var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
             network.UnRegisterObject(this, 1);

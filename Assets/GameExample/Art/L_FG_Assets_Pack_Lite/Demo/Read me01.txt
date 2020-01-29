@@ -1,0 +1,8 @@
+Demo scenes use Unity Standard Assets. 
+
+For achieving some certain effects, please import the Standard Assets which we list below before you use our kit. 
+
+  Assets-Import Package-Effects-ImageEffects
+
+
+

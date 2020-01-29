@@ -1,0 +1,21 @@
+{
+  "name": "com.arongranberg.astar",
+  "version": "4.3.4",
+  "displayName": "A* Pathfinding Project",
+  "unity": "2019.3",
+  "unityRelease": "0b5",
+  "documentation": "http://example.com",
+  "dependencies": {
+    "com.unity.burst": "1.0.0",
+    "com.unity.mathematics": "1.0.0"
+  },
+  "keywords": [
+    "pathfinding",
+    "ai"
+  ],
+  "author": {
+    "name": "Aron Granberg",
+    "email": "aron.granberg@gmail.com",
+    "url": "https://www.arongranberg.com"
+  }
+}

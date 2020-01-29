@@ -334,7 +334,7 @@ namespace ME.ECS.Network {
             if (this.objectToKey.TryGetValue(instance, out key) == true) {
 
                 var evt = new ME.ECS.StatesHistory.HistoryEvent();
-                evt.tick = this.world.GetTick() + 1UL; // Call RPC on next tick
+                evt.tick = this.world.GetStateTick() + 1UL;//this.world.GetCurrentTick() + 1UL; // Call RPC on next tick
                 evt.order = this.GetRPCOrder();
                 evt.localOrder = ++this.localOrderIndex;
                 evt.parameters = parameters;

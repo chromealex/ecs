@@ -7,7 +7,7 @@ namespace ME.ECS {
     
     public partial interface IWorldBase {
 
-        Tick GetTick();
+        Tick GetCurrentTick();
         void Simulate(double time);
         void Simulate(Tick toTick);
 
@@ -28,7 +28,7 @@ namespace ME.ECS {
 
         }
 
-        public Tick GetTick() {
+        public Tick GetCurrentTick() {
 
             if (this.statesHistoryModule != null) {
 
@@ -51,7 +51,7 @@ namespace ME.ECS {
             if (this.statesHistoryModule != null) {
 
                 this.timeSinceStart = time;
-                this.statesHistoryModule.Simulate(this.GetTick(), this.statesHistoryModule.GetTickByTime(time));
+                this.statesHistoryModule.Simulate(this.GetCurrentTick(), this.statesHistoryModule.GetTickByTime(time));
                 
             }
 
@@ -62,7 +62,7 @@ namespace ME.ECS {
             if (this.statesHistoryModule != null) {
 
                 this.timeSinceStart = toTick * this.tickTime;
-                this.statesHistoryModule.Simulate(this.GetTick(), toTick);
+                this.statesHistoryModule.Simulate(this.GetCurrentTick(), toTick);
                 
             }
 

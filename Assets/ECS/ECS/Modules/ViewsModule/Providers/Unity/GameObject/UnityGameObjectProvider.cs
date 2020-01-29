@@ -120,9 +120,15 @@ namespace ME.ECS.Views.Providers {
 
         public ParticleSystemSimulation particleSystemSimulation;
 
-        public void SimulateParticles(float time) {
+        public void SimulateParticles(float time, uint seed) {
             
-            this.particleSystemSimulation.SimulateParticles(time);
+            this.particleSystemSimulation.SimulateParticles(time, seed);
+            
+        }
+
+        public void UpdateParticlesSimulation(float deltaTime) {
+            
+            this.particleSystemSimulation.Update(deltaTime);
             
         }
 
@@ -156,7 +162,7 @@ namespace ME.ECS.Views.Providers {
         public virtual void OnInitialize(in TEntity data) { }
         public virtual void OnDeInitialize(in TEntity data) { }
         public abstract void ApplyState(in TEntity data, float deltaTime, bool immediately);
-
+        
     }
     
     public class UnityGameObjectProvider<TEntity> : ViewsProvider<TEntity> where TEntity : struct, IEntity {

@@ -100,7 +100,9 @@ namespace ME.ECS.Views {
         void OnInitialize(in T data);
         void OnDeInitialize(in T data);
         void ApplyState(in T data, float deltaTime, bool immediately);
-        void SimulateParticles(float time);
+        
+        void UpdateParticlesSimulation(float deltaTime);
+        void SimulateParticles(float time, uint seed);
 
     }
 
@@ -212,6 +214,7 @@ namespace ME.ECS.Views {
         private class ViewComponent : IComponent<TState, TEntity>, IViewComponent {
 
             public ViewInfo viewInfo;
+            public uint seed;
 
             public void AdvanceTick(TState state, ref TEntity data, float deltaTime, int index) {}
 
@@ -227,7 +230,8 @@ namespace ME.ECS.Views {
 
                 var otherView = (ViewComponent)other;
                 this.viewInfo = otherView.viewInfo;
-                
+                this.seed = otherView.seed;
+
             }
 
         }
@@ -325,11 +329,12 @@ namespace ME.ECS.Views {
             var viewInfo = new ViewInfo();
             viewInfo.entity = entity;
             viewInfo.prefabSourceId = sourceId;
-            viewInfo.creationTick = this.world.GetTick();
+            viewInfo.creationTick = this.world.GetStateTick();
 
             var component = this.world.AddComponent<TEntity, ViewComponent>(entity);
             component.viewInfo = viewInfo;
-            
+            component.seed = (uint)this.world.GetSeedValue();
+
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -599,11 +604,11 @@ namespace ME.ECS.Views {
                             // We need to create component view for entity
                             var instance = this.SpawnView_INTERNAL(component.viewInfo);
                             // Call ApplyState with deltaTime = current time offset
-                            var dt = UnityEngine.Mathf.Max(0f, (this.world.GetTick() - component.viewInfo.creationTick) * this.world.GetTickTime());
+                            var dt = UnityEngine.Mathf.Max(0f, (this.world.GetCurrentTick() - component.viewInfo.creationTick) * this.world.GetTickTime());
                             instance.ApplyState(item, dt, immediately: true);
                             // Simulate particle systems
-                            instance.SimulateParticles(dt);
-
+                            instance.SimulateParticles(dt, component.seed);
+                            
                         }
 
                     }
@@ -650,6 +655,7 @@ namespace ME.ECS.Views {
                 
                     var instance = list[i];
                     instance.ApplyState(this.GetData(instance), deltaTime, immediately: false);
+                    instance.UpdateParticlesSimulation(deltaTime);
                 
                 }
 

@@ -99,7 +99,7 @@ namespace ME.ECS {
         // State cache:
         private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
         private Dictionary<int, IComponents<TState>> componentsCache; // key = typeof(T:IData), value = list of T:Components
-        
+
         private float tickTime;
         private double timeSinceStart;
 
@@ -215,6 +215,12 @@ namespace ME.ECS {
             
         }
 
+        public int GetSeedValue() {
+
+            return (int)this.GetCurrentTick();
+            
+        }
+
         void IWorldBase.SetTickTime(float tickTime) {
 
             this.tickTime = tickTime;
@@ -224,6 +230,12 @@ namespace ME.ECS {
         float IWorldBase.GetTickTime() {
 
             return this.tickTime;
+
+        }
+
+        Tick IWorldBase.GetStateTick() {
+
+            return this.GetState().tick;
 
         }
 

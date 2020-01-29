@@ -166,7 +166,11 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public void SimulateParticles(float time) {
+        public void SimulateParticles(float time, uint seed) {
+            
+        }
+
+        public void UpdateParticlesSimulation(float deltaTime) {
             
         }
 

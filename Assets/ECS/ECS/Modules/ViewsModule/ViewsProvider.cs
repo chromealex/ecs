@@ -5,15 +5,129 @@ using Tick = System.UInt64;
 namespace ME.ECS.Views {
 
     [System.Serializable]
-    public struct ParticleSimulationItem {
+    public struct ParticleSimulationSettings {
 
-        public UnityEngine.ParticleSystem particleSystem;
+        public enum SimulationType : byte {
 
-        public void SimulateParticles(float time) {
+            RestoreHard,
+            RestoreSoft,
+            NoRestore,
+
+        }
+
+        public static ParticleSimulationSettings @default {
+            get {
                 
+                return new ParticleSimulationSettings() {
+                    simulationType = SimulationType.RestoreSoft,
+                    minSimulationTime = 0.2f,
+                    minEndingTime = 0.1f,
+                    halfEnding = 0.5f,
+                };
+                
+            }
+        }
+
+        public SimulationType simulationType;
+        public float minSimulationTime;
+        public float minEndingTime;
+        [UnityEngine.RangeAttribute(0.1f, 0.9f)]
+        public float halfEnding;
+
+    }
+
+    [System.Serializable]
+    public struct ParticleSimulationItem {
+        
+        public UnityEngine.ParticleSystem particleSystem;
+        
+        private float simulateToTime;
+        private float currentTime;
+        private float simulateToTimeDuration;
+        
+        public void SimulateParticles(float time, uint seed, ParticleSimulationSettings settings) {
+            
+            this.particleSystem.Stop(true);
+            this.particleSystem.useAutoRandomSeed = false;
+            this.particleSystem.randomSeed = seed;
+            
+            if (settings.simulationType == ParticleSimulationSettings.SimulationType.RestoreSoft) {
+
+                if (time > settings.minSimulationTime) {
+
+                    var mainModule = this.particleSystem.main;
+                    var duration = mainModule.duration / mainModule.simulationSpeed;
+                    var halfEnding = (duration - time) * settings.halfEnding;
+                    if (halfEnding <= settings.minEndingTime) { // if ending is less than Xms - skip
+
+                        this.Reset();
+                        return;
+
+                    }
+
+                    this.simulateToTime = time + halfEnding;
+                    this.currentTime = 0f;
+                    this.simulateToTimeDuration = halfEnding;
+
+                    this.Simulate(this.simulateToTime);
+                    if (this.particleSystem.particleCount <= 0) {
+
+                        this.Reset();
+
+                    }
+
+                    this.Simulate(0f);
+
+                } else {
+                    
+                    this.Simulate(time);
+                    
+                }
+
+            } else if (settings.simulationType == ParticleSimulationSettings.SimulationType.RestoreHard) {
+                
+                this.Simulate(time);
+                
+            } else if (settings.simulationType == ParticleSimulationSettings.SimulationType.NoRestore) {
+                
+                this.Simulate(0f);
+                
+            }
+
+        }
+
+        public void Update(float deltaTime, ParticleSimulationSettings settings) {
+
+            if (settings.simulationType == ParticleSimulationSettings.SimulationType.RestoreSoft && this.simulateToTimeDuration > 0f) {
+
+                this.currentTime += deltaTime / this.simulateToTimeDuration;
+                if (this.currentTime <= 1f) {
+                    
+                    this.Simulate(this.currentTime * this.simulateToTime);
+                    
+                } else {
+
+                    this.Reset();
+
+                }
+
+            }
+
+        }
+
+        private void Reset() {
+            
+            this.simulateToTimeDuration = 0f;
+            this.currentTime = 0f;
+            this.simulateToTime = 0f;
+            
+        }
+
+        private void Simulate(float time) {
+            
             this.particleSystem.Simulate(time, withChildren: true);
             this.particleSystem.Play(withChildren: true);
-                
+
         }
 
     }
@@ -22,27 +136,52 @@ namespace ME.ECS.Views {
     public struct ParticleSystemSimulation {
 
         public ParticleSimulationItem[] particleItems;
+        public ParticleSimulationSettings settings;
 
+        [UnityEngine.SerializeField][UnityEngine.HideInInspector]
+        private bool hasDefault;
+        
         public void OnValidate(UnityEngine.ParticleSystem[] particleSystems) {
-            
-            this.particleItems = new ParticleSimulationItem[particleSystems.Length];
-            for (int i = 0; i < this.particleItems.Length; ++i) {
+
+            if (this.particleItems.Length != particleSystems.Length) {
+
+                if (this.hasDefault == false) {
+                    
+                    this.settings = ParticleSimulationSettings.@default;
+                    this.hasDefault = true;
+
+                }
                 
-                this.particleItems[i] = new ParticleSimulationItem();
-                this.particleItems[i].particleSystem = particleSystems[i];
+                this.particleItems = new ParticleSimulationItem[particleSystems.Length];
+                for (int i = 0; i < this.particleItems.Length; ++i) {
+
+                    this.particleItems[i] = new ParticleSimulationItem();
+                    this.particleItems[i].particleSystem = particleSystems[i];
+
+                }
 
             }
 
         }
 
-        public void SimulateParticles(float time) {
+        public void SimulateParticles(float time, uint seed) {
 
             for (int i = 0; i < this.particleItems.Length; ++i) {
 
-                this.particleItems[i].SimulateParticles(time);
+                this.particleItems[i].SimulateParticles(time, seed, this.settings);
 
             }
 
+        }
+
+        public void Update(float deltaTime) {
+            
+            for (int i = 0; i < this.particleItems.Length; ++i) {
+
+                this.particleItems[i].Update(deltaTime, this.settings);
+
+            }
+            
         }
 
         public override string ToString() {

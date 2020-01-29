@@ -28,7 +28,7 @@ namespace ME.Example.Game.UI {
             if (this.game != null && this.game.world != null) {
 
                 var world = (ME.ECS.IWorld<State>)this.game.world;
-                var tick = world.GetTick();
+                var tick = world.GetStateTick();
                 var time = world.GetTimeSinceStart();
                 var historyModule = world.GetModule<ME.ECS.StatesHistory.IStatesHistoryModule<State>>();
                 var eventsAddedCount = historyModule.GetEventsAddedCount();

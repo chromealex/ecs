@@ -261,7 +261,7 @@ namespace ME.ECSEditor {
 
             public override string ToString() {
 
-                return "World " + this.world.id.ToString() + " (Tick: " + this.world.GetTick().ToString() + ")";
+                return "World " + this.world.id.ToString() + " (Tick: " + this.world.GetCurrentTick().ToString() + ")";
 
             }
 
@@ -652,7 +652,8 @@ namespace ME.ECSEditor {
                                 GUILayoutExt.Box(2f, 4f, () => {
 
                                     GUILayout.Label("Last Entity Id: " + worldEditor.world.GetLastEntityId().ToString());
-                                    GUILayout.Label("Tick: " + worldEditor.world.GetTick().ToString());
+                                    GUILayout.Label("State Tick: " + worldEditor.world.GetStateTick().ToString());
+                                    GUILayout.Label("Tick: " + worldEditor.world.GetCurrentTick().ToString());
                                     GUILayout.Label("Tick Time: " + worldEditor.world.GetTickTime().ToString() + "ms.");
                                     GUILayout.Label("Time: " + ME.ECS.MathUtils.SecondsToString(worldEditor.world.GetTimeSinceStart()));
 

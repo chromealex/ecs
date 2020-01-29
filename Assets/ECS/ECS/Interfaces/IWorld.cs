@@ -16,7 +16,8 @@ namespace ME.ECS {
         ModuleState GetModuleState(IModuleBase module);
 
         int GetStateHash();
-        
+
+        Tick GetStateTick();
         void SetTickTime(float tickTime);
         float GetTickTime();
         double GetTimeSinceStart();
@@ -40,6 +41,7 @@ namespace ME.ECS {
         int GetRandomRange(int from, int to);
         float GetRandomRange(float from, float to);
         float GetRandomValue();
+        int GetSeedValue();
 
         bool AddMarker<TMarker>(TMarker marker) where TMarker : struct, IMarker;
         bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker;

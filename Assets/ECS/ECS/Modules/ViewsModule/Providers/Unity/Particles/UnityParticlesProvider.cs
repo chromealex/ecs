@@ -129,31 +129,6 @@ namespace ME.ECS.Views.Providers {
             
         }
 
-        /*public UnityEngine.ParticleSystem.Particle rootData {
-            
-            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            get {
-
-                return this.items[0].particleData;
-
-            }
-            
-            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            set {
-
-                this.items[0].particleData = value;
-                for (int i = 1; i < this.items.Length; ++i) {
-
-                    ref var item = ref this.items[i];
-                    item.particleData.position = value.position + item.itemData.localPosition;
-                    item.particleData.rotation3D = value.rotation3D + item.itemData.localRotation;
-                    item.particleData.startSize3D = UnityEngine.Vector3.Scale(value.startSize3D, item.itemData.localScale);
-
-                }
-
-            }
-        }*/
-
         public void SetItems(UnityEngine.Vector3 rootPosition, UnityEngine.Vector3 rootRotation, UnityEngine.Vector3 rootScale, UnityEngine.MeshFilter[] filters, UnityEngine.Renderer[] renderers) {
             
             this.items = new Item[filters.Length];
@@ -176,7 +151,11 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public void SimulateParticles(float time) {
+        public void SimulateParticles(float time, uint seed) {
+            
+        }
+
+        public void UpdateParticlesSimulation(float deltaTime) {
             
         }
 

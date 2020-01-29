@@ -107,7 +107,7 @@ namespace ME.Example.Tests {
 
                 if (world.GetEntityData(entity.id, out data) == true) {
 
-                    Assert.IsTrue(data.unitsCount == 3f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+                    Assert.IsTrue(data.unitsCount == 3f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
                 } else {
                     
@@ -127,7 +127,7 @@ namespace ME.Example.Tests {
 
                 if (world.GetEntityData(entity.id, out data) == true) {
 
-                    Assert.IsTrue(data.unitsCount == 4f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+                    Assert.IsTrue(data.unitsCount == 4f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
                 } else {
                     
@@ -147,7 +147,7 @@ namespace ME.Example.Tests {
 
                 if (world.GetEntityData(entity.id, out data) == true) {
 
-                    Assert.IsTrue(data.unitsCount == 5f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+                    Assert.IsTrue(data.unitsCount == 5f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
                 } else {
                     
@@ -155,7 +155,7 @@ namespace ME.Example.Tests {
                     
                 }
                 
-                Assert.IsTrue(world.GetTick() == 300f);
+                Assert.IsTrue(world.GetCurrentTick() == 300f);
 
                 history.AddEvent(new ME.ECS.StatesHistory.HistoryEvent() {
                     tick = 500L, order = 0, localOrder = 1,
@@ -166,7 +166,7 @@ namespace ME.Example.Tests {
 
                 if (world.GetEntityData(entity.id, out data) == true) {
 
-                    Assert.IsTrue(data.unitsCount == 5f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+                    Assert.IsTrue(data.unitsCount == 5f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
                 } else {
                     
@@ -179,7 +179,7 @@ namespace ME.Example.Tests {
 
                 if (world.GetEntityData(entity.id, out data) == true) {
 
-                    Assert.IsTrue(data.unitsCount == 6f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetTick());
+                    Assert.IsTrue(data.unitsCount == 6f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
                 } else {
                     

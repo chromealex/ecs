@@ -56,7 +56,7 @@ namespace ME.Example.Game.Systems {
 
                 if (Input.GetKeyDown(KeyCode.S) == true) {
 
-                    this.savedTick = this.world.GetTick();
+                    this.savedTick = this.world.GetCurrentTick();
 
                 }
 

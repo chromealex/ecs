@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3614590470162572995}
   - component: {fileID: 485920277291654970}
   m_Layer: 0
-  m_Name: FootmanMesh
+  m_Name: UnitFootman
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -92,6 +92,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data:
+    particleSystemSimulation:
+      particleItems: []
+      settings:
+        simulationType: 1
+        minSimulationTime: 0.2
+        minEndingTime: 0.1
+        halfEnding: 0.5
+      hasDefault: 1
     items:
     - itemData:
         mesh: {fileID: 4300000, guid: d06688f72e50aaa48b0dea3435bfe092, type: 3}

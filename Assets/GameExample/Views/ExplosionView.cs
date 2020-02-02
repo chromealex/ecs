@@ -7,6 +7,8 @@ namespace ME.GameExample.Game.Views {
     using TEntity = ME.GameExample.Game.Entities.Explosion;
     
     public class ExplosionView : MonoBehaviourView<TEntity> {
+
+        public float lerpTime = 3f;
         
         public override void OnInitialize(in TEntity data) {
             
@@ -26,7 +28,7 @@ namespace ME.GameExample.Game.Views {
 
             } else {
 
-                tr.position = data.position;
+                tr.position = Vector3.Lerp(tr.position, data.position, deltaTime * this.lerpTime);
 
             }
 

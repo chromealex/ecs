@@ -34,7 +34,7 @@ namespace ME.GameExample.Game {
         public ParticleViewSourceBase pointSourceGameObject;
         public ParticleViewSourceBase unitSource;
         public ParticleViewSourceBase unitSource2;
-        public MonoBehaviourViewBase explosionSource;
+        public ParticleViewSourceBase explosionSource;
 
         public void Update() {
 

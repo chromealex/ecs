@@ -47,14 +47,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   particleSystemSimulation:
     particleItems:
-    - particleSystem: {fileID: 6454576856030805756}
-    - particleSystem: {fileID: 6454576854865045990}
+    - instanceId: 23978
+      particleSystem: {fileID: 6454576856030805756}
+    - instanceId: 23980
+      particleSystem: {fileID: 6454576854865045990}
     settings:
       simulationType: 1
       minSimulationTime: 0.2
       minEndingTime: 0.1
       halfEnding: 0.5
-    hasDefault: 0
+    hasDefault: 1
+  lerpTime: 3
 --- !u!1 &6454576854865045989
 GameObject:
   m_ObjectHideFlags: 0

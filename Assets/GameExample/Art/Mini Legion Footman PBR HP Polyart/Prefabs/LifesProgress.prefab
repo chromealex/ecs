@@ -124,6 +124,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data:
+    particleSystemSimulation:
+      particleItems: []
+      settings:
+        simulationType: 1
+        minSimulationTime: 0.2
+        minEndingTime: 0.1
+        halfEnding: 0.5
+      hasDefault: 1
     items:
     - itemData:
         mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
@@ -139,6 +147,7 @@ MonoBehaviour:
         localPosition: {x: 0, y: 0, z: 0}
         localRotation: {x: 0, y: 0, z: 0}
         localScale: {x: 1, y: 1, z: 1}
+    lerpSpeed: 3
 --- !u!1 &8938467786561748691
 GameObject:
   m_ObjectHideFlags: 0

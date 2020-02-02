@@ -6,13 +6,19 @@ namespace ME.ECS.Views.Providers {
         public abstract IView<TEntity> GetSource<TEntity>() where TEntity : struct, IEntity;
 
         [UnityEngine.ContextMenu("Validate")]
-        public virtual void DoValidate() {
+        public void DoValidate() {
+            
+            this.DoValidate(reset: true);
+            
+        }
+
+        public virtual void DoValidate(bool reset) {
             
         }
 
         public void OnValidate() {
 
-            this.DoValidate();
+            this.DoValidate(reset: false);
             
         }
 
@@ -28,16 +34,16 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public override void DoValidate() {
+        public override void DoValidate(bool reset) {
             
-            base.DoValidate();
+            base.DoValidate(reset);
             
             var filters = this.GetComponentsInChildren<UnityEngine.MeshFilter>(true);
-            var renderers = this.GetComponentsInChildren<UnityEngine.Renderer>(true);
+            var particleSystems = this.GetComponentsInChildren<UnityEngine.ParticleSystem>(true);
 
-            this.data = new T();
-            this.data.SetItems(this.transform.position, this.transform.rotation.eulerAngles, this.transform.localScale, filters, renderers);
-
+            if (this.data == null) this.data = new T();
+            this.data.OnValidate(this.transform.position, this.transform.rotation.eulerAngles, this.transform.localScale, filters, particleSystems, reset);
+            
         }
 
         public override string ToString() {

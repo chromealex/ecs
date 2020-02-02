@@ -38,18 +38,33 @@ namespace ME.ECS.Views {
 
     [System.Serializable]
     public struct ParticleSimulationItem {
-        
+
         public UnityEngine.ParticleSystem particleSystem;
         
         private float simulateToTime;
         private float currentTime;
         private float simulateToTimeDuration;
+        private bool customLifetime;
+        private float customLifetimeValue;
+        
+        public void SetAsCustomLifetime() {
+
+            this.customLifetime = true;
+
+        }
+
+        public float GetCustomLifetime() {
+
+            return this.customLifetimeValue;
+
+        }
         
         public void SimulateParticles(float time, uint seed, ParticleSimulationSettings settings) {
             
-            this.particleSystem.Stop(true);
-            this.particleSystem.useAutoRandomSeed = false;
-            this.particleSystem.randomSeed = seed;
+            /*this.particleSystem.Stop(true);
+            this.particleSystem.Pause(true);
+            if (this.particleSystem.useAutoRandomSeed == true) this.particleSystem.useAutoRandomSeed = false;
+            if (this.particleSystem.randomSeed != seed) this.particleSystem.randomSeed = seed;*/
             
             if (settings.simulationType == ParticleSimulationSettings.SimulationType.RestoreSoft) {
 
@@ -70,7 +85,7 @@ namespace ME.ECS.Views {
                     this.simulateToTimeDuration = halfEnding;
 
                     this.Simulate(this.simulateToTime);
-                    if (this.particleSystem.particleCount <= 0) {
+                    if (this.customLifetime == false && this.particleSystem.particleCount <= 0) {
 
                         this.Reset();
 
@@ -96,7 +111,7 @@ namespace ME.ECS.Views {
 
         }
 
-        public void Update(float deltaTime, ParticleSimulationSettings settings) {
+        public bool Update(float deltaTime, ParticleSimulationSettings settings) {
 
             if (settings.simulationType == ParticleSimulationSettings.SimulationType.RestoreSoft && this.simulateToTimeDuration > 0f) {
 
@@ -111,7 +126,11 @@ namespace ME.ECS.Views {
 
                 }
 
+                return true;
+
             }
+
+            return false;
 
         }
 
@@ -120,14 +139,77 @@ namespace ME.ECS.Views {
             this.simulateToTimeDuration = 0f;
             this.currentTime = 0f;
             this.simulateToTime = 0f;
-            
+
         }
 
         private void Simulate(float time) {
-            
-            this.particleSystem.Simulate(time, withChildren: true);
-            this.particleSystem.Play(withChildren: true);
 
+            if (this.customLifetime == true) {
+
+                this.customLifetimeValue = time;
+
+            } else {
+
+                this.particleSystem.Simulate(time, withChildren: true);
+                this.particleSystem.Play(withChildren: true);
+
+            }
+
+        }
+
+    }
+
+    [System.Serializable]
+    public struct ParticleSystemSimulationItem {
+        
+        public ParticleSimulationItem particleItem;
+        public ParticleSimulationSettings settings;
+
+        [UnityEngine.SerializeField][UnityEngine.HideInInspector]
+        private bool hasDefault;
+        
+        public void OnValidate(UnityEngine.ParticleSystem particleSystem) {
+
+            if (this.hasDefault == false) {
+                
+                this.settings = ParticleSimulationSettings.@default;
+                this.hasDefault = true;
+
+            }
+            
+            this.particleItem = new ParticleSimulationItem();
+            this.particleItem.particleSystem = particleSystem;
+
+        }
+
+        public void SetAsCustomLifetime() {
+
+            this.particleItem.SetAsCustomLifetime();
+
+        }
+
+        public float GetCustomLifetime() {
+
+            return this.particleItem.GetCustomLifetime();
+
+        }
+
+        public void SimulateParticles(float time, uint seed) {
+
+            this.particleItem.SimulateParticles(time, seed, this.settings);
+            
+        }
+
+        public bool Update(float deltaTime) {
+            
+            return this.particleItem.Update(deltaTime, this.settings);
+
+        }
+
+        public override string ToString() {
+
+            return "Particle System";
+            
         }
 
     }
@@ -143,7 +225,7 @@ namespace ME.ECS.Views {
         
         public void OnValidate(UnityEngine.ParticleSystem[] particleSystems) {
 
-            if (this.particleItems.Length != particleSystems.Length) {
+            if (this.particleItems == null || this.particleItems.Length != particleSystems.Length) {
 
                 if (this.hasDefault == false) {
                     

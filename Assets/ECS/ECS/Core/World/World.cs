@@ -422,7 +422,7 @@ namespace ME.ECS {
         public void Register<TEntity>(ref Filter<TEntity> filterRef, bool freeze, bool restore) where TEntity : struct, IEntity {
 
             this.RegisterPluginsModuleForEntity<TEntity>();
-            
+
             var code = WorldUtilities.GetKey<TEntity>();
             var capacity = this.GetCapacity<TEntity>(code);
             if (filterRef == null) {
@@ -451,6 +451,13 @@ namespace ME.ECS {
                     this.filtersCache.Add(code, list);
 
                 }
+
+            }
+
+            if (this.sharedEntity.id == 0 && typeof(TEntity) == typeof(SharedEntity)) {
+                
+                // Create shared entity which should store shared components
+                this.sharedEntity = this.AddEntity(new SharedEntity() { entity = Entity.Create<SharedEntity>(-1, noCheck: true) }, updateFilters: false);
 
             }
 
@@ -569,20 +576,17 @@ namespace ME.ECS {
 
         }
 
-        public void UpdateEntityCache<T>(T data) where T : struct, IEntity {
+        public void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity {
 
-            lock (EntitiesDirectCache<TState, T>.dataByEntityId) {
+            ref var dic = ref EntitiesDirectCache<TState, TEntity>.dataByEntityId;
+            var key = MathUtils.GetKey(this.id, data.entity.id);
+            if (dic.ContainsKey(key) == true) {
 
-                var key = MathUtils.GetKey(this.id, data.entity.id);
-                if (EntitiesDirectCache<TState, T>.dataByEntityId.ContainsKey(key) == true) {
+                dic[key] = data;
+                
+            } else {
 
-                    EntitiesDirectCache<TState, T>.dataByEntityId[key] = data;
-                    
-                } else {
-
-                    EntitiesDirectCache<TState, T>.dataByEntityId.Add(key, data);
-
-                }
+                dic.Add(key, data);
 
             }
 
@@ -919,12 +923,7 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
 
             var result = false;
-            lock (this.componentsCache) {
-
-                result = this.componentsCache.TryGetValue(code, out componentsContainer);
-                
-            }
-
+            result = this.componentsCache.TryGetValue(code, out componentsContainer);
             if (result == true) {
 
                 var item = (Components<TEntity, TState>)componentsContainer;

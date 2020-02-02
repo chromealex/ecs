@@ -12,11 +12,15 @@ namespace ME.ECS {
         
         ViewId RegisterViewSource<TEntity, TProvider>(IView<TEntity> prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider;
         bool UnRegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity;
-
-        //void AddViewsProvider<TProvider>() where TProvider : class, IViewsProvider, new();
         void InstantiateView<TEntity>(ViewId prefab, Entity entity) where TEntity : struct, IEntity;
         void InstantiateView<TEntity>(IView<TEntity> prefab, Entity entity) where TEntity : struct, IEntity;
         void DestroyView<TEntity>(ref IView<TEntity> instance) where TEntity : struct, IEntity;
+
+        ViewId RegisterViewSourceShared<TProvider>(IView<SharedEntity> prefab) where TProvider : struct, IViewsProvider;
+        bool UnRegisterViewSourceShared(IView<SharedEntity> prefab);
+        void InstantiateViewShared(ViewId prefab);
+        void InstantiateViewShared(IView<SharedEntity> prefab);
+        void DestroyViewShared(ref IView<SharedEntity> instance);
 
     }
 
@@ -78,6 +82,42 @@ namespace ME.ECS {
             
             var viewsModule = this.GetModule<ViewsModule<TState, TEntity>>();
             viewsModule.DestroyView(ref instance);
+            
+        }
+
+        
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool UnRegisterViewSourceShared(IView<SharedEntity> prefab) {
+
+            return this.UnRegisterViewSource(prefab);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ViewId RegisterViewSourceShared<TProvider>(IView<SharedEntity> prefab) where TProvider : struct, IViewsProvider {
+
+            return this.RegisterViewSource<SharedEntity, TProvider>(prefab);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void InstantiateViewShared(IView<SharedEntity> prefab) {
+
+            this.InstantiateView(prefab, this.sharedEntity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void InstantiateViewShared(ViewId prefab) {
+
+            this.InstantiateView<SharedEntity>(prefab, this.sharedEntity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void DestroyViewShared(ref IView<SharedEntity> instance) {
+            
+            this.DestroyView(ref instance);
             
         }
 

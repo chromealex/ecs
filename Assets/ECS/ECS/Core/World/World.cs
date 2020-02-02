@@ -63,8 +63,6 @@ namespace ME.ECS {
         private const int MODULES_CAPACITY = 100;
         private const int ENTITIES_CACHE_CAPACITY = 1000;
         private const int FILTERS_CAPACITY = 100;
-        private const int MARKERS_CAPACITY = 10;
-        private const int COMPONENTS_CAPACITY = 100;
         private const int CAPACITIES_CAPACITY = 100;
         private const int ENTITIES_DIRECT_CACHE_CAPACITY = 1000;
 
@@ -75,15 +73,14 @@ namespace ME.ECS {
 
         }
 
-        private static class MarkersDirectCache<TStateInner, TMarker> where TMarker : struct, IMarker where TStateInner : class, IState<TState> {
-
-            internal static Dictionary<int, List<TMarker>> data = new Dictionary<int, List<TMarker>>(World<TState>.MARKERS_CAPACITY);
-
-        }
-
         private static int registryWorldId = 0;
 
-        public int id { get; private set; }
+        public int id {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get;
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            private set;
+        }
         
         private TState resetState;
         private TState currentState;
@@ -91,14 +88,12 @@ namespace ME.ECS {
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
-        private Dictionary<int, IList> markers;
 
         private List<ModuleState> statesSystems;
         private List<ModuleState> statesModules;
         
         // State cache:
         private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
-        private Dictionary<int, IComponents<TState>> componentsCache; // key = typeof(T:IData), value = list of T:Components
 
         private float tickTime;
         private double timeSinceStart;
@@ -111,6 +106,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public EntityId GetLastEntityId() {
 
             return this.GetState().entityId;
@@ -165,6 +161,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetId(int forcedWorldId = 0) {
 
             if (forcedWorldId > 0) {
@@ -179,6 +176,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float radius) {
             
             UnityEngine.Random.state = this.currentState.randomState;
@@ -188,6 +186,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int GetRandomRange(int from, int to) {
 
             UnityEngine.Random.state = this.currentState.randomState;
@@ -197,6 +196,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public float GetRandomRange(float from, float to) {
 
             UnityEngine.Random.state = this.currentState.randomState;
@@ -206,6 +206,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public float GetRandomValue() {
 
             UnityEngine.Random.state = this.currentState.randomState;
@@ -215,60 +216,73 @@ namespace ME.ECS {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int GetSeedValue() {
 
             return (int)this.GetCurrentTick();
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         void IWorldBase.SetTickTime(float tickTime) {
 
             this.tickTime = tickTime;
 
         }
         
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         float IWorldBase.GetTickTime() {
 
             return this.tickTime;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         Tick IWorldBase.GetStateTick() {
 
             return this.GetState().tick;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         double IWorldBase.GetTimeSinceStart() {
 
             return this.timeSinceStart;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         void IWorldBase.SetTimeSinceStart(double time) {
 
             this.timeSinceStart = time;
 
         }
 
+        partial void OnSpawnMarkers();
+        partial void OnRecycleMarkers();
+
+        partial void OnSpawnComponents();
+        partial void OnRecycleComponents();
+
         void IPoolableSpawn.OnSpawn() {
-            
+
             this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
             this.statesSystems = PoolList<ModuleState>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
             //this.entitiesCache = PoolDictionary<int, IList>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
             this.filtersCache = PoolDictionary<int, IList>.Spawn(World<TState>.FILTERS_CAPACITY);
-            this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
             this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
 
-            this.markers = PoolDictionary<int, IList>.Spawn(4);
+            this.OnSpawnComponents();
+            this.OnSpawnMarkers();
 
         }
 
         void IPoolableRecycle.OnRecycle() {
-            
-            PoolDictionary<int, IList>.Recycle(ref this.markers);
+
+            this.OnRecycleMarkers();
+            this.OnRecycleComponents();
             
             WorldUtilities.ReleaseState(ref this.resetState);
             WorldUtilities.ReleaseState(ref this.currentState);
@@ -294,11 +308,11 @@ namespace ME.ECS {
             
             //PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
             PoolDictionary<int, IList>.Recycle(ref this.filtersCache);
-            PoolDictionary<int, IComponents<TState>>.Recycle(ref this.componentsCache);
             PoolDictionary<int, int>.Recycle(ref this.capacityCache);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity {
 
             T internalData;
@@ -314,6 +328,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         int IWorldBase.GetStateHash() {
 
             if (this.statesHistoryModule != null) {
@@ -326,6 +341,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetCapacity<T>(int capacity) where T : IEntity {
 
             var code = WorldUtilities.GetKey<T>();
@@ -333,6 +349,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int GetCapacity<T>() where T : IEntity {
 
             var code = WorldUtilities.GetKey<T>();
@@ -340,6 +357,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int GetCapacity<T>(int code) {
 
             int cap;
@@ -454,6 +472,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void UpdateFilters<TEntity>() where TEntity : struct, IEntity {
 
             this.UpdateFilters<TEntity>(WorldUtilities.GetKey<TEntity>());
@@ -481,6 +500,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool HasResetState() {
 
             return this.resetState != null;
@@ -496,6 +516,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public TState GetResetState() {
 
             return this.resetState;
@@ -520,24 +541,28 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public TState GetState() {
 
             return this.currentState;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public WorldStep GetCurrentStep() {
 
             return this.currentStep;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool HasStep(WorldStep step) {
 
             return (this.currentStep & step) != 0;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private Entity CreateNewEntity<T>() where T : IEntity {
 
             return Entity.Create<T>(++this.GetState().entityId);
@@ -1190,347 +1215,6 @@ namespace ME.ECS {
         partial void SimulatePlugin7ForTicks(Tick from, Tick to);
         partial void SimulatePlugin8ForTicks(Tick from, Tick to);
         partial void SimulatePlugin9ForTicks(Tick from, Tick to);
-
-        private void RemoveMarkers() {
-
-            IList markersCache;
-            if (this.markers.TryGetValue(this.id, out markersCache) == true) {
-
-                markersCache.Clear();
-
-            }
-
-        }
-
-        public bool AddMarker<TMarker>(TMarker markerData) where TMarker : struct, IMarker {
-
-            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-
-            List<TMarker> list;
-            if (cache.TryGetValue(this.id, out list) == true) {
-                
-                list.Add(markerData);
-                
-            } else {
-
-                list = PoolList<TMarker>.Spawn(World<TState>.MARKERS_CAPACITY);
-                list.Add(markerData);
-                cache.Add(this.id, list);
-
-            }
-
-            IList markersList;
-            if (this.markers.TryGetValue(this.id, out markersList) == true) {
-
-                this.markers[this.id] = cache[this.id];
-                
-            } else {
-                
-                this.markers.Add(this.id, cache[this.id]);
-                
-            }
-
-            return false;
-
-        }
-
-        public bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker {
-            
-            marker = default;
-            
-            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            List<TMarker> list;
-            if (cache.TryGetValue(this.id, out list) == true) {
-
-                var cnt = list.Count;
-                if (cnt > 0) {
-                    
-                    marker = list[cnt - 1];
-                    return true;
-
-                }
-
-            }
-
-            return false;
-
-        }
-
-        public bool HasMarker<TMarker>() where TMarker : struct, IMarker {
-            
-            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            return cache.ContainsKey(this.id);
-
-        }
-
-        public bool RemoveMarker<TMarker>() where TMarker : struct, IMarker {
-            
-            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            return cache.Remove(this.id);
-            
-        }
-
-        /// <summary>
-        /// Add component for current entity only (create component data)
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <typeparam name="TComponent"></typeparam>
-        public TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : struct, IEntity {
-
-            TComponent data;
-            lock (this) {
-
-                data = PoolComponents.Spawn<TComponent>();
-
-            }
-
-            return this.AddComponent<TEntity, TComponent>(entity, (IComponent<TState, TEntity>)data);
-
-        }
-
-        /// <summary>
-        /// Add component for entity
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="data"></param>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <typeparam name="TComponent"></typeparam>
-        public TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : struct, IEntity {
-
-            lock (this.componentsCache) {
-
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> components;
-                if (this.componentsCache.TryGetValue(code, out components) == true) {
-
-                    var item = (Components<TEntity, TState>)components;
-                    item.Add(entity, data);
-
-                } else {
-
-                    components = PoolClass<Components<TEntity, TState>>.Spawn();
-                    ((Components<TEntity, TState>)components).Add(entity, data);
-                    this.componentsCache.Add(code, components);
-
-                }
-
-            }
-
-            return (TComponent)data;
-
-        }
-
-        public TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
-
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> components;
-            var result = false;
-            lock (this.componentsCache) {
-
-                result = this.componentsCache.TryGetValue(code, out components);
-            
-            }
-
-            if (result == true) {
-
-                return ((Components<TEntity, TState>)components).GetFirst<TComponent>(entity);
-
-            }
-
-            return null;
-            
-        }
-
-        public void ForEachComponent<TEntity, TComponent>(Entity entity, List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
-
-            output.Clear();
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> components;
-            var result = false;
-            lock (this.componentsCache) {
-                
-                result = this.componentsCache.TryGetValue(code, out components);
-                
-            }
-
-            if (result == true) {
-
-                ((Components<TEntity, TState>)components).ForEach(entity, output);
-
-            }
-
-        }
-
-        /// <summary>
-        /// Check is component exists on entity
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <typeparam name="TComponent"></typeparam>
-        /// <returns></returns>
-        public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity {
-
-            lock (this.componentsCache) {
-
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> components;
-                if (this.componentsCache.TryGetValue(code, out components) == true) {
-
-                    return ((Components<TEntity, TState>)components).Contains<TComponent>(entity);
-
-                }
-
-            }
-
-            return false;
-
-        }
-
-        /// <summary>
-        /// Check is component exists on entity
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <typeparam name="TComponent"></typeparam>
-        /// <returns></returns>
-        public bool HasComponentOnce<TEntity, TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> where TEntity : struct, IEntity {
-
-            lock (this.componentsCache) {
-
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> components;
-                if (this.componentsCache.TryGetValue(code, out components) == true) {
-
-                    return ((Components<TEntity, TState>)components).ContainsOnce<TComponent>(entity);
-
-                }
-
-            }
-
-            return false;
-
-        }
-
-        /// <summary>
-        /// Remove all components from certain entity
-        /// </summary>
-        /// <param name="entity"></param>
-        public void RemoveComponents(Entity entity) {
-
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> componentsContainer;
-
-            bool result;
-            lock (this.componentsCache) {
-
-                result = this.componentsCache.TryGetValue(code, out componentsContainer);
-
-            }
-
-            if (result == true) {
-
-                componentsContainer.RemoveAll(entity);
-
-            }
-
-        }
-
-        /// <summary>
-        /// Remove all components with type from certain entity by predicate
-        /// </summary>
-        /// <param name="entity"></param>
-        public void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
-
-            lock (this.componentsCache) {
-
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> componentsContainer;
-                if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
-
-                    componentsContainer.RemoveAllPredicate<TComponent, TComponentPredicate>(entity, predicate);
-
-                }
-
-            }
-
-        }
-
-        /// <summary>
-        /// Remove all components with type from certain entity
-        /// </summary>
-        /// <param name="entity"></param>
-        public void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase {
-
-            lock (this.componentsCache) {
-
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> componentsContainer;
-                if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
-
-                    componentsContainer.RemoveAll<TComponent>(entity);
-
-                }
-
-            }
-
-        }
-
-        /// <summary>
-        /// Remove all components with type from certain entity
-        /// </summary>
-        /// <param name="entity"></param>
-        public void RemoveComponentsOnce<TComponent>(Entity entity) where TComponent : class, IComponentOnceBase {
-
-            lock (this.componentsCache) {
-
-                var code = WorldUtilities.GetKey(entity);
-                IComponents<TState> componentsContainer;
-                if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
-
-                    componentsContainer.RemoveAllOnce<TComponent>(entity);
-
-                }
-
-            }
-
-        }
-
-        /// <summary>
-        /// Remove all components with type TComponent from all entities
-        /// </summary>
-        /// <typeparam name="TComponent"></typeparam>
-        public void RemoveComponents<TComponent>() where TComponent : class, IComponentBase {
-
-            lock (this.componentsCache) {
-
-                foreach (var components in this.componentsCache) {
-
-                    components.Value.RemoveAll<TComponent>();
-
-                }
-
-            }
-
-        }
-
-        /// <summary>
-        /// Remove all components with type TComponent from all entities
-        /// </summary>
-        /// <typeparam name="TComponent"></typeparam>
-        public void RemoveComponentsOnce<TComponent>() where TComponent : class, IComponentOnceBase {
-
-            lock (this.componentsCache) {
-
-                foreach (var components in this.componentsCache) {
-
-                    components.Value.RemoveAllOnce<TComponent>();
-
-                }
-
-            }
-
-        }
 
     }
 

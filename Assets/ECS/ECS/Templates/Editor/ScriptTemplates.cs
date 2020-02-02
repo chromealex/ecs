@@ -13,7 +13,9 @@ namespace ME.ECSEditor {
         private const int CREATE_ENTITY_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 3;
         private const int CREATE_COMPONENT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 4;
         private const int CREATE_COMPONENT_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 5;
-        private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 6;
+        private const int CREATE_COMPONENT_SHARED_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 6;
+        private const int CREATE_COMPONENT_SHARED_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 7;
+        private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 8;
 
         internal class DoCreateScriptAsset : EndNameEditAction {
 
@@ -156,6 +158,20 @@ namespace ME.ECSEditor {
         public static void CreateComponentOnce() {
 
             ScriptTemplates.Create("New Component.cs", "41-ComponentOnceTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Shared Component", priority = ScriptTemplates.CREATE_COMPONENT_SHARED_PRIORITY)]
+        public static void CreateComponentShared() {
+
+            ScriptTemplates.Create("New Shared Component.cs", "32-ComponentSharedTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Shared Component (Once)", priority = ScriptTemplates.CREATE_COMPONENT_SHARED_ONCE_PRIORITY)]
+        public static void CreateComponentSharedOnce() {
+
+            ScriptTemplates.Create("New Shared Component.cs", "42-ComponentOnceSharedTemplate");
 
         }
 

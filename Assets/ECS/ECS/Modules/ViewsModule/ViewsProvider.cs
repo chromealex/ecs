@@ -182,24 +182,28 @@ namespace ME.ECS.Views {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetAsCustomLifetime() {
 
             this.particleItem.SetAsCustomLifetime();
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public float GetCustomLifetime() {
 
             return this.particleItem.GetCustomLifetime();
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SimulateParticles(float time, uint seed) {
 
             this.particleItem.SimulateParticles(time, seed, this.settings);
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Update(float deltaTime) {
             
             return this.particleItem.Update(deltaTime, this.settings);
@@ -208,7 +212,7 @@ namespace ME.ECS.Views {
 
         public override string ToString() {
 
-            return "Particle System";
+            return "Particle System Simulation Element";
             
         }
 
@@ -246,6 +250,7 @@ namespace ME.ECS.Views {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SimulateParticles(float time, uint seed) {
 
             for (int i = 0; i < this.particleItems.Length; ++i) {
@@ -256,6 +261,7 @@ namespace ME.ECS.Views {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Update(float deltaTime) {
             
             for (int i = 0; i < this.particleItems.Length; ++i) {

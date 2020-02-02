@@ -11,6 +11,8 @@ namespace #NAMESPACE# {
         
         void IComponent<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {}
         
+        void IPoolableRecycle.OnRecycle() {}
+
     }
     
 }

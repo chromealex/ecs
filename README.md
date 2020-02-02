@@ -56,6 +56,7 @@ Entities are storing base data of your objects like position, rotation, user dat
 
 #### Components (```IComponent<TEntity>```)
 Components are working with a certain Entity type and implements AdvanceTick (in which you can add logic of your tick) and CopyFrom. Or you can use components like a markers. Btw, you can use IComponentOnce interface to be sure all components removed at the end of current tick.
+Also you can add ```IComponentShared``` and ```IComponentSharedOnce``` to store any shared data.
 
 #### Markers (```IMarker```)
 Markers needed to implement UI events or something that doesn't exist in game state.
@@ -147,8 +148,9 @@ this.world.SaveResetState();
 - Add auto sync on packets drop (UDP) <b>(20% done)</b>
 - Views module <b>(100% done)</b>
 - Implement UnityGameObjectProvider <b>(100% done)</b>
-- Implement UnityParticlesProvider <b>(90% done)</b> - only MeshFilter/MeshRenderer support added
+- Implement UnityParticlesProvider <b>(95% done)</b> - MeshFilter/MeshRenderer support, inner ParticleSystem effects support, but rewind is not fully implemented.
 - Implement UnityDrawMeshProvider <b>(90% done)</b> - only MeshFilter/MeshRenderer support added
 - Add particle system simulation support on state change <b>(100% done)</b>
+- Add shared components support <b>(100% done)</b>
 - Add multithreading support <b>(15% done)</b>
 - Preformance refactoring <b>(70% done)</b>

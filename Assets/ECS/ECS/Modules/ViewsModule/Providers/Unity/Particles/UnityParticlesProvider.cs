@@ -109,14 +109,14 @@ namespace ME.ECS.Views.Providers {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref UnityEngine.ParticleSystem.Particle GetRootData() {
-            
+
             return ref this.items[0].particleData;
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetRootData(ref UnityEngine.ParticleSystem.Particle data) {
-            
+
             this.items[0].particleData = data;
             for (int i = 1; i < this.items.Length; ++i) {
 
@@ -129,33 +129,88 @@ namespace ME.ECS.Views.Providers {
             
         }
 
-        public void SetItems(UnityEngine.Vector3 rootPosition, UnityEngine.Vector3 rootRotation, UnityEngine.Vector3 rootScale, UnityEngine.MeshFilter[] filters, UnityEngine.Renderer[] renderers) {
-            
-            this.items = new Item[filters.Length];
-            for (int i = 0; i < filters.Length; ++i) {
+        public void OnValidate(
+            UnityEngine.Vector3 rootPosition,
+            UnityEngine.Vector3 rootRotation,
+            UnityEngine.Vector3 rootScale,
+            UnityEngine.MeshFilter[] filters,
+            UnityEngine.ParticleSystem[] particleSystems,
+            bool reset) {
 
-                var tr = filters[i].transform;
+            if (this.items.Length != filters.Length + particleSystems.Length) {
+
+                reset = true;
+
+            }
+
+            if (reset == true) {
                 
-                var item = new Item();
-                var itemData = new ParticleSystemItem();
-                itemData.material = renderers[i].sharedMaterial;
-                itemData.mesh = filters[i].sharedMesh;
-                itemData.meshFilter = filters[i];
-                itemData.localPosition = (i == 0 ? rootPosition : tr.position - rootPosition);
-                itemData.localRotation = (i == 0 ? rootRotation : tr.rotation.eulerAngles - rootRotation);
-                itemData.localScale = (i == 0 ? rootScale : UnityEngine.Vector3.Scale(tr.lossyScale, new UnityEngine.Vector3(1f / rootScale.x, 1f / rootScale.y, 1f / rootScale.z)));
-                item.itemData = itemData;
-                this.items[i] = item;
+                this.items = new Item[0];
+                
+            }
+
+            if (reset == true) {
+
+                var itemsList = new System.Collections.Generic.List<Item>();
+                for (int i = 0; i < filters.Length; ++i) {
+
+                    var tr = filters[i].transform;
+
+                    var item = new Item();
+                    var itemData = new ParticleSystemItem();
+                    itemData.material = tr.GetComponent<UnityEngine.Renderer>().sharedMaterial;
+                    itemData.mesh = filters[i].sharedMesh;
+                    itemData.meshFilter = filters[i];
+                    itemData.localPosition = tr.position - rootPosition;
+                    itemData.localRotation = tr.rotation.eulerAngles - rootRotation;
+                    itemData.localScale = UnityEngine.Vector3.Scale(tr.lossyScale, new UnityEngine.Vector3(1f / rootScale.x, 1f / rootScale.y, 1f / rootScale.z));
+                    item.itemData = itemData;
+                    itemsList.Add(item);
+
+                }
+
+                for (int i = 0; i < particleSystems.Length; ++i) {
+
+                    var tr = particleSystems[i].transform;
+
+                    var item = new Item();
+                    var itemData = new ParticleSystemItem();
+
+                    itemData.psSimulation = new ParticleSystemSimulationItem();
+                    itemData.psSimulation.OnValidate(particleSystems[i]);
+                    itemData.psSource = particleSystems[i];
+                    itemData.localPosition = tr.position - rootPosition;
+                    itemData.localRotation = tr.rotation.eulerAngles - rootRotation;
+                    itemData.localScale = UnityEngine.Vector3.Scale(tr.lossyScale, new UnityEngine.Vector3(1f / rootScale.x, 1f / rootScale.y, 1f / rootScale.z));
+
+                    item.itemData = itemData;
+                    itemsList.Add(item);
+
+                }
+
+                this.items = itemsList.ToArray();
+
+            }
+            
+        }
+
+        public void SimulateParticles(float time, uint seed) {
+
+            for (int i = 0; i < this.items.Length; ++i) {
+
+                this.items[i].itemData.SimulateParticles(time, seed);
 
             }
 
         }
 
-        public void SimulateParticles(float time, uint seed) {
-            
-        }
-
         public void UpdateParticlesSimulation(float deltaTime) {
+            
+            for (int i = 0; i < this.items.Length; ++i) {
+
+                this.items[i].itemData.UpdateParticlesSimulation(deltaTime);
+
+            }
             
         }
 
@@ -176,6 +231,8 @@ namespace ME.ECS.Views.Providers {
     [System.Serializable]
     public struct ParticleSystemItem {
 
+        public ParticleSystemSimulationItem psSimulation;
+        public UnityEngine.ParticleSystem psSource;
         public UnityEngine.Mesh mesh;
         public UnityEngine.MeshFilter meshFilter;
         public UnityEngine.Material material;
@@ -185,21 +242,82 @@ namespace ME.ECS.Views.Providers {
         
         // runtime
         [System.NonSerialized]
+        public bool simulation;
+        [System.NonSerialized]
+        public int r;
+        [System.NonSerialized]
+        public float startLifetime;
+        [System.NonSerialized]
+        public float lifetime;
+        [System.NonSerialized]
+        public int subEmitterIdx;
+        [System.NonSerialized]
+        public int subEmitterIdxInheritedLifetime;
+        [System.NonSerialized]
         public UnityEngine.ParticleSystem ps;
         [System.NonSerialized]
         public UnityEngine.ParticleSystemRenderer psRenderer;
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public long GetKey() {
-            
+
+            if (this.psSource != null) {
+
+                return this.psSource.GetInstanceID();
+
+            }
+
             return MathUtils.GetKey(this.material.GetInstanceID(), (this.mesh != null ? this.mesh.GetInstanceID() : this.meshFilter.GetInstanceID()));
             
         }
 
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public UnityEngine.Mesh GetMesh() {
+        public void SimulateParticles(float time, uint seed) {
 
-            return (this.mesh != null ? this.mesh : this.meshFilter.sharedMesh);
+            if (this.psSource != null) {
+
+                this.psSimulation.SetAsCustomLifetime();
+                this.psSimulation.SimulateParticles(time, seed);
+                this.lifetime = this.startLifetime - this.psSimulation.GetCustomLifetime();
+                this.Resimulate();
+
+                if (time > this.psSimulation.settings.minSimulationTime) {
+
+                    this.simulation = true;
+
+                } else {
+                    
+                    this.simulation = false;
+                    
+                }
+
+            }
+
+        }
+
+        public void UpdateParticlesSimulation(float deltaTime) {
+
+            if (this.psSource != null) {
+
+                if (this.psSimulation.Update(deltaTime) == true) {
+
+                    this.lifetime = this.startLifetime - this.psSimulation.GetCustomLifetime();
+                    this.Resimulate();
+                    
+                }
+
+            }
+            
+        }
+
+        private void Resimulate() {
+
+            if (this.r >= 1) {
+
+                var childPs = this.psSimulation.particleItem;
+                childPs.particleSystem.Clear();
+                this.r = 0;
+
+            }
 
         }
 
@@ -210,24 +328,81 @@ namespace ME.ECS.Views.Providers {
         private System.Collections.Generic.Dictionary<long, ParticleSystemItem> psItems;
         private PoolInternalBase pool;
         private UnityEngine.ParticleSystem.Particle[] particles;
+        private UnityEngine.ParticleSystem.Particle[] particlesStatic;
         private int maxParticles = 1000;
+
+        private UnityEngine.ParticleSystem mainParticleSystem;
 
         public override void OnConstruct() {
 
             this.psItems = PoolDictionary<long, ParticleSystemItem>.Spawn(100);
             this.pool = new PoolInternalBase(null, null);
             
+            UnityEngine.ParticleSystem particleSystem;
+            UnityEngine.ParticleSystemRenderer particleSystemRenderer;
+            this.CreateParticleSystemInstance("Main-" + this.GetType().ToString(), out particleSystem, out particleSystemRenderer);
+
+            var mainModule = particleSystem.main;
+            mainModule.startSize = 1f;
+
+            var subEmittersModule = particleSystem.subEmitters;
+            subEmittersModule.enabled = true;
+
+            particleSystemRenderer.enabled = false;
+            particleSystemRenderer.renderMode = UnityEngine.ParticleSystemRenderMode.Billboard;
+
+            this.mainParticleSystem = particleSystem;
+            this.mainParticleSystem.Play();
+
         }
 
         public override void OnDeconstruct() {
 
+            UnityEngine.Object.Destroy(this.mainParticleSystem);
+            this.mainParticleSystem = null;
+            
             this.pool = null;
             PoolDictionary<long, ParticleSystemItem>.Recycle(ref this.psItems);
             
         }
 
+        private void CreateParticleSystemInstance(string key, out UnityEngine.ParticleSystem particleSystem, out UnityEngine.ParticleSystemRenderer particleSystemRenderer) {
+            
+            particleSystem = new UnityEngine.GameObject("PS-Render-" + key, typeof(UnityEngine.ParticleSystem)).GetComponent<UnityEngine.ParticleSystem>();
+            //particleSystem.gameObject.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
+            particleSystem.Stop(withChildren: true);
+            particleSystem.Pause(withChildren: true);
+            particleSystem.useAutoRandomSeed = false;
+            particleSystem.randomSeed = 1u;
+            
+            var main = particleSystem.main;
+            main.duration = float.MaxValue;
+            main.loop = false;
+            main.prewarm = false;
+            main.playOnAwake = false;
+            main.startLifetime = float.MaxValue;
+            main.startSpeed = 0f;
+            main.maxParticles = int.MaxValue;
+            main.ringBufferMode = UnityEngine.ParticleSystemRingBufferMode.PauseUntilReplaced;
+            main.simulationSpace = UnityEngine.ParticleSystemSimulationSpace.World;
+                    
+            var emission = particleSystem.emission;
+            emission.enabled = false;
+                    
+            var shape = particleSystem.shape;
+            shape.enabled = false;
+            
+            particleSystemRenderer = particleSystem.GetComponent<UnityEngine.ParticleSystemRenderer>();
+            particleSystemRenderer.alignment = UnityEngine.ParticleSystemRenderSpace.World;
+                    
+            //particleSystem.Play(true);
+
+        }
+        
         public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {
 
+            var prefabSource = (ParticleView<TEntity>)prefab;
+            
             var obj = this.pool.Spawn();
             if (obj == null) {
                 
@@ -235,7 +410,6 @@ namespace ME.ECS.Views.Providers {
                 
             }
 
-            var prefabSource = (ParticleView<TEntity>)prefab;
             var particleViewBase = (ParticleView<TEntity>)obj;
             particleViewBase.items = PoolArray<ParticleViewBase.Item>.Spawn(prefabSource.items.Length);
             for (int i = 0; i < particleViewBase.items.Length; ++i) {
@@ -243,12 +417,13 @@ namespace ME.ECS.Views.Providers {
                 particleViewBase.items[i] = prefabSource.items[i];
 
             }
+            
             particleViewBase.entity = prefabSource.entity;
             particleViewBase.prefabSourceId = prefabSource.prefabSourceId;
-            
+
             var maxParticleCount = 0;
             long key;
-            // Create PS if doesn't exists
+            // Create PS if doesn't exist
             for (int i = 0; i < prefabSource.items.Length; ++i) {
 
                 maxParticleCount = 0;
@@ -258,47 +433,90 @@ namespace ME.ECS.Views.Providers {
                 if (this.psItems.TryGetValue(key, out psItem) == false) {
                     
                     psItem = source.itemData;
-                    
-                    var particleSystem = new UnityEngine.GameObject("PS-Render-" + key.ToString(), typeof(UnityEngine.ParticleSystem)).GetComponent<UnityEngine.ParticleSystem>();
-                    //particleSystem.gameObject.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
-                    particleSystem.Stop();
-                    
-                    var main = particleSystem.main;
-                    main.duration = float.MaxValue;
-                    main.loop = false;
-                    main.prewarm = false;
-                    main.playOnAwake = false;
-                    main.startLifetime = float.MaxValue;
-                    main.startSpeed = 0f;
-                    main.maxParticles = int.MaxValue;
-                    main.ringBufferMode = UnityEngine.ParticleSystemRingBufferMode.PauseUntilReplaced;
-                    main.simulationSpace = UnityEngine.ParticleSystemSimulationSpace.World;
-                    
-                    var trigger = particleSystem.trigger;
-                    trigger.enabled = true;
-                    trigger.inside = UnityEngine.ParticleSystemOverlapAction.Ignore;
-                    
-                    var emission = particleSystem.emission;
-                    emission.enabled = false;
-                    
-                    var shape = particleSystem.shape;
-                    shape.enabled = false;
-                    
-                    var particleSystemRenderer = particleSystem.GetComponent<UnityEngine.ParticleSystemRenderer>();
-                    particleSystemRenderer.alignment = UnityEngine.ParticleSystemRenderSpace.World;
-                    particleSystemRenderer.renderMode = UnityEngine.ParticleSystemRenderMode.Mesh;
-                    particleSystemRenderer.sharedMaterial = psItem.material;
-                    particleSystemRenderer.mesh = psItem.mesh;
-                    
-                    psItem.ps = particleSystem;
-                    psItem.psRenderer = particleSystemRenderer;
+
+                    var subEmittersModule = this.mainParticleSystem.subEmitters;
+
+                    var idx = -1;
+                    var idxInheritedLifetime = -1;
+                    UnityEngine.ParticleSystem particleSystem;
+                    if (psItem.psSource != null) {
+
+                        particleSystem = UnityEngine.ParticleSystem.Instantiate(psItem.psSource, this.mainParticleSystem.transform);
+
+                        idx = subEmittersModule.subEmittersCount;
+                        subEmittersModule.AddSubEmitter(
+                            particleSystem,
+                            UnityEngine.ParticleSystemSubEmitterType.Manual,
+                            UnityEngine.ParticleSystemSubEmitterProperties.InheritNothing
+                        );
+
+                        var particleSystemInheritLifetime = UnityEngine.ParticleSystem.Instantiate(psItem.psSource, this.mainParticleSystem.transform);
+                        
+                        idxInheritedLifetime = subEmittersModule.subEmittersCount;
+                        subEmittersModule.AddSubEmitter(
+                            particleSystemInheritLifetime,
+                            UnityEngine.ParticleSystemSubEmitterType.Manual,
+                            UnityEngine.ParticleSystemSubEmitterProperties.InheritLifetime
+                        );
+
+                        psItem.ps = particleSystem;
+                        psItem.psSimulation.particleItem.particleSystem = particleSystem;
+
+                    } else {
+
+                        UnityEngine.ParticleSystemRenderer particleSystemRenderer;
+                        this.CreateParticleSystemInstance(key.ToString(), out particleSystem, out particleSystemRenderer);
+                        
+                        particleSystemRenderer.alignment = UnityEngine.ParticleSystemRenderSpace.World;
+                        particleSystemRenderer.renderMode = UnityEngine.ParticleSystemRenderMode.Mesh;
+                        particleSystemRenderer.sharedMaterial = psItem.material;
+                        particleSystemRenderer.mesh = psItem.mesh;
+
+                        /*particleSystem.transform.SetParent(this.mainParticleSystem.transform);
+                        
+                        var emissionModule = particleSystem.emission;
+                        emissionModule.enabled = true;
+                        emissionModule.rateOverTime = new UnityEngine.ParticleSystem.MinMaxCurve(0f);
+                        emissionModule.rateOverDistance = new UnityEngine.ParticleSystem.MinMaxCurve(0f);
+                        emissionModule.burstCount = 1;
+                        emissionModule.SetBurst(0, new UnityEngine.ParticleSystem.Burst(0f, 1));
+
+                        idx = subEmittersModule.subEmittersCount;
+                        subEmittersModule.AddSubEmitter(
+                            particleSystem,
+                            UnityEngine.ParticleSystemSubEmitterType.Manual,
+                            UnityEngine.ParticleSystemSubEmitterProperties.InheritNothing);*/
+                        
+                        psItem.psRenderer = particleSystemRenderer;
+
+                        psItem.ps = particleSystem;
+
+                    }
+
+                    psItem.subEmitterIdx = idx;
+                    psItem.subEmitterIdxInheritedLifetime = idxInheritedLifetime;
                     this.psItems.Add(key, psItem);
-                    
-                    particleSystem.Play();
                     
                 }
 
-                psItem.ps.Emit(1);
+                if (psItem.psSource != null) {
+                    
+                    psItem.lifetime = psItem.ps.main.startLifetime.constantMax;
+                    psItem.startLifetime = psItem.lifetime;
+                    
+                    this.mainParticleSystem.Emit(1);
+
+                } else {
+
+                    psItem.lifetime = -1f;
+
+                    psItem.ps.Emit(1);
+
+                }
+                
+                psItem.ps.Play();
+
+                psItem.r = 0;
                 if (psItem.ps.particleCount > maxParticleCount) maxParticleCount = psItem.ps.particleCount;
 
                 particleViewBase.items[i].itemData = psItem;
@@ -334,18 +552,26 @@ namespace ME.ECS.Views.Providers {
                 
             }
 
+            if (this.particlesStatic == null || this.particlesStatic.Length < this.maxParticles) {
+                
+                this.particlesStatic = new UnityEngine.ParticleSystem.Particle[this.maxParticles];
+                
+            }
+
         }
 
         public override void Update(System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {
             
             this.ValidateParticles();
             
+            var k = 0;
+            //var kSize = this.mainParticleSystem.GetParticles(this.particles);
             foreach (var item in this.psItems) {
-                
-                var k = 0;
+
+                var staticK = 0;
                 var psItem = item.Value;
                 var ps = psItem.ps;
-                psItem.psRenderer.mesh = psItem.GetMesh();
+                //psItem.psRenderer.mesh = psItem.GetMesh();
                 //ps.GetParticles(this.particles, this.maxParticles);
                 foreach (var itemView in list) {
 
@@ -359,20 +585,67 @@ namespace ME.ECS.Views.Providers {
                             ref var element = ref view.items[j];
                             if (element.itemData.ps == ps) {
 
-                                element.particleData.remainingLifetime = float.MaxValue;
-                                element.particleData.startLifetime = float.MaxValue;
-                                this.particles[k++] = element.particleData;
+                                if (element.itemData.lifetime > 0f) {
+
+                                    // Sub particle system effect
+                                    
+                                    element.itemData.lifetime -= deltaTime;
+                                    if (element.itemData.lifetime <= 0f) {
+
+                                        // we should never render this element
+                                        element.itemData.lifetime = UnityEngine.Mathf.Epsilon;
+                                        continue;
+
+                                    }
+
+                                    element.particleData.remainingLifetime = element.itemData.lifetime;
+                                    element.particleData.startLifetime = element.itemData.startLifetime;
+                                    element.particleData.startSize = 1f;
+                                    this.particles[k] = element.particleData;
+                                    
+                                    // Just trigger sub system
+                                    if (element.itemData.r == 1) {
+
+                                        if (element.itemData.simulation == true) {
+                                            
+                                            this.particles[k].remainingLifetime = element.itemData.lifetime / element.itemData.startLifetime;
+                                            this.mainParticleSystem.TriggerSubEmitter(element.itemData.subEmitterIdxInheritedLifetime, ref this.particles[k]);
+                                            
+                                        } else {
+
+                                            this.mainParticleSystem.TriggerSubEmitter(element.itemData.subEmitterIdx, ref this.particles[k]);
+
+                                        }
+
+                                    }
+                                    ++element.itemData.r;
+
+                                    ++k;
+
+                                } else {
+                                    
+                                    // Static mesh with material
+                                    element.particleData.remainingLifetime = float.MaxValue;
+                                    element.particleData.startLifetime = float.MaxValue;
+
+                                    this.particlesStatic[staticK] = element.particleData;
+                                    ++staticK;
+
+                                }
 
                             }
 
                         }
-                    
-                    }
-                }
 
-                ps.SetParticles(this.particles, k, 0);
+                    }
+                    
+                }
                 
+                if (staticK > 0) ps.SetParticles(this.particlesStatic, staticK, 0);
+
             }
+
+            this.mainParticleSystem.SetParticles(this.particles, k, 0);
             
         }
 

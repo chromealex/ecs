@@ -569,6 +569,7 @@ namespace ME.ECS.Views.Providers {
             foreach (var item in this.psItems) {
 
                 var staticK = 0;
+                var dynamicK = 0;
                 var psItem = item.Value;
                 var ps = psItem.ps;
                 //psItem.psRenderer.mesh = psItem.GetMesh();
@@ -621,6 +622,7 @@ namespace ME.ECS.Views.Providers {
                                     ++element.itemData.r;
 
                                     ++k;
+                                    ++dynamicK;
 
                                 } else {
                                     
@@ -641,7 +643,7 @@ namespace ME.ECS.Views.Providers {
                     
                 }
                 
-                if (staticK > 0) ps.SetParticles(this.particlesStatic, staticK, 0);
+                if (staticK > 0 || dynamicK == 0) ps.SetParticles(this.particlesStatic, staticK, 0);
 
             }
 

@@ -14,10 +14,12 @@ namespace ME.Example.Game {
         public RandomState randomState { get; set; }
 
         public UnityEngine.Vector3 worldPosition;
-        
+
+        public Filter<SharedEntity> shared;
         public Filter<Point> points;
         public Filter<Unit> units;
 
+        public Components<SharedEntity, State> sharedComponents;
         public Components<Point, State> pointComponents;
         public Components<Unit, State> unitComponents;
 
@@ -29,9 +31,11 @@ namespace ME.Example.Game {
 
         void IState<State>.Initialize(IWorld<State> world, bool freeze, bool restore) {
 
+            world.Register(ref this.shared, freeze, restore);
             world.Register(ref this.points, freeze, restore);
             world.Register(ref this.units, freeze, restore);
 
+            world.Register(ref this.sharedComponents, freeze, restore);
             world.Register(ref this.pointComponents, freeze, restore);
             world.Register(ref this.unitComponents, freeze, restore);
 
@@ -45,9 +49,11 @@ namespace ME.Example.Game {
 
             this.worldPosition = other.worldPosition;
             
+            this.shared.CopyFrom(other.shared);
             this.points.CopyFrom(other.points);
             this.units.CopyFrom(other.units);
 
+            this.sharedComponents.CopyFrom(other.sharedComponents);
             this.pointComponents.CopyFrom(other.pointComponents);
             this.unitComponents.CopyFrom(other.unitComponents);
 
@@ -55,9 +61,11 @@ namespace ME.Example.Game {
 
         void IPoolableRecycle.OnRecycle() {
 
+            WorldUtilities.Release(ref this.shared);
             WorldUtilities.Release(ref this.points);
             WorldUtilities.Release(ref this.units);
 
+            WorldUtilities.Release(ref this.sharedComponents);
             WorldUtilities.Release(ref this.pointComponents);
             WorldUtilities.Release(ref this.unitComponents);
 

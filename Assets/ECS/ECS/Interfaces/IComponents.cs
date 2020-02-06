@@ -19,4 +19,8 @@ namespace ME.ECS {
 
     }
 
+    public interface IComponentSharedBase { }
+    public interface IComponentSharedOnce<TState> : IComponentOnce<TState, SharedEntity>, IComponentSharedBase where TState : IStateBase {}
+    public interface IComponentShared<TState> : IComponent<TState, SharedEntity>, IComponentSharedBase where TState : IStateBase { }
+
 }

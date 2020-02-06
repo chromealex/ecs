@@ -20,7 +20,7 @@ namespace ME.ECS {
 
             } else {
 
-                pool = new PoolInternalBase(() => new T[length], null);
+                pool = PoolArray<T>.CreatePool(length);
                 result = (T[])pool.Spawn();
                 PoolArray<T>.pools.Add(length, pool);
 
@@ -41,12 +41,18 @@ namespace ME.ECS {
 
             } else {
                 
-                pool = new PoolInternalBase(() => new T[length], null);
+                pool = PoolArray<T>.CreatePool(length);
                 pool.Recycle(buffer);
                 buffer = null;
                 PoolArray<T>.pools.Add(length, pool);
                 
             }
+
+        }
+
+        private static PoolInternalBase CreatePool(int length) {
+
+            return new PoolInternalBase(() => new T[length], null);
 
         }
 

@@ -12,7 +12,8 @@ namespace ME.Example.Game.Systems {
 
             void IJobParallelFor.Execute(int index) {
 
-                var data = Worlds<State>.currentWorld.RunComponents(Worlds<State>.currentState.points[index], this.deltaTime, index);
+                var data = Worlds<State>.currentState.points[index];
+                Worlds<State>.currentWorld.RunComponents(ref data, this.deltaTime, index);
                 Worlds<State>.currentState.points[index] = data;
                 Worlds<State>.currentWorld.UpdateEntityCache(data);
 

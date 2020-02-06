@@ -31,7 +31,7 @@ namespace ME.ECS {
 
         void Simulate(Tick from, Tick to);
 
-        TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
+        TEntity RunComponents<TEntity>(ref TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
 
     }
 
@@ -42,11 +42,6 @@ namespace ME.ECS {
         float GetRandomRange(float from, float to);
         float GetRandomValue();
         int GetSeedValue();
-
-        bool AddMarker<TMarker>(TMarker marker) where TMarker : struct, IMarker;
-        bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker;
-        bool HasMarker<TMarker>() where TMarker : struct, IMarker;
-        bool RemoveMarker<TMarker>() where TMarker : struct, IMarker;
 
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
 
@@ -84,17 +79,6 @@ namespace ME.ECS {
         void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
 
         bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity;
-
-        TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponentBase, new() where TEntity : struct, IEntity;
-        TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponentBase where TEntity : struct, IEntity;
-        TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
-        void ForEachComponent<TEntity, TComponent>(Entity entity, System.Collections.Generic.List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
-        bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;
-        void RemoveComponents(Entity entity);
-        void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase;
-        void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
-
-        void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
 
         void Update(float deltaTime);
 

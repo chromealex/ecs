@@ -100,8 +100,12 @@ namespace ME.Example.Game.Modules {
             if (this.connectToWorldId > 0) {
 
                 var connectedWorld = ME.ECS.Worlds<State>.GetWorld(this.connectToWorldId);
-                var networkModule = connectedWorld.GetModule<NetworkModule>();
-                networkModule.transporter.AddToBuffer(delay, bytes);
+                if (connectedWorld != null) {
+
+                    var networkModule = connectedWorld.GetModule<NetworkModule>();
+                    networkModule.transporter.AddToBuffer(delay, bytes);
+
+                }
 
             }
 

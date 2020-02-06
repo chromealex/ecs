@@ -31,7 +31,7 @@ namespace ME.ECS {
 
         void Simulate(Tick from, Tick to);
 
-        TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
+        TEntity RunComponents<TEntity>(ref TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
 
     }
 

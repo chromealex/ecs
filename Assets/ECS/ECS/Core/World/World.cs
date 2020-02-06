@@ -917,7 +917,7 @@ namespace ME.ECS {
 
         }
         
-        public TEntity RunComponents<TEntity>(TEntity data, float deltaTime, int index) where TEntity : struct, IEntity {
+        public TEntity RunComponents<TEntity>(ref TEntity data, float deltaTime, int index) where TEntity : struct, IEntity {
 
             var code = WorldUtilities.GetKey(data);
             IComponents<TState> componentsContainer;

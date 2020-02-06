@@ -60,8 +60,8 @@ namespace ME.Example.Game.Systems {
 
             for (int index = state.units.Count - 1; index >= 0; --index) {
                 
-                var data = Worlds<State>.currentState.units[index];
-                data = Worlds<State>.currentWorld.RunComponents(data, deltaTime, index);
+                var data = state.units[index];
+                this.world.RunComponents(ref data, deltaTime, index);
                 Point toData;
                 if (Worlds<State>.currentWorld.GetEntityData(data.pointTo.id, out toData) == true) {
 
@@ -72,7 +72,7 @@ namespace ME.Example.Game.Systems {
                         data.pointTo = from;
                         data.pointFrom = to;
                         Worlds<State>.currentWorld.RemoveComponents<UnitFollowFromTo>(data.entity);
-                        var comp = Worlds<State>.currentWorld.AddComponent<Unit, UnitFollowFromTo>(data.entity);
+                        var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
                         comp.@from = data.pointFrom;
                         comp.to = data.pointTo;
 
@@ -82,8 +82,8 @@ namespace ME.Example.Game.Systems {
 
                 }
 
-                Worlds<State>.currentState.units[index] = data;
-                Worlds<State>.currentWorld.UpdateEntityCache(data);
+                state.units[index] = data;
+                this.world.UpdateEntityCache(data);
                 
             }
 

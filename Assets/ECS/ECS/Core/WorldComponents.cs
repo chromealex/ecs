@@ -14,7 +14,7 @@ namespace ME.ECS {
         void RemoveComponents(Entity entity);
         void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase;
         void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
-        void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
+        void RemoveComponentsPredicate<TComponent, TComponentPredicate, TEntity>(Entity entity, TComponentPredicate predicate) where TEntity : struct, IEntity where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
         #endregion
         
         #region Shared Components
@@ -200,13 +200,14 @@ namespace ME.ECS {
         /// Remove all components with type from certain entity by predicate
         /// </summary>
         /// <param name="entity"></param>
-        public void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
+        public void RemoveComponentsPredicate<TComponent, TComponentPredicate, TEntity>(Entity entity, TComponentPredicate predicate) where TEntity : struct, IEntity where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
 
             var code = WorldUtilities.GetKey(entity);
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                componentsContainer.RemoveAllPredicate<TComponent, TComponentPredicate>(entity, predicate);
+                UnityEngine.Debug.Log("Container: " + componentsContainer + " for code " + code);
+                ((Components<TEntity, TState>)componentsContainer).RemoveAllPredicate<TComponent, TComponentPredicate>(entity, predicate);
 
             }
 
@@ -326,7 +327,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RemoveComponentsSharedPredicate<TComponent, TComponentPredicate>(TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
             
-            this.RemoveComponentsPredicate<TComponent, TComponentPredicate>(this.sharedEntity, predicate);
+            this.RemoveComponentsPredicate<TComponent, TComponentPredicate, SharedEntity>(this.sharedEntity, predicate);
             
         }
         #endregion

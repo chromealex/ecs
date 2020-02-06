@@ -392,7 +392,7 @@ namespace ME.ECS.Views {
             predicate.prefabSourceId = instance.prefabSourceId;
             predicate.creationTick = instance.creationTick;
             
-            this.world.RemoveComponentsPredicate<ViewComponent, RemoveComponentViewPredicate>(instance.entity, predicate);
+            this.world.RemoveComponentsPredicate<ViewComponent, RemoveComponentViewPredicate, TEntity>(instance.entity, predicate);
             
             instance = null;
 

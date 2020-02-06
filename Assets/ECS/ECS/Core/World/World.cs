@@ -270,7 +270,6 @@ namespace ME.ECS {
             this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
             this.statesSystems = PoolList<ModuleState>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
-            //this.entitiesCache = PoolDictionary<int, IList>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
             this.filtersCache = PoolDictionary<int, IList>.Spawn(World<TState>.FILTERS_CAPACITY);
             this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
 
@@ -532,10 +531,6 @@ namespace ME.ECS {
 
         public void SetState(TState state) {
 
-            //UnityEngine.Debug.Log(UnityEngine.Time.frameCount + " World SetState(): " + state.tick);
-            
-            //this.entitiesCache.Clear();
-            //this.entitiesDirectCache.Clear();
             this.filtersCache.Clear();
             this.componentsCache.Clear();
 

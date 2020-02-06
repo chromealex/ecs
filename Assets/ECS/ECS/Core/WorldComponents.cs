@@ -206,7 +206,6 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                UnityEngine.Debug.Log("Container: " + componentsContainer + " for code " + code);
                 ((Components<TEntity, TState>)componentsContainer).RemoveAllPredicate<TComponent, TComponentPredicate>(entity, predicate);
 
             }

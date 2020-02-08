@@ -49,22 +49,24 @@ namespace ME.ECS {
         int GetCapacity<T>() where T : IEntity;
         int GetCapacity<T>(int code);
 
+        bool HasFilter<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity;
+        void Register<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity;
         void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity;
-        void Register<TEntity>(ref Filter<TEntity> filterRef, bool freeze, bool restore) where TEntity : struct, IEntity;
+        void Register<TEntity>(ref Storage<TEntity> storageRef, bool freeze, bool restore) where TEntity : struct, IEntity;
 
-        void UpdateFilters<TEntity>() where TEntity : struct, IEntity;
-        void UpdateFilters<TEntity>(int code) where TEntity : struct, IEntity;
+        void UpdateStorages<TEntity>() where TEntity : struct, IEntity;
+        void UpdateStorages<TEntity>(int code) where TEntity : struct, IEntity;
 
         void SetState(TState state);
         TState GetState();
         
         TState GetResetState();
 
-        Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity;
-        void RemoveEntities<T>(T data) where T : struct, IEntity;
+        Entity AddEntity<T>(T data, bool updateStorages = true) where T : struct, IEntity;
+        //void RemoveEntities<T>(T data) where T : struct, IEntity;
         bool RemoveEntity<T>(Entity entity) where T : struct, IEntity;
-        bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
-        bool ForEachEntity<TEntity>(out System.Collections.Generic.List<TEntity> output) where TEntity : struct, IEntity;
+        //bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
+        bool ForEachEntity<TEntity>(out RefList<TEntity> output) where TEntity : struct, IEntity;
 
         System.Collections.Generic.List<TModule> GetModules<TModule>(System.Collections.Generic.List<TModule> output) where TModule : IModuleBase;
         TModule GetModule<TModule>() where TModule : IModuleBase;
@@ -78,7 +80,8 @@ namespace ME.ECS {
         void RemoveSystem(ISystem<TState> instance);
         void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
 
-        bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity;
+        //Entity GetEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
+        bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity;
 
         void Update(float deltaTime);
 

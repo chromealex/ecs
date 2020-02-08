@@ -15,9 +15,9 @@ namespace ME.Example.Game {
 
         public UnityEngine.Vector3 worldPosition;
 
-        public Filter<SharedEntity> shared;
-        public Filter<Point> points;
-        public Filter<Unit> units;
+        public Storage<SharedEntity> shared;
+        public Storage<Point> points;
+        public Storage<Unit> units;
 
         public Components<SharedEntity, State> sharedComponents;
         public Components<Point, State> pointComponents;

@@ -45,16 +45,17 @@ namespace ME.ECSEditor {
             public bool foldoutSystems;
             public bool foldoutModules;
             public bool foldoutEntitiesStorage;
+            public bool foldoutFilters;
 
-            private List<ME.ECS.IFilter> foldoutFilters = new List<ME.ECS.IFilter>();
-            private Dictionary<ME.ECS.IFilter, List<EntityId>> foldoutFilterData = new Dictionary<ME.ECS.IFilter, List<EntityId>>();
-            private Dictionary<ME.ECS.IFilter, List<EntityId>> foldoutFilterComponents = new Dictionary<ME.ECS.IFilter, List<EntityId>>();
-            private Dictionary<ME.ECS.IFilter, List<EntityId>> foldoutFilterViews = new Dictionary<ME.ECS.IFilter, List<EntityId>>();
+            private List<ME.ECS.IStorage> foldoutStorages = new List<ME.ECS.IStorage>();
+            private Dictionary<ME.ECS.IStorage, List<EntityId>> foldoutStorageData = new Dictionary<ME.ECS.IStorage, List<EntityId>>();
+            private Dictionary<ME.ECS.IStorage, List<EntityId>> foldoutStorageComponents = new Dictionary<ME.ECS.IStorage, List<EntityId>>();
+            private Dictionary<ME.ECS.IStorage, List<EntityId>> foldoutStorageViews = new Dictionary<ME.ECS.IStorage, List<EntityId>>();
 
-            public bool IsFoldOutComponents(ME.ECS.IFilter filter, EntityId entityId) {
+            public bool IsFoldOutComponents(ME.ECS.IStorage storage, EntityId entityId) {
 
                 List<EntityId> list;
-                if (this.foldoutFilterComponents.TryGetValue(filter, out list) == true) {
+                if (this.foldoutStorageComponents.TryGetValue(storage, out list) == true) {
 
                     return list.Contains(entityId);
 
@@ -64,10 +65,10 @@ namespace ME.ECSEditor {
 
             }
 
-            public void SetFoldOutComponents(ME.ECS.IFilter filter, EntityId entityId, bool state) {
+            public void SetFoldOutComponents(ME.ECS.IStorage storage, EntityId entityId, bool state) {
 
                 List<EntityId> list;
-                if (this.foldoutFilterComponents.TryGetValue(filter, out list) == true) {
+                if (this.foldoutStorageComponents.TryGetValue(storage, out list) == true) {
 
                     if (state == true) {
 
@@ -85,7 +86,7 @@ namespace ME.ECSEditor {
 
                         list = new List<EntityId>();
                         list.Add(entityId);
-                        this.foldoutFilterComponents.Add(filter, list);
+                        this.foldoutStorageComponents.Add(storage, list);
 
                     }
 
@@ -93,10 +94,10 @@ namespace ME.ECSEditor {
 
             }
 
-            public bool IsFoldOutData(ME.ECS.IFilter filter, EntityId entityId) {
+            public bool IsFoldOutData(ME.ECS.IStorage storage, EntityId entityId) {
 
                 List<EntityId> list;
-                if (this.foldoutFilterData.TryGetValue(filter, out list) == true) {
+                if (this.foldoutStorageData.TryGetValue(storage, out list) == true) {
 
                     return list.Contains(entityId);
 
@@ -106,10 +107,10 @@ namespace ME.ECSEditor {
 
             }
 
-            public void SetFoldOutData(ME.ECS.IFilter filter, EntityId entityId, bool state) {
+            public void SetFoldOutData(ME.ECS.IStorage storage, EntityId entityId, bool state) {
 
                 List<EntityId> list;
-                if (this.foldoutFilterData.TryGetValue(filter, out list) == true) {
+                if (this.foldoutStorageData.TryGetValue(storage, out list) == true) {
 
                     if (state == true) {
 
@@ -127,7 +128,7 @@ namespace ME.ECSEditor {
 
                         list = new List<EntityId>();
                         list.Add(entityId);
-                        this.foldoutFilterData.Add(filter, list);
+                        this.foldoutStorageData.Add(storage, list);
 
                     }
 
@@ -135,10 +136,10 @@ namespace ME.ECSEditor {
 
             }
 
-            public bool IsFoldOutViews(ME.ECS.IFilter filter, EntityId entityId) {
+            public bool IsFoldOutViews(ME.ECS.IStorage storage, EntityId entityId) {
 
                 List<EntityId> list;
-                if (this.foldoutFilterViews.TryGetValue(filter, out list) == true) {
+                if (this.foldoutStorageViews.TryGetValue(storage, out list) == true) {
 
                     return list.Contains(entityId);
 
@@ -148,10 +149,10 @@ namespace ME.ECSEditor {
 
             }
 
-            public void SetFoldOutViews(ME.ECS.IFilter filter, EntityId entityId, bool state) {
+            public void SetFoldOutViews(ME.ECS.IStorage storage, EntityId entityId, bool state) {
 
                 List<EntityId> list;
-                if (this.foldoutFilterViews.TryGetValue(filter, out list) == true) {
+                if (this.foldoutStorageViews.TryGetValue(storage, out list) == true) {
 
                     if (state == true) {
 
@@ -169,7 +170,7 @@ namespace ME.ECSEditor {
 
                         list = new List<EntityId>();
                         list.Add(entityId);
-                        this.foldoutFilterViews.Add(filter, list);
+                        this.foldoutStorageViews.Add(storage, list);
 
                     }
 
@@ -177,27 +178,34 @@ namespace ME.ECSEditor {
 
             }
 
-            public bool IsFoldOut(ME.ECS.IFilter filter) {
+            public bool IsFoldOut(ME.ECS.IStorage storage) {
 
-                return this.foldoutFilters.Contains(filter);
+                return this.foldoutStorages.Contains(storage);
 
             }
 
-            public void SetFoldOut(ME.ECS.IFilter filter, bool state) {
+            public void SetFoldOut(ME.ECS.IStorage storage, bool state) {
 
                 if (state == true) {
 
-                    if (this.foldoutFilters.Contains(filter) == false) this.foldoutFilters.Add(filter);
+                    if (this.foldoutStorages.Contains(storage) == false) this.foldoutStorages.Add(storage);
 
                 } else {
 
-                    this.foldoutFilters.Remove(filter);
+                    this.foldoutStorages.Remove(storage);
 
                 }
 
             }
 
             private Dictionary<int, ME.ECS.IComponentsBase> componentsCache = new Dictionary<int, ME.ECS.IComponentsBase>();
+
+            public List<ME.ECS.IFilterBase> GetFilters() {
+
+                var field = this.world.GetType().GetField("filtersCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                return (List<ME.ECS.IFilterBase>)field.GetValue(this.world);
+
+            }
 
             public Dictionary<int, ME.ECS.IComponentsBase> GetComponentsStorage() {
 
@@ -216,7 +224,7 @@ namespace ME.ECSEditor {
 
             public Dictionary<int, IList> GetEntitiesStorage() {
 
-                var field = this.world.GetType().GetField("filtersCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                var field = this.world.GetType().GetField("storagesCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 return (Dictionary<int, IList>)field.GetValue(this.world);
 
             }
@@ -451,19 +459,21 @@ namespace ME.ECSEditor {
                     var entitiesStorage = world.GetEntitiesStorage();
                     foreach (var entityStorage in entitiesStorage) {
 
-                        var filters = entityStorage.Value.Cast<ME.ECS.IFilter>().ToList();
-                        foreach (var filter in filters) {
+                        var storages = entityStorage.Value.Cast<ME.ECS.IStorage>().ToList();
+                        foreach (var storage in storages) {
 
                             GUILayout.BeginVertical();
                             {
-                                var foldout = world.IsFoldOut(filter);
-                                GUILayoutExt.FoldOut(ref foldout, GUILayoutExt.GetTypeLabel(filter.GetType()), () => {
+                                var foldout = world.IsFoldOut(storage);
+                                GUILayoutExt.FoldOut(ref foldout, GUILayoutExt.GetTypeLabel(storage.GetType()), () => {
 
-                                    var list = filter.GetData();
-                                    for (var i = 0; i < list.Count; ++i) {
+                                    var list = storage.GetData();
+                                    for (var i = list.FromIndex; i < list.SizeCount; ++i) {
 
-                                        var item = list[i];
-                                        var entityData = (ME.ECS.IEntity)item;
+                                        if (list.IsFree(i) == true) continue;
+                                        
+                                        var item = list.Get<ME.ECS.IEntity>(i);
+                                        var entityData = item;
 
                                         GUILayoutExt.Box(
                                             padding,
@@ -471,7 +481,7 @@ namespace ME.ECSEditor {
                                             () => {
 
                                                 GUILayout.Space(2f);
-                                                GUILayout.Label("Entity " + entityData.entity.id.ToString());
+                                                GUILayout.Label("Entity " + entityData.entity.id.ToString() + " (" + entityData.entity.storageIdx.ToString() + ")");
 
                                                 GUILayoutExt.Box(
                                                     padding,
@@ -479,7 +489,7 @@ namespace ME.ECSEditor {
                                                     () => {
 
                                                         #region Data
-                                                        var foldoutData = world.IsFoldOutData(filter, entityData.entity.id);
+                                                        var foldoutData = world.IsFoldOutData(storage, entityData.entity.id);
                                                         GUILayoutExt.FoldOut(ref foldoutData, "Data", () => {
 
                                                             { // Draw data table
@@ -489,11 +499,11 @@ namespace ME.ECSEditor {
                                                             }
 
                                                         });
-                                                        world.SetFoldOutData(filter, entityData.entity.id, foldoutData);
+                                                        world.SetFoldOutData(storage, entityData.entity.id, foldoutData);
                                                         #endregion
 
                                                         #region Components
-                                                        var foldoutComponents = world.IsFoldOutComponents(filter, entityData.entity.id);
+                                                        var foldoutComponents = world.IsFoldOutComponents(storage, entityData.entity.id);
                                                         GUILayoutExt.FoldOut(ref foldoutComponents, "Components", () => {
 
                                                             ME.ECS.IComponentsBase components;
@@ -546,11 +556,11 @@ namespace ME.ECSEditor {
                                                             }
 
                                                         });
-                                                        world.SetFoldOutComponents(filter, entityData.entity.id, foldoutComponents);
+                                                        world.SetFoldOutComponents(storage, entityData.entity.id, foldoutComponents);
                                                         #endregion
 
                                                         #if VIEWS_MODULE_SUPPORT
-                                                        var foldoutViews = world.IsFoldOutViews(filter, entityData.entity.id);
+                                                        var foldoutViews = world.IsFoldOutViews(storage, entityData.entity.id);
                                                         GUILayoutExt.FoldOut(ref foldoutViews, "Views", () => {
                                                             { // Draw views table
 
@@ -593,7 +603,7 @@ namespace ME.ECSEditor {
 
                                                             }
                                                         });
-                                                        world.SetFoldOutViews(filter, entityData.entity.id, foldoutViews);
+                                                        world.SetFoldOutViews(storage, entityData.entity.id, foldoutViews);
                                                         #endif
 
                                                     }, GUIStyle.none);
@@ -601,12 +611,12 @@ namespace ME.ECSEditor {
                                             },
                                             "dragtabdropwindow");
 
-                                        list[i] = entityData;
+                                        list.Set(i, entityData);
 
                                     }
 
                                 });
-                                world.SetFoldOut(filter, foldout);
+                                world.SetFoldOut(storage, foldout);
 
                             }
                             GUILayout.EndVertical();
@@ -643,6 +653,7 @@ namespace ME.ECSEditor {
                         var systems = worldEditor.GetSystems();
                         var modules = worldEditor.GetModules();
                         var entitiesStorage = worldEditor.GetEntitiesStorage();
+                        var filters = worldEditor.GetFilters();
                         var world = worldEditor.world;
 
                         GUILayoutExt.Padding(4f, () => {
@@ -850,10 +861,10 @@ namespace ME.ECSEditor {
                                 var entitiesCount = 0;
                                 foreach (var item in entitiesStorage) {
 
-                                    var filters = item.Value.Cast<ME.ECS.IFilter>().ToList();
-                                    foreach (var filter in filters) {
+                                    var storages = item.Value.Cast<ME.ECS.IStorage>().ToList();
+                                    foreach (var storage in storages) {
 
-                                        entitiesCount += filter.Count;
+                                        entitiesCount += storage.Count;
 
                                     }
 
@@ -882,15 +893,15 @@ namespace ME.ECSEditor {
 
                                         foreach (var entityStorage in entitiesStorage) {
 
-                                            var filters = entityStorage.Value.Cast<ME.ECS.IFilter>().ToList();
-                                            foreach (var filter in filters) {
+                                            var storages = entityStorage.Value.Cast<ME.ECS.IStorage>().ToList();
+                                            foreach (var storage in storages) {
 
                                                 GUILayout.BeginHorizontal();
                                                 {
                                                     GUILayoutExt.Box(
                                                         padding,
                                                         margin,
-                                                        () => { GUILayoutExt.TypeLabel(filter.GetType()); },
+                                                        () => { GUILayoutExt.TypeLabel(storage.GetType()); },
                                                         tableStyle,
                                                         GUILayout.Width(col1), GUILayout.Height(cellHeight));
                                                 }
@@ -898,7 +909,7 @@ namespace ME.ECSEditor {
                                                     GUILayoutExt.Box(
                                                         padding,
                                                         margin,
-                                                        () => { GUILayout.Label(filter.ToString(), dataStyle); },
+                                                        () => { GUILayout.Label(storage.ToString(), dataStyle); },
                                                         tableStyle,
                                                         GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
                                                 }
@@ -909,6 +920,41 @@ namespace ME.ECSEditor {
                                         }
 
                                     });
+
+                                });
+
+                                var filtersCount = filters.Count;
+                                GUILayoutExt.FoldOut(ref worldEditor.foldoutFilters, "Filters (" + filtersCount.ToString() + ")", () => {
+                                    
+                                    var cellHeight = 25f;
+                                    var padding = 2f;
+                                    var margin = 1f;
+                                    var col1 = 80f;
+                                    var tableStyle = (GUIStyle)"Box";
+                                    var dataStyle = new GUIStyle(EditorStyles.label);
+                                    dataStyle.richText = true;
+                                    foreach (var filter in filters) {
+
+                                        GUILayout.BeginHorizontal();
+                                        {
+                                            GUILayoutExt.Box(
+                                                padding,
+                                                margin,
+                                                () => { GUILayoutExt.TypeLabel(filter.GetType()); },
+                                                tableStyle,
+                                                GUILayout.Width(col1), GUILayout.Height(cellHeight));
+                                        }
+                                        {
+                                            GUILayoutExt.Box(
+                                                padding,
+                                                margin,
+                                                () => { GUILayout.Label(filter.ToString(), dataStyle); },
+                                                tableStyle,
+                                                GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
+                                        }
+                                        GUILayout.EndHorizontal();
+
+                                    }
 
                                 });
 

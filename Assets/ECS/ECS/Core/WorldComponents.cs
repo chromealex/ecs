@@ -90,12 +90,12 @@ namespace ME.ECS {
             if (this.componentsCache.TryGetValue(code, out components) == true) {
 
                 var item = (Components<TEntity, TState>)components;
-                item.Add(entity, data);
+                item.Add(entity.id, data);
 
             } else {
 
                 components = PoolClass<Components<TEntity, TState>>.Spawn();
-                ((Components<TEntity, TState>)components).Add(entity, data);
+                ((Components<TEntity, TState>)components).Add(entity.id, data);
                 this.componentsCache.Add(code, components);
 
             }
@@ -112,7 +112,7 @@ namespace ME.ECS {
             result = this.componentsCache.TryGetValue(code, out components);
             if (result == true) {
 
-                return ((Components<TEntity, TState>)components).GetFirst<TComponent>(entity);
+                return ((Components<TEntity, TState>)components).GetFirst<TComponent>(entity.id);
 
             }
 
@@ -129,7 +129,7 @@ namespace ME.ECS {
             result = this.componentsCache.TryGetValue(code, out components);
             if (result == true) {
 
-                ((Components<TEntity, TState>)components).ForEach(entity, output);
+                ((Components<TEntity, TState>)components).ForEach(entity.id, output);
 
             }
 
@@ -148,7 +148,7 @@ namespace ME.ECS {
             IComponents<TState> components;
             if (this.componentsCache.TryGetValue(code, out components) == true) {
 
-                return ((Components<TEntity, TState>)components).Contains<TComponent>(entity);
+                return ((Components<TEntity, TState>)components).Contains<TComponent>(entity.id);
 
             }
 
@@ -169,7 +169,7 @@ namespace ME.ECS {
             IComponents<TState> components;
             if (this.componentsCache.TryGetValue(code, out components) == true) {
 
-                return ((Components<TEntity, TState>)components).ContainsOnce<TComponent>(entity);
+                return ((Components<TEntity, TState>)components).ContainsOnce<TComponent>(entity.id);
 
             }
 
@@ -190,7 +190,7 @@ namespace ME.ECS {
             result = this.componentsCache.TryGetValue(code, out componentsContainer);
             if (result == true) {
 
-                componentsContainer.RemoveAll(entity);
+                componentsContainer.RemoveAll(entity.id);
 
             }
 
@@ -206,7 +206,7 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                ((Components<TEntity, TState>)componentsContainer).RemoveAllPredicate<TComponent, TComponentPredicate>(entity, predicate);
+                ((Components<TEntity, TState>)componentsContainer).RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate);
 
             }
 
@@ -222,7 +222,7 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                componentsContainer.RemoveAll<TComponent>(entity);
+                componentsContainer.RemoveAll<TComponent>(entity.id);
 
             }
 
@@ -238,7 +238,7 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                componentsContainer.RemoveAllOnce<TComponent>(entity);
+                componentsContainer.RemoveAllOnce<TComponent>(entity.id);
 
             }
 

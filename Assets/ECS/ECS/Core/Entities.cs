@@ -6,6 +6,7 @@ namespace ME.ECS {
     public struct Entity {
 
         public EntityId id;
+        public int storageIdx;
         public int typeId;
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -13,7 +14,7 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        public static Entity Create<TEntity>(in EntityId id) where TEntity : IEntity {
+        internal static Entity Create<TEntity>(in EntityId id) where TEntity : IEntity {
 
             return Entity.Create<TEntity>(id, noCheck: false);
 
@@ -34,6 +35,7 @@ namespace ME.ECS {
 
             var entity = new Entity();
             entity.id = id;
+            entity.storageIdx = -1;
             entity.typeId = WorldUtilities.GetKey<TEntity>();
             return entity;
 
@@ -41,7 +43,7 @@ namespace ME.ECS {
 
         public override string ToString() {
             
-            return "Entity Id: " + this.id.ToString() + " (type: " + this.typeId.ToString() + ")";
+            return "Entity Id: " + this.id.ToString() + " (type: " + this.typeId.ToString() + "), Storage Index: " + this.storageIdx.ToString();
             
         }
 

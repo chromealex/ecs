@@ -16,22 +16,22 @@ namespace ME.ECS {
         int Count { get; }
         int CountOnce { get; }
 
-        void RemoveAll(Entity entity);
-        void RemoveAll<TComponent>(Entity entity) where TComponent : class, IComponentBase;
-        void RemoveAllOnce<TComponent>(Entity entity) where TComponent : class, IComponentOnceBase;
+        void RemoveAll(EntityId entityId);
+        void RemoveAll<TComponent>(EntityId entityId) where TComponent : class, IComponentBase;
+        void RemoveAllOnce<TComponent>(EntityId entityId) where TComponent : class, IComponentOnceBase;
         void RemoveAll<TComponent>() where TComponent : class, IComponentBase;
         void RemoveAllOnce<TComponent>() where TComponent : class, IComponentOnceBase;
 
-        void RemoveAllPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
+        void RemoveAllPredicate<TComponent, TComponentPredicate>(EntityId entityId, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
 
     }
 
     public static class ComponentExtensions {
 
-        public static bool GetEntityData<TState, TEntity, TEntitySource>(this IComponent<TState, TEntitySource> _, EntityId entityId, out TEntity data) where TEntity : struct, IEntity where TEntitySource : struct, IEntity where TState : class, IState<TState> {
+        public static bool GetEntityData<TState, TEntity, TEntitySource>(this IComponent<TState, TEntitySource> _, Entity entity, out TEntity data) where TEntity : struct, IEntity where TEntitySource : struct, IEntity where TState : class, IState<TState> {
 
-            var world = Worlds<TState>.currentWorld;
-            return world.GetEntityData(entityId, out data);
+            ref var world = ref Worlds<TState>.currentWorld;
+            return world.GetEntityData(entity, out data);
 
         }
 
@@ -114,10 +114,10 @@ namespace ME.ECS {
 
         }
 
-        public void RemoveAllPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
+        public void RemoveAllPredicate<TComponent, TComponentPredicate>(EntityId entityId, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            if (this.dic.TryGetValue(entityId, out list) == true) {
 
                 this.RemoveAll_INTERNAL<TComponent, TComponentPredicate>(list, predicate);
                 
@@ -125,10 +125,10 @@ namespace ME.ECS {
             
         }
 
-        public void RemoveAll<TComponent>(Entity entity) where TComponent : class, IComponentBase {
+        public void RemoveAll<TComponent>(EntityId entityId) where TComponent : class, IComponentBase {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            if (this.dic.TryGetValue(entityId, out list) == true) {
 
                 this.RemoveAll_INTERNAL<TComponent>(list);
                 
@@ -136,10 +136,10 @@ namespace ME.ECS {
             
         }
 
-        public void RemoveAllOnce<TComponent>(Entity entity) where TComponent : class, IComponentOnceBase {
+        public void RemoveAllOnce<TComponent>(EntityId entityId) where TComponent : class, IComponentOnceBase {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            if (this.dic.TryGetValue(entityId, out list) == true) {
 
                 this.RemoveAll_INTERNAL<TComponent>(list);
                 
@@ -203,17 +203,17 @@ namespace ME.ECS {
             
         }
 
-        public void RemoveAll(Entity entity) {
+        public void RemoveAll(EntityId entityId) {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            if (this.dic.TryGetValue(entityId, out list) == true) {
 
                 PoolComponents.Recycle(list);
                 list.Clear();
 
             }
             
-            if (this.dicOnce.TryGetValue(entity.id, out list) == true) {
+            if (this.dicOnce.TryGetValue(entityId, out list) == true) {
 
                 PoolComponents.Recycle(list);
                 list.Clear();
@@ -222,12 +222,12 @@ namespace ME.ECS {
 
         }
 
-        public void Add(Entity entity, IComponent<TState, TEntity> data) {
+        public void Add(EntityId entityId, IComponent<TState, TEntity> data) {
 
             var dic = this.GetDictionary(data);
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (dic.TryGetValue(entity.id, out list) == true) {
+            if (dic.TryGetValue(entityId, out list) == true) {
 
                 list.Add(data);
 
@@ -235,30 +235,30 @@ namespace ME.ECS {
 
                 list = PoolHashSet<IComponent<TState, TEntity>>.Spawn(this.capacity);
                 list.Add(data);
-                dic.Add(entity.id, list);
+                dic.Add(entityId, list);
                 
             }
 
         }
         
-        private Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> GetDictionary(IComponent<TState, TEntity> data) {
+        private ref Dictionary<EntityId, HashSet<IComponent<TState, TEntity>>> GetDictionary(IComponent<TState, TEntity> data) {
 
             if (data is IComponentOnceBase) {
 
-                return this.dicOnce;
+                return ref this.dicOnce;
 
             } else {
 
-                return this.dic;
+                return ref this.dic;
 
             }
 
         }
 
-        public TComponent GetFirst<TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> {
+        public TComponent GetFirst<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity> {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            if (this.dic.TryGetValue(entityId, out list) == true) {
 
                 foreach (var listItem in list) {
                     
@@ -272,10 +272,10 @@ namespace ME.ECS {
 
         }
 
-        public TComponent GetFirstOnce<TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> {
+        public TComponent GetFirstOnce<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity> {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dicOnce.TryGetValue(entity.id, out list) == true) {
+            if (this.dicOnce.TryGetValue(entityId, out list) == true) {
 
                 foreach (var listItem in list) {
                     
@@ -289,10 +289,10 @@ namespace ME.ECS {
 
         }
 
-        public void ForEach<TComponent>(Entity entity, List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> {
+        public void ForEach<TComponent>(EntityId entityId, List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            if (this.dic.TryGetValue(entityId, out list) == true) {
 
                 foreach (var listItem in list) {
                     
@@ -304,10 +304,10 @@ namespace ME.ECS {
 
         }
 
-        public bool ContainsOnce<TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> {
+        public bool ContainsOnce<TComponent>(EntityId entityId) where TComponent : IComponentOnce<TState, TEntity> {
 
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dicOnce.TryGetValue(entity.id, out list) == true) {
+            if (this.dicOnce.TryGetValue(entityId, out list) == true) {
 
                 foreach (var listItem in list) {
 
@@ -321,10 +321,10 @@ namespace ME.ECS {
 
         }
 
-        public bool ContainsOnce(Entity entity, IComponentOnce<TState, TEntity> data) {
+        public bool ContainsOnce(EntityId entityId, IComponentOnce<TState, TEntity> data) {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dicOnce.TryGetValue(entity.id, out list) == true) {
+            if (this.dicOnce.TryGetValue(entityId, out list) == true) {
 
                 return list.Contains(data);
 
@@ -334,10 +334,10 @@ namespace ME.ECS {
 
         }
 
-        public bool Contains<TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> {
+        public bool Contains<TComponent>(EntityId entityId) where TComponent : IComponent<TState, TEntity> {
 
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            if (this.dic.TryGetValue(entityId, out list) == true) {
 
                 foreach (var listItem in list) {
 
@@ -351,10 +351,10 @@ namespace ME.ECS {
 
         }
 
-        public bool Contains(Entity entity, IComponent<TState, TEntity> data) {
+        public bool Contains(EntityId entityId, IComponent<TState, TEntity> data) {
             
             HashSet<IComponent<TState, TEntity>> list;
-            if (this.dic.TryGetValue(entity.id, out list) == true) {
+            if (this.dic.TryGetValue(entityId, out list) == true) {
 
                 return list.Contains(data);
 

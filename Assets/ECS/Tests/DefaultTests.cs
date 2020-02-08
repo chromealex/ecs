@@ -72,7 +72,7 @@ namespace ME.Example.Tests {
             var history = world.GetModule<StatesHistoryModule>();
 
             var network = world.GetModule<ME.ECS.Network.INetworkModuleBase>();
-            var testCallId = network.RegisterRPC(new System.Action(this.TestCall_RPC).Method);
+            var testCallId = network.RegisterRPC(new System.Action<Entity>(this.TestCall_RPC).Method);
             network.RegisterObject(this, 1);
             
             // Adding default items
@@ -88,7 +88,7 @@ namespace ME.Example.Tests {
                 world.Update(100f);
 
                 Point data;
-                if (world.GetEntityData(entity.id, out data) == true) {
+                if (world.GetEntityData(entity, out data) == true) {
 
                     Assert.IsTrue(data.unitsCount == 2f);
 
@@ -103,9 +103,10 @@ namespace ME.Example.Tests {
                     objId = 1,
                     groupId = 0,
                     rpcId = testCallId,
+                    parameters = new object[] { entity },
                 });
 
-                if (world.GetEntityData(entity.id, out data) == true) {
+                if (world.GetEntityData(entity, out data) == true) {
 
                     Assert.IsTrue(data.unitsCount == 3f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
@@ -125,7 +126,7 @@ namespace ME.Example.Tests {
                     rpcId = testCallId,
                 });
 
-                if (world.GetEntityData(entity.id, out data) == true) {
+                if (world.GetEntityData(entity, out data) == true) {
 
                     Assert.IsTrue(data.unitsCount == 4f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
@@ -145,7 +146,7 @@ namespace ME.Example.Tests {
                     rpcId = testCallId,
                 });
 
-                if (world.GetEntityData(entity.id, out data) == true) {
+                if (world.GetEntityData(entity, out data) == true) {
 
                     Assert.IsTrue(data.unitsCount == 5f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
@@ -164,7 +165,7 @@ namespace ME.Example.Tests {
                     rpcId = testCallId,
                 });
 
-                if (world.GetEntityData(entity.id, out data) == true) {
+                if (world.GetEntityData(entity, out data) == true) {
 
                     Assert.IsTrue(data.unitsCount == 5f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
@@ -177,7 +178,7 @@ namespace ME.Example.Tests {
                 // Do regular update
                 world.Update(300f);
 
-                if (world.GetEntityData(entity.id, out data) == true) {
+                if (world.GetEntityData(entity, out data) == true) {
 
                     Assert.IsTrue(data.unitsCount == 6f, "UnitsCount: " + data.unitsCount.ToString() + ", Tick: " + world.GetCurrentTick());
 
@@ -193,9 +194,9 @@ namespace ME.Example.Tests {
 
         }
 
-        public void TestCall_RPC() {
+        public void TestCall_RPC(Entity p1) {
 
-            this.worldTemp.AddComponent<Point, PointIncreaseUnitsOnce>(Entity.Create<Point>(1));
+            this.worldTemp.AddComponent<Point, PointIncreaseUnitsOnce>(p1);
 
         }
 
@@ -299,12 +300,6 @@ namespace ME.Example.Tests {
             {
                 var dic = TestsHelper.GetValue<Dictionary<int, IComponentsBase>>(world, "componentsCache");
                 Assert.IsTrue(dic.Count == 2);
-            }
-
-            {
-                Point data;
-                world.GetEntityData(1, out data);
-                Assert.IsTrue(data.unitsCount == 99f);
             }
 
             TestsHelper.ReleaseWorld(ref world);

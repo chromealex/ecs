@@ -8,90 +8,75 @@ namespace ME.Example.Game.Systems {
     
     public class UnitsSystem : ISystem<State> {
 
-        //[BurstCompile(CompileSynchronously = true, FloatMode = FloatMode.Deterministic, FloatPrecision = FloatPrecision.Standard)]
-        /*private struct TestJob : IJobParallelFor {
+        public IWorld<State> world { get; set; }
 
-            public float deltaTime;
+        private IFilter<State, Unit> unitsFilter;
+        private IFilter<State, Unit> unitsFilter2;
+        private IFilter<State, Unit> unitsFilter3;
 
-            void IJobParallelFor.Execute(int index) {
+        private class CustomFilter : INode<Unit> {
 
-                var data = Worlds<State>.currentState.units[index];
-                data = Worlds<State>.currentWorld.RunComponents(data, this.deltaTime, index);
+            public bool Execute(Unit data) {
+
                 Point toData;
-                if (Worlds<State>.currentWorld.GetEntityData(data.pointTo.id, out toData) == true) {
+                if (Worlds<State>.currentWorld.GetEntityData(data.pointTo, out toData) == true) {
 
-                    if ((toData.position - data.position).sqrMagnitude <= 0.01f) {
-
-                        var from = data.pointFrom;
-                        var to = data.pointTo;
-                        data.pointTo = from;
-                        data.pointFrom = to;
-                        Worlds<State>.currentWorld.RemoveComponents<UnitFollowFromTo>(data.entity);
-                        var comp = Worlds<State>.currentWorld.AddComponent<Unit, UnitFollowFromTo>(data.entity);
-                        comp.@from = data.pointFrom;
-                        comp.to = data.pointTo;
-
-                        --data.lifes;
-
-                    }
+                    return ((toData.position - data.position).sqrMagnitude <= 0.01f);
 
                 }
 
-                Worlds<State>.currentState.units[index] = data;
-                Worlds<State>.currentWorld.UpdateEntityCache(data);
+                return false;
 
             }
 
-        }*/
+        }
+        
+        void ISystemBase.OnConstruct() {
 
-        public IWorld<State> world { get; set; }
-
-        void ISystemBase.OnConstruct() { }
+            Filter<State, Unit>.Create(ref this.unitsFilter, nameof(this.unitsFilter)).WithoutComponent<UnitFollowFromTo>().Push();
+            Filter<State, Unit>.Create(ref this.unitsFilter2, nameof(this.unitsFilter2)).WithComponent<UnitGravity>().WithComponent<UnitFollowFromTo>().Push();
+            Filter<State, Unit>.Create(ref this.unitsFilter3, nameof(this.unitsFilter3)).WithComponent<UnitGravity>().WithComponent<UnitFollowFromTo>().Custom<CustomFilter>().Push();
+            
+        }
+        
         void ISystemBase.OnDeconstruct() { }
 
         void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 
-            /*var job = new TestJob() {
-                deltaTime = deltaTime
-            };
-
-            var jobHandle = job.Schedule(state.units.Count, 1000);
-            jobHandle.Complete();*/
-
-            for (int index = state.units.Count - 1; index >= 0; --index) {
+            for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
                 
-                var data = state.units[index];
+                if (state.units.IsFree(index) == true) continue;
+                
+                ref var data = ref state.units[index];
                 this.world.RunComponents(ref data, deltaTime, index);
-                Point toData;
-                if (Worlds<State>.currentWorld.GetEntityData(data.pointTo.id, out toData) == true) {
+                
+                if (this.unitsFilter3.Contains(data) == true) {
 
-                    if ((toData.position - data.position).sqrMagnitude <= 0.01f) {
+                    var from = data.pointFrom;
+                    var to = data.pointTo;
+                    data.pointTo = from;
+                    data.pointFrom = to;
+                    Worlds<State>.currentWorld.RemoveComponents<UnitFollowFromTo>(data.entity);
+                    var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
+                    comp.@from = data.pointFrom;
+                    comp.to = data.pointTo;
 
-                        var from = data.pointFrom;
-                        var to = data.pointTo;
-                        data.pointTo = from;
-                        data.pointFrom = to;
-                        Worlds<State>.currentWorld.RemoveComponents<UnitFollowFromTo>(data.entity);
-                        var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
-                        comp.@from = data.pointFrom;
-                        comp.to = data.pointTo;
-
-                        --data.lifes;
-
-                    }
+                    --data.lifes;
 
                 }
 
-                state.units[index] = data;
+                //state.units[index] = data;
                 this.world.UpdateEntityCache(data);
-                
+
             }
 
-            for (int i = state.units.Count - 1; i >= 0; --i) {
+            for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
 
-                if (state.units[i].lifes <= 0) {
+                if (state.units.IsFree(index) == true) continue;
 
-                    this.world.RemoveEntity<Unit>(state.units[i].entity);
+                if (state.units[index].lifes <= 0) {
+
+                    this.world.RemoveEntity<Unit>(state.units[index].entity);
 
                 }
 

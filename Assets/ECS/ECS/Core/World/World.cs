@@ -61,15 +61,20 @@ namespace ME.ECS {
 
         private const int SYSTEMS_CAPACITY = 100;
         private const int MODULES_CAPACITY = 100;
-        private const int ENTITIES_CACHE_CAPACITY = 1000;
-        private const int FILTERS_CAPACITY = 100;
+        internal const int ENTITIES_CACHE_CAPACITY = 1000;
+        private const int STORAGES_CAPACITY = 100;
         private const int CAPACITIES_CAPACITY = 100;
         private const int ENTITIES_DIRECT_CACHE_CAPACITY = 1000;
 
         private static class EntitiesDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<long, TEntity> dataByEntityId = new Dictionary<long, TEntity>(World<TState>.ENTITIES_DIRECT_CACHE_CAPACITY);
-            internal static Dictionary<int, List<TEntity>> entitiesList = new Dictionary<int, List<TEntity>>(4);
+            internal static Dictionary<int, RefList<TEntity>> entitiesList = new Dictionary<int, RefList<TEntity>>(4);
+
+        }
+
+        private static class FiltersDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
+
+            internal static Dictionary<int, HashSet<IFilterInternal<TState, TEntity>>> dic = new Dictionary<int, HashSet<IFilterInternal<TState, TEntity>>>(4);
 
         }
 
@@ -93,7 +98,8 @@ namespace ME.ECS {
         private List<ModuleState> statesModules;
         
         // State cache:
-        private Dictionary<int, IList> filtersCache; // key = typeof(T:IFilter), value = list of T:IFilter
+        private Dictionary<int, IList> storagesCache; // key = typeof(T:IStorage), value = list of T:IStorage
+        private List<IFilterBase> filtersCache;
 
         private float tickTime;
         private double timeSinceStart;
@@ -103,6 +109,56 @@ namespace ME.ECS {
             this.currentState = null;
             this.resetState = null;
             this.currentStep = WorldStep.None;
+
+        }
+
+        void IPoolableSpawn.OnSpawn() {
+
+            this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
+            this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
+            this.statesSystems = PoolList<ModuleState>.Spawn(World<TState>.SYSTEMS_CAPACITY);
+            this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
+            this.storagesCache = PoolDictionary<int, IList>.Spawn(World<TState>.STORAGES_CAPACITY);
+            this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
+
+            this.filtersCache = new List<IFilterBase>(100);
+            
+            this.OnSpawnComponents();
+            this.OnSpawnMarkers();
+
+        }
+
+        void IPoolableRecycle.OnRecycle() {
+
+            this.OnRecycleMarkers();
+            this.OnRecycleComponents();
+            
+            this.filtersCache.Clear();
+            
+            WorldUtilities.ReleaseState(ref this.resetState);
+            WorldUtilities.ReleaseState(ref this.currentState);
+
+            for (int i = 0; i < this.systems.Count; ++i) {
+                
+                this.systems[i].OnDeconstruct();
+                PoolSystems.Recycle(this.systems[i]);
+
+            }
+            PoolList<ISystem<TState>>.Recycle(ref this.systems);
+            
+            for (int i = 0; i < this.modules.Count; ++i) {
+                
+                this.modules[i].OnDeconstruct();
+                PoolModules.Recycle(this.modules[i]);
+
+            }
+            PoolList<IModule<TState>>.Recycle(ref this.modules);
+            
+            PoolList<ModuleState>.Recycle(ref this.statesModules);
+            PoolList<ModuleState>.Recycle(ref this.statesSystems);
+            
+            PoolDictionary<int, IList>.Recycle(ref this.storagesCache);
+            PoolDictionary<int, int>.Recycle(ref this.capacityCache);
 
         }
 
@@ -264,65 +320,18 @@ namespace ME.ECS {
         partial void OnSpawnComponents();
         partial void OnRecycleComponents();
 
-        void IPoolableSpawn.OnSpawn() {
-
-            this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
-            this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
-            this.statesSystems = PoolList<ModuleState>.Spawn(World<TState>.SYSTEMS_CAPACITY);
-            this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
-            this.filtersCache = PoolDictionary<int, IList>.Spawn(World<TState>.FILTERS_CAPACITY);
-            this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
-
-            this.OnSpawnComponents();
-            this.OnSpawnMarkers();
-
-        }
-
-        void IPoolableRecycle.OnRecycle() {
-
-            this.OnRecycleMarkers();
-            this.OnRecycleComponents();
-            
-            WorldUtilities.ReleaseState(ref this.resetState);
-            WorldUtilities.ReleaseState(ref this.currentState);
-
-            for (int i = 0; i < this.systems.Count; ++i) {
-                
-                this.systems[i].OnDeconstruct();
-                PoolSystems.Recycle(this.systems[i]);
-
-            }
-            PoolList<ISystem<TState>>.Recycle(ref this.systems);
-            
-            for (int i = 0; i < this.modules.Count; ++i) {
-                
-                this.modules[i].OnDeconstruct();
-                PoolModules.Recycle(this.modules[i]);
-
-            }
-            PoolList<IModule<TState>>.Recycle(ref this.modules);
-            
-            PoolList<ModuleState>.Recycle(ref this.statesModules);
-            PoolList<ModuleState>.Recycle(ref this.statesSystems);
-            
-            //PoolDictionary<int, IList>.Recycle(ref this.entitiesCache);
-            PoolDictionary<int, IList>.Recycle(ref this.filtersCache);
-            PoolDictionary<int, int>.Recycle(ref this.capacityCache);
-
-        }
-
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool GetEntityData<T>(EntityId entityId, out T data) where T : struct, IEntity {
+        public bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity {
 
-            T internalData;
-            if (EntitiesDirectCache<TState, T>.dataByEntityId.TryGetValue(MathUtils.GetKey(this.id, entityId), out internalData) == true) {
+            RefList<TEntity> list;
+            if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out list) == true) {
 
-                data = internalData;
+                data = list[entity.storageIdx];
                 return true;
 
             }
 
-            data = default(T);
+            data = default;
             return false;
 
         }
@@ -367,6 +376,40 @@ namespace ME.ECS {
             }
 
             return 100;
+
+        }
+
+        public bool HasFilter<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity {
+            
+            HashSet<IFilterInternal<TState, TEntity>> filters;
+            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            if (dic.TryGetValue(this.id, out filters) == true) {
+
+                return filters.Contains((IFilterInternal<TState, TEntity>)filterRef);
+
+            }
+
+            return false;
+
+        }
+
+        public void Register<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity {
+
+            HashSet<IFilterInternal<TState, TEntity>> filters;
+            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            if (dic.TryGetValue(this.id, out filters) == true) {
+
+                filters.Add((IFilterInternal<TState, TEntity>)filterRef);
+
+            } else {
+                
+                filters = new HashSet<IFilterInternal<TState, TEntity>>();
+                filters.Add((IFilterInternal<TState, TEntity>)filterRef);
+                dic.Add(this.id, filters);
+                
+            }
+
+            this.filtersCache.Add(filterRef);
 
         }
 
@@ -418,36 +461,36 @@ namespace ME.ECS {
 
         }
 
-        public void Register<TEntity>(ref Filter<TEntity> filterRef, bool freeze, bool restore) where TEntity : struct, IEntity {
+        public void Register<TEntity>(ref Storage<TEntity> storageRef, bool freeze, bool restore) where TEntity : struct, IEntity {
 
             this.RegisterPluginsModuleForEntity<TEntity>();
 
             var code = WorldUtilities.GetKey<TEntity>();
             var capacity = this.GetCapacity<TEntity>(code);
-            if (filterRef == null) {
+            if (storageRef == null) {
 
-                filterRef = PoolClass<Filter<TEntity>>.Spawn();
-                filterRef.Initialize(capacity);
-                filterRef.SetFreeze(freeze);
+                storageRef = PoolClass<Storage<TEntity>>.Spawn();
+                storageRef.Initialize(capacity);
+                storageRef.SetFreeze(freeze);
 
             } else {
 
-                filterRef.SetFreeze(freeze);
+                storageRef.SetFreeze(freeze);
 
             }
 
             if (freeze == false) {
 
                 IList list;
-                if (this.filtersCache.TryGetValue(code, out list) == true) {
+                if (this.storagesCache.TryGetValue(code, out list) == true) {
 
-                    ((List<Filter<TEntity>>)list).Add(filterRef);
+                    ((List<Storage<TEntity>>)list).Add(storageRef);
 
                 } else {
 
-                    list = PoolList<Filter<TEntity>>.Spawn(capacity);
-                    ((List<Filter<TEntity>>)list).Add(filterRef);
-                    this.filtersCache.Add(code, list);
+                    list = PoolList<Storage<TEntity>>.Spawn(capacity);
+                    ((List<Storage<TEntity>>)list).Add(storageRef);
+                    this.storagesCache.Add(code, list);
 
                 }
 
@@ -456,47 +499,47 @@ namespace ME.ECS {
             if (this.sharedEntity.id == 0 && typeof(TEntity) == typeof(SharedEntity)) {
                 
                 // Create shared entity which should store shared components
-                this.sharedEntity = this.AddEntity(new SharedEntity() { entity = Entity.Create<SharedEntity>(-1, noCheck: true) }, updateFilters: false);
+                this.sharedEntity = this.AddEntity(new SharedEntity() { entity = Entity.Create<SharedEntity>(-1, noCheck: true) }, updateStorages: false);
 
             }
 
             if (restore == true) {
 
                 // Update entities cache
-                for (int i = 0; i < filterRef.Count; ++i) {
+                for (int i = 0; i < storageRef.Count; ++i) {
 
-                    var item = filterRef[i];
-                    var list = PoolList<TEntity>.Spawn(capacity);
-                    list.Add(item);
-                    this.AddEntity(item, updateFilters: false);
+                    var item = storageRef[i];
+                    //var list = PoolList<TEntity>.Spawn(capacity);
+                    //list.Add(item);
+                    this.AddEntity(item, updateStorages: false);
 
                 }
 
-                this.UpdateFilters<TEntity>(code);
+                this.UpdateStorages<TEntity>(code);
 
             }
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void UpdateFilters<TEntity>() where TEntity : struct, IEntity {
+        public void UpdateStorages<TEntity>() where TEntity : struct, IEntity {
 
-            this.UpdateFilters<TEntity>(WorldUtilities.GetKey<TEntity>());
+            this.UpdateStorages<TEntity>(WorldUtilities.GetKey<TEntity>());
 
         }
 
-        public void UpdateFilters<TEntity>(int code) where TEntity : struct, IEntity {
+        public void UpdateStorages<TEntity>(int code) where TEntity : struct, IEntity {
 
-            List<TEntity> listEntities;
+            RefList<TEntity> listEntities;
             if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out listEntities) == true) {
 
-                IList listFilters;
-                if (this.filtersCache.TryGetValue(code, out listFilters) == true) {
+                IList listStorages;
+                if (this.storagesCache.TryGetValue(code, out listStorages) == true) {
 
-                    for (int i = 0, count = listFilters.Count; i < count; ++i) {
+                    for (int i = 0, count = listStorages.Count; i < count; ++i) {
 
-                        var filter = (Filter<TEntity>)listFilters[i];
-                        filter.SetData(listEntities);
+                        var storage = (Storage<TEntity>)listStorages[i];
+                        storage.SetData(listEntities);
 
                     }
 
@@ -531,7 +574,7 @@ namespace ME.ECS {
 
         public void SetState(TState state) {
 
-            this.filtersCache.Clear();
+            this.storagesCache.Clear();
             this.componentsCache.Clear();
 
             if (this.currentState != null && this.currentState != state) WorldUtilities.ReleaseState(ref this.currentState);
@@ -573,7 +616,7 @@ namespace ME.ECS {
 
         public void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity {
 
-            ref var dic = ref EntitiesDirectCache<TState, TEntity>.dataByEntityId;
+            /*ref var dic = ref EntitiesDirectCache<TState, TEntity>.dataByEntityId;
             var key = MathUtils.GetKey(this.id, data.entity.id);
             if (dic.ContainsKey(key) == true) {
 
@@ -583,45 +626,110 @@ namespace ME.ECS {
 
                 dic.Add(key, data);
 
+            }*/
+
+            this.UpdateFilters(data);
+
+        }
+
+        public void UpdateFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
+
+            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            HashSet<IFilterInternal<TState, TEntity>> filters;
+            if (dic.TryGetValue(this.id, out filters) == true) {
+
+                foreach (var filter in filters) {
+
+                    filter.OnUpdate(data);
+
+                }
+
             }
 
         }
 
-        public Entity AddEntity<T>(T data, bool updateFilters = true) where T : struct, IEntity {
+        public void AddToFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
+            
+            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            HashSet<IFilterInternal<TState, TEntity>> filters;
+            if (dic.TryGetValue(this.id, out filters) == true) {
 
-            if (data.entity.id == 0) data.entity = this.CreateNewEntity<T>();
+                foreach (var filter in filters) {
 
-            List<T> entitiesList;
-            if (EntitiesDirectCache<TState, T>.entitiesList.TryGetValue(this.id, out entitiesList) == false) {
+                    filter.OnAdd(data);
 
-                entitiesList = PoolList<T>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
-                entitiesList.Add(data);
-                EntitiesDirectCache<TState, T>.entitiesList.Add(this.id, entitiesList);
+                }
 
-            } else {
-                
-                entitiesList.Add(data);
-                
             }
             
-            if (updateFilters == true) {
+        }
+
+        public void RemoveFromFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
+            
+            this.RemoveFromFilters_INTERNAL<TEntity>(data.entity);
+            
+        }
+
+        public void RemoveFromFilters<TEntity>(Entity data) where TEntity : struct, IEntity {
+
+            this.RemoveFromFilters_INTERNAL<TEntity>(data);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void RemoveFromFilters_INTERNAL<TEntity>(Entity data) where TEntity : struct, IEntity {
+            
+            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            HashSet<IFilterInternal<TState, TEntity>> filters;
+            if (dic.TryGetValue(this.id, out filters) == true) {
+
+                foreach (var filter in filters) {
+
+                    filter.OnRemove(data);
+
+                }
+
+            }
+            
+        }
+
+        public Entity AddEntity<TEntity>(TEntity data, bool updateStorages = true) where TEntity : struct, IEntity {
+
+            if (data.entity.id == 0) data.entity = this.CreateNewEntity<TEntity>();
+
+            RefList<TEntity> entitiesList;
+            if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out entitiesList) == false) {
+
+                entitiesList = PoolRefList<TEntity>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
+                EntitiesDirectCache<TState, TEntity>.entitiesList.Add(this.id, entitiesList);
+
+            }
+
+            var nextIndex = entitiesList.GetNextIndex();
+            var entity = data.entity;
+            entity.storageIdx = nextIndex;
+            data.entity = entity;
+            entitiesList.Add(data);
+
+            if (updateStorages == true) {
 
                 var code = WorldUtilities.GetKey(data);
-                this.UpdateFilters<T>(code);
+                this.UpdateStorages<TEntity>(code);
 
             }
-            
+
+            this.AddToFilters(data);
             this.UpdateEntityCache(data);
 
             return data.entity;
 
         }
 
-        public bool ForEachEntity<TEntity>(out List<TEntity> output) where TEntity : struct, IEntity {
+        public bool ForEachEntity<TEntity>(out RefList<TEntity> output) where TEntity : struct, IEntity {
 
             output = null;
             
-            List<TEntity> listEntities;
+            RefList<TEntity> listEntities;
             if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out listEntities) == true) {
                 
                 output = listEntities;
@@ -633,19 +741,21 @@ namespace ME.ECS {
 
         }
 
-        public bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity {
+        /*public bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity {
             
             var key = MathUtils.GetKey(this.id, entityId);
             return EntitiesDirectCache<TState, TEntity>.dataByEntityId.ContainsKey(key);
 
-        }
+        }*/
 
-        public void RemoveEntities<TEntity>(TEntity data) where TEntity : struct, IEntity {
+        /*public void RemoveEntities<TEntity>(TEntity data) where TEntity : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, data.entity.id);
             if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
 
-                List<TEntity> listEntities;
+                this.RemoveFromFilters(data);
+                
+                RefList<TEntity> listEntities;
                 if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out listEntities) == true) {
                 
                     this.DestroyEntityPlugins<TEntity>(data.entity);
@@ -656,32 +766,26 @@ namespace ME.ECS {
 
             }
 
-        }
+        }*/
 
         public bool RemoveEntity<TEntity>(Entity entity) where TEntity : struct, IEntity {
 
-            var key = MathUtils.GetKey(this.id, entity.id);
-            if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
+            //var key = MathUtils.GetKey(this.id, entity.id);
+            //if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
 
-                List<TEntity> list;
+                RefList<TEntity> list;
                 if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out list) == true) {
+
+                    list.RemoveAt(entity.storageIdx);
                     
-                    for (int i = 0, count = list.Count; i < count; ++i) {
+                    this.DestroyEntityPlugins<TEntity>(entity);
+                    this.RemoveComponents(entity);
+                    this.RemoveFromFilters<TEntity>(entity);
+                    return true;
 
-                        if (list[i].entity.id == entity.id) {
-
-                            this.DestroyEntityPlugins<TEntity>(entity);
-                            list.RemoveAt(i);
-                            this.RemoveComponents(entity);
-                            return true;
-
-                        }
-
-                    }
-                    
                 }
 
-            }
+            //}
 
             return false;
 
@@ -752,6 +856,8 @@ namespace ME.ECS {
         /// <returns></returns>
         public bool AddModule<TModule>() where TModule : class, IModule<TState>, new() {
             
+            WorldUtilities.SetWorld(this);
+            
             var instance = PoolModules.Spawn<TModule>();
             instance.world = this;
             if (instance is IModuleValidation instanceValidate) {
@@ -807,7 +913,6 @@ namespace ME.ECS {
         public bool AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
 
             var instance = PoolSystems.Spawn<TSystem>();
-            instance.world = this;
             if (this.AddSystem(instance) == false) {
 
                 instance.world = null;
@@ -827,6 +932,8 @@ namespace ME.ECS {
         /// <param name="instance"></param>
         public bool AddSystem(ISystem<TState> instance) {
 
+            WorldUtilities.SetWorld(this);
+            
             instance.world = this;
             if (instance is ISystemValidation instanceValidate) {
 
@@ -998,8 +1105,7 @@ namespace ME.ECS {
             var state = this.GetState();
             
             // Setup current static variables
-            Worlds.currentWorld = this;
-            Worlds<TState>.currentWorld = this;
+            WorldUtilities.SetWorld(this);
             Worlds<TState>.currentState = state;
 
             // Update time

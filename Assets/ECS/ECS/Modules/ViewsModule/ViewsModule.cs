@@ -441,11 +441,9 @@ namespace ME.ECS.Views {
                 for (int i = 0, count = list.Count; i < count; ++i) {
                     
                     var view = list[i];
-                    //this.UnRegister_INTERNAL(view, removeFromList: false);
                     this.DestroyView(ref view);
                     
                 }
-                //list.Clear();
 
             }
 
@@ -595,7 +593,7 @@ namespace ME.ECS.Views {
         private TEntity GetData(IViewBase view) {
             
             TEntity data;
-            if (this.world.GetEntityData(view.entity.id, out data) == true) {
+            if (this.world.GetEntityData(view.entity, out data) == true) {
 
                 return data;
 
@@ -618,13 +616,15 @@ namespace ME.ECS.Views {
         private void RestoreViews() {
             
             var aliveEntities = PoolHashSet<EntityId>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_ENTITIES_CACHE_CAPACITY);
-            List<TEntity> allEntities;
+            RefList<TEntity> allEntities;
             if (this.world.ForEachEntity(out allEntities) == true) {
 
-                for (int j = 0, jCount = allEntities.Count; j < jCount; ++j) {
+                for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
 
                     // For each entity in state
                     var item = allEntities[j];
+                    if (allEntities.IsFree(j) == true) continue;
+                    
                     aliveEntities.Add(item.entity.id);
 
                     // For each view component
@@ -633,7 +633,7 @@ namespace ME.ECS.Views {
                     for (int k = 0, kCount = components.Count; k < kCount; ++k) {
 
                         var component = components[k];
-
+                        
                         var isRenderingNow = this.IsRenderingNow(ref component.viewInfo);
                         if (isRenderingNow == true) {
 

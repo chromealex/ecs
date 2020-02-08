@@ -33,6 +33,38 @@ namespace ME.ECS {
 	}
 
 	#if ECS_COMPILE_IL2CPP_OPTIONS
+	[Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+	#endif
+	public static class PoolQueue<TValue> {
+
+		private static int capacity;
+		private static PoolInternalBase pool = new PoolInternalBase(() => new Queue<TValue>(PoolQueue<TValue>.capacity), (x) => ((Queue<TValue>)x).Clear());
+
+		public static Queue<TValue> Spawn(int capacity) {
+
+			PoolQueue<TValue>.capacity = capacity;
+			return (Queue<TValue>)PoolQueue<TValue>.pool.Spawn();
+		    
+		}
+
+		public static void Recycle(ref Queue<TValue> dic) {
+
+			PoolQueue<TValue>.pool.Recycle(dic);
+			dic = null;
+
+		}
+
+		public static void Recycle(Queue<TValue> dic) {
+
+			PoolQueue<TValue>.pool.Recycle(dic);
+
+		}
+
+	}
+
+	#if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]

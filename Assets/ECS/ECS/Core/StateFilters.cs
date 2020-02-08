@@ -1,103 +1,225 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace ME.ECS {
+    
+    using EntityId = System.Int32;
 
-    public interface IFilter : IPoolableRecycle {
+    internal interface IFilterInternal<TState, in TEntity> where TState : class, IState<TState> where TEntity : struct, IEntity {
 
-        int Count { get; }
-        IList GetData();
+        bool OnUpdate(TEntity data);
+        bool OnAdd(TEntity data);
+        bool OnRemove(Entity entity);
 
     }
-    
-    #if ECS_COMPILE_IL2CPP_OPTIONS
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-    #endif
-    public class Filter<T> : IFilter where T : IEntity {
 
-        private List<T> list;
-        private bool freeze;
+    public interface IFilterBase {
+        
+        int Count { get; }
+        bool Contains(Entity entity);
 
-        void IPoolableRecycle.OnRecycle() {
-            
-            PoolList<T>.Recycle(ref this.list);
-            this.freeze = false;
+    }
+
+    public interface INode<in TEntity> where TEntity : struct, IEntity {
+
+        bool Execute(TEntity data);
+
+    }
+
+    public interface IFilter<TState, TEntity> : IFilterBase, IEnumerable<KeyValuePair<EntityId, TEntity>> where TState : class, IState<TState> where TEntity : struct, IEntity {
+
+        bool Contains(TEntity data);
+
+        IFilter<TState, TEntity> Custom(INode<TEntity> filter);
+        IFilter<TState, TEntity> Custom<TFilter>() where TFilter : class, INode<TEntity>, new();
+        IFilter<TState, TEntity> WithComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
+        IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
+
+        IFilter<TState, TEntity> Push();
+
+    }
+
+    public class Filter<TState, TEntity> : IFilterInternal<TState, TEntity>, IFilter<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+
+        private Filter() {}
+
+        private Filter(string name) {
+
+            this.name = name;
 
         }
 
+        private class ComponentExistsNode<TComponent> : INode<TEntity> where TComponent : class, IComponent<TState, TEntity> {
+
+            public bool Execute(TEntity data) {
+                
+                return ((World<TState>)Worlds<TState>.currentWorld).HasComponent<TEntity, TComponent>(data.entity) == true;
+                
+            }
+
+        }
+
+        private class ComponentNotExistsNode<TComponent> : INode<TEntity> where TComponent : class, IComponent<TState, TEntity> {
+
+            public bool Execute(TEntity data) {
+                
+                return ((World<TState>)Worlds<TState>.currentWorld).HasComponent<TEntity, TComponent>(data.entity) == false;
+                
+            }
+
+        }
+
+        private string name;
+        private INode<TEntity>[] nodes = null;
+        private List<INode<TEntity>> tempNodes = new List<INode<TEntity>>();
+        private List<INode<TEntity>> tempNodesCustom = new List<INode<TEntity>>();
+        private int nodesCount;
+        private HashSet<EntityId> data = new HashSet<EntityId>();
+
         public int Count {
-
-            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
+                return this.data.Count;
+            }
+        }
 
-                return this.list.Count;
+        public bool Contains(TEntity data) {
+
+            return this.Contains_INTERNAL(data.entity);
+
+        }
+
+        public bool Contains(Entity entity) {
+            
+            return this.Contains_INTERNAL(entity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private bool Contains_INTERNAL(Entity entity) {
+
+            return this.data.Contains(entity.id);
+
+        }
+
+        IEnumerator<KeyValuePair<EntityId, TEntity>> IEnumerable<KeyValuePair<EntityId, TEntity>>.GetEnumerator() {
+
+            return ((IEnumerable<KeyValuePair<EntityId, TEntity>>)this.data).GetEnumerator();
+
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+
+            return ((System.Collections.IEnumerable)this.data).GetEnumerator();
+
+        }
+
+        bool IFilterInternal<TState, TEntity>.OnUpdate(TEntity data) {
+
+            var isExists = this.data.Contains(data.entity.id);
+            if (isExists == true) {
+
+                for (int i = 0; i < this.nodesCount; ++i) {
+
+                    if (this.nodes[i].Execute(data) == false) {
+
+                        return ((IFilterInternal<TState, TEntity>)this).OnRemove(data.entity);
+
+                    }
+
+                }
+
+            } else {
+
+                return ((IFilterInternal<TState, TEntity>)this).OnAdd(data);
 
             }
+
+            return false;
+
+        }
+
+        bool IFilterInternal<TState, TEntity>.OnAdd(TEntity data) {
+
+            for (int i = 0; i < this.nodesCount; ++i) {
+
+                if (this.nodes[i].Execute(data) == false) {
+
+                    return false;
+
+                }
+
+            }
+
+            this.data.Add(data.entity.id);
+            return true;
+
+        }
+
+        bool IFilterInternal<TState, TEntity>.OnRemove(Entity entity) {
+
+            return this.data.Remove(entity.id);
+            
+        }
+
+        public IFilter<TState, TEntity> Push() {
+
+            if (Worlds<TState>.currentWorld.HasFilter(this) == false) {
+
+                this.tempNodes.AddRange(this.tempNodesCustom);
+                this.nodes = Enumerable.ToArray(this.tempNodes);
+                this.nodesCount = this.nodes.Length;
+                this.tempNodes.Clear();
+                this.tempNodesCustom.Clear();
+                Worlds<TState>.currentWorld.Register(this);
+
+            }
+
+            return this;
+
+        }
+
+        public IFilter<TState, TEntity> Custom(INode<TEntity> filter) {
+
+            this.tempNodesCustom.Add(filter);
+            return this;
+
+        }
+
+        public IFilter<TState, TEntity> Custom<TFilter>() where TFilter : class, INode<TEntity>, new() {
+
+            var filter = new TFilter();
+            this.tempNodesCustom.Add(filter);
+            return this;
+
+        }
+
+        public IFilter<TState, TEntity> WithComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity> {
+
+            var node = new ComponentExistsNode<TComponent>();
+            this.tempNodes.Add(node);
+            return this;
 
         }
         
-        public T this[int index] {
-            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            get {
-                return this.list[index];
-            }
-            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            set {
-                this.list[index] = value;
-            }
+        public IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity> {
+
+            var node = new ComponentNotExistsNode<TComponent>();
+            this.tempNodes.Add(node);
+            return this;
+
         }
 
-        public void Initialize(int capacity) {
+        public static IFilter<TState, TEntity> Create(ref IFilter<TState, TEntity> filter, string customName = null) {
             
-            this.list = PoolList<T>.Spawn(capacity);
-
-        }
-
-        public void SetFreeze(bool freeze) {
-
-            this.freeze = freeze;
-
-        }
-
-        public void CopyFrom(Filter<T> other) {
-            
-            if (this.list != null) PoolList<T>.Recycle(ref this.list);
-            this.list = PoolList<T>.Spawn(other.list.Capacity);
-            this.list.AddRange(other.list);
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public List<T> GetData() {
-
-            return this.list;
-
-        }
-
-        IList IFilter.GetData() {
-
-            return this.list;
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void SetData(List<T> data) {
-
-            if (this.freeze == false && data != null && this.list != data) {
-
-                if (this.list != null) PoolList<T>.Recycle(ref this.list);
-                this.list = data;
-
-            }
+            filter = new Filter<TState, TEntity>(customName != null ? customName : nameof(filter));
+            return filter;
 
         }
 
         public override string ToString() {
-            
-            return "Entities Count: " + this.list.Count.ToString();
-            
+
+            return "Name: " + this.name + ", Objects Count: " + this.Count.ToString();
+
         }
 
     }

@@ -7,6 +7,13 @@ namespace ME.ECS {
     #endif
     public static class WorldUtilities {
 
+        public static void SetWorld<TState>(IWorld<TState> world) where TState : class, IState<TState>, new() {
+
+            Worlds.currentWorld = world;
+            Worlds<TState>.currentWorld = world;
+
+        }
+
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static TState CreateState<TState>() where TState : class, IStateBase, new() {
 
@@ -27,9 +34,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release<T>(ref Filter<T> filter) where T : IEntity {
+        public static void Release<T>(ref Storage<T> storage) where T : struct, IEntity {
             
-            PoolClass<Filter<T>>.Recycle(ref filter);
+            PoolClass<Storage<T>>.Recycle(ref storage);
             
         }
 
@@ -67,21 +74,21 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey(System.Type type) {
+        public static int GetKey(in System.Type type) {
 
             return type.GetHashCode();
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey<T>(T data) where T : IEntity {
+        public static int GetKey<T>(in T data) where T : struct, IEntity {
 
             return data.entity.typeId;
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey(Entity data) {
+        public static int GetKey(in Entity data) {
 
             return data.typeId;
 

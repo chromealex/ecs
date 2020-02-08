@@ -12,7 +12,7 @@ namespace ME.Example.Game.Components {
         public void AdvanceTick(State state, ref Unit data, float deltaTime, int index) {
 
             Point toData;
-            if (this.GetEntityData(this.to.id, out toData) == true) {
+            if (this.GetEntityData(this.to, out toData) == true) {
 
                 var toPos = toData.position;
                 data.position = UnityEngine.Vector3.MoveTowards(data.position, toPos, data.speed * deltaTime);

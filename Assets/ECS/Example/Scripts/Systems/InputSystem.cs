@@ -11,6 +11,9 @@ namespace ME.Example.Game.Systems {
 
     public class InputSystem : ISystem<State> {
 
+        public Entity p1;
+        public Entity p2;
+        
         public IWorld<State> world { get; set; }
         private RPCId testEventCallId;
         private RPCId createUnitCallId;
@@ -18,7 +21,7 @@ namespace ME.Example.Game.Systems {
         void ISystemBase.OnConstruct() {
 
             var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
-            this.testEventCallId = network.RegisterRPC(new System.Action<int, Color, float>(this.TestEvent_RPC).Method);
+            this.testEventCallId = network.RegisterRPC(new System.Action<Entity, Color, float>(this.TestEvent_RPC).Method);
             this.createUnitCallId = network.RegisterRPC(new System.Action<Color, int, ViewId, ViewId>(this.CreateUnit_RPC).Method);
             network.RegisterObject(this, 1);
 
@@ -37,13 +40,6 @@ namespace ME.Example.Game.Systems {
         private ulong savedTick;
 
         void ISystem<State>.Update(State state, float deltaTime) {
-
-            if (Input.GetKeyDown(KeyCode.Q) == true) {
-
-                this.world.AddComponent<Point, PointIncreaseUnits>(Entity.Create<Point>(1));
-                this.world.AddComponent<Point, PointIncreaseUnits>(Entity.Create<Point>(2));
-
-            }
 
             if (Input.GetKey(KeyCode.F) == true) {
 
@@ -70,10 +66,10 @@ namespace ME.Example.Game.Systems {
             
         }
 
-        public void AddEventUIButtonClick(int pointId, Color color, float moveSide) {
+        public void AddEventUIButtonClick(Entity point, Color color, float moveSide) {
 
             var networkModule = this.world.GetModule<NetworkModule>();
-            networkModule.RPC(this, this.testEventCallId, pointId, color, moveSide);
+            networkModule.RPC(this, this.testEventCallId, point, color, moveSide);
 
         }
 
@@ -86,23 +82,20 @@ namespace ME.Example.Game.Systems {
 
         private void CreateUnit_RPC(Color color, int count, ViewId viewSourceId, ViewId viewSourceId2) {
 
-            var p1 = Entity.Create<Point>(1);
-            var p2 = Entity.Create<Point>(2);
-
             var p1Position = Vector3.zero;
             Point data;
-            if (this.world.GetEntityData(p1.id, out data) == true) {
+            if (this.world.GetEntityData(this.p1, out data) == true) {
                 p1Position = data.position;
             }
 
             for (int i = 0; i < count; ++i) {
 
                 var unit = this.world.AddEntity(new Unit() {
-                    position = this.world.GetRandomInSphere(p1Position, 1f), scale = Vector3.one * 0.3f, lifes = 1, speed = this.world.GetRandomRange(0.5f, 1.5f), pointFrom = p1, pointTo = p2
-                });
+                    position = this.world.GetRandomInSphere(p1Position, 1f), scale = Vector3.one * 0.3f, lifes = 3, speed = this.world.GetRandomRange(0.5f, 1.5f), pointFrom = p1, pointTo = p2
+                }, updateStorages: false);
                 var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
-                followComponent.@from = p1;
-                followComponent.to = p2;
+                followComponent.@from = this.p1;
+                followComponent.to = this.p2;
 
                 this.world.AddComponent<Unit, UnitGravity>(unit);
                 var setColor = this.world.AddComponent<Unit, UnitSetColor>(unit);
@@ -113,14 +106,16 @@ namespace ME.Example.Game.Systems {
 
             }
             
+            this.world.UpdateStorages<Unit>();
+            
         }
 
-        private void TestEvent_RPC(int pointId, Color color, float moveSide) {
+        private void TestEvent_RPC(Entity point, Color color, float moveSide) {
 
-            var componentColor = this.world.AddComponent<Point, PointSetColor>(Entity.Create<Point>(pointId));
+            var componentColor = this.world.AddComponent<Point, PointSetColor>(point);
             componentColor.color = color;
 
-            var componentPos = this.world.AddComponent<Point, PointAddPositionDelta>(Entity.Create<Point>(pointId));
+            var componentPos = this.world.AddComponent<Point, PointAddPositionDelta>(point);
             componentPos.positionDelta = Vector3.left * moveSide;
 
         }

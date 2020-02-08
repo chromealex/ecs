@@ -61,7 +61,7 @@ namespace ME.Example.Game {
                 this.world.InstantiateView<Point>(this.pointViewSourceId, p1);
                 this.world.InstantiateView<Point>(this.pointViewSourceId, p2);
 
-                this.world.AddSystem<InputSystem>();
+                this.world.AddSystem(new InputSystem() { p1 = p1, p2 = p2 });
                 this.world.AddSystem<PointsSystem>();
                 this.world.AddSystem<UnitsSystem>();
                 this.world.SaveResetState();
@@ -90,7 +90,7 @@ namespace ME.Example.Game {
         public virtual void AddEventUIButtonClick(int pointId) {
 
             var input = this.world.GetSystem<InputSystem>();
-            input.AddEventUIButtonClick(pointId, this.playerColor, this.moveSide);
+            input.AddEventUIButtonClick(pointId == 1 ? input.p1 : input.p2, this.playerColor, this.moveSide);
 
         }
 

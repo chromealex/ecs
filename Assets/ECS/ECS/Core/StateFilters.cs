@@ -53,7 +53,7 @@ namespace ME.ECS {
 
             public bool Execute(TEntity data) {
                 
-                return ((World<TState>)Worlds<TState>.currentWorld).HasComponent<TEntity, TComponent>(data.entity) == true;
+                return Worlds<TState>.currentWorld.HasComponent<TEntity, TComponent>(data.entity) == true;
                 
             }
 
@@ -63,7 +63,7 @@ namespace ME.ECS {
 
             public bool Execute(TEntity data) {
                 
-                return ((World<TState>)Worlds<TState>.currentWorld).HasComponent<TEntity, TComponent>(data.entity) == false;
+                return Worlds<TState>.currentWorld.HasComponent<TEntity, TComponent>(data.entity) == false;
                 
             }
 

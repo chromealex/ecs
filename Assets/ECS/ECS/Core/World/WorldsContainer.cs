@@ -9,9 +9,9 @@ namespace ME.ECS {
 
     }
 
-    public static class Worlds<TState> where TState : class, IState<TState> {
+    public static class Worlds<TState> where TState : class, IState<TState>, new() {
 
-        public static IWorld<TState> currentWorld;
+        public static World<TState> currentWorld;
         public static TState currentState;
         
         private static Dictionary<int, IWorld<TState>> cache = new Dictionary<int, IWorld<TState>>(1);

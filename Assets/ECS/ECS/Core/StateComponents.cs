@@ -28,7 +28,7 @@ namespace ME.ECS {
 
     public static class ComponentExtensions {
 
-        public static bool GetEntityData<TState, TEntity, TEntitySource>(this IComponent<TState, TEntitySource> _, Entity entity, out TEntity data) where TEntity : struct, IEntity where TEntitySource : struct, IEntity where TState : class, IState<TState> {
+        public static bool GetEntityData<TState, TEntity, TEntitySource>(this IComponent<TState, TEntitySource> _, Entity entity, out TEntity data) where TEntity : struct, IEntity where TEntitySource : struct, IEntity where TState : class, IState<TState>, new() {
 
             ref var world = ref Worlds<TState>.currentWorld;
             return world.GetEntityData(entity, out data);

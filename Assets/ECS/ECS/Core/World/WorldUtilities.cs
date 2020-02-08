@@ -7,7 +7,7 @@ namespace ME.ECS {
     #endif
     public static class WorldUtilities {
 
-        public static void SetWorld<TState>(IWorld<TState> world) where TState : class, IState<TState>, new() {
+        public static void SetWorld<TState>(World<TState> world) where TState : class, IState<TState>, new() {
 
             Worlds.currentWorld = world;
             Worlds<TState>.currentWorld = world;

@@ -99,7 +99,7 @@ namespace ME.ECS {
         
         // State cache:
         private Dictionary<int, IList> storagesCache; // key = typeof(T:IStorage), value = list of T:IStorage
-        private List<IFilterBase> filtersCache;
+        private FiltersStorage filtersStorage;
 
         private float tickTime;
         private double timeSinceStart;
@@ -121,8 +121,6 @@ namespace ME.ECS {
             this.storagesCache = PoolDictionary<int, IList>.Spawn(World<TState>.STORAGES_CAPACITY);
             this.capacityCache = PoolDictionary<int, int>.Spawn(World<TState>.CAPACITIES_CAPACITY);
 
-            this.filtersCache = new List<IFilterBase>(100);
-            
             this.OnSpawnComponents();
             this.OnSpawnMarkers();
 
@@ -133,7 +131,7 @@ namespace ME.ECS {
             this.OnRecycleMarkers();
             this.OnRecycleComponents();
             
-            this.filtersCache.Clear();
+            PoolClass<FiltersStorage>.Recycle(ref this.filtersStorage);
             
             WorldUtilities.ReleaseState(ref this.resetState);
             WorldUtilities.ReleaseState(ref this.currentState);
@@ -409,14 +407,37 @@ namespace ME.ECS {
                 
             }
 
-            this.filtersCache.Add(filterRef);
+            this.filtersStorage.Register(filterRef);
 
+        }
+
+        public void Register(ref FiltersStorage filtersRef, bool freeze, bool restore) {
+
+            const int capacity = 100;
+            if (filtersRef == null) {
+
+                filtersRef = PoolClass<FiltersStorage>.Spawn();
+                filtersRef.Initialize(capacity);
+                filtersRef.SetFreeze(freeze);
+
+            } else {
+
+                filtersRef.SetFreeze(freeze);
+
+            }
+            
+            if (freeze == false) {
+
+                this.filtersStorage = filtersRef;
+
+            }
+            
         }
 
         public void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity {
             
             var code = WorldUtilities.GetKey<TEntity>();
-            var capacity = 100;
+            const int capacity = 100;
             if (componentsRef == null) {
 
                 componentsRef = PoolClass<Components<TEntity, TState>>.Spawn();

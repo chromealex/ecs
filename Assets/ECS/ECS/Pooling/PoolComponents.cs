@@ -29,7 +29,7 @@ namespace ME.ECS {
 
 		    }
 
-		    return new T();
+		    return PoolInternalBase.Create<T>();
 
 	    }
 	    

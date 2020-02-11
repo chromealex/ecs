@@ -489,7 +489,7 @@ namespace ME.ECS.StatesHistory {
                 }
 
             } else {
-                    
+                
                 // Previous state was not found - need to rewind from initial state
                 var resetState = this.world.GetResetState();
                 this.world.GetState().CopyFrom(resetState);

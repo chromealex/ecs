@@ -15,6 +15,8 @@ namespace ME.Example.Game {
 
         public UnityEngine.Vector3 worldPosition;
 
+        public FiltersStorage filters;
+        
         public Storage<SharedEntity> shared;
         public Storage<Point> points;
         public Storage<Unit> units;
@@ -31,6 +33,8 @@ namespace ME.Example.Game {
 
         void IState<State>.Initialize(IWorld<State> world, bool freeze, bool restore) {
 
+            world.Register(ref this.filters, freeze, restore);
+            
             world.Register(ref this.shared, freeze, restore);
             world.Register(ref this.points, freeze, restore);
             world.Register(ref this.units, freeze, restore);
@@ -49,6 +53,8 @@ namespace ME.Example.Game {
 
             this.worldPosition = other.worldPosition;
             
+            this.filters.CopyFrom(other.filters);
+            
             this.shared.CopyFrom(other.shared);
             this.points.CopyFrom(other.points);
             this.units.CopyFrom(other.units);
@@ -60,7 +66,9 @@ namespace ME.Example.Game {
         }
 
         void IPoolableRecycle.OnRecycle() {
-
+            
+            WorldUtilities.Release(ref this.filters);
+            
             WorldUtilities.Release(ref this.shared);
             WorldUtilities.Release(ref this.points);
             WorldUtilities.Release(ref this.units);

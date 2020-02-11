@@ -8,6 +8,8 @@ using ViewId = System.UInt64;
 using Tick = System.UInt64;
 
 namespace ME.ECSEditor {
+    
+    using ME.ECS;
 
     public class CustomEditorAttribute : System.Attribute {
 
@@ -200,10 +202,10 @@ namespace ME.ECSEditor {
 
             private Dictionary<int, ME.ECS.IComponentsBase> componentsCache = new Dictionary<int, ME.ECS.IComponentsBase>();
 
-            public List<ME.ECS.IFilterBase> GetFilters() {
+            public FiltersStorage GetFilters() {
 
-                var field = this.world.GetType().GetField("filtersCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                return (List<ME.ECS.IFilterBase>)field.GetValue(this.world);
+                var field = this.world.GetType().GetField("filtersStorage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                return (FiltersStorage)field.GetValue(this.world);
 
             }
 
@@ -933,7 +935,7 @@ namespace ME.ECSEditor {
                                     var tableStyle = (GUIStyle)"Box";
                                     var dataStyle = new GUIStyle(EditorStyles.label);
                                     dataStyle.richText = true;
-                                    foreach (var filter in filters) {
+                                    foreach (var filter in filters.GetData()) {
 
                                         GUILayout.BeginHorizontal();
                                         {

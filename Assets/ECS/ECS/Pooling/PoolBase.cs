@@ -62,6 +62,25 @@ namespace ME.ECS {
 
 	    }
 
+	    public static T Create<T>() where T : new() {
+		    
+		    var instance = new T();
+		    PoolInternalBase.CallOnSpawn(instance);
+
+		    return instance;
+
+	    }
+
+	    public static void CallOnSpawn<T>(T instance) {
+		    
+		    if (instance is IPoolableSpawn poolable) {
+			    
+			    poolable.OnSpawn();
+			    
+		    }
+		    
+	    }
+
 	    [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	    public virtual void Prewarm(int count) {
 

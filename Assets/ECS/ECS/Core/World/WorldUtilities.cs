@@ -41,6 +41,13 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void Release(ref FiltersStorage storage) {
+            
+            PoolClass<FiltersStorage>.Recycle(ref storage);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Release<TEntity, TState>(ref Components<TEntity, TState> components) where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
             
             PoolClass<Components<TEntity, TState>>.Recycle(ref components);

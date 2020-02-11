@@ -18,6 +18,8 @@ namespace ME.ECS {
         int Count { get; }
         bool Contains(Entity entity);
 
+        IFilterBase Clone();
+
     }
 
     public interface INode<in TEntity> where TEntity : struct, IEntity {
@@ -39,13 +41,81 @@ namespace ME.ECS {
 
     }
 
-    public class Filter<TState, TEntity> : IFilterInternal<TState, TEntity>, IFilter<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+    public class FiltersStorage {
 
-        private Filter() {}
+        private List<IFilterBase> filters;
+        private bool freeze;
 
-        private Filter(string name) {
+        public int Count {
+            get {
+                return this.filters.Count;
+            }
+        }
+
+        public void Initialize(int capacity) {
+
+            this.filters = PoolList<IFilterBase>.Spawn(capacity);
+
+        }
+
+        public void SetFreeze(bool freeze) {
+
+            this.freeze = freeze;
+
+        }
+
+        public List<IFilterBase> GetData() {
+
+            return this.filters;
+
+        }
+
+        public void Register(IFilterBase filter) {
+            
+            this.filters.Add(filter);
+            
+        }
+
+        public void CopyFrom(FiltersStorage other) {
+
+            if (this.filters != null) {
+
+                for (int i = 0, count = this.filters.Count; i < count; ++i) {
+                    
+                    PoolFilters.Recycle(this.filters[i]);
+                    
+                }
+
+                PoolList<IFilterBase>.Recycle(ref this.filters);
+                
+            }
+            this.filters = PoolList<IFilterBase>.Spawn(other.filters.Count);
+
+            for (int i = 0, count = other.filters.Count; i < count; ++i) {
+                
+                this.filters.Add(other.filters[i].Clone());
+                
+            }
+
+        }
+
+    }
+
+    public class Filter<TState, TEntity> : IPoolableSpawn, IPoolableRecycle, IFilterInternal<TState, TEntity>, IFilter<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+
+        public Filter() {}
+
+        internal Filter(string name) {
 
             this.name = name;
+
+        }
+
+        public IFilterBase Clone() {
+
+            var instance = PoolFilters.Spawn<Filter<TState, TEntity>>();
+            instance.CopyFrom(this);
+            return instance;
 
         }
 
@@ -71,10 +141,48 @@ namespace ME.ECS {
 
         private string name;
         private INode<TEntity>[] nodes = null;
-        private List<INode<TEntity>> tempNodes = new List<INode<TEntity>>();
-        private List<INode<TEntity>> tempNodesCustom = new List<INode<TEntity>>();
         private int nodesCount;
-        private HashSet<EntityId> data = new HashSet<EntityId>();
+        private HashSet<EntityId> data;
+
+        private List<INode<TEntity>> tempNodes;
+        private List<INode<TEntity>> tempNodesCustom;
+
+        void IPoolableSpawn.OnSpawn() {
+            
+            this.nodes = PoolArray<INode<TEntity>>.Spawn(1000);
+            this.data = PoolHashSet<EntityId>.Spawn();
+
+        }
+
+        void IPoolableRecycle.OnRecycle() {
+            
+            PoolArray<INode<TEntity>>.Recycle(ref this.nodes);
+            PoolHashSet<EntityId>.Recycle(ref this.data);
+            
+        }
+
+        public void CopyFrom(Filter<TState, TEntity> other) {
+
+            this.name = other.name;
+            this.nodesCount = other.nodesCount;
+            
+            if (this.nodes != null) PoolArray<INode<TEntity>>.Recycle(ref this.nodes);
+            this.nodes = PoolArray<INode<TEntity>>.Spawn(other.nodes.Length);
+            for (int i = 0; i < this.nodes.Length; ++i) {
+
+                this.nodes[i] = other.nodes[i];
+
+            }
+            
+            if (this.data != null) PoolHashSet<EntityId>.Recycle(ref this.data);
+            this.data = PoolHashSet<EntityId>.Spawn(other.data.Count);
+            foreach (var item in other.data) {
+
+                this.data.Add(item);
+
+            }
+
+        }
 
         public int Count {
             get {
@@ -211,7 +319,11 @@ namespace ME.ECS {
 
         public static IFilter<TState, TEntity> Create(ref IFilter<TState, TEntity> filter, string customName = null) {
             
-            filter = new Filter<TState, TEntity>(customName != null ? customName : nameof(filter));
+            var f = PoolFilters.Spawn<Filter<TState, TEntity>>();
+            f.name = customName != null ? customName : nameof(filter);
+            f.tempNodes = new List<INode<TEntity>>();
+            f.tempNodesCustom = new List<INode<TEntity>>();
+            filter = f;
             return filter;
 
         }

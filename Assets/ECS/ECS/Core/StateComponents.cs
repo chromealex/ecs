@@ -432,9 +432,13 @@ namespace ME.ECS {
                 foreach (var element in item.Value) {
                     
                     var comp = (IComponent<TState, TEntity>)PoolComponents.Spawn(element.GetType());
-                    if (comp == null) comp = (IComponent<TState, TEntity>)System.Activator.CreateInstance(element.GetType());
-                    comp.CopyFrom(element);
-                    newList.Add(comp);
+                    if (comp == null) {
+                        
+                        comp = (IComponent<TState, TEntity>)System.Activator.CreateInstance(element.GetType());
+                        PoolInternalBase.CallOnSpawn(comp);
+                        
+                    }
+                    newList.Add(element);
                     
                 }
 

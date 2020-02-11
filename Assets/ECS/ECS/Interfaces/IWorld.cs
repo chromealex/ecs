@@ -51,6 +51,7 @@ namespace ME.ECS {
 
         bool HasFilter<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity;
         void Register<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity;
+        void Register(ref FiltersStorage filtersRef, bool freeze, bool restore);
         void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity;
         void Register<TEntity>(ref Storage<TEntity> storageRef, bool freeze, bool restore) where TEntity : struct, IEntity;
 

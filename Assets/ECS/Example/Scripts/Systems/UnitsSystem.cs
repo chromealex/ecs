@@ -51,7 +51,7 @@ namespace ME.Example.Game.Systems {
                 this.world.RunComponents(ref data, deltaTime, index);
                 
                 if (this.unitsFilter3.Contains(data) == true) {
-
+                        
                     var from = data.pointFrom;
                     var to = data.pointTo;
                     data.pointTo = from;
@@ -60,9 +60,9 @@ namespace ME.Example.Game.Systems {
                     var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
                     comp.@from = data.pointFrom;
                     comp.to = data.pointTo;
-
+                    
                     --data.lifes;
-
+                    
                 }
 
                 //state.units[index] = data;

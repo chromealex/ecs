@@ -3,7 +3,9 @@ using Tick = System.UInt64;
 using RandomState = UnityEngine.Random.State;
 
 namespace ME.ECS {
-
+    
+    using ME.ECS.Collections;
+    
     public partial interface IWorldBase {
 
         int id { get; }

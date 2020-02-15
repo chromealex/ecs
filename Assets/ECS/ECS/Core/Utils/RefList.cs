@@ -1,5 +1,4 @@
-
-namespace ME.ECS {
+namespace ME.ECS.Collections {
 
     public interface IRefList {
 
@@ -25,7 +24,7 @@ namespace ME.ECS {
         private int size;
         private int capacity;
         private int fromIndex;
-        private System.Collections.Generic.Queue<int> free;
+        private QueueCopyable<int> free;
         private int initCapacity;
 
         public RefList() : this(4) {}
@@ -52,7 +51,7 @@ namespace ME.ECS {
             this.size = 0;
             this.capacity = -1;
             this.fromIndex = 0;
-            if (this.free == null) this.free = PoolQueue<int>.Spawn(capacity);
+            if (this.free == null) this.free = PoolCopyableQueue<int>.Spawn(capacity);
             this.free.Clear();
             this.Resize_INTERNAL(capacity);
 
@@ -61,7 +60,7 @@ namespace ME.ECS {
         void IPoolableRecycle.OnRecycle() {
             
             PoolArray<T>.Recycle(ref this.arr);
-            PoolQueue<int>.Recycle(ref this.free);
+            PoolCopyableQueue<int>.Recycle(ref this.free);
             
         }
 
@@ -247,6 +246,7 @@ namespace ME.ECS {
             this.capacity = other.capacity;
             this.count = other.count;
             this.fromIndex = other.fromIndex;
+            this.initCapacity = other.initCapacity;
 
         }
 

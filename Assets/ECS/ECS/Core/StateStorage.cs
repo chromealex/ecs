@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 
 namespace ME.ECS {
-
+    
+    using ME.ECS.Collections;
+    
     public interface IStorage : IPoolableRecycle {
 
         int Count { get; }

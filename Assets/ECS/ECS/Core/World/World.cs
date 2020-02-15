@@ -5,6 +5,8 @@ using Tick = System.UInt64;
 using RPCId = System.Int32;
 
 namespace ME.ECS {
+    
+    using ME.ECS.Collections;
 
     [System.Flags]
     public enum WorldStep : byte {
@@ -52,6 +54,12 @@ namespace ME.ECS {
 
     }
 
+    public class AllocationException : System.Exception {
+
+        public AllocationException() : base("Allocation not allowed!") {}
+
+    }
+
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -74,7 +82,7 @@ namespace ME.ECS {
 
         private static class FiltersDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<int, HashSet<IFilterInternal<TState, TEntity>>> dic = new Dictionary<int, HashSet<IFilterInternal<TState, TEntity>>>(4);
+            internal static Dictionary<int, HashSet<int>> dic = new Dictionary<int, HashSet<int>>(4);
 
         }
 
@@ -377,13 +385,19 @@ namespace ME.ECS {
 
         }
 
+        internal Filter<TState, TEntity> GetFilter<TEntity>(int id) where TEntity : struct, IEntity {
+
+            return (Filter<TState, TEntity>)this.filtersStorage.Get(id);
+
+        }
+
         public bool HasFilter<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity {
             
-            HashSet<IFilterInternal<TState, TEntity>> filters;
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
-                return filters.Contains((IFilterInternal<TState, TEntity>)filterRef);
+                return filters.Contains(filterRef.id);
 
             }
 
@@ -393,21 +407,21 @@ namespace ME.ECS {
 
         public void Register<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity {
 
-            HashSet<IFilterInternal<TState, TEntity>> filters;
+            this.filtersStorage.Register(filterRef);
+
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
-                filters.Add((IFilterInternal<TState, TEntity>)filterRef);
+                filters.Add(filterRef.id);
 
             } else {
                 
-                filters = new HashSet<IFilterInternal<TState, TEntity>>();
-                filters.Add((IFilterInternal<TState, TEntity>)filterRef);
+                filters = new HashSet<int>();
+                filters.Add(filterRef.id);
                 dic.Add(this.id, filters);
                 
             }
-
-            this.filtersStorage.Register(filterRef);
 
         }
 
@@ -656,12 +670,12 @@ namespace ME.ECS {
         public void UpdateFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
 
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
-            HashSet<IFilterInternal<TState, TEntity>> filters;
+            HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
-                foreach (var filter in filters) {
+                foreach (var filterId in filters) {
 
-                    filter.OnUpdate(data);
+                    ((IFilterInternal<TState, TEntity>)this.GetFilter<TEntity>(filterId)).OnUpdate(data);
 
                 }
 
@@ -672,12 +686,12 @@ namespace ME.ECS {
         public void AddToFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
             
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
-            HashSet<IFilterInternal<TState, TEntity>> filters;
+            HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
-                foreach (var filter in filters) {
+                foreach (var filterId in filters) {
 
-                    filter.OnAdd(data);
+                    ((IFilterInternal<TState, TEntity>)this.GetFilter<TEntity>(filterId)).OnAdd(data);
 
                 }
 
@@ -701,12 +715,12 @@ namespace ME.ECS {
         public void RemoveFromFilters_INTERNAL<TEntity>(Entity data) where TEntity : struct, IEntity {
             
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
-            HashSet<IFilterInternal<TState, TEntity>> filters;
+            HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
-                foreach (var filter in filters) {
+                foreach (var filterId in filters) {
 
-                    filter.OnRemove(data);
+                    ((IFilterInternal<TState, TEntity>)this.GetFilter<TEntity>(filterId)).OnRemove(data);
 
                 }
 

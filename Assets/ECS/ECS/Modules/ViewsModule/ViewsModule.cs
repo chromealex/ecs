@@ -7,7 +7,7 @@ using Tick = System.UInt64;
 namespace ME.ECS {
     
     using ME.ECS.Views;
-
+    
     public partial interface IWorld<TState> where TState : class, IState<TState> {
         
         ViewId RegisterViewSource<TEntity, TProvider>(IView<TEntity> prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider;
@@ -126,7 +126,9 @@ namespace ME.ECS {
 }
 
 namespace ME.ECS.Views {
-
+    
+    using ME.ECS.Collections;
+    
     public interface IViewBase {
         
         Entity entity { get; set; }

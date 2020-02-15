@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿namespace ME.ECS {
 
-namespace ME.ECS {
+	using System.Collections.Generic;
+	using ME.ECS.Collections;
 
 	#if ECS_COMPILE_IL2CPP_OPTIONS
 	[Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
@@ -27,6 +28,38 @@ namespace ME.ECS {
 		public static void Recycle(HashSet<TValue> dic) {
 
 			PoolHashSet<TValue>.pool.Recycle(dic);
+
+		}
+
+	}
+
+	#if ECS_COMPILE_IL2CPP_OPTIONS
+	[Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+	#endif
+	public static class PoolCopyableQueue<TValue> where TValue : struct {
+
+		private static int capacity;
+		private static PoolInternalBase pool = new PoolInternalBase(() => new QueueCopyable<TValue>(PoolCopyableQueue<TValue>.capacity), (x) => ((QueueCopyable<TValue>)x).Clear());
+
+		public static QueueCopyable<TValue> Spawn(int capacity) {
+
+			PoolCopyableQueue<TValue>.capacity = capacity;
+			return (QueueCopyable<TValue>)PoolCopyableQueue<TValue>.pool.Spawn();
+		    
+		}
+
+		public static void Recycle(ref QueueCopyable<TValue> dic) {
+
+			PoolCopyableQueue<TValue>.pool.Recycle(dic);
+			dic = null;
+
+		}
+
+		public static void Recycle(QueueCopyable<TValue> dic) {
+
+			PoolCopyableQueue<TValue>.pool.Recycle(dic);
 
 		}
 

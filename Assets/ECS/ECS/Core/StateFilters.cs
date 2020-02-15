@@ -13,10 +13,10 @@ namespace ME.ECS {
 
     }
 
-    public interface IFilterBase {
-        
+    public interface IFilterBase : IPoolableSpawn, IPoolableRecycle {
+
+        int id { get; set; }
         int Count { get; }
-        bool Contains(Entity entity);
 
         IFilterBase Clone();
 
@@ -70,8 +70,15 @@ namespace ME.ECS {
 
         }
 
+        public IFilterBase Get(int id) {
+
+            return this.filters[id - 1];
+
+        }
+
         public void Register(IFilterBase filter) {
-            
+
+            filter.id = this.filters.Count + 1;
             this.filters.Add(filter);
             
         }
@@ -101,7 +108,7 @@ namespace ME.ECS {
 
     }
 
-    public class Filter<TState, TEntity> : IPoolableSpawn, IPoolableRecycle, IFilterInternal<TState, TEntity>, IFilter<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+    public class Filter<TState, TEntity> : IFilterInternal<TState, TEntity>, IFilter<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
 
         public Filter() {}
 
@@ -139,6 +146,7 @@ namespace ME.ECS {
 
         }
 
+        public int id { get; set; }
         private string name;
         private INode<TEntity>[] nodes = null;
         private int nodesCount;
@@ -163,6 +171,7 @@ namespace ME.ECS {
 
         public void CopyFrom(Filter<TState, TEntity> other) {
 
+            this.id = other.id;
             this.name = other.name;
             this.nodesCount = other.nodesCount;
             
@@ -192,14 +201,9 @@ namespace ME.ECS {
 
         public bool Contains(TEntity data) {
 
-            return this.Contains_INTERNAL(data.entity);
+            var filter = Worlds<TState>.currentWorld.GetFilter<TEntity>(this.id);
+            return filter.Contains_INTERNAL(data.entity);
 
-        }
-
-        public bool Contains(Entity entity) {
-            
-            return this.Contains_INTERNAL(entity);
-            
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

@@ -35,14 +35,42 @@ namespace ME.ECSEditor {
             
         }
 
+        public struct CheckpointInfo : System.IEquatable<CheckpointInfo> {
+
+            public object obj;
+            public WorldStep step;
+
+            bool System.IEquatable<CheckpointInfo>.Equals(CheckpointInfo other) {
+
+                return this.obj == other.obj && this.step == other.step;
+
+            }
+
+        }
+
         private Dictionary<long, Watcher> dic = new Dictionary<long, Watcher>();
         private Dictionary<long, double> dicMeasured = new Dictionary<long, double>();
+        private List<CheckpointInfo> allCheckpoints = new List<CheckpointInfo>();
+        private List<CheckpointInfo> checkpoints = new List<CheckpointInfo>();
 
         public void Reset() {
             
             this.dic.Clear();
             this.dicMeasured.Clear();
+
+            if (this.allCheckpoints.Count < this.checkpoints.Count) {
             
+                this.allCheckpoints.Clear();
+                for (int i = 0; i < this.checkpoints.Count; ++i) {
+                    
+                    this.allCheckpoints.Add(this.checkpoints[i]);
+                    
+                }
+
+            }
+            
+            this.checkpoints.Clear();
+
         }
 
         public void Checkpoint(object interestObj, WorldStep step) {
@@ -67,11 +95,48 @@ namespace ME.ECSEditor {
                 watcher.Stop();
                 this.dic.Remove(key);
 
+                var checkpoint = new CheckpointInfo();
+                checkpoint.obj = interestObj;
+                checkpoint.step = step;
+                if (this.checkpoints.Contains(checkpoint) == false) {
+                
+                    this.checkpoints.Add(checkpoint);
+                
+                }
+
             } else {
             
                 this.dic.Add(key, new Watcher(interestObj));
                 
             }
+            
+        }
+
+        public List<CheckpointInfo> GetCheckpointsBetween(object obj1, object obj2) {
+
+            var list = new List<CheckpointInfo>();
+            if (obj1 == null || obj2 == null) return list;
+            
+            var startFound = false;
+            for (int i = 0; i < this.allCheckpoints.Count; ++i) {
+
+                if (startFound == false && this.allCheckpoints[i].obj == obj1) {
+
+                    startFound = true;
+
+                } else if (startFound == true && this.allCheckpoints[i].obj != obj2) {
+                    
+                    list.Add(this.allCheckpoints[i]);
+                    
+                } else if (this.allCheckpoints[i].obj == obj2) {
+
+                    break;
+
+                }
+
+            }
+
+            return list;
 
         }
 
@@ -100,9 +165,10 @@ namespace ME.ECSEditor {
             public const float horizontalSpacing = 100f;
             public const float verticalSpacing = 6f;
             public const float width = 220f;
-            public const float nodeHeight = 80f;
+            public const float nodeHeight = 60f;
             public const float beginEndTickHeight = 10000f;
             public static GUIStyle nodeStyle;
+            public static GUIStyle nodeCustomStyle;
             public static GUIStyle containerStyle;
             public static GUIStyle containerCaption;
             public static GUIStyle enterStyle;
@@ -125,6 +191,10 @@ namespace ME.ECSEditor {
                 Styles.nodeStyle.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node1.png") as Texture2D;
                 Styles.nodeStyle.border = new RectOffset(12, 12, 12, 12);
 
+                Styles.nodeCustomStyle = new GUIStyle();
+                Styles.nodeCustomStyle.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node0.png") as Texture2D;
+                Styles.nodeCustomStyle.border = new RectOffset(12, 12, 12, 12);
+
                 Styles.systemNode = new GUIStyle();
                 Styles.systemNode.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node2.png") as Texture2D;
                 Styles.systemNode.border = new RectOffset(12, 12, 12, 12);
@@ -142,7 +212,8 @@ namespace ME.ECSEditor {
                 Styles.containerCaption.alignment = TextAnchor.UpperCenter;
 
                 Styles.nodeCaption = new GUIStyle(EditorStyles.label);
-                Styles.nodeCaption.alignment = TextAnchor.MiddleCenter;
+                Styles.nodeCaption.alignment = TextAnchor.LowerCenter;
+                Styles.nodeCaption.padding = new RectOffset(0, 0, 0, 15);
                 
                 Styles.containerStyle = new GUIStyle(EditorStyles.helpBox);
 
@@ -168,6 +239,7 @@ namespace ME.ECSEditor {
 
         public class Graph {
 
+            public WorldGraph worldGraph;
             public bool vertical;
             public Vector2 graphSize;
             private List<Node> nodes = new List<Node>();
@@ -205,6 +277,7 @@ namespace ME.ECSEditor {
 
             }
 
+            private object prevCheckpoint;
             private Vector2 DrawNode(Node node, float x, float y) {
 
                 const float targetFrameRate = 30f;
@@ -234,6 +307,48 @@ namespace ME.ECSEditor {
 
                 }
 
+                if (this.checkpointCollector != null) {
+
+                    if (node.data is ISystemBase) {
+
+                        var checkpoints = this.checkpointCollector.GetCheckpointsBetween(this.prevCheckpoint, node.checkpoint);
+                        if (checkpoints.Count > 0) {
+
+                            /*var graph = new Graph(this.checkpointCollector);
+                            graph.vertical = true;
+                            graph.worldGraph = this.worldGraph;
+                            var prevNode = node;
+                            foreach (var chk in checkpoints) {
+
+                                prevNode = graph.AddNode(prevNode, new CustomUserNode(null), chk.obj, chk.step);
+
+                            }
+
+                            node.data = graph;*/
+                            
+                            var nextConnection = node.connections[0];
+                            if ((nextConnection is CustomUserNode) == false) {
+                                
+                                node.connections.RemoveAt(0);
+
+                                var prevNode = node;
+                                foreach (var chk in checkpoints) {
+
+                                    prevNode = this.AddNode(prevNode, new CustomUserNode(chk.obj), chk.obj, chk.step);
+
+                                }
+
+                                prevNode.ConnectTo(nextConnection);
+                                
+                            }
+
+                        }
+
+                    }
+                    this.prevCheckpoint = node.checkpoint;
+
+                }
+
                 var cpx = px;
                 var cpy = py;
                 for (int i = 0; i < node.connections.Count; ++i) {
@@ -245,7 +360,7 @@ namespace ME.ECSEditor {
 
                 }
                 GUI.Box(boxRectOffset, string.Empty, style);
-                
+
                 var mData = string.Empty;
                 if (this.checkpointCollector != null && node.checkpoint != null) {
 
@@ -565,6 +680,26 @@ namespace ME.ECSEditor {
 
         }
 
+        public class CustomUserContainer : Container { public CustomUserContainer(object data) : base(data) { } }
+
+        public class CustomUserNode : Node {
+
+            public CustomUserNode(object data) : base(data) { }
+
+            public override GUIStyle GetStyle() {
+                
+                return Styles.nodeCustomStyle;
+                
+            }
+
+            public override void OnGUI(Rect rect) {
+                
+                GUI.Label(rect, this.data.ToString(), Styles.nodeCaption);
+                
+            }
+
+        }
+        
         public class WorldNode : Node { public WorldNode(object data) : base(data) { } }
         public class SystemsVisualContainer : Container { public SystemsVisualContainer(object data) : base(data) { } }
         public class ModulesVisualContainer : Container { public ModulesVisualContainer(object data) : base(data) { } }
@@ -716,6 +851,7 @@ namespace ME.ECSEditor {
         private Graph CreateSubGraph<T>(IEnumerable list, string methodName, WorldStep step) where T : Node {
             
             var innerGraph = new Graph(this.checkpointCollector);
+            innerGraph.worldGraph = this;
             innerGraph.vertical = true;
             var enter = innerGraph.AddNode(new SubmoduleEnterNode(null));
             var lastNode = enter;
@@ -741,6 +877,7 @@ namespace ME.ECSEditor {
             var modules = WorldHelper.GetModules(world);
 
             var graph = new Graph(this.checkpointCollector);
+            graph.worldGraph = this;
             
             var rootNode = graph.AddNode(new WorldNode(world));
             var modulesVisualContainer = graph.AddNode(rootNode, new ModulesVisualContainer(this.CreateSubGraph<ModuleVisualNode>(modules, "Update", WorldStep.VisualTick)), modules);
@@ -864,9 +1001,10 @@ namespace ME.ECSEditor {
             var deltaTime = EditorApplication.timeSinceStartup - this.prevTime;
             if (this.worldGraphs != null) {
 
+                var isPaused = EditorApplication.isPaused;
                 foreach (var worldGraph in this.worldGraphs) {
 
-                    worldGraph.Update((float)deltaTime);
+                    worldGraph.Update(isPaused == true ? 0f : (float)deltaTime);
 
                 }
 
@@ -878,7 +1016,7 @@ namespace ME.ECSEditor {
 
         public void OnGUI() {
 
-            if (this.worldGraphs.Count > 0) {
+            if (this.worldGraphs.Count > 0 && Worlds.registeredWorlds.Count > 0) {
 
                 var elements = new GUIContent[this.worldGraphs.Count];
                 for (int i = 0; i < elements.Length; ++i) {

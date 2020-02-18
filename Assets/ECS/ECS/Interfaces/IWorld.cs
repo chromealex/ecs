@@ -11,6 +11,7 @@ namespace ME.ECS {
         int id { get; }
 
         void SetCheckpointCollector(ICheckpointCollector checkpointCollector);
+        void Checkpoint(object interestObj);
 
         EntityId GetLastEntityId();
         

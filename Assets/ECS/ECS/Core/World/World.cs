@@ -186,6 +186,14 @@ namespace ME.ECS {
 
         }
 
+        public void Checkpoint(object interestObj) {
+            
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(interestObj, this.currentStep);
+            #endif
+            
+        }
+
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public EntityId GetLastEntityId() {
 

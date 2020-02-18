@@ -65,11 +65,11 @@ namespace ME.Example.Game.Systems {
                     
                 }
 
-                //state.units[index] = data;
                 this.world.UpdateEntityCache(data);
 
             }
 
+            this.world.Checkpoint("Remove Units");
             for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
 
                 if (state.units.IsFree(index) == true) continue;
@@ -81,6 +81,7 @@ namespace ME.Example.Game.Systems {
                 }
 
             }
+            this.world.Checkpoint("Remove Units");
 
         }
 

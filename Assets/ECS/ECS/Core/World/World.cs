@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#define CHECKPOINT_COLLECTOR
+#endif
+using System.Collections;
 using System.Collections.Generic;
 using EntityId = System.Int32;
 using Tick = System.UInt64;
@@ -60,6 +63,13 @@ namespace ME.ECS {
 
     }
 
+    public interface ICheckpointCollector {
+
+        void Reset();
+        void Checkpoint(object interestObj, WorldStep step);
+
+    }
+
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -104,6 +114,8 @@ namespace ME.ECS {
 
         private List<ModuleState> statesSystems;
         private List<ModuleState> statesModules;
+
+        private ICheckpointCollector checkpointCollector;
         
         // State cache:
         private Dictionary<int, IList> storagesCache; // key = typeof(T:IStorage), value = list of T:IStorage
@@ -165,6 +177,12 @@ namespace ME.ECS {
             
             PoolDictionary<int, IList>.Recycle(ref this.storagesCache);
             PoolDictionary<int, int>.Recycle(ref this.capacityCache);
+
+        }
+
+        public void SetCheckpointCollector(ICheckpointCollector checkpointCollector) {
+
+            this.checkpointCollector = checkpointCollector;
 
         }
 
@@ -1137,6 +1155,10 @@ namespace ME.ECS {
 
             if (deltaTime < 0f) return;
             
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Reset();
+            #endif
+
             var state = this.GetState();
             
             // Setup current static variables
@@ -1153,34 +1175,90 @@ namespace ME.ECS {
             ////////////////
             {
 
+                #if CHECKPOINT_COLLECTOR
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules, WorldStep.VisualTick);
+                #endif
+
                 for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
-                    if (this.IsModuleActive(i) == true) this.modules[i].Update(state, deltaTime);
+                    if (this.IsModuleActive(i) == true) {
+                        
+                        #if CHECKPOINT_COLLECTOR
+                        if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.VisualTick);
+                        #endif
+
+                        this.modules[i].Update(state, deltaTime);
+                        
+                        #if CHECKPOINT_COLLECTOR
+                        if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.VisualTick);
+                        #endif
+
+                    }
 
                 }
+
+                #if CHECKPOINT_COLLECTOR
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules, WorldStep.VisualTick);
+                #endif
 
             }
 
             ////////////////
             // Update Logic Tick
             ////////////////
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("Simulate", WorldStep.None);
+            #endif
+
             this.Simulate(prevTick + 1, state.tick + 1);
+
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("Simulate", WorldStep.None);
+            #endif
 
             ////////////////
             this.currentStep = WorldStep.SystemsVisualTick;
             ////////////////
             {
 
+                #if CHECKPOINT_COLLECTOR
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems, WorldStep.VisualTick);
+                #endif
+
                 for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
-                    if (this.IsSystemActive(i) == true) this.systems[i].Update(state, deltaTime);
+                    if (this.IsSystemActive(i) == true) {
+                        
+                        #if CHECKPOINT_COLLECTOR
+                        if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.VisualTick);
+                        #endif
+
+                        this.systems[i].Update(state, deltaTime);
+
+                        #if CHECKPOINT_COLLECTOR
+                        if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.VisualTick);
+                        #endif
+                        
+                    }
 
                 }
 
+                #if CHECKPOINT_COLLECTOR
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems, WorldStep.VisualTick);
+                #endif
+
             }
             
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveMarkers", WorldStep.None);
+            #endif
+
             this.RemoveMarkers();
             
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveMarkers", WorldStep.None);
+            #endif
+
             ////////////////
             this.currentStep = WorldStep.None;
             ////////////////
@@ -1208,35 +1286,89 @@ namespace ME.ECS {
                 ////////////////
                 {
                     
+                    #if CHECKPOINT_COLLECTOR
+                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules, WorldStep.LogicTick);
+                    #endif
+                    
                     for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
-                        if (this.IsModuleActive(i) == true) this.modules[i].AdvanceTick(state, fixedDeltaTime);
+                        if (this.IsModuleActive(i) == true) {
+
+                            #if CHECKPOINT_COLLECTOR
+                            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.LogicTick);
+                            #endif
+                            this.modules[i].AdvanceTick(state, fixedDeltaTime);
+                            #if CHECKPOINT_COLLECTOR
+                            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.LogicTick);
+                            #endif
+                            
+                        }
 
                     }
                     
+                    #if CHECKPOINT_COLLECTOR
+                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules, WorldStep.LogicTick);
+                    #endif
+
                 }
                 ////////////////
                 this.currentStep = WorldStep.PluginsLogicTick;
                 ////////////////
                 {
                     
+                    #if CHECKPOINT_COLLECTOR
+                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("PlayPluginsForTick", WorldStep.None);
+                    #endif
+
                     this.PlayPluginsForTick(tick);
                     
+                    #if CHECKPOINT_COLLECTOR
+                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("PlayPluginsForTick", WorldStep.None);
+                    #endif
+
                 }
                 ////////////////
                 this.currentStep = WorldStep.SystemsLogicTick;
                 ////////////////
                 {
                     
+                    #if CHECKPOINT_COLLECTOR
+                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems, WorldStep.LogicTick);
+                    #endif
+
                     for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
-                        if (this.IsSystemActive(i) == true) this.systems[i].AdvanceTick(state, fixedDeltaTime);
+                        if (this.IsSystemActive(i) == true) {
+                            
+                            #if CHECKPOINT_COLLECTOR
+                            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);
+                            #endif
+
+                            this.systems[i].AdvanceTick(state, fixedDeltaTime);
+                            
+                            #if CHECKPOINT_COLLECTOR
+                            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);
+                            #endif
+
+                        }
 
                     }
 
+                    #if CHECKPOINT_COLLECTOR
+                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems, WorldStep.LogicTick);
+                    #endif
+
                 }
 
+                #if CHECKPOINT_COLLECTOR
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);
+                #endif
+
                 this.RemoveComponentsOnce<IComponentOnceBase>();
+
+                #if CHECKPOINT_COLLECTOR
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);
+                #endif
 
             }
             
@@ -1245,8 +1377,16 @@ namespace ME.ECS {
             ////////////////
             {
                 
+                #if CHECKPOINT_COLLECTOR
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("SimulatePluginsForTicks", WorldStep.None);
+                #endif
+
                 this.SimulatePluginsForTicks(from, to);
                 
+                #if CHECKPOINT_COLLECTOR
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("SimulatePluginsForTicks", WorldStep.None);
+                #endif
+
             }
 
         }

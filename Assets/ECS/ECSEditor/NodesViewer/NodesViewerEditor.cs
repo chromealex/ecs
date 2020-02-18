@@ -11,6 +11,88 @@ namespace ME.ECSEditor {
     
     using ME.ECS;
 
+    public class CheckpointCollector : ICheckpointCollector {
+
+        public struct Watcher {
+
+            private long tsStarted;
+            
+            public Watcher(object interestObj) {
+
+                this.tsStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+
+            }
+
+            public void Stop() {
+                
+            }
+
+            public double GetElapsedMs() {
+
+                return (System.Diagnostics.Stopwatch.GetTimestamp() - this.tsStarted) / (System.Diagnostics.Stopwatch.Frequency / 1000d);
+
+            }
+            
+        }
+
+        private Dictionary<long, Watcher> dic = new Dictionary<long, Watcher>();
+        private Dictionary<long, double> dicMeasured = new Dictionary<long, double>();
+
+        public void Reset() {
+            
+            this.dic.Clear();
+            this.dicMeasured.Clear();
+            
+        }
+
+        public void Checkpoint(object interestObj, WorldStep step) {
+
+            var hash = interestObj.GetHashCode();
+            var key = MathUtils.GetKey(hash, (int)step);
+            
+            Watcher watcher;
+            if (this.dic.TryGetValue(key, out watcher) == true) {
+
+                double watcherMeasured;
+                if (this.dicMeasured.TryGetValue(key, out watcherMeasured) == true) {
+
+                    this.dicMeasured[key] = watcherMeasured + watcher.GetElapsedMs();
+
+                } else {
+                    
+                    this.dicMeasured.Add(key, watcher.GetElapsedMs());
+                    
+                }
+
+                watcher.Stop();
+                this.dic.Remove(key);
+
+            } else {
+            
+                this.dic.Add(key, new Watcher(interestObj));
+                
+            }
+
+        }
+
+        public double GetWatcher(object interestObj, WorldStep step) {
+            
+            var hash = interestObj.GetHashCode();
+            var key = MathUtils.GetKey(hash, (int)step);
+
+            double watcherMeasured;
+            if (this.dicMeasured.TryGetValue(key, out watcherMeasured) == true) {
+
+                return watcherMeasured;
+
+            }
+            
+            return 0d;
+            
+        }
+
+    }
+
     public class WorldGraph {
 
         public static class Styles {
@@ -18,6 +100,8 @@ namespace ME.ECSEditor {
             public const float horizontalSpacing = 100f;
             public const float verticalSpacing = 6f;
             public const float width = 220f;
+            public const float nodeHeight = 80f;
+            public const float beginEndTickHeight = 10000f;
             public static GUIStyle nodeStyle;
             public static GUIStyle containerStyle;
             public static GUIStyle containerCaption;
@@ -27,6 +111,10 @@ namespace ME.ECSEditor {
             public static GUIStyle beginTickStyle;
             public static GUIStyle endTickStyle;
             public static GUIStyle systemNode;
+            public static GUIStyle measureLabel;
+            public static Color measureLabelNormal;
+            public static Color measureLabelWarning;
+            public static Color measureLabelError;
             public static Texture2D connectionTexture;
 
             static Styles() {
@@ -40,6 +128,15 @@ namespace ME.ECSEditor {
                 Styles.systemNode = new GUIStyle();
                 Styles.systemNode.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node2.png") as Texture2D;
                 Styles.systemNode.border = new RectOffset(12, 12, 12, 12);
+
+                Styles.measureLabel = new GUIStyle(EditorStyles.boldLabel);
+                Styles.measureLabel.richText = true;
+                Styles.measureLabel.padding = new RectOffset(0, 0, 15, 0);
+                Styles.measureLabel.alignment = TextAnchor.UpperCenter;
+                
+                Styles.measureLabelNormal = Color.green;
+                Styles.measureLabelWarning = Color.yellow;
+                Styles.measureLabelError = Color.red;
 
                 Styles.containerCaption = new GUIStyle(EditorStyles.centeredGreyMiniLabel);
                 Styles.containerCaption.alignment = TextAnchor.UpperCenter;
@@ -74,11 +171,21 @@ namespace ME.ECSEditor {
             public bool vertical;
             public Vector2 graphSize;
             private List<Node> nodes = new List<Node>();
+            private float timer;
+            private double maxTs = double.MinValue;
             public Node rootNode {
                 get {
                     if (this.nodes.Count == 0) return null;
                     return this.nodes[0];
                 }
+            }
+
+            private CheckpointCollector checkpointCollector;
+            
+            public Graph(CheckpointCollector checkpointCollector) {
+
+                this.checkpointCollector = checkpointCollector;
+
             }
 
             public Node AddNode(Node node) {
@@ -88,8 +195,10 @@ namespace ME.ECSEditor {
 
             }
 
-            public Node AddNode(Node prevNode, Node node) {
+            public Node AddNode(Node prevNode, Node node, object checkpoint = null, WorldStep step = WorldStep.None) {
 
+                node.checkpoint = checkpoint;
+                node.worldStep = step;
                 this.nodes.Add(node);
                 prevNode.ConnectTo(node);
                 return node;
@@ -98,6 +207,7 @@ namespace ME.ECSEditor {
 
             private Vector2 DrawNode(Node node, float x, float y) {
 
+                const float targetFrameRate = 30f;
                 var offset = node.GetOffset();
                 var px = x;
                 var py = y;
@@ -130,12 +240,45 @@ namespace ME.ECSEditor {
 
                     var nodeSize = node.connections[i].GetSize();
                     var nodeOffset = node.connections[i].GetOffset();
-                    this.DrawConnection(boxRectOffset, new Rect(cpx + nodeOffset.x, cpy + nodeOffset.y, nodeSize.x, nodeSize.y));
+                    this.DrawConnection(boxRectOffset, new Rect(cpx + nodeOffset.x, cpy + nodeOffset.y, nodeSize.x, nodeSize.y), node, node.connections[i]);
                     cpy += nodeSize.y + Styles.verticalSpacing;
 
                 }
-                
                 GUI.Box(boxRectOffset, string.Empty, style);
+                
+                var mData = string.Empty;
+                if (this.checkpointCollector != null && node.checkpoint != null) {
+
+                    var watcherTs = this.checkpointCollector.GetWatcher(node.checkpoint, node.worldStep);
+                    var curColor = Styles.measureLabelNormal;
+                    var maxColor = Styles.measureLabelNormal;
+                    if (watcherTs >= this.maxTs) this.maxTs = watcherTs;
+                    if (watcherTs > 1000f / targetFrameRate) {
+
+                        curColor = Styles.measureLabelError;
+
+                    } else if (watcherTs > 1000f / targetFrameRate * 0.5f) {
+                        
+                        curColor = Styles.measureLabelWarning;
+                        
+                    }
+                    
+                    if (this.maxTs > 1000f / targetFrameRate) {
+
+                        maxColor = Styles.measureLabelError;
+
+                    } else if (this.maxTs > 1000f / targetFrameRate * 0.5f) {
+                        
+                        maxColor = Styles.measureLabelWarning;
+                        
+                    }
+
+                    mData = string.Format("<color=#{2}>{0}ms</color>  <color=#{3}>Max: {1}ms</color>", watcherTs.ToString("#0.000"), this.maxTs.ToString("#0.000"), this.ColorToHex(curColor), this.ColorToHex(maxColor));
+                    
+                    GUI.Label(boxRectOffset, mData, Styles.measureLabel);
+
+                }
+
                 node.OnGUI(boxRectOffset);
                 if (node.data is Graph) {
 
@@ -166,30 +309,135 @@ namespace ME.ECSEditor {
 
             }
 
-            private void DrawConnection(Rect from, Rect to) {
+            private string ColorToHex(Color color) {
 
+                return ColorUtility.ToHtmlStringRGB(color);
+                
+            }
+
+            private void DrawConnection(Rect from, Rect to, Node fromNode, Node toNode) {
+
+                const float dotSize = 3f;
+                var dotColor = new Color(0.3f, 0.2f, 0.8f, 1f);
+                
                 if (this.vertical == true) {
                     
                     var fromPos = new Vector3(from.center.x, from.center.y, 0f);
                     var toPos = new Vector3(to.center.x, to.center.y, 0f);
 
                     Handles.DrawAAPolyLine(Styles.connectionTexture, 2f, fromPos, toPos);
+                    var oldColor = Handles.color;
+                    Handles.color = dotColor;
+                    Handles.DrawSolidDisc(Vector3.Lerp(fromPos, toPos, this.timer), Vector3.back, dotSize);
+                    Handles.color = oldColor;
                     
                 } else {
 
-                    var fromPos = new Vector3(from.center.x, from.yMax, 0f);
-                    var toPos = new Vector3(to.center.x, to.yMin, 0f);
+                    Vector3 fromPos = new Vector3(from.center.x, from.center.y, 0f);
+                    Vector3 toPos = new Vector3(to.center.x, to.center.y, 0f);
+                    Vector3 fromDir = Vector3.down;
+                    Vector3 toDir = Vector3.up;
 
-                    Handles.DrawBezier(
-                        fromPos,
-                        toPos,
-                        fromPos + Vector3.up * 250f,
-                        toPos + Vector3.down * 250f,
-                        Color.white,
-                        Styles.connectionTexture,
-                        2f
-                    );
+                    if (fromNode is Container) {
+                        
+                        fromPos = new Vector3(from.center.x, from.yMax, 0f);
+                        fromDir = Vector3.up * 250f;
 
+                    } else {
+                        
+                        fromPos = new Vector3(from.xMax - 15f, from.center.y, 0f);
+                        fromDir = Vector3.right * 50f;
+
+                    }
+
+                    if (toNode is Container) {
+
+                        toPos = new Vector3(to.center.x, to.yMin, 0f);
+                        toDir = Vector3.down * 250f;
+                            
+                    } else {
+                        
+                        toPos = new Vector3(to.xMin + 15f, to.center.y, 0f);
+                        toDir = Vector3.left * 50f;
+
+                    }
+
+                    var points = Handles.MakeBezierPoints(fromPos, toPos, fromPos + fromDir,
+                                             toPos + toDir, 50);
+                    Handles.DrawAAPolyLine(Styles.connectionTexture, 2f, points);
+                    var oldColor = Handles.color;
+                    Handles.color = dotColor;
+                    Handles.DrawSolidDisc(this.GetPoint(points, this.timer / 4f), Vector3.back, dotSize);
+                    Handles.DrawSolidDisc(this.GetPoint(points, this.timer / 4f + 0.25f), Vector3.back, dotSize);
+                    Handles.DrawSolidDisc(this.GetPoint(points, this.timer / 4f + 0.5f), Vector3.back, dotSize);
+                    Handles.DrawSolidDisc(this.GetPoint(points, this.timer / 4f + 0.75f), Vector3.back, dotSize);
+                    Handles.color = oldColor;
+
+                }
+
+            }
+
+            private Vector3 GetPoint(Vector3[] points, float distanceClamped) {
+
+                var fullDistance = 0f;
+                for (int i = 0; i < points.Length - 1; ++i) {
+
+                    fullDistance += Vector3.Distance(points[i], points[i + 1]);
+
+                }
+
+                Vector3 result = points[0];
+                var fDistance = fullDistance * distanceClamped;
+                var curDistance = 0f;
+                for (int i = 0; i < points.Length - 1; ++i) {
+                    
+                    var dist = Vector3.Distance(points[i], points[i + 1]);
+                    curDistance += dist; 
+                    if (curDistance >= fDistance) {
+
+                        var end = curDistance;
+                        var t = (dist - (end - fDistance)) / dist;
+                        result = Vector3.Lerp(points[i], points[i + 1], t);
+                        break;
+                        
+                    }
+
+                }
+
+                return result;
+
+            }
+
+            public void Update(float deltaTime) {
+
+                this.timer += deltaTime;
+                if (this.timer >= 1f) {
+
+                    this.timer -= 1f;
+
+                }
+
+                this.UpdateNode(this.rootNode, deltaTime);
+
+            }
+            
+            private void UpdateNode(Node node, float deltaTime) {
+                
+                if (node != null) {
+
+                    if (node.data is Graph) {
+
+                        var subGraph = node.data as Graph;
+                        subGraph.Update(deltaTime);
+                        
+                    }
+
+                    for (int i = 0; i < node.connections.Count; ++i) {
+
+                        this.UpdateNode(node.connections[i], deltaTime);
+
+                    }
+                    
                 }
 
             }
@@ -214,6 +462,8 @@ namespace ME.ECSEditor {
 
         public abstract class Node {
 
+            public object checkpoint;
+            public WorldStep worldStep;
             public List<Node> connections = new List<Node>();
             public object data;
 
@@ -237,7 +487,7 @@ namespace ME.ECSEditor {
 
             public virtual Vector2 GetSize() {
 
-                return new Vector2(Styles.width, 40f);
+                return new Vector2(Styles.width, Styles.nodeHeight);
 
             }
 
@@ -403,7 +653,7 @@ namespace ME.ECSEditor {
             
             public override Vector2 GetSize() {
                 
-                return new Vector2(24f, 40f);
+                return new Vector2(24f, 0f);
                 
             }
 
@@ -415,7 +665,7 @@ namespace ME.ECSEditor {
 
             public override void OnGUI(Rect rect) {
 
-                rect.height = 1000f;
+                rect.height = Styles.beginEndTickHeight;
                 rect.y -= rect.height * 0.5f;
                 GUI.Box(rect, string.Empty, this.GetStyle());
                 
@@ -429,7 +679,7 @@ namespace ME.ECSEditor {
             
             public override Vector2 GetSize() {
                 
-                return new Vector2(24f, 40f);
+                return new Vector2(24f, 0f);
                 
             }
 
@@ -441,7 +691,7 @@ namespace ME.ECSEditor {
 
             public override void OnGUI(Rect rect) {
                 
-                rect.height = 1000f;
+                rect.height = Styles.beginEndTickHeight;
                 rect.y -= rect.height * 0.5f;
                 GUI.Box(rect, string.Empty, this.GetStyle());
 
@@ -451,17 +701,21 @@ namespace ME.ECSEditor {
 
         private Graph graph;
         private IWorldBase world;
+        private CheckpointCollector checkpointCollector;
         
         public WorldGraph(IWorldBase world) {
 
+            if (world == null) return;
+            
             this.world = world;
+            this.world.SetCheckpointCollector(this.checkpointCollector = new CheckpointCollector());
             this.graph = this.CreateGraph(world);
 
         }
 
-        private Graph CreateSubGraph<T>(IEnumerable list, string methodName) where T : Node {
+        private Graph CreateSubGraph<T>(IEnumerable list, string methodName, WorldStep step) where T : Node {
             
-            var innerGraph = new Graph();
+            var innerGraph = new Graph(this.checkpointCollector);
             innerGraph.vertical = true;
             var enter = innerGraph.AddNode(new SubmoduleEnterNode(null));
             var lastNode = enter;
@@ -469,7 +723,7 @@ namespace ME.ECSEditor {
 
                 if (WorldHelper.HasMethod(item, methodName) == true) {
 
-                    lastNode = innerGraph.AddNode(lastNode, (T)System.Activator.CreateInstance(typeof(T), item));
+                    lastNode = innerGraph.AddNode(lastNode, (T)System.Activator.CreateInstance(typeof(T), item), item, step);
                     
                 }
 
@@ -486,29 +740,22 @@ namespace ME.ECSEditor {
             var systems = WorldHelper.GetSystems(world);
             var modules = WorldHelper.GetModules(world);
 
-            var graph = new Graph();
+            var graph = new Graph(this.checkpointCollector);
             
             var rootNode = graph.AddNode(new WorldNode(world));
-            var modulesVisualContainer = graph.AddNode(rootNode, new ModulesVisualContainer(this.CreateSubGraph<ModuleVisualNode>(modules, "Update")));
+            var modulesVisualContainer = graph.AddNode(rootNode, new ModulesVisualContainer(this.CreateSubGraph<ModuleVisualNode>(modules, "Update", WorldStep.VisualTick)), modules);
             
-            var beginTick = graph.AddNode(modulesVisualContainer, new BeginTickNode(null));
-            var modulesLogicContainer = graph.AddNode(beginTick, new ModulesLogicContainer(this.CreateSubGraph<ModuleLogicNode>(modules, "AdvanceTick")));
-            var pluginsLogicContainer = graph.AddNode(modulesLogicContainer, new PluginsLogicContainer(null));
-            var systemsLogicContainer = graph.AddNode(pluginsLogicContainer, new SystemsLogicContainer(this.CreateSubGraph<SystemLogicNode>(systems, "AdvanceTick")));
-            var removeOnceComponents = graph.AddNode(systemsLogicContainer, new RemoveOnceComponentsNode(null));
+            var beginTick = graph.AddNode(modulesVisualContainer, new BeginTickNode(null), "Simulate");
+            var modulesLogicContainer = graph.AddNode(beginTick, new ModulesLogicContainer(this.CreateSubGraph<ModuleLogicNode>(modules, "AdvanceTick", WorldStep.LogicTick)), modules);
+            var pluginsLogicContainer = graph.AddNode(modulesLogicContainer, new PluginsLogicContainer(null), "PlayPluginsForTick");
+            var systemsLogicContainer = graph.AddNode(pluginsLogicContainer, new SystemsLogicContainer(this.CreateSubGraph<SystemLogicNode>(systems, "AdvanceTick", WorldStep.LogicTick)), systems);
+            var removeOnceComponents = graph.AddNode(systemsLogicContainer, new RemoveOnceComponentsNode(null), "RemoveComponentsOnce");
             var endTick = graph.AddNode(removeOnceComponents, new EndTickNode(null));
             
-            var pluginsLogicSimulateContainer = graph.AddNode(endTick, new PluginsLogicSimulateContainer(null));
-            var systemsVisualContainer = graph.AddNode(pluginsLogicSimulateContainer, new SystemsVisualContainer(this.CreateSubGraph<SystemVisualNode>(systems, "Update")));
-            graph.AddNode(systemsVisualContainer, new RemoveMarkersNode(null));
+            var pluginsLogicSimulateContainer = graph.AddNode(endTick, new PluginsLogicSimulateContainer(null), "SimulatePluginsForTicks");
+            var systemsVisualContainer = graph.AddNode(pluginsLogicSimulateContainer, new SystemsVisualContainer(this.CreateSubGraph<SystemVisualNode>(systems, "Update", WorldStep.VisualTick)), systems);
+            graph.AddNode(systemsVisualContainer, new RemoveMarkersNode(null), "RemoveMarkers");
             
-            /*var systems = WorldHelper.GetSystems(world);
-            foreach (var system in systems) {
-                
-                graph.AddNode(new SystemNode(system));
-                
-            }*/
-
             return graph;
 
         }
@@ -519,24 +766,22 @@ namespace ME.ECSEditor {
 
         }
 
+        public void Update(float deltaTime) {
+            
+            if (this.graph != null) this.graph.Update(deltaTime);
+            
+        }
+
         private Rect rect;
         private Vector2 scrollPosition;
-        public Vector2 OnGUI(Rect rect, Vector2 scrollPosition) {
-
-            if (this.graph == null) {
-
-                GUILayout.Label("This is runtime utility", EditorStyles.centeredGreyMiniLabel);
-                return scrollPosition;
-
-            }
+        public Vector2 OnGUI(Rect rect) {
 
             this.rect = rect;
-            this.scrollPosition = scrollPosition;
             
             this.DrawGrid(20f, 0.2f, Color.grey);
             this.DrawGrid(100f, 0.4f, Color.grey);
 
-            this.graph.OnGUI(new Rect(scrollPosition.x, scrollPosition.y, rect.width, rect.height));
+            this.graph.OnGUI(new Rect(this.scrollPosition.x, this.scrollPosition.y, rect.width, rect.height));
 
             this.ProcessEvents(Event.current);
 
@@ -546,8 +791,6 @@ namespace ME.ECSEditor {
         
         private void ProcessEvents(Event e) {
             
-            var drag = Vector2.zero;
- 
             switch (e.type) {
                 
                 case EventType.MouseDrag:
@@ -592,8 +835,9 @@ namespace ME.ECSEditor {
 
     public class NodesViewerEditor : EditorWindow {
 
-        private WorldGraph worldGraph;
-        private Vector2 scrollPosition;
+        private List<WorldGraph> worldGraphs = new List<WorldGraph>();
+        private double prevTime;
+        private int selectedWorldIndex = 0;
 
         [MenuItem("ME.ECS/Nodes Viewer...")]
         public static void ShowInstance() {
@@ -606,14 +850,55 @@ namespace ME.ECSEditor {
 
         public void Update() {
 
+            if (this.worldGraphs.Count != Worlds.registeredWorlds.Count) {
+                
+                this.worldGraphs.Clear();
+                foreach (var world in Worlds.registeredWorlds) {
+                    
+                    this.worldGraphs.Add(new WorldGraph(world));
+                    
+                }
+
+            }
+
+            var deltaTime = EditorApplication.timeSinceStartup - this.prevTime;
+            if (this.worldGraphs != null) {
+
+                foreach (var worldGraph in this.worldGraphs) {
+
+                    worldGraph.Update((float)deltaTime);
+
+                }
+
+            }
+            this.prevTime = EditorApplication.timeSinceStartup;
             this.Repaint();
 
         }
 
         public void OnGUI() {
 
-            if (this.worldGraph == null || this.worldGraph.IsValid() == false) this.worldGraph = new WorldGraph(Worlds.currentWorld);
-            this.scrollPosition = this.worldGraph.OnGUI(this.position, this.scrollPosition);
+            if (this.worldGraphs.Count > 0) {
+
+                var elements = new GUIContent[this.worldGraphs.Count];
+                for (int i = 0; i < elements.Length; ++i) {
+
+                    elements[i] = new GUIContent(@"World " + Worlds.registeredWorlds[i].id.ToString());
+
+                }
+
+                this.worldGraphs[this.selectedWorldIndex].OnGUI(this.position);
+                EditorGUI.LabelField(new Rect(0f, -2f, this.position.width, 18f), string.Empty, EditorStyles.toolbar);
+                this.selectedWorldIndex = EditorGUI.Popup(new Rect(0f, -2f, 200f, 18f), this.selectedWorldIndex, elements, EditorStyles.toolbarDropDown);
+
+            } else {
+                
+                var centeredStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel);
+                centeredStyle.stretchHeight = true;
+                centeredStyle.richText = true;
+                GUILayout.Label("This is runtime utility to view current running worlds.\nPress <b>Play</b> to start profiling.", centeredStyle);
+                
+            }
 
         }
 

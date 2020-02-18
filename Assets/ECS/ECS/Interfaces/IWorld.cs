@@ -10,6 +10,8 @@ namespace ME.ECS {
 
         int id { get; }
 
+        void SetCheckpointCollector(ICheckpointCollector checkpointCollector);
+
         EntityId GetLastEntityId();
         
         void SetSystemState(ISystemBase system, ModuleState state);

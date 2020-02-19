@@ -27,7 +27,7 @@ namespace ME.ECS {
             public void SetInfo(Storage<TEntity> storage) {
                 
                 this.storage = storage;
-                this.index = this.storage.ToIndex - 1;
+                this.index = this.storage.ToIndex;
 
             }
 
@@ -39,15 +39,16 @@ namespace ME.ECS {
 
             bool IEnumerator.MoveNext() {
 
-                --this.index;
-                while (this.storage.IsFree(this.index) == true) --this.index;
+                do {
+                    --this.index;
+                } while (this.storage.IsFree(this.index) == true);
                 return this.index >= this.storage.FromIndex;
 
             }
 
             void IEnumerator.Reset() {
 
-                this.index = this.storage.ToIndex - 1;
+                this.index = this.storage.ToIndex;
 
             }
 

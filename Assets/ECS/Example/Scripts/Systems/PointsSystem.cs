@@ -21,7 +21,7 @@ namespace ME.Example.Game.Systems {
 
         }
 
-        IWorld<State> ISystem<State>.world { get; set; }
+        public IWorld<State> world { get; set; }
 
         void ISystemBase.OnConstruct() { }
         void ISystemBase.OnDeconstruct() { }
@@ -31,8 +31,10 @@ namespace ME.Example.Game.Systems {
             var job = new TestJob() {
                 deltaTime = deltaTime
             };
+            this.world.Checkpoint("Update Points");
             var jobHandle = job.Schedule(state.points.Count, 64);
             jobHandle.Complete();
+            this.world.Checkpoint("Update Points");
 
         }
 

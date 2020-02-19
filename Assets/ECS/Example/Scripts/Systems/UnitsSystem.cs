@@ -43,6 +43,7 @@ namespace ME.Example.Game.Systems {
 
         void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 
+            this.world.Checkpoint("Update Units");
             //for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
             foreach (var index in state.units) {
                 
@@ -69,6 +70,7 @@ namespace ME.Example.Game.Systems {
                 this.world.UpdateFilters(data);
 
             }
+            this.world.Checkpoint("Update Units");
 
             this.world.Checkpoint("Remove Units");
             //for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {

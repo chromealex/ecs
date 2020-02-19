@@ -48,6 +48,7 @@ namespace ME.ECS {
         float GetRandomValue();
         int GetSeedValue();
 
+        void UpdateFilters<TEntity>(TEntity data) where TEntity : struct, IEntity;
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
 
         void SetCapacity<T>(int capacity) where T : IEntity;

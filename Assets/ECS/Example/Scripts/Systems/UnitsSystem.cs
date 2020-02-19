@@ -14,7 +14,7 @@ namespace ME.Example.Game.Systems {
         private IFilter<State, Unit> unitsFilter2;
         private IFilter<State, Unit> unitsFilter3;
 
-        private class CustomFilter : INode<Unit> {
+        private class CustomFilter : IFilterNode<Unit> {
 
             public bool Execute(Unit data) {
 
@@ -43,20 +43,21 @@ namespace ME.Example.Game.Systems {
 
         void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 
-            for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
+            //for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
+            foreach (var index in state.units) {
                 
-                if (state.units.IsFree(index) == true) continue;
+                //if (state.units.IsFree(index) == true) continue;
                 
                 ref var data = ref state.units[index];
                 this.world.RunComponents(ref data, deltaTime, index);
                 
                 if (this.unitsFilter3.Contains(data) == true) {
-                        
+                    
                     var from = data.pointFrom;
                     var to = data.pointTo;
                     data.pointTo = from;
                     data.pointFrom = to;
-                    Worlds<State>.currentWorld.RemoveComponents<UnitFollowFromTo>(data.entity);
+                    this.world.RemoveComponents<UnitFollowFromTo>(data.entity);
                     var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
                     comp.@from = data.pointFrom;
                     comp.to = data.pointTo;
@@ -65,14 +66,15 @@ namespace ME.Example.Game.Systems {
                     
                 }
 
-                this.world.UpdateEntityCache(data);
+                this.world.UpdateFilters(data);
 
             }
 
             this.world.Checkpoint("Remove Units");
-            for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
+            //for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
+            foreach (var index in state.units) {
 
-                if (state.units.IsFree(index) == true) continue;
+                //if (state.units.IsFree(index) == true) continue;
 
                 if (state.units[index].lifes <= 0) {
 

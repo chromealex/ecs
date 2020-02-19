@@ -17,7 +17,53 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Storage<TEntity> : IStorage where TEntity : struct, IEntity {
+    public class Storage<TEntity> : IStorage, IEnumerable<int> where TEntity : struct, IEntity {
+
+        private class StorageEnumerator : IEnumerator<int> {
+
+            private Storage<TEntity> storage;
+            private int index;
+
+            public void SetInfo(Storage<TEntity> storage) {
+                
+                this.storage = storage;
+                this.index = this.storage.ToIndex - 1;
+
+            }
+
+            object IEnumerator.Current {
+                get {
+                    throw new AllocationException();
+                }
+            }
+
+            bool IEnumerator.MoveNext() {
+
+                --this.index;
+                while (this.storage.IsFree(this.index) == true) --this.index;
+                return this.index >= this.storage.FromIndex;
+
+            }
+
+            void IEnumerator.Reset() {
+
+                this.index = this.storage.ToIndex - 1;
+
+            }
+
+            int IEnumerator<int>.Current {
+                get {
+                    return this.index;
+                }
+            }
+
+            void System.IDisposable.Dispose() {
+                
+                PoolClass<StorageEnumerator>.Recycle(this);
+                
+            }
+
+        }
 
         private RefList<TEntity> list;
         private bool freeze;
@@ -67,6 +113,20 @@ namespace ME.ECS {
             get {
                 return ref this.list[index];
             }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+
+            throw new AllocationException();
+
+        }
+
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() {
+
+            var instance = PoolClass<StorageEnumerator>.Spawn();
+            instance.SetInfo(this);
+            return instance;
+
         }
 
         public bool IsFree(int index) {

@@ -22,7 +22,7 @@ namespace ME.ECS {
 
     }
 
-    public interface INode<in TEntity> where TEntity : struct, IEntity {
+    public interface IFilterNode<in TEntity> where TEntity : struct, IEntity {
 
         bool Execute(TEntity data);
 
@@ -32,8 +32,8 @@ namespace ME.ECS {
 
         bool Contains(TEntity data);
 
-        IFilter<TState, TEntity> Custom(INode<TEntity> filter);
-        IFilter<TState, TEntity> Custom<TFilter>() where TFilter : class, INode<TEntity>, new();
+        IFilter<TState, TEntity> Custom(IFilterNode<TEntity> filter);
+        IFilter<TState, TEntity> Custom<TFilter>() where TFilter : class, IFilterNode<TEntity>, new();
         IFilter<TState, TEntity> WithComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
         IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
 
@@ -126,7 +126,7 @@ namespace ME.ECS {
 
         }
 
-        private class ComponentExistsNode<TComponent> : INode<TEntity> where TComponent : class, IComponent<TState, TEntity> {
+        private class ComponentExistsFilterNode<TComponent> : IFilterNode<TEntity> where TComponent : class, IComponent<TState, TEntity> {
 
             public bool Execute(TEntity data) {
                 
@@ -136,7 +136,7 @@ namespace ME.ECS {
 
         }
 
-        private class ComponentNotExistsNode<TComponent> : INode<TEntity> where TComponent : class, IComponent<TState, TEntity> {
+        private class ComponentNotExistsFilterNode<TComponent> : IFilterNode<TEntity> where TComponent : class, IComponent<TState, TEntity> {
 
             public bool Execute(TEntity data) {
                 
@@ -148,23 +148,23 @@ namespace ME.ECS {
 
         public int id { get; set; }
         private string name;
-        private INode<TEntity>[] nodes = null;
+        private IFilterNode<TEntity>[] nodes = null;
         private int nodesCount;
         private HashSet<EntityId> data;
 
-        private List<INode<TEntity>> tempNodes;
-        private List<INode<TEntity>> tempNodesCustom;
+        private List<IFilterNode<TEntity>> tempNodes;
+        private List<IFilterNode<TEntity>> tempNodesCustom;
 
         void IPoolableSpawn.OnSpawn() {
             
-            this.nodes = PoolArray<INode<TEntity>>.Spawn(1000);
+            this.nodes = PoolArray<IFilterNode<TEntity>>.Spawn(1000);
             this.data = PoolHashSet<EntityId>.Spawn();
 
         }
 
         void IPoolableRecycle.OnRecycle() {
             
-            PoolArray<INode<TEntity>>.Recycle(ref this.nodes);
+            PoolArray<IFilterNode<TEntity>>.Recycle(ref this.nodes);
             PoolHashSet<EntityId>.Recycle(ref this.data);
             
         }
@@ -175,8 +175,8 @@ namespace ME.ECS {
             this.name = other.name;
             this.nodesCount = other.nodesCount;
             
-            if (this.nodes != null) PoolArray<INode<TEntity>>.Recycle(ref this.nodes);
-            this.nodes = PoolArray<INode<TEntity>>.Spawn(other.nodes.Length);
+            if (this.nodes != null) PoolArray<IFilterNode<TEntity>>.Recycle(ref this.nodes);
+            this.nodes = PoolArray<IFilterNode<TEntity>>.Spawn(other.nodes.Length);
             for (int i = 0; i < this.nodes.Length; ++i) {
 
                 this.nodes[i] = other.nodes[i];
@@ -290,14 +290,14 @@ namespace ME.ECS {
 
         }
 
-        public IFilter<TState, TEntity> Custom(INode<TEntity> filter) {
+        public IFilter<TState, TEntity> Custom(IFilterNode<TEntity> filter) {
 
             this.tempNodesCustom.Add(filter);
             return this;
 
         }
 
-        public IFilter<TState, TEntity> Custom<TFilter>() where TFilter : class, INode<TEntity>, new() {
+        public IFilter<TState, TEntity> Custom<TFilter>() where TFilter : class, IFilterNode<TEntity>, new() {
 
             var filter = new TFilter();
             this.tempNodesCustom.Add(filter);
@@ -307,7 +307,7 @@ namespace ME.ECS {
 
         public IFilter<TState, TEntity> WithComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity> {
 
-            var node = new ComponentExistsNode<TComponent>();
+            var node = new ComponentExistsFilterNode<TComponent>();
             this.tempNodes.Add(node);
             return this;
 
@@ -315,7 +315,7 @@ namespace ME.ECS {
         
         public IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity> {
 
-            var node = new ComponentNotExistsNode<TComponent>();
+            var node = new ComponentNotExistsFilterNode<TComponent>();
             this.tempNodes.Add(node);
             return this;
 
@@ -325,8 +325,8 @@ namespace ME.ECS {
             
             var f = PoolFilters.Spawn<Filter<TState, TEntity>>();
             f.name = customName != null ? customName : nameof(filter);
-            f.tempNodes = new List<INode<TEntity>>();
-            f.tempNodesCustom = new List<INode<TEntity>>();
+            f.tempNodes = new List<IFilterNode<TEntity>>();
+            f.tempNodesCustom = new List<IFilterNode<TEntity>>();
             filter = f;
             return filter;
 

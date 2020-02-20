@@ -116,7 +116,8 @@ namespace ME.ECSEditor {
 
             var list = new List<CheckpointInfo>();
             if (obj1 == null || obj2 == null) return list;
-            
+
+            var firstFound = false;
             var startFound = false;
             for (int i = 0; i < this.allCheckpoints.Count; ++i) {
 
@@ -125,9 +126,17 @@ namespace ME.ECSEditor {
                     startFound = true;
 
                 } else if (startFound == true && this.allCheckpoints[i].obj != obj2) {
-                    
-                    list.Add(this.allCheckpoints[i]);
-                    
+
+                    if (firstFound == false) {
+
+                        firstFound = true;
+
+                    } else {
+
+                        list.Add(this.allCheckpoints[i]);
+
+                    }
+
                 } else if (this.allCheckpoints[i].obj == obj2) {
 
                     break;
@@ -291,7 +300,7 @@ namespace ME.ECSEditor {
 
                     var subGraph = node.data as Graph;
                     size.y += subGraph.graphSize.y;
-
+                    
                 }
 
                 var boxRect = new Rect(x, y, size.x, size.y);
@@ -345,7 +354,6 @@ namespace ME.ECSEditor {
                         }
 
                     }
-                    this.prevCheckpoint = node.checkpoint;
 
                 }
 
@@ -398,6 +406,7 @@ namespace ME.ECSEditor {
                 if (node.data is Graph) {
 
                     var subGraph = node.data as Graph;
+                    subGraph.prevCheckpoint = this.prevCheckpoint;
                     subGraph.OnGUI(boxRect);
                     if (subGraph.vertical == true) {
 
@@ -406,6 +415,8 @@ namespace ME.ECSEditor {
                     }
 
                 }
+
+                if (node.checkpoint != null) this.prevCheckpoint = node.checkpoint;
 
                 for (int i = 0; i < node.connections.Count; ++i) {
 

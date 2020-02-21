@@ -438,8 +438,9 @@ namespace ME.ECS {
                         PoolInternalBase.CallOnSpawn(comp);
                         
                     }
-                    newList.Add(element);
-                    
+                    comp.CopyFrom(element);
+                    newList.Add(comp);
+
                 }
 
                 dicDest.Add(item.Key, newList);

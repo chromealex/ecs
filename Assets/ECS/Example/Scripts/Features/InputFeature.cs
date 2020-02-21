@@ -1,5 +1,4 @@
 ﻿using ME.ECS;
-using Unity.Jobs;
 
 namespace ME.Example.Game.Features {
     
@@ -7,9 +6,9 @@ namespace ME.Example.Game.Features {
     
     public class InputFeature : Feature<State, ConstructParameters<Entity, Entity>> {
 
-        protected override void OnConstruct(ConstructParameters<Entity, Entity> parameters) {
+        protected override void OnConstruct(ref ConstructParameters<Entity, Entity> parameters) {
             
-            this.AddSystem<ME.Example.Game.Systems.InputSystem>();
+            this.AddSystem<InputSystem>();
             {
                 var inputSystem = this.world.GetSystem<InputSystem>();
                 inputSystem.p1 = parameters.p1;

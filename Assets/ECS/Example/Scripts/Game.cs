@@ -12,6 +12,18 @@ namespace ME.Example.Game {
     using ME.Example.Game.Systems;
     using ME.Example.Game.Entities;
 
+    [System.Serializable]
+    public struct PointsFeatureInitParameters : IConstructParameters {
+
+        public Vector3 p1Position;
+        public Vector3 p2Position;
+        public ViewId pointViewSourceId;
+
+        public Entity p1;
+        public Entity p2;
+
+    }
+
     public class Game : MonoBehaviour {
 
         public int worldId;
@@ -26,9 +38,8 @@ namespace ME.Example.Game {
         public World<State> world;
         private IState<State> savedState;
 
-        public Vector3 p1Position = new Vector3(0f, 0f, 3f);
-        public Vector3 p2Position = new Vector3(0f, 0f, -3f);
-        
+        public PointsFeatureInitParameters pointsFeatureInitParameters = new PointsFeatureInitParameters() { p1Position = new Vector3(0f, 0f, 3f), p2Position = new Vector3(0f, 0f, -3f) };
+
         protected ViewId pointViewSourceId;
         protected ViewId unitViewSourceId;
         protected ViewId unitViewSourceId2;
@@ -57,15 +68,10 @@ namespace ME.Example.Game {
                 
                 this.RegisterViewSources();
 
-                var p1 = this.world.AddEntity(new Point() { position = this.transform.position + this.p1Position, scale = Vector3.one });
-                var p2 = this.world.AddEntity(new Point() { position = this.transform.position + this.p2Position, scale = Vector3.one });
-                
-                this.world.InstantiateView<Point>(this.pointViewSourceId, p1);
-                this.world.InstantiateView<Point>(this.pointViewSourceId, p2);
-
-                this.world.AddFeature<InputFeature, ConstructParameters<Entity, Entity>>(new ConstructParameters<Entity, Entity>(p1, p2));
-                this.world.AddSystem<PointsSystem>();
-                this.world.AddSystem<UnitsSystem>();
+                this.pointsFeatureInitParameters.pointViewSourceId = this.pointViewSourceId;
+                this.world.AddFeature<PointsFeature, PointsFeatureInitParameters>(ref this.pointsFeatureInitParameters);
+                this.world.AddFeature<UnitsFeature>();
+                this.world.AddFeature<InputFeature, ConstructParameters<Entity, Entity>>(new ConstructParameters<Entity, Entity>(this.pointsFeatureInitParameters.p1, this.pointsFeatureInitParameters.p2));
                 this.world.SaveResetState();
 
             }
@@ -91,7 +97,7 @@ namespace ME.Example.Game {
 
         public virtual void AddEventUIButtonClick(int pointId) {
 
-            this.world.AddMarker(new PointMoveMarker() {
+            this.world.AddMarker(new ME.Example.Game.Components.UI.UIMove() {
                 pointId = pointId,
                 color = this.playerColor,
                 moveSide = this.moveSide
@@ -101,7 +107,7 @@ namespace ME.Example.Game {
 
         public virtual void AddUnitButtonClick() {
 
-            this.world.AddMarker(new CreateUnitMarker() {
+            this.world.AddMarker(new ME.Example.Game.Components.UI.UIAddUnit() {
                 color = this.playerColor,
                 count = this.spawnUnitsCount,
                 viewSourceId = this.unitViewSourceId,

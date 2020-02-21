@@ -66,16 +66,18 @@ namespace ME.ECS {
 
     }
 
+    public abstract class Feature<TState> : Feature<TState, ConstructParameters> where TState : class, IState<TState> { }
+
     public abstract class Feature<TState, TConstructParameters> : IFeature<TState, TConstructParameters> where TState : class, IState<TState> where TConstructParameters : IConstructParameters {
 
         public IWorld<TState> world { get; set; }
 
-        protected abstract void OnConstruct(TConstructParameters parameters);
+        protected abstract void OnConstruct(ref TConstructParameters parameters);
         protected abstract void OnDeconstruct();
         
-        void IFeature<TState, TConstructParameters>.OnConstruct(TConstructParameters parameters) {
+        void IFeature<TState, TConstructParameters>.OnConstruct(ref TConstructParameters parameters) {
             
-            this.OnConstruct(parameters);
+            this.OnConstruct(ref parameters);
             
         }
 

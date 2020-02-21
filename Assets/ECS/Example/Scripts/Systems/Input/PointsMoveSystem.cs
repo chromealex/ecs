@@ -9,14 +9,6 @@ namespace ME.Example.Game.Systems {
     using ME.Example.Game.Components;
     using ME.Example.Game.Entities;
 
-    public struct PointMoveMarker : IMarker {
-
-        public int pointId;
-        public Color color;
-        public float moveSide;
-
-    }
-    
     public class PointsMoveSystem : ISystem<State> {
 
         public Entity p1;
@@ -46,7 +38,7 @@ namespace ME.Example.Game.Systems {
 
         void ISystem<State>.Update(State state, float deltaTime) {
 
-            PointMoveMarker marker;
+            ME.Example.Game.Components.UI.UIMove marker;
             if (this.world.GetMarker(out marker) == true) {
                 
                 this.AddEventUIButtonClick(marker.pointId == 1 ? this.p1 : this.p2, marker.color, marker.moveSide);

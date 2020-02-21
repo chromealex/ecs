@@ -9,15 +9,6 @@ namespace ME.Example.Game.Systems {
     using ME.Example.Game.Components;
     using ME.Example.Game.Entities;
 
-    public struct CreateUnitMarker : IMarker {
-
-        public int count;
-        public Color color;
-        public ViewId viewSourceId;
-        public ViewId viewSourceId2;
-
-    }
-
     public class InputSystem : ISystem<State> {
 
         public Entity p1;
@@ -45,7 +36,7 @@ namespace ME.Example.Game.Systems {
 
         void ISystem<State>.Update(State state, float deltaTime) {
             
-            CreateUnitMarker marker;
+            ME.Example.Game.Components.UI.UIAddUnit marker;
             if (this.world.GetMarker(out marker) == true) {
                 
                 this.AddUnitButtonClick(marker.color, marker.count, marker.viewSourceId, marker.viewSourceId2);

@@ -10,7 +10,7 @@ namespace ME.ECS {
 
         IWorld<TState> world { get; set; }
 
-        void OnConstruct(TConstructParameters parameters);
+        void OnConstruct(ref TConstructParameters parameters);
         
     }
 

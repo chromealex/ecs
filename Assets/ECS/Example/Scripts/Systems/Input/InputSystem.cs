@@ -9,19 +9,26 @@ namespace ME.Example.Game.Systems {
     using ME.Example.Game.Components;
     using ME.Example.Game.Entities;
 
+    public struct CreateUnitMarker : IMarker {
+
+        public int count;
+        public Color color;
+        public ViewId viewSourceId;
+        public ViewId viewSourceId2;
+
+    }
+
     public class InputSystem : ISystem<State> {
 
         public Entity p1;
         public Entity p2;
         
         public IWorld<State> world { get; set; }
-        private RPCId testEventCallId;
         private RPCId createUnitCallId;
 
         void ISystemBase.OnConstruct() {
 
             var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
-            this.testEventCallId = network.RegisterRPC(new System.Action<Entity, Color, float>(this.TestEvent_RPC).Method);
             this.createUnitCallId = network.RegisterRPC(new System.Action<Color, int, ViewId, ViewId>(this.CreateUnit_RPC).Method);
             network.RegisterObject(this, 1);
 
@@ -31,45 +38,19 @@ namespace ME.Example.Game.Systems {
 
             var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
             network.UnRegisterObject(this, 1);
-            network.UnRegisterRPC(this.testEventCallId);
 
         }
 
         void ISystem<State>.AdvanceTick(State state, float deltaTime) {}
 
-        private ulong savedTick;
-
         void ISystem<State>.Update(State state, float deltaTime) {
-
-            if (Input.GetKey(KeyCode.F) == true) {
-
-                var networkModule = this.world.GetModule<NetworkModule>();
-                networkModule.RPC(this, this.testEventCallId, 1, Color.white);
-
-            }
-
-            if (this.world.id == 1) {
-
-                if (Input.GetKeyDown(KeyCode.S) == true) {
-
-                    this.savedTick = this.world.GetCurrentTick();
-
-                }
-
-                if (Input.GetKeyDown(KeyCode.R) == true) {
-
-                    this.world.Simulate(this.savedTick);
-
-                }
-
-            }
             
-        }
-
-        public void AddEventUIButtonClick(Entity point, Color color, float moveSide) {
-
-            var networkModule = this.world.GetModule<NetworkModule>();
-            networkModule.RPC(this, this.testEventCallId, point, color, moveSide);
+            CreateUnitMarker marker;
+            if (this.world.GetMarker(out marker) == true) {
+                
+                this.AddUnitButtonClick(marker.color, marker.count, marker.viewSourceId, marker.viewSourceId2);
+                
+            }
 
         }
 
@@ -108,16 +89,6 @@ namespace ME.Example.Game.Systems {
             
             this.world.UpdateStorages<Unit>();
             
-        }
-
-        private void TestEvent_RPC(Entity point, Color color, float moveSide) {
-
-            var componentColor = this.world.AddComponent<Point, PointSetColor>(point);
-            componentColor.color = color;
-
-            var componentPos = this.world.AddComponent<Point, PointAddPositionDelta>(point);
-            componentPos.positionDelta = Vector3.left * moveSide;
-
         }
 
     }

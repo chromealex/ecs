@@ -230,17 +230,10 @@ namespace ME.ECS.Collections {
             if (this.arr != null) PoolArray<T>.Recycle(ref this.arr);
             this.arr = PoolArray<T>.Spawn(other.arr.Length);
             System.Array.Copy(other.arr, this.arr, other.arr.Length);
-            {
-                this.free.Clear();
-                var ienum = other.free.GetEnumerator();
-                while (ienum.MoveNext() == true) {
-
-                    this.free.Enqueue(ienum.Current);
-
-                }
-
-                ienum.Dispose();
-            }
+            
+            if (this.free != null) PoolCopyableQueue<int>.Recycle(ref this.free);
+            this.free = PoolCopyableQueue<int>.Spawn(other.free.capacity);
+            this.free.CopyFrom(other.free);
             
             this.size = other.size;
             this.capacity = other.capacity;

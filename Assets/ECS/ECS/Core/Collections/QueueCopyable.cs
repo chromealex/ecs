@@ -17,7 +17,7 @@ namespace ME.ECS.Collections {
         private int tail; // Last valid element in the queue
         private int size; // Number of elements.
         private int version;
-        private int capacity;
+        public int capacity;
 
         private const int MINIMUM_GROW = 4;
         private const int SHRINK_THRESHOLD = 32;
@@ -27,16 +27,9 @@ namespace ME.ECS.Collections {
 
         public void CopyFrom(QueueCopyable<T> other) {
 
-            if (this.array != null) {
-                PoolArray<T>.Recycle(ref this.array);
-            }
-
+            if (this.array != null) PoolArray<T>.Recycle(ref this.array);
             this.array = PoolArray<T>.Spawn(other.array.Length);
-            for (var i = 0; i < this.array.Length; ++i) {
-
-                this.array[i] = other.array[i];
-
-            }
+            System.Array.Copy(other.array, this.array, other.array.Length);
 
             this.head = other.head;
             this.tail = other.tail;
@@ -69,6 +62,7 @@ namespace ME.ECS.Collections {
             this.head = 0;
             this.tail = 0;
             this.size = 0;
+            
         }
 
         public int Count {

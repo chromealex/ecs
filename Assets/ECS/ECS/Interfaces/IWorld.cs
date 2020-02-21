@@ -15,6 +15,8 @@ namespace ME.ECS {
 
         EntityId GetLastEntityId();
         
+        void SetFeatureState(IFeatureBase feature, ModuleState state);
+        ModuleState GetFeatureState(IFeatureBase feature);
         void SetSystemState(ISystemBase system, ModuleState state);
         ModuleState GetSystemState(ISystemBase system);
         void SetModuleState(IModuleBase module, ModuleState state);
@@ -81,6 +83,12 @@ namespace ME.ECS {
         bool AddModule<TModule>() where TModule : class, IModule<TState>, new();
         void RemoveModules<TModule>() where TModule : class, IModule<TState>, new();
 
+        bool HasFeature<TFeature>() where TFeature : class, IFeatureBase, new();
+        bool AddFeature<TFeature, TConstructParameters>(TConstructParameters parameters) where TFeature : class, IFeature<TState, TConstructParameters>, new() where TConstructParameters : IConstructParameters;
+        bool AddFeature<TConstructParameters>(IFeature<TState, TConstructParameters> instance, TConstructParameters parameters) where TConstructParameters : IConstructParameters;
+        void RemoveFeature(IFeatureBase instance);
+        
+        bool HasSystem<TSystem>() where TSystem : class, ISystem<TState>, new();
         TSystem GetSystem<TSystem>() where TSystem : ISystemBase;
         bool AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new();
         bool AddSystem(ISystem<TState> instance);

@@ -44,28 +44,36 @@ namespace ME.Example.Game.Systems {
         void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 
             this.world.Checkpoint("Update Units");
-            //for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
-            foreach (var index in state.units) {
+            for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
+            //foreach (var index in state.units) {
                 
-                //if (state.units.IsFree(index) == true) continue;
+                if (state.units.IsFree(index) == true) continue;
                 
                 ref var data = ref state.units[index];
                 this.world.RunComponents(ref data, deltaTime, index);
                 
-                if (this.unitsFilter3.Contains(data) == true) {
+                //if (this.unitsFilter3.Contains(data) == true) {
+                Point toData;
+                if (Worlds<State>.currentWorld.GetEntityData(data.pointTo, out toData) == true) {
+
+                    if ((toData.position - data.position).sqrMagnitude <= 0.01f) {
+                        
+                        var from = data.pointFrom;
+                        var to = data.pointTo;
+                        data.pointTo = from;
+                        data.pointFrom = to;
+                        this.world.RemoveComponents<UnitFollowFromTo>(data.entity);
+                        var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
+                        comp.@from = data.pointFrom;
+                        comp.to = data.pointTo;
                     
-                    var from = data.pointFrom;
-                    var to = data.pointTo;
-                    data.pointTo = from;
-                    data.pointFrom = to;
-                    this.world.RemoveComponents<UnitFollowFromTo>(data.entity);
-                    var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
-                    comp.@from = data.pointFrom;
-                    comp.to = data.pointTo;
-                    
-                    --data.lifes;
-                    
+                        --data.lifes;
+
+                    }
+
                 }
+
+                //}
 
                 this.world.UpdateFilters(data);
 
@@ -73,10 +81,10 @@ namespace ME.Example.Game.Systems {
             this.world.Checkpoint("Update Units");
 
             this.world.Checkpoint("Remove Units");
-            //for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
-            foreach (var index in state.units) {
+            for (int index = state.units.ToIndex - 1; index >= state.units.FromIndex; --index) {
+            //foreach (var index in state.units) {
 
-                //if (state.units.IsFree(index) == true) continue;
+                if (state.units.IsFree(index) == true) continue;
 
                 if (state.units[index].lifes <= 0) {
 

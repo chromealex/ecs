@@ -539,7 +539,7 @@ namespace ME.ECSEditor {
                 this.timer += deltaTime;
                 if (this.timer >= 1f) {
 
-                    this.timer -= 1f;
+                    this.timer = 0f;
 
                 }
 

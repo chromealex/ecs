@@ -257,12 +257,16 @@ namespace ME.ECS.Network {
                 if (item.Key == obj) {
 
                     var keyData = item.Value;
-                    var key = MathUtils.GetKey(keyData.groupId, keyData.objId);
-                    var found = this.keyToObjects.Remove(key);
-                    if (found == true) {
+                    if (objId == keyData.objId) {
 
-                        this.objectToKey.Remove(obj);
-                        return true;
+                        var key = MathUtils.GetKey(keyData.groupId, keyData.objId);
+                        var found = this.keyToObjects.Remove(key);
+                        if (found == true) {
+
+                            this.objectToKey.Remove(obj);
+                            return true;
+
+                        }
 
                     }
 

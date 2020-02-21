@@ -126,56 +126,56 @@ namespace ME.ECSEditor {
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Module", priority = ScriptTemplates.CREATE_MODULE_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Module", priority = ScriptTemplates.CREATE_MODULE_PRIORITY)]
         public static void CreateModuleClass() {
 
             ScriptTemplates.Create("New Module.cs", "01-ModuleTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create System", priority = ScriptTemplates.CREATE_SYSTEM_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/System", priority = ScriptTemplates.CREATE_SYSTEM_PRIORITY)]
         public static void CreateSystemClass() {
 
             ScriptTemplates.Create("New System.cs", "11-SystemTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Entity", priority = ScriptTemplates.CREATE_ENTITY_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Entity", priority = ScriptTemplates.CREATE_ENTITY_PRIORITY)]
         public static void CreateEntity() {
 
             ScriptTemplates.Create("New Entity.cs", "21-EntityTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Component", priority = ScriptTemplates.CREATE_COMPONENT_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component", priority = ScriptTemplates.CREATE_COMPONENT_PRIORITY)]
         public static void CreateComponent() {
 
             ScriptTemplates.Create("New Component.cs", "31-ComponentTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Component (Once)", priority = ScriptTemplates.CREATE_COMPONENT_ONCE_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component (Once)", priority = ScriptTemplates.CREATE_COMPONENT_ONCE_PRIORITY)]
         public static void CreateComponentOnce() {
 
             ScriptTemplates.Create("New Component.cs", "41-ComponentOnceTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Shared Component", priority = ScriptTemplates.CREATE_COMPONENT_SHARED_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Shared Component", priority = ScriptTemplates.CREATE_COMPONENT_SHARED_PRIORITY)]
         public static void CreateComponentShared() {
 
             ScriptTemplates.Create("New Shared Component.cs", "32-ComponentSharedTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Shared Component (Once)", priority = ScriptTemplates.CREATE_COMPONENT_SHARED_ONCE_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Shared Component (Once)", priority = ScriptTemplates.CREATE_COMPONENT_SHARED_ONCE_PRIORITY)]
         public static void CreateComponentSharedOnce() {
 
             ScriptTemplates.Create("New Shared Component.cs", "42-ComponentOnceSharedTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Create Marker", priority = ScriptTemplates.CREATE_MARKER_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Marker", priority = ScriptTemplates.CREATE_MARKER_PRIORITY)]
         public static void CreateMarker() {
 
             ScriptTemplates.Create("New Marker.cs", "51-MarkerTemplate");

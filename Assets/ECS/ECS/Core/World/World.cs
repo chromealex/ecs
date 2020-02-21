@@ -77,13 +77,13 @@ namespace ME.ECS {
     #endif
     public partial class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
+        private const int FEATURES_CAPACITY = 100;
         private const int SYSTEMS_CAPACITY = 100;
         private const int MODULES_CAPACITY = 100;
         internal const int ENTITIES_CACHE_CAPACITY = 1000;
         private const int STORAGES_CAPACITY = 100;
         private const int CAPACITIES_CAPACITY = 100;
-        private const int ENTITIES_DIRECT_CACHE_CAPACITY = 1000;
-
+        
         private static class EntitiesDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
 
             internal static Dictionary<int, RefList<TEntity>> entitiesList = new Dictionary<int, RefList<TEntity>>(4);
@@ -108,10 +108,12 @@ namespace ME.ECS {
         private TState resetState;
         private TState currentState;
         private WorldStep currentStep;
+        private List<IFeatureBase> features;
         private List<ISystem<TState>> systems;
         private List<IModule<TState>> modules;
         private Dictionary<int, int> capacityCache;
 
+        private List<ModuleState> statesFeatures;
         private List<ModuleState> statesSystems;
         private List<ModuleState> statesModules;
 
@@ -134,8 +136,10 @@ namespace ME.ECS {
 
         void IPoolableSpawn.OnSpawn() {
 
+            this.features = PoolList<IFeatureBase>.Spawn(World<TState>.FEATURES_CAPACITY);
             this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
+            this.statesFeatures = PoolList<ModuleState>.Spawn(World<TState>.FEATURES_CAPACITY);
             this.statesSystems = PoolList<ModuleState>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
             this.storagesCache = PoolDictionary<int, IList>.Spawn(World<TState>.STORAGES_CAPACITY);
@@ -156,6 +160,14 @@ namespace ME.ECS {
             WorldUtilities.ReleaseState(ref this.resetState);
             WorldUtilities.ReleaseState(ref this.currentState);
 
+            for (int i = 0; i < this.features.Count; ++i) {
+                
+                this.features[i].OnDeconstruct();
+                PoolFeatures.Recycle(this.features[i]);
+
+            }
+            PoolList<IFeatureBase>.Recycle(ref this.features);
+
             for (int i = 0; i < this.systems.Count; ++i) {
                 
                 this.systems[i].OnDeconstruct();
@@ -174,6 +186,7 @@ namespace ME.ECS {
             
             PoolList<ModuleState>.Recycle(ref this.statesModules);
             PoolList<ModuleState>.Recycle(ref this.statesSystems);
+            PoolList<ModuleState>.Recycle(ref this.statesFeatures);
             
             PoolDictionary<int, IList>.Recycle(ref this.storagesCache);
             PoolDictionary<int, int>.Recycle(ref this.capacityCache);
@@ -198,6 +211,30 @@ namespace ME.ECS {
         public EntityId GetLastEntityId() {
 
             return this.GetState().entityId;
+
+        }
+
+        public void SetFeatureState(IFeatureBase feature, ModuleState state) {
+            
+            var index = this.features.IndexOf(feature);
+            if (index >= 0) {
+
+                this.statesFeatures[index] = state;
+
+            }
+            
+        }
+        
+        public ModuleState GetFeatureState(IFeatureBase feature) {
+
+            var index = this.features.IndexOf(feature);
+            if (index >= 0) {
+
+                return this.statesFeatures[index];
+
+            }
+
+            return ModuleState.AllActive;
 
         }
 
@@ -966,6 +1003,100 @@ namespace ME.ECS {
 
         }
         
+        public bool HasFeature<TFeature>() where TFeature : class, IFeatureBase, new() {
+
+            for (int i = 0, count = this.features.Count; i < count; ++i) {
+
+                if (this.features[i] is TFeature) return true;
+
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Add feature by type
+        /// Retrieve feature from pool, OnConstruct() call
+        /// </summary>
+        /// <typeparam name="TFeature"></typeparam>
+        /// <typeparam name="TConstructParameters"></typeparam>
+        public bool AddFeature<TFeature, TConstructParameters>(TConstructParameters parameters) where TFeature : class, IFeature<TState, TConstructParameters>, new() where TConstructParameters : IConstructParameters {
+
+            var instance = PoolFeatures.Spawn<TFeature>();
+            if (this.AddFeature(instance, parameters) == false) {
+
+                instance.world = null;
+                PoolFeatures.Recycle(ref instance);
+                return false;
+
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Add feature manually
+        /// Pool will not be used, OnConstruct() call
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="parameters"></param>
+        public bool AddFeature<TConstructParameters>(IFeature<TState, TConstructParameters> instance, TConstructParameters parameters) where TConstructParameters : IConstructParameters {
+
+            WorldUtilities.SetWorld(this);
+            
+            instance.world = this;
+            if (instance is IFeatureValidation instanceValidate) {
+
+                if (instanceValidate.CouldBeAdded() == false) {
+                    
+                    instance.world = null;
+                    return false;
+                    
+                }
+
+            }
+            
+            this.features.Add(instance);
+            this.statesFeatures.Add(ModuleState.AllActive);
+            instance.OnConstruct(parameters);
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Remove feature manually
+        /// Pool will not be used, OnDeconstruct() call
+        /// </summary>
+        /// <param name="instance"></param>
+        public void RemoveFeature(IFeatureBase instance) {
+
+            var idx = this.features.IndexOf(instance);
+            if (idx >= 0) {
+                
+                this.features.RemoveAt(idx);
+                this.statesFeatures.RemoveAt(idx);
+                instance.OnDeconstruct();
+                
+            }
+            
+        }
+
+
+        public bool HasSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
+
+            for (int i = 0, count = this.systems.Count; i < count; ++i) {
+
+                if (this.systems[i] is TSystem) return true;
+
+            }
+
+            return false;
+
+        }
+
         /// <summary>
         /// Add system by type
         /// Retrieve system from pool, OnConstruct() call

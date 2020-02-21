@@ -1,4 +1,4 @@
-namespace ME.ECS {
+namespace ME.ECS.Collections {
 
     public interface IEntitiesList {
 

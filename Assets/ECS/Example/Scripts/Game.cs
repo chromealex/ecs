@@ -7,6 +7,7 @@ using ME.ECS.Views.Providers;
 
 namespace ME.Example.Game {
     
+    using ME.Example.Game.Features;
     using ME.Example.Game.Modules;
     using ME.Example.Game.Systems;
     using ME.Example.Game.Entities;
@@ -52,6 +53,7 @@ namespace ME.Example.Game {
                 }
 
                 this.world.SetState(WorldUtilities.CreateState<State>());
+                this.world.GetState().worldPosition = this.transform.position;
                 
                 this.RegisterViewSources();
 
@@ -61,7 +63,7 @@ namespace ME.Example.Game {
                 this.world.InstantiateView<Point>(this.pointViewSourceId, p1);
                 this.world.InstantiateView<Point>(this.pointViewSourceId, p2);
 
-                this.world.AddSystem(new InputSystem() { p1 = p1, p2 = p2 });
+                this.world.AddFeature<InputFeature, ConstructParameters<Entity, Entity>>(new ConstructParameters<Entity, Entity>(p1, p2));
                 this.world.AddSystem<PointsSystem>();
                 this.world.AddSystem<UnitsSystem>();
                 this.world.SaveResetState();
@@ -89,16 +91,23 @@ namespace ME.Example.Game {
 
         public virtual void AddEventUIButtonClick(int pointId) {
 
-            var input = this.world.GetSystem<InputSystem>();
-            input.AddEventUIButtonClick(pointId == 1 ? input.p1 : input.p2, this.playerColor, this.moveSide);
-
+            this.world.AddMarker(new PointMoveMarker() {
+                pointId = pointId,
+                color = this.playerColor,
+                moveSide = this.moveSide
+            });
+            
         }
 
         public virtual void AddUnitButtonClick() {
-            
-            var input = this.world.GetSystem<InputSystem>();
-            input.AddUnitButtonClick(this.playerColor, this.spawnUnitsCount, this.unitViewSourceId, this.unitViewSourceId2);
-            
+
+            this.world.AddMarker(new CreateUnitMarker() {
+                color = this.playerColor,
+                count = this.spawnUnitsCount,
+                viewSourceId = this.unitViewSourceId,
+                viewSourceId2 = this.unitViewSourceId2,
+            });
+
         }
 
     }

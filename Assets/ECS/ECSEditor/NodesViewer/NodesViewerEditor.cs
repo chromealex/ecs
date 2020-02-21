@@ -323,18 +323,6 @@ namespace ME.ECSEditor {
                         var checkpoints = this.checkpointCollector.GetCheckpointsBetween(this.prevCheckpoint, node.checkpoint);
                         if (checkpoints.Count > 0) {
 
-                            /*var graph = new Graph(this.checkpointCollector);
-                            graph.vertical = true;
-                            graph.worldGraph = this.worldGraph;
-                            var prevNode = node;
-                            foreach (var chk in checkpoints) {
-
-                                prevNode = graph.AddNode(prevNode, new CustomUserNode(null), chk.obj, chk.step);
-
-                            }
-
-                            node.data = graph;*/
-                            
                             var nextConnection = node.connections[0];
                             if ((nextConnection is CustomUserNode) == false) {
                                 
@@ -343,6 +331,8 @@ namespace ME.ECSEditor {
                                 var prevNode = node;
                                 foreach (var chk in checkpoints) {
 
+                                    if (chk.obj is ISystemBase) continue;
+                                    
                                     prevNode = this.AddNode(prevNode, new CustomUserNode(chk.obj), chk.obj, chk.step);
 
                                 }

@@ -36,7 +36,6 @@ namespace ME.Example.Game {
         public int spawnUnitsCount = 10;
 
         public World<State> world;
-        private IState<State> savedState;
 
         public PointsFeatureInitParameters pointsFeatureInitParameters = new PointsFeatureInitParameters() { p1Position = new Vector3(0f, 0f, 3f), p2Position = new Vector3(0f, 0f, -3f) };
 

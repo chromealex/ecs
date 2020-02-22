@@ -1,0 +1,78 @@
+﻿using EntityId = System.Int32;
+using Tick = System.UInt64;
+using RandomState = UnityEngine.Random.State;
+
+namespace #NAMESPACE# {
+
+    using ME.ECS;
+    
+    public class #STATENAME# : IState<#STATENAME#> {
+
+        public EntityId entityId { get; set; }
+        public Tick tick { get; set; }
+        public RandomState randomState { get; set; }
+
+        public FiltersStorage filters;
+        
+        // TODO: Place your custom data here
+        
+        public Storage<SharedEntity> shared;
+        // TODO: Place your storages here
+
+        public Components<SharedEntity, #STATENAME#> sharedComponents;
+        // TODO: Place your components here
+        
+        int IStateBase.GetHash() {
+
+            // TODO: Return most unique hash here
+            return this.sharedComponents.Count;
+
+        }
+
+        void IState<#STATENAME#>.Initialize(IWorld<#STATENAME#> world, bool freeze, bool restore) {
+
+            world.Register(ref this.filters, freeze, restore);
+            
+            world.Register(ref this.shared, freeze, restore);
+            // TODO: Register your storages here
+            
+            world.Register(ref this.sharedComponents, freeze, restore);
+            // TODO: Register your components here
+            
+        }
+
+        void IState<#STATENAME#>.CopyFrom(#STATENAME# other) {
+
+            this.entityId = other.entityId;
+            this.tick = other.tick;
+            this.randomState = other.randomState;
+
+            // TODO: Copy your custom data here
+
+            this.filters.CopyFrom(other.filters);
+            
+            this.shared.CopyFrom(other.shared);
+            // TODO: Call CopyFrom on your storages
+
+            this.sharedComponents.CopyFrom(other.sharedComponents);
+            // TODO: Call CopyFrom on your components
+
+        }
+
+        void IPoolableRecycle.OnRecycle() {
+            
+            WorldUtilities.Release(ref this.filters);
+            
+            // TODO: Release your custom data here
+            
+            WorldUtilities.Release(ref this.shared);
+            // TODO: Call WorldUtilities.Release on your storages
+
+            WorldUtilities.Release(ref this.sharedComponents);
+            // TODO: Call WorldUtilities.Release on your components
+
+        }
+
+    }
+
+}

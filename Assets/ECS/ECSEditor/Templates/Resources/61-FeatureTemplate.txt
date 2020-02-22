@@ -1,0 +1,19 @@
+﻿using ME.ECS;
+
+namespace #NAMESPACE# {
+    
+    using TState = #STATENAME#;
+    
+    public class #SCRIPTNAME# : Feature<TState> {
+
+        protected override void OnConstruct(ref ConstructParameters parameters) {
+            
+        }
+
+        protected override void OnDeconstruct() {
+            
+        }
+
+    }
+
+}

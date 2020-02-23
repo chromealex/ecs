@@ -8,7 +8,10 @@ namespace ME.ECS {
     public interface IStorage : IPoolableRecycle {
 
         int Count { get; }
+        int FromIndex { get; }
+        int ToIndex { get; }
         IRefList GetData();
+        bool IsFree(int index);
 
     }
     

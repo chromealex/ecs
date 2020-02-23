@@ -248,16 +248,19 @@ namespace ME.ECS.Collections {
                     return false;
                 }
 
-                this.index++;
+                ++this.index;
 
                 if (this.index == this._q.size) {
+                    
                     this.index = -2;
-                    this.currentElement = default(T);
+                    this.currentElement = default;
                     return false;
+                    
                 }
 
                 this.currentElement = this._q.GetElement(this.index);
                 return true;
+                
             }
 
             public T Current {

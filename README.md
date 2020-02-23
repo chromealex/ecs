@@ -7,7 +7,10 @@ In general ME.ECS should be used for multiplayer real-time strategy games games 
 ### Demo
 
 [![](https://img.youtube.com/vi/360PyjjjZTE/0.jpg)](https://www.youtube.com/watch?v=360PyjjjZTE)
+(Click image to play)
 
+### Tutorial 01: Initialization
+[![](https://img.youtube.com/vi/qRQ2E8pv7Dk/0.jpg)](https://www.youtube.com/watch?v=qRQ2E8pv7Dk)
 (Click image to play)
 
 ## Default Modules

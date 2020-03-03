@@ -1,0 +1,16 @@
+{
+    "name": "Warcraft",
+    "references": [
+        "GUID:8979e5b9ed38b420d8191f6eb2c94074",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:efa45043feb7e4147a305b73b5cea642"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

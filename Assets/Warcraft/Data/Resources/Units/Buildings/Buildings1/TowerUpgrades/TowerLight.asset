@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 664ac9a9132534e85a854666a5fd72e7, type: 3}
+  m_Name: TowerLight
+  m_EditorClassIdentifier: 
+  unitTypeId: 52
+  viewSource: {fileID: 1820512939237373680, guid: c03a8c440bf734ea5865e4240024e5c9,
+    type: 3}
+  icon: {fileID: -7869515734063598108, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  actions: {fileID: 0}
+  buildingTime: 5
+  walkable: 0
+  hasEntrancePoint: 0
+  entrancePoint: {x: 0, y: 0}

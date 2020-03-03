@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "com.unity.2d.sprite": "1.0.0",
+    "com.unity.2d.tilemap": "1.0.0",
+    "com.unity.2d.tilemap.extras": "https://github.com/Unity-Technologies/2d-extras.git#master",
     "com.unity.burst": "1.1.2",
     "com.unity.collections": "0.1.1-preview",
     "com.unity.ext.nunit": "1.0.0",
@@ -41,5 +44,11 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
+  },
+  "lock": {
+    "com.unity.2d.tilemap.extras": {
+      "hash": "ea401cd05132f72a4e768fcc18288bc3671e1fd0",
+      "revision": "master"
+    }
   }
 }

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd8683aff7ec5450fb8cb8c0db5c2887, type: 3}
+  m_Name: TestMap
+  m_EditorClassIdentifier: 
+  forestTile: {fileID: 11400000, guid: 0b1f1c1ea58754cccaaf1825f40debe0, type: 2}
+  forestFelledTile: {fileID: 11400000, guid: f51e9bf3be7fa481e979f44bb432be2d, type: 2}
+  mapSize: {x: 66, y: 26}
+  mapGrid: {fileID: -752116106198529332, guid: fddc90aad415f4eb289c5f443e7d1517, type: 3}
+  playersData:
+  - playerIndex: 0
+  - playerIndex: 1
+  - playerIndex: 2

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6bd23f95d43e41cc9008595887b58fd, type: 3}
+  m_Name: Archer
+  m_EditorClassIdentifier: 
+  unitTypeId: 10002
+  viewSource: {fileID: 4810092360561578503, guid: 2fa1c2ad0816b42d7b255a6bc36575b9,
+    type: 3}
+  icon: {fileID: 7246090447554825513, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  actions: {fileID: 0}
+  buildingTime: 10
+  walkable: 1
+  hasEntrancePoint: 0
+  entrancePoint: {x: 0, y: 0}
+  movementSpeed: 0.5

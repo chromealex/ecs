@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebe1f00623504ad3a6c1a1a95c01a309, type: 3}
+  m_Name: GoldMine
+  m_EditorClassIdentifier: 
+  unitTypeId: 1000
+  viewSource: {fileID: 3154739707516078254, guid: c52528247c4fb48609b3a0303bd08cff,
+    type: 3}
+  icon: {fileID: -1581339107750589905, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  actions: {fileID: 0}
+  walkable: 0
+  entrancePoint: {x: 0, y: 0}

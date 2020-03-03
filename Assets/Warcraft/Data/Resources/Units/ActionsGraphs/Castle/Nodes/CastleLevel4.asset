@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba06d5af22254b829b1e2d6ab41a1dc, type: 3}
+  m_Name: CastleLevel4
+  m_EditorClassIdentifier: 
+  next: []
+  requiredToOpen: []
+  icon: {fileID: 0}
+  cost:
+    gold: 50
+    wood: 50
+  isUpgrade: 1
+  building: {fileID: 11400000, guid: b0c0d274975c544d7b5c246b9a7677f7, type: 2}

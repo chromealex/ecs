@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e650e993fd39d43b3acb8443c2a79249, type: 3}
+  m_Name: Castle2Lvl
+  m_EditorClassIdentifier: 
+  unitTypeId: 12
+  viewSource: {fileID: 1820512939237373680, guid: fc4bc7e60c4a347e3ab43af7b623abb1,
+    type: 3}
+  icon: {fileID: -3486167937274899560, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  actions: {fileID: 11400000, guid: 1613172b57101462b9ff6e5b8516e911, type: 2}
+  buildingTime: 10
+  walkable: 0
+  hasEntrancePoint: 1
+  entrancePoint: {x: 2, y: 0}

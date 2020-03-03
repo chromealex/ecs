@@ -9,17 +9,28 @@ namespace ME.ECSEditor {
     public static class ScriptTemplates {
 
         public const int CREATE_MENU_PRIORITY = 90;
-        private const int CREATE_PROJECT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 0;
-        private const int CREATE_MODULE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 1;
-        private const int CREATE_SYSTEM_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 2;
-        private const int CREATE_ENTITY_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 3;
-        private const int CREATE_COMPONENT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 4;
-        private const int CREATE_COMPONENT_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 5;
-        private const int CREATE_COMPONENT_SHARED_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 6;
-        private const int CREATE_COMPONENT_SHARED_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 7;
-        private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 8;
-        private const int CREATE_FEATURE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 9;
+        
+        private const int CREATE_PROJECT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 100;
+        
+        private const int CREATE_FEATURE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 11;
+        private const int CREATE_SYSTEM_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 12;
+        private const int CREATE_MODULE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 13;
+        private const int CREATE_ENTITY_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 14;
+        private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 15;
+        
+        private const int CREATE_COMPONENT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 40;
+        private const int CREATE_COMPONENT_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 41;
+        private const int CREATE_COMPONENT_SHARED_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 42;
+        private const int CREATE_COMPONENT_SHARED_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 43;
+        
+        private const int CREATE_COPYABLE_COMPONENT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 44 + 10;
+        private const int CREATE_COPYABLE_COMPONENT_SHARED_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 45 + 10;
 
+        private const int CREATE_RUNNABLE_COMPONENT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 46 + 20;
+        private const int CREATE_RUNNABLE_COMPONENT_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 47 + 20;
+        private const int CREATE_RUNNABLE_COMPONENT_SHARED_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 48 + 20;
+        private const int CREATE_RUNNABLE_COMPONENT_SHARED_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 49 + 20;
+        
         internal class DoCreateScriptAsset : EndNameEditAction {
 
             private static UnityEngine.Object CreateScriptAssetFromTemplate(string pathName, string resourceFile) {
@@ -149,6 +160,13 @@ namespace ME.ECSEditor {
             } else {
 
                 var fullDir = path + "/" + fileName;
+                if (System.IO.File.Exists(fullDir) == true) {
+
+                    var contentExists = System.IO.File.ReadAllText(fullDir);
+                    if (contentExists == content) return;
+
+                }
+
                 System.IO.File.WriteAllText(fullDir, content);
                 AssetDatabase.ImportAsset(fullDir);
                 
@@ -255,6 +273,9 @@ MonoBehaviour:
             ScriptTemplates.Create(path, "Modules/FPSModule.cs", "00-FPSModuleTemplate", defines, allowRename: false);
             ScriptTemplates.Create(path, "Modules/NetworkModule.cs", "00-NetworkModuleTemplate", defines, allowRename: false);
             ScriptTemplates.Create(path, "Modules/StatesHistoryModule.cs", "00-StatesHistoryModuleTemplate", defines, allowRename: false);
+            
+            ScriptTemplates.Create(path, "csc.rsp", "00-csc.rsp", defines, allowRename: false);
+            ScriptTemplates.Create(path, projectName + ".asmdef", "00-asmdef", defines, allowRename: false);
 
             var guid = AssetDatabase.AssetPathToGUID(path + "/" + projectName + "Initializer.cs");
             if (string.IsNullOrEmpty(guid) == false) ScriptTemplates.CreatePrefab(path, projectName + "Initializer", guid);
@@ -279,6 +300,20 @@ MonoBehaviour:
         public static void CreateEntity() {
 
             ScriptTemplates.Create("New Entity.cs", "21-EntityTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Marker", priority = ScriptTemplates.CREATE_MARKER_PRIORITY)]
+        public static void CreateMarker() {
+
+            ScriptTemplates.Create("New Marker.cs", "51-MarkerTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Feature", priority = ScriptTemplates.CREATE_FEATURE_PRIORITY)]
+        public static void CreateFeature() {
+
+            ScriptTemplates.Create("New Feature.cs", "61-FeatureTemplate");
 
         }
 
@@ -310,17 +345,45 @@ MonoBehaviour:
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Marker", priority = ScriptTemplates.CREATE_MARKER_PRIORITY)]
-        public static void CreateMarker() {
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component Runnable", priority = ScriptTemplates.CREATE_RUNNABLE_COMPONENT_PRIORITY)]
+        public static void CreateComponentRunnable() {
 
-            ScriptTemplates.Create("New Marker.cs", "51-MarkerTemplate");
+            ScriptTemplates.Create("New Runnable Component.cs", "33-RunnableComponentTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Feature", priority = ScriptTemplates.CREATE_FEATURE_PRIORITY)]
-        public static void CreateFeature() {
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component Runnable (Once)", priority = ScriptTemplates.CREATE_RUNNABLE_COMPONENT_ONCE_PRIORITY)]
+        public static void CreateComponentOnceRunnable() {
 
-            ScriptTemplates.Create("New Feature.cs", "61-FeatureTemplate");
+            ScriptTemplates.Create("New Runnable Component.cs", "43-RunnableComponentOnceTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Shared Component Runnable", priority = ScriptTemplates.CREATE_RUNNABLE_COMPONENT_SHARED_PRIORITY)]
+        public static void CreateComponentSharedRunnable() {
+
+            ScriptTemplates.Create("New Shared Runnable Component.cs", "34-RunnableComponentSharedTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Shared Component Runnable (Once)", priority = ScriptTemplates.CREATE_RUNNABLE_COMPONENT_SHARED_ONCE_PRIORITY)]
+        public static void CreateComponentSharedOnceRunnable() {
+
+            ScriptTemplates.Create("New Shared Runnable Component.cs", "44-RunnableComponentOnceSharedTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component Runnable", priority = ScriptTemplates.CREATE_COPYABLE_COMPONENT_PRIORITY)]
+        public static void CreateComponentCopyable() {
+
+            ScriptTemplates.Create("New Copyable Component.cs", "35-ComponentCopyableTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component Runnable (Once)", priority = ScriptTemplates.CREATE_COPYABLE_COMPONENT_SHARED_PRIORITY)]
+        public static void CreateComponentSharedCopyable() {
+
+            ScriptTemplates.Create("New Shared Copyable Component.cs", "36-ComponentSharedCopyableTemplate");
 
         }
 

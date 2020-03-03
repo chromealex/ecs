@@ -61,7 +61,7 @@ namespace ME.ECSEditor {
 
             } else if (fieldInfo.FieldType == typeof(Vector2)) {
 
-                value = EditorGUILayout.Vector3Field(string.Empty, (Vector2)value);
+                value = EditorGUILayout.Vector2Field(string.Empty, (Vector2)value);
 
             } else if (fieldInfo.FieldType == typeof(Vector3)) {
 

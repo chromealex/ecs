@@ -6,7 +6,7 @@ namespace #NAMESPACE# {
     
     public class #SCRIPTNAME# : ISystem<TState> {
         
-        IWorld<TState> ISystem<TState>.world { get; set; }
+        public IWorld<TState> world { get; set; }
         
         void ISystemBase.OnConstruct() {}
         

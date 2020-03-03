@@ -4,7 +4,7 @@ namespace ME.Example.Game.Components {
 
     using ME.Example.Game.Entities;
 
-    public class UnitGravity : IComponent<State, Unit> {
+    public class UnitGravity : IRunnableComponent<State, Unit> {
 
         public float gravity = 9.8f;
 
@@ -21,7 +21,7 @@ namespace ME.Example.Game.Components {
 
         void IPoolableRecycle.OnRecycle() {}
 
-        void IComponent<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
+        void IComponentCopyable<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
 
             var otherUnit = ((UnitGravity)other);
             this.gravity = otherUnit.gravity;

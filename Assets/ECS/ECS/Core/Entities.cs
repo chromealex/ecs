@@ -3,11 +3,25 @@
 namespace ME.ECS {
     
     [System.Serializable]
-    public struct Entity {
+    public struct Entity : System.IEquatable<Entity> {
 
-        public EntityId id;
+        public readonly EntityId id;
         public int storageIdx;
-        public int typeId;
+        public readonly int typeId;
+
+        public static Entity Empty {
+            get {
+                return new Entity(0, 0, 0);
+            }
+        }
+
+        internal Entity(EntityId id, int storageIdx, int typeId) {
+
+            this.id = id;
+            this.storageIdx = storageIdx;
+            this.typeId = typeId;
+
+        }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
@@ -33,12 +47,39 @@ namespace ME.ECS {
                 
             }
 
-            var entity = new Entity();
-            entity.id = id;
-            entity.storageIdx = -1;
-            entity.typeId = WorldUtilities.GetKey<TEntity>();
+            var entity = new Entity(id, -1, WorldUtilities.GetKey<TEntity>());
             return entity;
 
+        }
+        
+        public static bool operator ==(Entity e1, Entity e2) {
+
+            return e1.id == e2.id && e1.storageIdx == e2.storageIdx && e1.typeId == e2.typeId;
+
+        }
+
+        public static bool operator !=(Entity e1, Entity e2) {
+
+            return !(e1 == e2);
+
+        }
+
+        public bool Equals(Entity other) {
+
+            return this == other;
+
+        }
+
+        public override bool Equals(object obj) {
+            
+            throw new AllocationException();
+            
+        }
+
+        public override int GetHashCode() {
+            
+            return this.id ^ this.storageIdx ^ this.typeId;
+            
         }
 
         public override string ToString() {

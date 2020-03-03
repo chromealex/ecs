@@ -4,7 +4,7 @@ namespace ME.Example.Game.Components {
 
     using ME.Example.Game.Entities;
 
-    public class PointIncreaseUnits : IComponent<State, Point> {
+    public class PointIncreaseUnits : IRunnableComponent<State, Point> {
 
         public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
 
@@ -14,11 +14,11 @@ namespace ME.Example.Game.Components {
 
         void IPoolableRecycle.OnRecycle() {}
 
-        void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) { }
+        void IComponentCopyable<State, Point>.CopyFrom(IComponent<State, Point> other) { }
 
     }
 
-    public class PointIncreaseUnitsOnce : IComponentOnce<State, Point> {
+    public class PointIncreaseUnitsOnce : IRunnableComponentOnce<State, Point> {
 
         public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
 
@@ -28,7 +28,7 @@ namespace ME.Example.Game.Components {
 
         void IPoolableRecycle.OnRecycle() {}
 
-        void IComponent<State, Point>.CopyFrom(IComponent<State, Point> other) { }
+        void IComponentCopyable<State, Point>.CopyFrom(IComponent<State, Point> other) { }
 
     }
 

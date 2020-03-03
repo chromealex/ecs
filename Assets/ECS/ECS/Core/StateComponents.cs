@@ -430,15 +430,16 @@ namespace ME.ECS {
                 var newList = PoolHashSet<IComponent<TState, TEntity>>.Spawn(item.Value.Count);
                 //UnityEngine.Debug.Log("CopyState for " + typeof(TEntity) + ", list: " + newList.Count + " << " + item.Value.Count);
                 foreach (var element in item.Value) {
-                    
-                    var comp = (IComponent<TState, TEntity>)PoolComponents.Spawn(element.GetType());
+
+                    var type = element.GetType();
+                    var comp = (IComponent<TState, TEntity>)PoolComponents.Spawn(type);
                     if (comp == null) {
                         
-                        comp = (IComponent<TState, TEntity>)System.Activator.CreateInstance(element.GetType());
+                        comp = (IComponent<TState, TEntity>)System.Activator.CreateInstance(type);
                         PoolInternalBase.CallOnSpawn(comp);
                         
                     }
-                    comp.CopyFrom(element);
+                    if (comp is IComponentCopyable<TState, TEntity> compCopyable) compCopyable.CopyFrom(element);
                     newList.Add(comp);
 
                 }

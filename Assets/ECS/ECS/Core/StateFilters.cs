@@ -28,7 +28,7 @@ namespace ME.ECS {
 
     }
 
-    public interface IFilter<TState, TEntity> : IFilterBase, IEnumerable<KeyValuePair<EntityId, TEntity>> where TState : class, IState<TState> where TEntity : struct, IEntity {
+    public interface IFilter<TState, TEntity> : IFilterBase, IEnumerable<Entity> where TState : class, IState<TState> where TEntity : struct, IEntity {
 
         bool Contains(TEntity data);
 
@@ -37,6 +37,8 @@ namespace ME.ECS {
         IFilter<TState, TEntity> WithComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
         IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
 
+        HashSet<Entity> GetData();
+        
         IFilter<TState, TEntity> Push();
 
     }
@@ -150,7 +152,7 @@ namespace ME.ECS {
         private string name;
         private IFilterNode<TEntity>[] nodes = null;
         private int nodesCount;
-        private HashSet<EntityId> data;
+        private HashSet<Entity> data;
 
         private List<IFilterNode<TEntity>> tempNodes;
         private List<IFilterNode<TEntity>> tempNodesCustom;
@@ -158,14 +160,14 @@ namespace ME.ECS {
         void IPoolableSpawn.OnSpawn() {
             
             this.nodes = PoolArray<IFilterNode<TEntity>>.Spawn(1000);
-            this.data = PoolHashSet<EntityId>.Spawn();
+            this.data = PoolHashSet<Entity>.Spawn();
 
         }
 
         void IPoolableRecycle.OnRecycle() {
             
             PoolArray<IFilterNode<TEntity>>.Recycle(ref this.nodes);
-            PoolHashSet<EntityId>.Recycle(ref this.data);
+            PoolHashSet<Entity>.Recycle(ref this.data);
             
         }
 
@@ -183,13 +185,19 @@ namespace ME.ECS {
 
             }
             
-            if (this.data != null) PoolHashSet<EntityId>.Recycle(ref this.data);
-            this.data = PoolHashSet<EntityId>.Spawn(other.data.Count);
+            if (this.data != null) PoolHashSet<Entity>.Recycle(ref this.data);
+            this.data = PoolHashSet<Entity>.Spawn(other.data.Count);
             foreach (var item in other.data) {
 
                 this.data.Add(item);
 
             }
+
+        }
+
+        public HashSet<Entity> GetData() {
+
+            return this.data;
 
         }
 
@@ -209,13 +217,13 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool Contains_INTERNAL(Entity entity) {
 
-            return this.data.Contains(entity.id);
+            return this.data.Contains(entity);
 
         }
 
-        IEnumerator<KeyValuePair<EntityId, TEntity>> IEnumerable<KeyValuePair<EntityId, TEntity>>.GetEnumerator() {
+        IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() {
 
-            return ((IEnumerable<KeyValuePair<EntityId, TEntity>>)this.data).GetEnumerator();
+            return ((IEnumerable<Entity>)this.data).GetEnumerator();
 
         }
 
@@ -225,9 +233,15 @@ namespace ME.ECS {
 
         }
 
+        public HashSet<Entity>.Enumerator GetEnumerator() {
+
+            return this.data.GetEnumerator();
+
+        }
+
         bool IFilterInternal<TState, TEntity>.OnUpdate(TEntity data) {
 
-            var isExists = this.data.Contains(data.entity.id);
+            var isExists = this.data.Contains(data.entity);
             if (isExists == true) {
 
                 for (int i = 0; i < this.nodesCount; ++i) {
@@ -262,14 +276,14 @@ namespace ME.ECS {
 
             }
 
-            this.data.Add(data.entity.id);
+            this.data.Add(data.entity);
             return true;
 
         }
 
         bool IFilterInternal<TState, TEntity>.OnRemove(Entity entity) {
 
-            return this.data.Remove(entity.id);
+            return this.data.Remove(entity);
             
         }
 

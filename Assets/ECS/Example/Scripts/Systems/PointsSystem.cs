@@ -6,7 +6,7 @@ namespace ME.Example.Game.Systems {
     public class PointsSystem : ISystem<State> {
 
         //[BurstCompile(CompileSynchronously = true, FloatMode = FloatMode.Deterministic, FloatPrecision = FloatPrecision.Standard)]
-        private struct TestJob : IJobParallelFor {
+        /*private struct TestJob : IJobParallelFor {
 
             public float deltaTime;
 
@@ -19,7 +19,7 @@ namespace ME.Example.Game.Systems {
 
             }
 
-        }
+        }*/
 
         public IWorld<State> world { get; set; }
 
@@ -28,13 +28,20 @@ namespace ME.Example.Game.Systems {
 
         void ISystem<State>.AdvanceTick(State state, float deltaTime) {
 
-            var job = new TestJob() {
+            /*var job = new TestJob() {
                 deltaTime = deltaTime
             };
             this.world.Checkpoint("Update Points");
             var jobHandle = job.Schedule(state.points.Count, 64);
             jobHandle.Complete();
-            this.world.Checkpoint("Update Points");
+            this.world.Checkpoint("Update Points");*/
+
+            foreach (var index in state.points) {
+                
+                ref var data = ref state.points[index];
+                this.world.RunComponents(ref data, deltaTime, index);
+                
+            }
 
         }
 

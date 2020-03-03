@@ -17,8 +17,6 @@ namespace #NAMESPACE# {
         
         public override void ApplyState(in TEntity data, float deltaTime, bool immediately) {
             
-            
-            
         }
         
     }

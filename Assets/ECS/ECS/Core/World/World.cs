@@ -3,6 +3,7 @@
 #endif
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Jobs;
 using EntityId = System.Int32;
 using Tick = System.UInt64;
 using RPCId = System.Int32;
@@ -303,10 +304,16 @@ namespace ME.ECS {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float radius) {
-            
+
+            #if UNITY_MATHEMATICS
+            var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
+            var spherePoint = ((UnityEngine.Vector3)rnd.NextFloat3(-1f, 1f)).normalized * radius;
+            this.currentState.randomState = rnd.state;
+            #else
             UnityEngine.Random.state = this.currentState.randomState;
             var spherePoint = UnityEngine.Random.insideUnitSphere * radius;
             this.currentState.randomState = UnityEngine.Random.state;
+            #endif
             return spherePoint + center;
 
         }
@@ -314,9 +321,15 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int GetRandomRange(int from, int to) {
 
+            #if UNITY_MATHEMATICS
+            var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
+            var result = rnd.NextInt(from, to);
+            this.currentState.randomState = rnd.state;
+            #else
             UnityEngine.Random.state = this.currentState.randomState;
             var result = UnityEngine.Random.Range(from, to);
             this.currentState.randomState = UnityEngine.Random.state;
+            #endif
             return result;
 
         }
@@ -324,9 +337,15 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public float GetRandomRange(float from, float to) {
 
+            #if UNITY_MATHEMATICS
+            var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
+            var result = rnd.NextFloat(from, to);
+            this.currentState.randomState = rnd.state;
+            #else
             UnityEngine.Random.state = this.currentState.randomState;
             var result = UnityEngine.Random.Range(from, to);
             this.currentState.randomState = UnityEngine.Random.state;
+            #endif
             return result;
 
         }
@@ -334,9 +353,15 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public float GetRandomValue() {
 
+            #if UNITY_MATHEMATICS
+            var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
+            var result = rnd.NextFloat(0f, 1f);
+            this.currentState.randomState = rnd.state;
+            #else
             UnityEngine.Random.state = this.currentState.randomState;
             var result = UnityEngine.Random.value;
             this.currentState.randomState = UnityEngine.Random.state;
+            #endif
             return result;
             
         }
@@ -392,15 +417,24 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity {
 
+            data = default;
+            
+            if (entity.id == 0) {
+
+                return false;
+                
+            }
+            
             RefList<TEntity> list;
             if (EntitiesDirectCache<TState, TEntity>.entitiesList.TryGetValue(this.id, out list) == true) {
 
+                if (list.IsFree(entity.storageIdx) == true) return false;
+                
                 data = list[entity.storageIdx];
                 return true;
 
             }
 
-            data = default;
             return false;
 
         }
@@ -679,8 +713,13 @@ namespace ME.ECS {
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: true);
 
+            #if UNITY_MATHEMATICS
+            var rnd = new Unity.Mathematics.Random(1u);
+            state.randomState = rnd.state;
+            #else
             UnityEngine.Random.InitState(0);
             state.randomState = UnityEngine.Random.state;
+            #endif
 
         }
 
@@ -1267,7 +1306,7 @@ namespace ME.ECS {
 
                         foreach (var listItem in components) {
 
-                            listItem.AdvanceTick(this.currentState, ref data, deltaTime, index);
+                            if (listItem is IRunnableComponent<TState, TEntity> runnable) runnable.AdvanceTick(this.currentState, ref data, deltaTime, index);
 
                         }
 
@@ -1280,7 +1319,7 @@ namespace ME.ECS {
 
                         foreach (var listItem in components) {
 
-                            listItem.AdvanceTick(this.currentState, ref data, deltaTime, index);
+                            if (listItem is IRunnableComponent<TState, TEntity> runnable) runnable.AdvanceTick(this.currentState, ref data, deltaTime, index);
 
                         }
 
@@ -1329,24 +1368,34 @@ namespace ME.ECS {
 
         }
 
-        public void Update(float deltaTime) {
-
-            if (deltaTime < 0f) return;
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void UpdateLogic(float deltaTime, Tick prevTick) {
             
-            #if CHECKPOINT_COLLECTOR
-            if (this.checkpointCollector != null) this.checkpointCollector.Reset();
-            #endif
+            if (deltaTime < 0f) return;
 
             var state = this.GetState();
             
-            // Setup current static variables
-            WorldUtilities.SetWorld(this);
-            Worlds<TState>.currentState = state;
+            ////////////////
+            // Update Logic Tick
+            ////////////////
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("Simulate", WorldStep.None);
+            #endif
 
-            // Update time
-            var prevTick = state.tick;
-            this.timeSinceStart += deltaTime;
-            if (this.timeSinceStart < 0d) this.timeSinceStart = 0d;
+            this.Simulate(prevTick + 1, state.tick + 1);
+
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("Simulate", WorldStep.None);
+            #endif
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void UpdateVisualPre(float deltaTime) {
+            
+            if (deltaTime < 0f) return;
+
+            var state = this.GetState();
 
             ////////////////
             this.currentStep = WorldStep.ModulesVisualTick;
@@ -1381,18 +1430,14 @@ namespace ME.ECS {
 
             }
 
-            ////////////////
-            // Update Logic Tick
-            ////////////////
-            #if CHECKPOINT_COLLECTOR
-            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("Simulate", WorldStep.None);
-            #endif
+        }
 
-            this.Simulate(prevTick + 1, state.tick + 1);
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void UpdateVisualPost(float deltaTime) {
+            
+            if (deltaTime < 0f) return;
 
-            #if CHECKPOINT_COLLECTOR
-            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("Simulate", WorldStep.None);
-            #endif
+            var state = this.GetState();
 
             ////////////////
             this.currentStep = WorldStep.SystemsVisualTick;
@@ -1437,6 +1482,51 @@ namespace ME.ECS {
             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveMarkers", WorldStep.None);
             #endif
 
+        }
+
+        private struct UpdateJob : Unity.Jobs.IJobParallelFor {
+
+            public float deltaTime;
+            public Tick prevTick;
+
+            void Unity.Jobs.IJobParallelFor.Execute(int index) {
+
+                Worlds<TState>.currentWorld.UpdateLogic(this.deltaTime, this.prevTick);
+
+            }
+
+        }
+        
+        public void Update(float deltaTime) {
+
+            if (deltaTime < 0f) return;
+            
+            #if CHECKPOINT_COLLECTOR
+            if (this.checkpointCollector != null) this.checkpointCollector.Reset();
+            #endif
+
+            var state = this.GetState();
+            var prevTick = state.tick;
+            
+            // Setup current static variables
+            WorldUtilities.SetWorld(this);
+            Worlds<TState>.currentState = state;
+
+            // Update time
+            this.timeSinceStart += deltaTime;
+            if (this.timeSinceStart < 0d) this.timeSinceStart = 0d;
+
+            this.UpdateVisualPre(deltaTime);
+            
+            var job = new UpdateJob() {
+                deltaTime = deltaTime,
+                prevTick = prevTick,
+            };
+            var jobHandle = job.Schedule(1, 64);
+            jobHandle.Complete();
+            
+            this.UpdateVisualPost(deltaTime);
+            
             ////////////////
             this.currentStep = WorldStep.None;
             ////////////////

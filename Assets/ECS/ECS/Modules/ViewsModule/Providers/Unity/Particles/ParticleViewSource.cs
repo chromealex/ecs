@@ -1,4 +1,4 @@
-﻿
+﻿#if PARTICLES_VIEWS_MODULE_SUPPORT
 namespace ME.ECS.Views.Providers {
 
     public abstract class ParticleViewSourceBase : UnityEngine.MonoBehaviour, IDoValidate {
@@ -55,3 +55,4 @@ namespace ME.ECS.Views.Providers {
     }
 
 }
+#endif

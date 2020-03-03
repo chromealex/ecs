@@ -288,10 +288,12 @@ namespace ME.ECS.Views {
 
     }
 
-    public interface IViewsProvider {
+    public interface IViewsProviderInitializerBase {}
 
-        IViewsProvider<TEntity> Create<TEntity>() where TEntity : struct, IEntity;
-        void Destroy<TEntity>(IViewsProvider<TEntity> instance) where TEntity : struct, IEntity;
+    public interface IViewsProviderInitializer<TEntity> : IViewsProviderInitializerBase where TEntity : struct, IEntity {
+
+        IViewsProvider<TEntity> Create();
+        void Destroy(IViewsProvider<TEntity> instance);
 
     }
 

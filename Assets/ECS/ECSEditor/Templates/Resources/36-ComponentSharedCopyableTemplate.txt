@@ -1,0 +1,15 @@
+﻿using ME.ECS;
+
+namespace #NAMESPACE# {
+
+    using TState = #STATENAME#;
+    
+    public class #SCRIPTNAME# : IComponentSharedCopyable<TState> {
+        
+        void IComponentCopyable<TState, SharedEntity>.CopyFrom(IComponent<TState, SharedEntity> other) {}
+        
+        void IPoolableRecycle.OnRecycle() {}
+
+    }
+    
+}

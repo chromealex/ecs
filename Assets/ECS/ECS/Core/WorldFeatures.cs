@@ -99,6 +99,18 @@ namespace ME.ECS {
 
         }
 
+        protected bool AddModule<TModule>() where TModule : class, IModule<TState>, new() {
+
+            if (this.world.HasModule<TModule>() == false) {
+                
+                return this.world.AddModule<TModule>();
+                
+            }
+
+            return false;
+
+        }
+
     }
 
 }

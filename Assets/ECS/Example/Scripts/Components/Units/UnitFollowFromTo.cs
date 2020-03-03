@@ -4,7 +4,7 @@ namespace ME.Example.Game.Components {
 
     using ME.Example.Game.Entities;
 
-    public class UnitFollowFromTo : IComponent<State, Unit> {
+    public class UnitFollowFromTo : IRunnableComponent<State, Unit> {
 
         public Entity from;
         public Entity to;
@@ -24,7 +24,7 @@ namespace ME.Example.Game.Components {
 
         void IPoolableRecycle.OnRecycle() {}
 
-        void IComponent<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
+        void IComponentCopyable<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
 
             var otherUnit = ((UnitFollowFromTo)other);
             this.from = otherUnit.from;

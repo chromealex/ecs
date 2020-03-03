@@ -24,30 +24,36 @@ namespace ME.ECS {
         
         private static class MarkersDirectCache<TStateInner, TMarker> where TMarker : struct, IMarker where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<int, List<TMarker>> data = new Dictionary<int, List<TMarker>>(World<TState>.MARKERS_CAPACITY);
+            internal static Dictionary<int, TMarker> data = new Dictionary<int, TMarker>(World<TState>.MARKERS_CAPACITY);
 
         }
 
-        private Dictionary<int, IList> markers;
+        private Dictionary<int, HashSet<IDictionary>> allMarkers;
 
         partial void OnSpawnMarkers() {
             
-            this.markers = PoolDictionary<int, IList>.Spawn(4);
+            this.allMarkers = PoolDictionary<int, HashSet<IDictionary>>.Spawn(4);
 
         }
 
         partial void OnRecycleMarkers() {
             
-            PoolDictionary<int, IList>.Recycle(ref this.markers);
+            PoolDictionary<int, HashSet<IDictionary>>.Recycle(ref this.allMarkers);
 
         }
 
         private void RemoveMarkers() {
 
-            IList markersCache;
-            if (this.markers.TryGetValue(this.id, out markersCache) == true) {
+            HashSet<IDictionary> markersCache;
+            if (this.allMarkers.TryGetValue(this.id, out markersCache) == true) {
 
-                markersCache.Clear();
+                foreach (var item in markersCache) {
+                    
+                    item.Clear();
+                    
+                }
+
+                this.allMarkers.Remove(this.id);
 
             }
 
@@ -57,49 +63,41 @@ namespace ME.ECS {
 
             var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
 
-            List<TMarker> list;
-            if (cache.TryGetValue(this.id, out list) == true) {
-                
-                list.Add(markerData);
-                
+            TMarker marker;
+            if (cache.TryGetValue(this.id, out marker) == true) {
+
+                cache[this.id] = markerData;
+                return false;
+
             } else {
 
-                list = PoolList<TMarker>.Spawn(World<TState>.MARKERS_CAPACITY);
-                list.Add(markerData);
-                cache.Add(this.id, list);
+                cache.Add(this.id, markerData);
+
+                HashSet<IDictionary> markersCache;
+                if (this.allMarkers.TryGetValue(this.id, out markersCache) == true) {
+                    
+                    if (markersCache.Contains(cache) == false) markersCache.Add(cache);
+                    
+                } else {
+
+                    markersCache = PoolHashSet<IDictionary>.Spawn(World<TState>.MARKERS_CAPACITY);
+                    markersCache.Add(cache);
+                    this.allMarkers.Add(this.id, markersCache);
+                    
+                }
 
             }
 
-            IList markersList;
-            if (this.markers.TryGetValue(this.id, out markersList) == true) {
-
-                this.markers[this.id] = cache[this.id];
-                
-            } else {
-                
-                this.markers.Add(this.id, cache[this.id]);
-                
-            }
-
-            return false;
+            return true;
 
         }
 
         public bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker {
             
-            marker = default;
-            
             var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            List<TMarker> list;
-            if (cache.TryGetValue(this.id, out list) == true) {
+            if (cache.TryGetValue(this.id, out marker) == true) {
 
-                var cnt = list.Count;
-                if (cnt > 0) {
-                    
-                    marker = list[cnt - 1];
-                    return true;
-
-                }
+                return true;
 
             }
 
@@ -117,8 +115,19 @@ namespace ME.ECS {
         public bool RemoveMarker<TMarker>() where TMarker : struct, IMarker {
             
             var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            return cache.Remove(this.id);
-            
+            var removed = cache.Remove(this.id);
+            if (removed == true) {
+
+                if (this.allMarkers.TryGetValue(this.id, out var list) == true) {
+
+                    list.Remove(cache);
+
+                }
+
+            }
+
+            return removed;
+
         }
 
     }

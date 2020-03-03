@@ -5,18 +5,18 @@ using ViewId = System.UInt64;
 
 namespace ME.ECS.Views {
     
-    public static class PoolGameObject {
+    public class PoolGameObject<T> where T : Component, IViewBase {
 
-        private static Dictionary<ViewId, Stack<Component>> prefabToInstances = new Dictionary<ViewId, Stack<Component>>();
+        private Dictionary<ViewId, Stack<T>> prefabToInstances = new Dictionary<ViewId, Stack<T>>();
         
-        public static T Spawn<T>(T source, ViewId sourceId) where T : Component, IViewBase {
+        public T Spawn(T source, ViewId sourceId) {
 
             T instance = default;
             var found = false;
             //var key = (ViewId)(int.MaxValue + source.gameObject.GetInstanceID());
             var key = sourceId;
-            Stack<Component> list;
-            if (PoolGameObject.prefabToInstances.TryGetValue(key, out list) == true) {
+            Stack<T> list;
+            if (this.prefabToInstances.TryGetValue(key, out list) == true) {
 
                 if (list.Count > 0) {
 
@@ -27,8 +27,8 @@ namespace ME.ECS.Views {
 
             } else {
                 
-                list = new Stack<Component>();
-                PoolGameObject.prefabToInstances.Add(key, list);
+                list = new Stack<T>();
+                this.prefabToInstances.Add(key, list);
                 
             }
 
@@ -45,11 +45,11 @@ namespace ME.ECS.Views {
 
         }
 
-        public static void Recycle<T>(ref T instance) where T : Component, IViewBase {
+        public void Recycle(ref T instance) {
             
             var key = instance.prefabSourceId;
-            Stack<Component> list;
-            if (PoolGameObject.prefabToInstances.TryGetValue(key, out list) == true) {
+            Stack<T> list;
+            if (this.prefabToInstances.TryGetValue(key, out list) == true) {
                 
                 instance.gameObject.SetActive(false);
                 list.Push(instance);

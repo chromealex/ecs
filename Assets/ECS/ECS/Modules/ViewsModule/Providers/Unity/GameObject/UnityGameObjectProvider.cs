@@ -11,7 +11,6 @@ namespace ME.ECS {
     public partial interface IWorld<TState> where TState : class, IState<TState> {
 
         ViewId RegisterViewSource<TEntity>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity;
-        ViewId RegisterViewSource<TEntity, TProvider>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider;
         ViewId RegisterViewSource<TEntity>(MonoBehaviourViewBase prefab) where TEntity : struct, IEntity;
         void InstantiateView<TEntity>(UnityEngine.GameObject prefab, Entity entity) where TEntity : struct, IEntity;
         void InstantiateView<TEntity>(MonoBehaviourViewBase prefab, Entity entity) where TEntity : struct, IEntity;
@@ -23,17 +22,17 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource<TEntity>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity {
 
-            return this.RegisterViewSource<TEntity, UnityGameObjectProvider>(prefab);
+            return this.RegisterViewSource(new UnityGameObjectProviderInitializer<TEntity>(), prefab);
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TEntity, TProvider>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider {
+        public ViewId RegisterViewSource<TEntity>(UnityGameObjectProviderInitializer<TEntity> providerInitializer, UnityEngine.GameObject prefab) where TEntity : struct, IEntity {
 
             IView<TEntity> component;
             if (prefab.TryGetComponent(out component) == true) {
 
-                return this.RegisterViewSource<TEntity, TProvider>(component);
+                return this.RegisterViewSource(providerInitializer, component);
 
             }
 
@@ -44,7 +43,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource<TEntity>(MonoBehaviourViewBase prefab) where TEntity : struct, IEntity {
 
-            return this.RegisterViewSource<TEntity, UnityGameObjectProvider>((IView<TEntity>)prefab);
+            return this.RegisterViewSource(new UnityGameObjectProviderInitializer<TEntity>(), (IView<TEntity>)prefab);
 
         }
 
@@ -88,7 +87,7 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(UnityEngine.GameObject prefab) {
 
-            return this.RegisterViewSource<UnityGameObjectProvider>(prefab.GetComponent<MonoBehaviourView<TEntity>>());
+            return this.RegisterViewSource(new UnityGameObjectProviderInitializer<TEntity>(), prefab.GetComponent<MonoBehaviourView<TEntity>>());
 
         }
 
@@ -167,39 +166,45 @@ namespace ME.ECS.Views.Providers {
     
     public class UnityGameObjectProvider<TEntity> : ViewsProvider<TEntity> where TEntity : struct, IEntity {
 
+        private PoolGameObject<MonoBehaviourView<TEntity>> pool;
+        
         public override void OnConstruct() {
 
+            this.pool = new PoolGameObject<MonoBehaviourView<TEntity>>();
+            
         }
 
         public override void OnDeconstruct() {
-            
+
+            this.pool = null;
+
         }
         
         public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {
 
-            return PoolGameObject.Spawn((MonoBehaviourView<TEntity>)prefab, prefabSourceId);
+            return this.pool.Spawn((MonoBehaviourView<TEntity>)prefab, prefabSourceId);
 
         }
 
         public override void Destroy(ref IView<TEntity> instance) {
 
             var instanceTyped = (MonoBehaviourView<TEntity>)instance;
-            PoolGameObject.Recycle(ref instanceTyped);
+            this.pool.Recycle(ref instanceTyped);
             instance = null;
 
         }
 
     }
 
-    public struct UnityGameObjectProvider : IViewsProvider {
+    public struct UnityGameObjectProviderInitializer<TEntity> : IViewsProviderInitializer<TEntity> where TEntity : struct, IEntity {
 
-        public IViewsProvider<TEntity> Create<TEntity>() where TEntity : struct, IEntity {
-
+        public IViewsProvider<TEntity> Create() {
+            
             return PoolClass<UnityGameObjectProvider<TEntity>>.Spawn();
 
         }
 
-        public void Destroy<TEntity>(IViewsProvider<TEntity> instance) where TEntity : struct, IEntity {
+        public void Destroy(IViewsProvider<TEntity> instance) {
 
             PoolClass<UnityGameObjectProvider<TEntity>>.Recycle((UnityGameObjectProvider<TEntity>)instance);
             

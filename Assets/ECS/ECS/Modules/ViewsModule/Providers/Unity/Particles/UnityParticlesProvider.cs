@@ -11,7 +11,6 @@ namespace ME.ECS {
     public partial interface IWorld<TState> where TState : class, IState<TState> {
 
         ViewId RegisterViewSource<TEntity>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity;
-        ViewId RegisterViewSource<TEntity, TProvider>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider;
         void InstantiateView<TEntity>(ParticleViewSourceBase prefab, Entity entity) where TEntity : struct, IEntity;
 
     }
@@ -19,16 +18,9 @@ namespace ME.ECS {
     public partial class World<TState> where TState : class, IState<TState>, new() {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TEntity, TProvider>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProvider {
-
-            return this.RegisterViewSource<TEntity, TProvider>(prefab.GetSource<TEntity>());
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource<TEntity>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity {
 
-            return this.RegisterViewSource<TEntity, UnityParticlesProvider>(prefab.GetSource<TEntity>());
+            return this.RegisterViewSource(new UnityParticlesProviderInitializer<TEntity>(), prefab.GetSource<TEntity>());
 
         }
 
@@ -60,12 +52,14 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(ParticleViewSourceBase prefab) {
 
-            return this.RegisterViewSource<UnityParticlesProvider>(prefab.GetSource<TEntity>());
+            return this.RegisterViewSource(new UnityParticlesProviderInitializer<TEntity>(), prefab.GetSource<TEntity>());
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void UnRegisterViewSource(ParticleViewSourceBase prefab) {
+            
+            this.UnRegisterViewSource(prefab.GetSource<TEntity>());
             
         }
 
@@ -653,15 +647,15 @@ namespace ME.ECS.Views.Providers {
 
     }
 
-    public struct UnityParticlesProvider : IViewsProvider {
+    public struct UnityParticlesProviderInitializer<TEntity> : IViewsProviderInitializer<TEntity> where TEntity : struct, IEntity {
 
-        public IViewsProvider<TEntity> Create<TEntity>() where TEntity : struct, IEntity {
+        public IViewsProvider<TEntity> Create() {
 
             return PoolClass<UnityParticlesProvider<TEntity>>.Spawn();
 
         }
 
-        public void Destroy<TEntity>(IViewsProvider<TEntity> instance) where TEntity : struct, IEntity {
+        public void Destroy(IViewsProvider<TEntity> instance) {
 
             PoolClass<UnityParticlesProvider<TEntity>>.Recycle((UnityParticlesProvider<TEntity>)instance);
 

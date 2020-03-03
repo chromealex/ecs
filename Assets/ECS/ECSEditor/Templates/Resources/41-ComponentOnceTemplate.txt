@@ -7,8 +7,6 @@ namespace #NAMESPACE# {
     
     public class #SCRIPTNAME# : IComponentOnce<TState, TEntity> {
         
-        void IComponent<TState, TEntity>.AdvanceTick(TState state, ref TEntity data, float deltaTime, int index) {}
-        
         void IComponent<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {}
         
         void IPoolableRecycle.OnRecycle() {}

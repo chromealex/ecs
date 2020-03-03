@@ -4,7 +4,7 @@ namespace ME.Example.Game.Components {
 
     using ME.Example.Game.Entities;
 
-    public class UnitSetColor : IComponentOnce<State, Unit> {
+    public class UnitSetColor : IRunnableComponentOnce<State, Unit> {
 
         public UnityEngine.Color color;
 
@@ -16,7 +16,7 @@ namespace ME.Example.Game.Components {
 
         void IPoolableRecycle.OnRecycle() {}
 
-        void IComponent<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
+        void IComponentCopyable<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
 
             this.color = ((UnitSetColor)other).color;
 

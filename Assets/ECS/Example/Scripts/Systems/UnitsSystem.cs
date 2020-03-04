@@ -14,14 +14,18 @@ namespace ME.Example.Game.Systems {
         private IFilter<State, Unit> unitsFilter2;
         private IFilter<State, Unit> unitsFilter3;
 
-        private class CustomFilter : IFilterNode<Unit> {
+        private class CustomFilter : IFilterNode {
 
-            public bool Execute(Unit data) {
+            public bool Execute(Entity data) {
 
-                Point toData;
-                if (Worlds<State>.currentWorld.GetEntityData(data.pointTo, out toData) == true) {
+                if (Worlds<State>.currentWorld.GetEntityData(data, out Unit entityData) == true) {
 
-                    return ((toData.position - data.position).sqrMagnitude <= 0.01f);
+                    Point toData;
+                    if (Worlds<State>.currentWorld.GetEntityData(entityData.pointTo, out toData) == true) {
+
+                        return ((toData.position - entityData.position).sqrMagnitude <= 0.01f);
+
+                    }
 
                 }
 
@@ -55,7 +59,7 @@ namespace ME.Example.Game.Systems {
                     var to = data.pointTo;
                     data.pointTo = from;
                     data.pointFrom = to;
-                    this.world.RemoveComponents<UnitFollowFromTo>(data.entity);
+                    this.world.RemoveComponents<Unit, UnitFollowFromTo>(data.entity);
                     var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
                     comp.@from = data.pointFrom;
                     comp.to = data.pointTo;

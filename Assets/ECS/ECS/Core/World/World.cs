@@ -777,7 +777,7 @@ namespace ME.ECS {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState, TEntity>)this.GetFilter<TEntity>(filterId)).OnUpdate(data);
+                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnUpdate(data.entity);
 
                 }
 
@@ -785,7 +785,7 @@ namespace ME.ECS {
 
         }
 
-        public void AddToFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
+        public void AddComponentToFilter<TEntity>(Entity entity) where TEntity : struct, IEntity {
             
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
             HashSet<int> filters;
@@ -793,7 +793,39 @@ namespace ME.ECS {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState, TEntity>)this.GetFilter<TEntity>(filterId)).OnAdd(data);
+                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnAddComponent(entity);
+
+                }
+
+            }
+            
+        }
+
+        public void RemoveComponentFromFilter<TEntity>(Entity entity) where TEntity : struct, IEntity {
+            
+            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            HashSet<int> filters;
+            if (dic.TryGetValue(this.id, out filters) == true) {
+
+                foreach (var filterId in filters) {
+
+                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnRemoveComponent(entity);
+
+                }
+
+            }
+            
+        }
+
+        public void AddToFilters<TEntity>(Entity entity) where TEntity : struct, IEntity {
+            
+            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            HashSet<int> filters;
+            if (dic.TryGetValue(this.id, out filters) == true) {
+
+                foreach (var filterId in filters) {
+
+                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnAdd(entity);
 
                 }
 
@@ -814,7 +846,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RemoveFromFilters_INTERNAL<TEntity>(Entity data) where TEntity : struct, IEntity {
+        public void RemoveFromFilters_INTERNAL<TEntity>(Entity entity) where TEntity : struct, IEntity {
             
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
             HashSet<int> filters;
@@ -822,7 +854,7 @@ namespace ME.ECS {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState, TEntity>)this.GetFilter<TEntity>(filterId)).OnRemove(data);
+                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnRemove(entity);
 
                 }
 
@@ -855,7 +887,7 @@ namespace ME.ECS {
 
             }
 
-            this.AddToFilters(data);
+            this.AddToFilters<TEntity>(data.entity);
             this.UpdateEntityCache(data);
 
             return data.entity;
@@ -916,7 +948,7 @@ namespace ME.ECS {
                     list.RemoveAt(entity.storageIdx);
                     
                     this.DestroyEntityPlugins<TEntity>(entity);
-                    this.RemoveComponents(entity);
+                    this.RemoveComponentsByEntityType<TEntity>(entity);
                     this.RemoveFromFilters<TEntity>(entity);
                     return true;
 

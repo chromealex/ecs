@@ -12,9 +12,8 @@ namespace ME.ECS {
         TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
         void ForEachComponent<TEntity, TComponent>(Entity entity, System.Collections.Generic.List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
         bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;
-        void RemoveComponents(Entity entity);
-        void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase;
-        void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
+        void RemoveComponents<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentBase;
+        void RemoveComponentsByEntityType<TEntity>(Entity entity) where TEntity : struct, IEntity;
         void RemoveComponentsPredicate<TComponent, TComponentPredicate, TEntity>(Entity entity, TComponentPredicate predicate) where TEntity : struct, IEntity where TComponent : class, IComponent<TState, TEntity> where TComponentPredicate : IComponentPredicate<TComponent>;
         #endregion
         
@@ -25,7 +24,6 @@ namespace ME.ECS {
         TComponent GetComponentShared<TComponent>() where TComponent : class, IComponent<TState, SharedEntity>;
         void ForEachComponentShared<TComponent>(System.Collections.Generic.List<TComponent> output) where TComponent : class, IComponent<TState, SharedEntity>;
         bool HasComponentShared<TComponent>() where TComponent : IComponent<TState, SharedEntity>;
-        void RemoveComponentsShared();
         void RemoveComponentsShared<TComponent>() where TComponent : class, IComponentBase;
         void RemoveComponentsSharedPredicate<TComponent, TComponentPredicate>(TComponentPredicate predicate) where TComponent : class, IComponent<TState, SharedEntity> where TComponentPredicate : IComponentPredicate<TComponent>;
         #endregion
@@ -114,6 +112,7 @@ namespace ME.ECS {
 
             }
 
+            this.AddComponentToFilter<TEntity>(entity);
             return (TComponent)data;
 
         }
@@ -195,7 +194,7 @@ namespace ME.ECS {
         /// Remove all components from certain entity
         /// </summary>
         /// <param name="entity"></param>
-        public void RemoveComponents(Entity entity) {
+        /*public void RemoveComponents(Entity entity) {
 
             var code = WorldUtilities.GetKey(entity);
             IComponents<TState> componentsContainer;
@@ -205,10 +204,10 @@ namespace ME.ECS {
             if (result == true) {
 
                 componentsContainer.RemoveAll(entity.id);
-
+                
             }
 
-        }
+        }*/
 
         /// <summary>
         /// Remove all components with type from certain entity by predicate
@@ -221,7 +220,8 @@ namespace ME.ECS {
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
                 ((Components<TEntity, TState>)componentsContainer).RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate);
-
+                this.RemoveComponentFromFilter<TEntity>(entity);
+                
             }
 
         }
@@ -230,13 +230,31 @@ namespace ME.ECS {
         /// Remove all components with type from certain entity
         /// </summary>
         /// <param name="entity"></param>
-        public void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponentBase {
+        public void RemoveComponents<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentBase {
 
             var code = WorldUtilities.GetKey(entity);
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
                 componentsContainer.RemoveAll<TComponent>(entity.id);
+                this.RemoveComponentFromFilter<TEntity>(entity);
+
+            }
+
+        }
+
+        /// <summary>
+        /// Remove all components from certain entity
+        /// </summary>
+        /// <param name="entity"></param>
+        public void RemoveComponentsByEntityType<TEntity>(Entity entity) where TEntity : struct, IEntity {
+
+            var code = WorldUtilities.GetKey(entity);
+            IComponents<TState> componentsContainer;
+            if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
+
+                componentsContainer.RemoveAll(entity.id);
+                this.RemoveComponentFromFilter<TEntity>(entity);
 
             }
 
@@ -246,13 +264,14 @@ namespace ME.ECS {
         /// Remove all components with type from certain entity
         /// </summary>
         /// <param name="entity"></param>
-        public void RemoveComponentsOnce<TComponent>(Entity entity) where TComponent : class, IComponentOnceBase {
+        public void RemoveComponentsOnce<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentOnceBase {
 
             var code = WorldUtilities.GetKey(entity);
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
                 componentsContainer.RemoveAllOnce<TComponent>(entity.id);
+                this.RemoveComponentFromFilter<TEntity>(entity);
 
             }
 
@@ -330,16 +349,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RemoveComponentsShared() {
-            
-            this.RemoveComponents(this.sharedEntity);
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RemoveComponentsShared<TComponent>() where TComponent : class, IComponentBase {
             
-            this.RemoveComponents<TComponent>(this.sharedEntity);
+            this.RemoveComponents<SharedEntity, TComponent>(this.sharedEntity);
             
         }
 

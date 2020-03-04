@@ -53,8 +53,6 @@ namespace ME.ECS {
                     
                 }
 
-                this.allMarkers.Remove(this.id);
-
             }
 
         }

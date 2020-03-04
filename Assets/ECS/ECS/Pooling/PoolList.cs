@@ -38,28 +38,58 @@
 	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
 	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
 	#endif
-	public static class PoolCopyableQueue<TValue> where TValue : struct {
+	public static class PoolHashSetCopyable<TValue> {
+
+		private static PoolInternalBase pool = new PoolInternalBase(() => new HashSetCopyable<TValue>(), (x) => ((HashSetCopyable<TValue>)x).Clear());
+
+		public static HashSetCopyable<TValue> Spawn(int capacity = 0) {
+
+			return (HashSetCopyable<TValue>)PoolHashSetCopyable<TValue>.pool.Spawn();
+		    
+		}
+
+		public static void Recycle(ref HashSetCopyable<TValue> dic) {
+
+			PoolHashSetCopyable<TValue>.pool.Recycle(dic);
+			dic = null;
+
+		}
+
+		public static void Recycle(HashSetCopyable<TValue> dic) {
+
+			PoolHashSetCopyable<TValue>.pool.Recycle(dic);
+
+		}
+
+	}
+
+	#if ECS_COMPILE_IL2CPP_OPTIONS
+	[Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+	#endif
+	public static class PoolQueueCopyable<TValue> where TValue : struct {
 
 		private static int capacity;
-		private static PoolInternalBase pool = new PoolInternalBase(() => new QueueCopyable<TValue>(PoolCopyableQueue<TValue>.capacity), (x) => ((QueueCopyable<TValue>)x).Clear());
+		private static PoolInternalBase pool = new PoolInternalBase(() => new QueueCopyable<TValue>(PoolQueueCopyable<TValue>.capacity), (x) => ((QueueCopyable<TValue>)x).Clear());
 
 		public static QueueCopyable<TValue> Spawn(int capacity) {
 
-			PoolCopyableQueue<TValue>.capacity = capacity;
-			return (QueueCopyable<TValue>)PoolCopyableQueue<TValue>.pool.Spawn();
+			PoolQueueCopyable<TValue>.capacity = capacity;
+			return (QueueCopyable<TValue>)PoolQueueCopyable<TValue>.pool.Spawn();
 		    
 		}
 
 		public static void Recycle(ref QueueCopyable<TValue> dic) {
 
-			PoolCopyableQueue<TValue>.pool.Recycle(dic);
+			PoolQueueCopyable<TValue>.pool.Recycle(dic);
 			dic = null;
 
 		}
 
 		public static void Recycle(QueueCopyable<TValue> dic) {
 
-			PoolCopyableQueue<TValue>.pool.Recycle(dic);
+			PoolQueueCopyable<TValue>.pool.Recycle(dic);
 
 		}
 

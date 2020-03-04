@@ -1,4 +1,6 @@
 namespace ME.ECS.Collections {
+    
+    using System.Collections.Generic;
 
     public interface IRefList {
 
@@ -24,7 +26,7 @@ namespace ME.ECS.Collections {
         private int size;
         private int capacity;
         private int fromIndex;
-        private QueueCopyable<int> free;
+        private HashSetCopyable<int> free;
         private int initCapacity;
 
         public RefList() : this(4) {}
@@ -51,7 +53,7 @@ namespace ME.ECS.Collections {
             this.size = 0;
             this.capacity = -1;
             this.fromIndex = 0;
-            if (this.free == null) this.free = PoolCopyableQueue<int>.Spawn(capacity);
+            if (this.free == null) this.free = PoolHashSetCopyable<int>.Spawn(capacity);
             this.free.Clear();
             this.Resize_INTERNAL(capacity);
 
@@ -60,7 +62,7 @@ namespace ME.ECS.Collections {
         void IPoolableRecycle.OnRecycle() {
             
             PoolArray<T>.Recycle(ref this.arr);
-            PoolCopyableQueue<int>.Recycle(ref this.free);
+            PoolHashSetCopyable<int>.Recycle(ref this.free);
             
         }
 
@@ -121,7 +123,7 @@ namespace ME.ECS.Collections {
 
             for (int i = 0; i < this.size; ++i) {
                 
-                if (this.free.Contains(i) == false) this.free.Enqueue(i);
+                if (this.free.Contains(i) == false) this.free.Add(i);
                 
             }
 
@@ -132,12 +134,22 @@ namespace ME.ECS.Collections {
 
         }
 
+        private int PeekFree() {
+            
+            var ienum = this.free.GetEnumerator();
+            ienum.MoveNext();
+            var peek = ienum.Current;
+            ienum.Dispose();
+            return peek;
+
+        }
+
         public int GetNextIndex() {
             
             int nextIndex = -1;
             if (this.free.Count > 0) {
 
-                nextIndex = this.free.Peek();
+                nextIndex = this.PeekFree();
                 
             } else {
 
@@ -154,8 +166,9 @@ namespace ME.ECS.Collections {
             int nextIndex = -1;
             if (this.free.Count > 0) {
                 
-                nextIndex = this.free.Dequeue();
-                
+                nextIndex = this.PeekFree();
+                this.free.Remove(nextIndex);
+
             } else {
                 
                 nextIndex = this.size;
@@ -189,7 +202,7 @@ namespace ME.ECS.Collections {
             if (this.IsFree(index) == false) {
 
                 this.arr[index] = default;
-                this.free.Enqueue(index);
+                this.free.Add(index);
                 --this.count;
 
                 if (index == this.size - 1) {
@@ -231,10 +244,10 @@ namespace ME.ECS.Collections {
             this.arr = PoolArray<T>.Spawn(other.arr.Length);
             System.Array.Copy(other.arr, this.arr, other.arr.Length);
             
-            if (this.free != null) PoolCopyableQueue<int>.Recycle(ref this.free);
-            this.free = PoolCopyableQueue<int>.Spawn(other.free.capacity);
+            if (this.free != null) PoolHashSetCopyable<int>.Recycle(ref this.free);
+            this.free = PoolHashSetCopyable<int>.Spawn(other.free.Count);
             this.free.CopyFrom(other.free);
-            
+
             this.size = other.size;
             this.capacity = other.capacity;
             this.count = other.count;
@@ -270,7 +283,7 @@ namespace ME.ECS.Collections {
 
                 for (int i = oldCapacity; i < this.capacity; ++i) {
 
-                    this.free.Enqueue(i);
+                    this.free.Add(i);
 
                 }
 

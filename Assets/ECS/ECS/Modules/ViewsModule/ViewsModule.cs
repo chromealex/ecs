@@ -737,8 +737,8 @@ namespace ME.ECS.Views {
                     }
                     PoolList<IViewComponentRequest<TState, TEntity>>.Recycle(ref components);
 
-                    this.world.RemoveComponents<CreateViewComponentRequest<TState, TEntity>>(item.entity);
-                    this.world.RemoveComponents<DestroyViewComponentRequest<TState, TEntity>>(item.entity);
+                    this.world.RemoveComponents<TEntity, CreateViewComponentRequest<TState, TEntity>>(item.entity);
+                    this.world.RemoveComponents<TEntity, DestroyViewComponentRequest<TState, TEntity>>(item.entity);
 
                 }
 

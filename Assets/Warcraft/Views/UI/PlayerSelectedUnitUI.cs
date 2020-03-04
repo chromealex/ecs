@@ -16,10 +16,17 @@ namespace Warcraft.Views.UI {
         public UnityEngine.UI.Text unitCaption;
         public UnityEngine.UI.Image unitIcon;
 
+        public UnityEngine.UI.Slider buildingProgress;
+        public UnityEngine.UI.Text buildingValue;
+
         public Transform actionsContainer;
         public ButtonActionUI buttonSource;
         private System.Collections.Generic.List<ButtonActionUI> buttons = new System.Collections.Generic.List<ButtonActionUI>();
-        
+
+        public Transform queueContainer;
+        public ButtonQueueActionUI queueButtonSource;
+        private System.Collections.Generic.List<ButtonQueueActionUI> queueButtons = new System.Collections.Generic.List<ButtonQueueActionUI>();
+
         private ActionsGraphNode[] graphNodeSelected;
         private TEntity playerData;
         private Entity selectedUnit;
@@ -36,7 +43,7 @@ namespace Warcraft.Views.UI {
             
         }
 
-        private void ClearButtons() {
+        private void UpdateActions() {
             
             foreach (var button in this.buttons) {
 
@@ -46,12 +53,6 @@ namespace Warcraft.Views.UI {
 
             this.buttons.Clear();
 
-        }
-
-        private void UpdateActions() {
-            
-            this.ClearButtons();
-            
             foreach (var item in this.graphNodeSelected) {
 
                 var icon = item.GetIcon();
@@ -72,19 +73,79 @@ namespace Warcraft.Views.UI {
 
         }
 
-        public override void ApplyState(in TEntity data, float deltaTime, bool immediately) {
+        private void UpdateQueue(Entity entity) {
             
-            var comp = Worlds<WarcraftState>.currentWorld.GetComponent<TEntity, Warcraft.Components.PlayerSelectedUnitComponent>(data.entity);
+            var world = Worlds<WarcraftState>.currentWorld;
+
+            foreach (var button in this.queueButtons) {
+
+                Object.Destroy(button.gameObject);
+
+            }
+
+            this.queueButtons.Clear();
+
+            var queue = world.GetComponent<UnitEntity, UnitBuildingQueueComponent>(entity);
+            if (queue != null) {
+
+                var i = 0;
+                foreach (var unitEntity in queue.units) {
+
+                    var unit = unitEntity;
+                    var unitInfo = world.GetComponent<UnitEntity, UnitInfoComponent>(unit);
+                    var icon = unitInfo.unitInfo.icon;
+
+                    var progress = world.GetComponent<UnitEntity, UnitBuildingProgress>(unit);
+
+                    var button = Object.Instantiate(this.queueButtonSource, this.actionsContainer);
+                    button.gameObject.SetActive(true);
+                    button.SetInfo(icon, progress.progress / progress.time, i == 0);
+                    button.button.onClick.RemoveAllListeners();
+                    button.button.onClick.AddListener(() => { this.DoCancelQueue(entity, unit); });
+                    this.queueButtons.Add(button);
+
+                    ++i;
+
+                }
+
+            }
+
+        }
+
+        public override void ApplyState(in TEntity data, float deltaTime, bool immediately) {
+
+            var world = Worlds<WarcraftState>.currentWorld;
+
+            var inProgress = world.GetComponent<UnitEntity, UnitBuildingProgress>(data.entity);
+            if (inProgress != null) {
+
+                this.actionsContainer.gameObject.SetActive(false);
+                this.queueContainer.gameObject.SetActive(false);
+                this.buildingProgress.gameObject.SetActive(true);
+                var progress = inProgress.progress / inProgress.time;
+                this.buildingProgress.value = progress;
+                this.buildingValue.text = Mathf.FloorToInt(progress * 100f).ToString() + "%";
+                return;
+
+            }
+            
+            this.actionsContainer.gameObject.SetActive(true);
+            this.queueContainer.gameObject.SetActive(false);
+            this.buildingProgress.gameObject.SetActive(false);
+
+            var comp = world.GetComponent<TEntity, Warcraft.Components.PlayerSelectedUnitComponent>(data.entity);
             if (comp != null) {
 
                 if (this.selectedUnit != comp.unit) this.graphNodeSelected = null;
                 this.selectedUnit = comp.unit;
                 
-                if (Worlds<WarcraftState>.currentWorld.GetEntityData(comp.unit, out UnitEntity unitEntity) == true) {
+                if (world.GetEntityData(comp.unit, out UnitEntity unitEntity) == true) {
 
-                    var unitInfoComponent = Worlds<WarcraftState>.currentWorld.GetComponent<UnitEntity, UnitInfoComponent>(unitEntity.entity);
+                    var unitInfoComponent = world.GetComponent<UnitEntity, UnitInfoComponent>(unitEntity.entity);
                     this.SetInfo(unitInfoComponent.unitInfo);
                 
+                    this.UpdateQueue(data.entity);
+
                 } else {
 
                     this.graphNodeSelected = null;
@@ -118,6 +179,15 @@ namespace Warcraft.Views.UI {
                 }
 
             }
+            
+        }
+
+        private void DoCancelQueue(Entity building, Entity unit) {
+            
+            Worlds<WarcraftState>.currentWorld.AddMarker(new InputUnitQueueCancel() {
+                selectedUnit = building,
+                unitInQueue = unit
+            });
             
         }
 

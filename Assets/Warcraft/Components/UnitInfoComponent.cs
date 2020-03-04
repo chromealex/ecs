@@ -23,5 +23,24 @@ namespace Warcraft.Components {
         }
 
     }
-    
+
+    public class UnitCostComponent : IComponentCopyable<TState, TEntity> {
+
+        public ResourcesStorage cost;
+
+        void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
+
+            var _other = (UnitCostComponent)other;
+            this.cost = _other.cost;
+
+        }
+
+        void IPoolableRecycle.OnRecycle() {
+
+            this.cost = default;
+
+        }
+
+    }
+
 }

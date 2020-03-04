@@ -21,4 +21,4 @@ MonoBehaviour:
   walkable: 1
   hasEntrancePoint: 0
   entrancePoint: {x: 0, y: 0}
-  movementSpeed: 0.5
+  movementSpeed: 0.8

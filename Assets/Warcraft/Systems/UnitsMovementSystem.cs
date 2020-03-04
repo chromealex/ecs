@@ -23,7 +23,7 @@ namespace Warcraft.Systems {
             
             this.moveUnitsMarkerExists = false;
             
-            Filter<Warcraft.WarcraftState, UnitEntity>.Create(ref this.unitsSelectedFilter, "unitsSelectedFilter").WithComponent<UnitSelectedComponent>().WithoutComponent<UnitPeasantComponent>().Push();
+            Filter<Warcraft.WarcraftState, UnitEntity>.Create(ref this.unitsSelectedFilter, "unitsSelectedFilter").WithComponent<UnitSelectedComponent>().WithoutComponent<UnitPeasantComponent>().WithComponent<CharacterComponent>().Push();
             Filter<Warcraft.WarcraftState, UnitEntity>.Create(ref this.unitsHasTargetFilter, "unitsHasTargetFilter").WithComponent<CharacterManualTarget>().WithoutComponent<UnitPeasantComponent>().Push();
 
         }
@@ -46,7 +46,7 @@ namespace Warcraft.Systems {
                     
                     if ((unit.position - target.target).sqrMagnitude <= UnitsMovementSystem.REACH_DESTINATION_DISTANCE * UnitsMovementSystem.REACH_DESTINATION_DISTANCE) {
 
-                        this.world.RemoveComponents<Warcraft.Components.CharacterStates.CharacterMoveState>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterStates.CharacterMoveState>(unit.entity);
                         this.world.AddOrGetComponent<UnitEntity, Warcraft.Components.CharacterStates.CharacterIdleState>(unit.entity);
 
                     }

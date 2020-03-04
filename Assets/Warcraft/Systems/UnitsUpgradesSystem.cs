@@ -35,12 +35,17 @@ namespace Warcraft.Systems {
                 if (this.world.GetEntityData(activePlayer, out Warcraft.Entities.PlayerEntity playerEntity) == true) {
 
                     if (marker.actionInfo.IsEnabled(playerEntity) == true) {
-                    
-                        var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
-                        playerResources.resources.gold -= marker.actionInfo.cost.gold;
-                        playerResources.resources.wood -= marker.actionInfo.cost.wood;
 
-                        this.unitsFeature.UpgradeUnit(marker.selectedUnit, marker.unitInfo.unitTypeId);
+                        var inProgress = this.world.GetComponent<UnitEntity, UnitBuildingProgress>(marker.selectedUnit);
+                        if (inProgress == null) {
+
+                            var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
+                            playerResources.resources.gold -= marker.actionInfo.cost.gold;
+                            playerResources.resources.wood -= marker.actionInfo.cost.wood;
+
+                            this.unitsFeature.UpgradeUnit(marker.selectedUnit, marker.unitInfo.unitTypeId, marker.actionInfo.cost);
+
+                        }
 
                     }
 

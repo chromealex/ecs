@@ -101,6 +101,10 @@ MonoBehaviour:
       minEndingTime: 0.1
       halfEnding: 0.5
     hasDefault: 1
-  buildingProgressSprites: []
+  buildingProgressSprites:
+  - {fileID: -9072964128852463637, guid: 8175c21ae7cfe4b1ea37d9966b5e397c, type: 3}
+  - {fileID: -5134637518163707888, guid: 1cb04eb5ef2e847819f7994702d92a8a, type: 3}
+  - {fileID: 8123311100913580, guid: 1cb04eb5ef2e847819f7994702d92a8a, type: 3}
+  invalidColor: {r: 1, g: 0, b: 0, a: 0.5}
   spriteRenderer: {fileID: 7507356385485268453}
   size: {x: 4, y: 4}

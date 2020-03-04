@@ -10,4 +10,11 @@ namespace Warcraft.Markers {
 
     }
 
+    public struct InputUnitQueueCancel : IMarker {
+
+        public Entity selectedUnit;
+        public Entity unitInQueue;
+
+    }
+
 }

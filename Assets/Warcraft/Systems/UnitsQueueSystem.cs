@@ -12,6 +12,9 @@ namespace Warcraft.Systems {
         private InputUnitQueue placeInQueueMarker;
         private bool placeInQueueMarkerExists;
 
+        private InputUnitQueueCancel placeInQueueCancelMarker;
+        private bool placeInQueueCancelMarkerExists;
+
         private Warcraft.Features.PlayersFeature playersFeature;
         private Warcraft.Features.UnitsFeature unitsFeature;
         private Warcraft.Features.PathfindingFeature pathfindingFeature;
@@ -49,8 +52,8 @@ namespace Warcraft.Systems {
                         progress.progress += deltaTime;
                         if (progress.progress >= progress.time) {
                             
-                            this.world.RemoveComponents<UnitBuildingProgress>(unitItem);
-                            this.world.RemoveComponents<UnitHiddenView>(unitItem);
+                            this.world.RemoveComponents<UnitEntity, UnitBuildingProgress>(unitItem);
+                            this.world.RemoveComponents<UnitEntity, UnitHiddenView>(unitItem);
                             queue.units.RemoveAt(0);
                             
                             var target = this.world.AddOrGetComponent<UnitEntity, CharacterManualTarget>(unitItem);
@@ -65,6 +68,45 @@ namespace Warcraft.Systems {
 
             }
 
+            if (this.placeInQueueCancelMarkerExists == true) {
+
+                this.placeInQueueCancelMarkerExists = false;
+                var marker = this.placeInQueueCancelMarker;
+                
+                var activePlayer = this.playersFeature.GetActivePlayer();
+                if (this.world.GetEntityData(activePlayer, out PlayerEntity playerEntity) == true) {
+
+                    if (this.world.GetEntityData(marker.selectedUnit, out UnitEntity buildingEntity) == true) {
+
+                        var queue = this.world.GetComponent<UnitEntity, UnitBuildingQueueComponent>(buildingEntity.entity);
+                        if (queue != null) {
+
+                            foreach (var unit in queue.units) {
+
+                                if (unit == marker.unitInQueue) {
+
+                                    var unitCost = this.world.GetComponent<UnitEntity, UnitCostComponent>(unit);
+                                    
+                                    var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
+                                    playerResources.resources.gold += unitCost.cost.gold;
+                                    playerResources.resources.wood += unitCost.cost.wood;
+
+                                    queue.units.Remove(unit);
+                                    this.world.RemoveEntity<UnitEntity>(unit);
+                                    break;
+
+                                }
+
+                            }
+
+                        }
+                        
+                    }
+                    
+                }
+                
+            }
+
             if (this.placeInQueueMarkerExists == true) {
 
                 this.placeInQueueMarkerExists = false;
@@ -75,18 +117,23 @@ namespace Warcraft.Systems {
 
                     if (marker.actionInfo.IsEnabled(playerEntity) == true) {
 
-                        var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
-                        playerResources.resources.gold -= marker.actionInfo.cost.gold;
-                        playerResources.resources.wood -= marker.actionInfo.cost.wood;
-
                         if (this.world.GetEntityData(marker.selectedUnit, out UnitEntity unitEntity) == true) {
 
-                            var newEntity = this.unitsFeature.SpawnUnit(activePlayer, marker.unitInfo.unitTypeId, unitEntity.position);
-                            this.world.AddComponent<UnitEntity, UnitHiddenView>(newEntity);
+                            var inProgress = this.world.GetComponent<UnitEntity, UnitBuildingProgress>(unitEntity.entity);
+                            if (inProgress == null) {
 
-                            var queueComponent = this.world.AddOrGetComponent<UnitEntity, UnitBuildingQueueComponent>(marker.selectedUnit);
-                            if (queueComponent.units == null) queueComponent.units = PoolList<Entity>.Spawn(3);
-                            queueComponent.units.Add(newEntity);
+                                var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
+                                playerResources.resources.gold -= marker.actionInfo.cost.gold;
+                                playerResources.resources.wood -= marker.actionInfo.cost.wood;
+
+                                var newEntity = this.unitsFeature.SpawnUnit(activePlayer, marker.unitInfo.unitTypeId, this.mapFeature.GetWorldEntrancePosition(unitEntity.position, unitEntity.size, unitEntity.entrance), marker.actionInfo.cost);
+                                this.world.AddComponent<UnitEntity, UnitHiddenView>(newEntity);
+
+                                var queueComponent = this.world.AddOrGetComponent<UnitEntity, UnitBuildingQueueComponent>(marker.selectedUnit);
+                                if (queueComponent.units == null) queueComponent.units = PoolList<Entity>.Spawn(3);
+                                queueComponent.units.Add(newEntity);
+
+                            }
                             
                         }
                         
@@ -104,6 +151,13 @@ namespace Warcraft.Systems {
 
                 this.placeInQueueMarker = marker;
                 this.placeInQueueMarkerExists = true;
+
+            }
+
+            if (this.world.GetMarker(out InputUnitQueueCancel markerCancel) == true) {
+
+                this.placeInQueueCancelMarker = markerCancel;
+                this.placeInQueueCancelMarkerExists = true;
 
             }
 

@@ -20,6 +20,7 @@ namespace Warcraft {
         public FiltersStorage filters;
         
         // TODO: Place your custom data here
+        public float peasantsMindTimer;
         
         public Storage<SharedEntity> shared;
         public Storage<PlayerEntity> players;
@@ -77,6 +78,7 @@ namespace Warcraft {
             this.randomState = other.randomState;
 
             // TODO: Copy your custom data here
+            this.peasantsMindTimer = other.peasantsMindTimer;
 
             this.filters.CopyFrom(other.filters);
             
@@ -105,6 +107,7 @@ namespace Warcraft {
             WorldUtilities.Release(ref this.filters);
             
             // TODO: Release your custom data here
+            this.peasantsMindTimer = default;
             
             WorldUtilities.Release(ref this.shared);
             WorldUtilities.Release(ref this.players);

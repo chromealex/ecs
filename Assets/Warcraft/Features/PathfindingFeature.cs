@@ -156,7 +156,7 @@ namespace Warcraft.Features {
 
         public void StopMovement(Entity entity) {
             
-            this.world.RemoveComponents<PathfindingPathComponent>(entity);
+            this.world.RemoveComponents<UnitEntity, PathfindingPathComponent>(entity);
             
         }
 
@@ -185,7 +185,7 @@ namespace Warcraft.Features {
                 } else {
                     
                     var result = (Vector3)comp.nodes[comp.nodes.Count - 1].position;
-                    this.world.RemoveComponents<PathfindingPathComponent>(entity);
+                    this.world.RemoveComponents<UnitEntity, PathfindingPathComponent>(entity);
                     return result.XY();
 
                 }

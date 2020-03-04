@@ -81,7 +81,7 @@ namespace Warcraft.Systems {
 
                 var activePlayer = this.playersFeature.GetActivePlayer();
                 
-                var currentGhoster = this.unitsFeature.SpawnUnit(activePlayer, marker.unitInfo.unitTypeId, UnityEngine.Vector3.zero, ghost: true);
+                var currentGhoster = this.unitsFeature.SpawnUnit(activePlayer, marker.unitInfo.unitTypeId, UnityEngine.Vector3.zero, new ResourcesStorage(), ghost: true);
                 var ghoster = this.world.GetComponent<UnitEntity, UnitGhosterComponent>(currentGhoster);
                 ghoster.actionInfo = marker.actionInfo;
 
@@ -149,7 +149,7 @@ namespace Warcraft.Systems {
                                 var unitInfoComponent = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity);
                                 
                                 unit.position = this.mapFeature.GetWorldCellPosition(marker.worldPosition, unit.size);
-                                this.unitsFeature.SpawnUnit(activePlayer, unitInfoComponent.unitInfo.unitTypeId, unit.position);
+                                this.unitsFeature.SpawnUnit(activePlayer, unitInfoComponent.unitInfo.unitTypeId, unit.position, ghosterComponent.actionInfo.cost);
                                 this.world.RemoveEntity<UnitEntity>(unit.entity);
 
                             }

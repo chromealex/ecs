@@ -30,7 +30,7 @@ namespace Warcraft.Features {
 
         public void ClearSelection(Entity unitEntity) {
         
-            this.world.RemoveComponents<UnitSelectedComponent>(unitEntity);
+            this.world.RemoveComponents<UnitEntity, UnitSelectedComponent>(unitEntity);
             
         }
 

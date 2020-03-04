@@ -19,6 +19,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 30de871c0aa434e9a992c4bc6497cc67, type: 2}
   - {fileID: 11400000, guid: 35e905aeb15fb4ad6b7abe81e377d750, type: 2}
   - {fileID: 11400000, guid: c7c0e89199b2c490f81ac263308c2d42, type: 2}
+  - {fileID: 11400000, guid: 488abe881863c4e738f0536bf9eab5da, type: 2}
   requiredToOpen: []
   icon: {fileID: 187276457610163354, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
   cost:

@@ -39,6 +39,8 @@ namespace Warcraft.Views {
             
             if (world.HasComponent<UnitEntity, Warcraft.Components.UnitHiddenView>(data.entity) == true) {
 
+                this.tr.position = data.position;
+                this.tr.rotation = data.rotation;
                 this.tr.localScale = Vector3.zero;
                 return;
 

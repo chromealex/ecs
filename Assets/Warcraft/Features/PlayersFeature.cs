@@ -58,7 +58,7 @@ namespace Warcraft.Features {
                 foreach (var sd in mapInfo.mapGrid.spawnPoints) {
 
                     var pos = sd.transform.position.XY();
-                    unitsFeature.SpawnUnit(this.players[sd.playerIndex], sd.unitInfo.unitTypeId, pos, placeComplete: true);
+                    unitsFeature.SpawnUnit(this.players[sd.playerIndex], sd.unitInfo.unitTypeId, pos, new ResourcesStorage(), placeComplete: true);
                     
                 }
                 

@@ -208,7 +208,7 @@ namespace Warcraft.Systems {
                     
                 unitsSelectionFeature.ClearSelection(selection.unitEntity);
                 this.world.RemoveEntity<Warcraft.Entities.SelectionEntity>(selection.entity);
-                this.world.RemoveComponents<Warcraft.Components.PlayerSelectedUnitComponent>(playerFeature.GetActivePlayer());
+                this.world.RemoveComponents<Warcraft.Entities.PlayerEntity, Warcraft.Components.PlayerSelectedUnitComponent>(playerFeature.GetActivePlayer());
 
             }
 

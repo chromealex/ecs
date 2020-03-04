@@ -34,7 +34,7 @@ namespace Warcraft.Features {
             
         }
 
-        public Entity UpgradeUnit(Entity unitEntity, int unitTypeId, bool placeComplete = false) {
+        public Entity UpgradeUnit(Entity unitEntity, int unitTypeId, ResourcesStorage cost, bool placeComplete = false) {
             
             if (this.world.GetEntityData(unitEntity, out UnitEntity unitData) == true) {
                 
@@ -62,9 +62,15 @@ namespace Warcraft.Features {
                     
                 }
                 
+                var unitCost = this.world.AddOrGetComponent<UnitEntity, UnitCostComponent>(unitEntity);
+                unitCost.cost = cost;
+
                 var units = this.world.AddOrGetComponent<PlayerEntity, PlayerUnitsComponent>(playerEntity);
                 units.AddUnit(unitTypeId);
-                
+
+                var unitType = this.world.AddOrGetComponent<UnitEntity, UnitInfoComponent>(unitEntity);
+                unitType.unitInfo = unitInfo;
+
                 unitInfo.OnUpgrade(this.world, unitEntity);
                 
                 return unitEntity;
@@ -75,7 +81,7 @@ namespace Warcraft.Features {
             
         }
 
-        public Entity SpawnUnit(Entity playerEntity, int unitTypeId, UnityEngine.Vector2 position, bool ghost = false, bool placeComplete = false) {
+        public Entity SpawnUnit(Entity playerEntity, int unitTypeId, UnityEngine.Vector2 position, ResourcesStorage cost, bool ghost = false, bool placeComplete = false) {
 
             var mapFeature = this.world.GetFeature<MapFeature>();
             
@@ -127,6 +133,9 @@ namespace Warcraft.Features {
                     compMax.max = 1;
                     
                 }
+
+                var unitCost = this.world.AddOrGetComponent<UnitEntity, UnitCostComponent>(entity);
+                unitCost.cost = cost;
 
                 var units = this.world.AddOrGetComponent<PlayerEntity, PlayerUnitsComponent>(playerEntity);
                 units.AddUnit(unitTypeId);

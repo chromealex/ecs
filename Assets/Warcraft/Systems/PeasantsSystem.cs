@@ -35,7 +35,7 @@ namespace Warcraft.Systems {
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.castlesEntities, "castlesEntities").WithComponent<CastleComponent>().Push();
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.goldMineEntities, "goldMineEntities").WithComponent<GoldMineComponent>().Push();
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.buildingsInProgressEntities, "buildingsInProgressEntities").WithComponent<UnitBuildingProgress>().WithoutComponent<CharacterComponent>().Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantIdleEntities, "peasantIdleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantIdleState>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantIdleEntities, "peasantIdleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantIdleState>().WithoutComponent<UnitBuildingProgress>().Push();
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantGoToWorkEntities, "peasantGoToWorkEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantGoToWorkState>().Push();
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantWorkingEntities, "peasantWorkingEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantWorkingState>().Push();
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantGoToCastleEntities, "peasantGoToCastleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantGoToCastleState>().WithoutComponent<PeasantWorkingState>().Push();
@@ -46,6 +46,8 @@ namespace Warcraft.Systems {
         void ISystemBase.OnDeconstruct() {}
 
         void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+
+            state.peasantsMindTimer += deltaTime;
 
             foreach (var index in state.units) {
 
@@ -58,7 +60,7 @@ namespace Warcraft.Systems {
 
                         unit.workingTimer = 0f;
                         
-                        this.world.RemoveComponents<PeasantGoToCastleState>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, PeasantGoToCastleState>(unit.entity);
 
                         var playerOwner = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
                         PlayerEntity playerData;
@@ -71,11 +73,11 @@ namespace Warcraft.Systems {
                         if (resValueWood != null) comp.resources.wood += resValueWood.value;
                         if (resValueGold != null) comp.resources.gold += resValueGold.value;
 
-                        this.world.RemoveComponents<PeasantCarryGold>(unit.entity);
-                        this.world.RemoveComponents<PeasantCarryWood>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, PeasantCarryGold>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, PeasantCarryWood>(unit.entity);
 
-                        this.world.RemoveComponents<UnitHiddenView>(unit.entity);
-                        this.world.RemoveComponents<PeasantWorkingState>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, UnitHiddenView>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, PeasantWorkingState>(unit.entity);
 
                         this.world.AddComponent<UnitEntity, PeasantIdleState>(unit.entity);
 
@@ -101,11 +103,6 @@ namespace Warcraft.Systems {
                         var progress = this.world.GetComponent<UnitEntity, UnitBuildingProgress>(unit.jobTarget);
                         progress.progress += deltaTime;
                         timer = progress.time;
-                        if (progress.progress >= progress.time) {
-                            
-                            this.world.RemoveComponents<UnitBuildingProgress>(unit.jobTarget);
-                            
-                        }
 
                     }
 
@@ -117,6 +114,8 @@ namespace Warcraft.Systems {
 
                         if (unit.jobTargetType == 3) {
                             
+                            this.world.RemoveComponents<UnitEntity, UnitBuildingProgress>(unit.jobTarget);
+
                             var workPlace = this.world.GetComponent<UnitEntity, BuildingInProgressCountAtWorkPlace>(unit.jobTarget);
                             --workPlace.count;
 
@@ -223,8 +222,8 @@ namespace Warcraft.Systems {
                             
                         }
 
-                        this.world.RemoveComponents<UnitHiddenView>(unit.entity);
-                        this.world.RemoveComponents<PeasantWorkingState>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, UnitHiddenView>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, PeasantWorkingState>(unit.entity);
                         
                     }
 
@@ -234,7 +233,7 @@ namespace Warcraft.Systems {
                     unit.position = this.pathfindingFeature.MoveTowards(unit.entity, unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime);
                     if ((unit.position - unit.jobTargetPos).sqrMagnitude <= PeasantsSystem.REACH_DESTINATION_DISTANCE * PeasantsSystem.REACH_DESTINATION_DISTANCE) {
                         
-                        this.world.RemoveComponents<PeasantGoToWorkState>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, PeasantGoToWorkState>(unit.entity);
                         this.world.AddComponent<UnitEntity, PeasantWorkingState>(unit.entity);
 
                         if (unit.jobTargetType == 3) {
@@ -261,6 +260,8 @@ namespace Warcraft.Systems {
                     }
 
                 } else if (this.peasantIdleEntities.Contains(unit) == true) {
+
+                    if (state.peasantsMindTimer < 1f) continue;
 
                     var unitMapPosition = unit.position;
                     
@@ -443,7 +444,7 @@ namespace Warcraft.Systems {
 
                     if (found == true) {
 
-                        this.world.RemoveComponents<PeasantIdleState>(unit.entity);
+                        this.world.RemoveComponents<UnitEntity, PeasantIdleState>(unit.entity);
                         this.world.AddComponent<UnitEntity, PeasantGoToWorkState>(unit.entity);
 
                     }
@@ -454,6 +455,12 @@ namespace Warcraft.Systems {
 
             }
 
+            if (state.peasantsMindTimer >= 1f) {
+                
+                state.peasantsMindTimer -= 1f;
+                
+            }
+            
         }
 
         private bool HasCastleNearby(int playerIndex, UnityEngine.Vector2 position) {

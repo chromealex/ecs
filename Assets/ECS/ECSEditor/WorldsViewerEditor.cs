@@ -463,47 +463,37 @@ namespace ME.ECSEditor {
                                                             ME.ECS.IComponentsBase components;
                                                             if (componentsStorage.TryGetValue(entityData.entity.typeId, out components) == true) {
 
-                                                                var componentsDic = components.GetData();
-                                                                foreach (DictionaryEntry itemData in componentsDic) {
+                                                                var componentsDic = components.GetData(entityData.entity.id);
+                                                                foreach (var component in componentsDic) {
 
-                                                                    if ((EntityId)itemData.Key == entityData.entity.id) {
+                                                                    GUILayoutExt.Box(
+                                                                        padding,
+                                                                        margin,
+                                                                        () => {
 
-                                                                        var collection = (IEnumerable)(itemData.Value);
-                                                                        foreach (var collectionItem in collection) {
+                                                                            GUILayout.Space(2f);
+                                                                            GUILayout.BeginHorizontal();
+                                                                            GUILayout.Label(component.GetType().Name, GUILayout.Width(90f));
+                                                                            GUILayoutExt.TypeLabel(component.GetType());
+                                                                            GUILayout.EndHorizontal();
 
-                                                                            var component = (ME.ECS.IComponentBase)collectionItem;
                                                                             GUILayoutExt.Box(
                                                                                 padding,
                                                                                 margin,
                                                                                 () => {
 
-                                                                                    GUILayout.Space(2f);
-                                                                                    GUILayout.BeginHorizontal();
-                                                                                    GUILayout.Label(component.GetType().Name, GUILayout.Width(90f));
-                                                                                    GUILayoutExt.TypeLabel(component.GetType());
-                                                                                    GUILayout.EndHorizontal();
+                                                                                    /*if (component is IGUIEditor componentEditor) {
 
-                                                                                    GUILayoutExt.Box(
-                                                                                        padding,
-                                                                                        margin,
-                                                                                        () => {
+                                                                                        componentEditor.OnDrawGUI();
 
-                                                                                            /*if (component is IGUIEditor componentEditor) {
+                                                                                    }*/
 
-                                                                                                componentEditor.OnDrawGUI();
+                                                                                    GUILayout.Label("Data", EditorStyles.miniBoldLabel);
+                                                                                    GUILayoutExt.DrawFields(component, 120f);
 
-                                                                                            }*/
+                                                                                }, GUIStyle.none);
 
-                                                                                            GUILayout.Label("Data", EditorStyles.miniBoldLabel);
-                                                                                            GUILayoutExt.DrawFields(component, 120f);
-
-                                                                                        }, GUIStyle.none);
-
-                                                                                }, "dragtabdropwindow");
-
-                                                                        }
-
-                                                                    }
+                                                                        }, "dragtabdropwindow");
 
                                                                 }
 

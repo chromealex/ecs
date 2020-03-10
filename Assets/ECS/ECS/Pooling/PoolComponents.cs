@@ -80,6 +80,17 @@ namespace ME.ECS {
 
 	    }
 
+	    public static void Recycle<TComponent>(ref TComponent[] list) where TComponent : class, IComponentBase {
+
+		    for (int i = 0; i < list.Length; ++i) {
+			    
+			    PoolComponents.Recycle(list[i]);
+			    
+		    }
+		    PoolArray<TComponent>.Recycle(ref list);
+
+	    }
+
 	    public static void Recycle<TComponent>(List<TComponent> list) where TComponent : class, IComponentBase {
 
 		    for (int i = 0; i < list.Count; ++i) {

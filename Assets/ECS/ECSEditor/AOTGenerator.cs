@@ -83,7 +83,7 @@ ME.ECS.Worlds<#STATENAME#>.currentWorld.AddComponent<#PROJECTNAME#.Entities.#ENT
 ME.ECS.Worlds<#STATENAME#>.currentWorld.AddOrGetComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.ViewComponent<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());
 ME.ECS.Worlds<#STATENAME#>.currentWorld.GetComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.ViewComponent<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());
 ME.ECS.Worlds<#STATENAME#>.currentWorld.ForEachEntity<#PROJECTNAME#.Entities.#ENTITYNAME#>(out ME.ECS.Collections.RefList<#PROJECTNAME#.Entities.#ENTITYNAME#> _);
-ME.ECS.Worlds<#STATENAME#>.currentWorld.ForEachComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.ViewComponent<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity(), null);
+ME.ECS.Worlds<#STATENAME#>.currentWorld.ForEachComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.ViewComponent<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());
 ME.ECS.Worlds<#STATENAME#>.currentWorld.GetEntityData(new ME.ECS.Entity(), out #PROJECTNAME#.Entities.#ENTITYNAME# _);
 ME.ECS.Worlds<#STATENAME#>.currentWorld.RemoveComponentsPredicate<ME.ECS.Views.ViewComponent<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>, ME.ECS.Views.RemoveComponentViewPredicate<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>, #PROJECTNAME#.Entities.#ENTITYNAME#>(new ME.ECS.Entity(), new ME.ECS.Views.RemoveComponentViewPredicate<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>());
 ";

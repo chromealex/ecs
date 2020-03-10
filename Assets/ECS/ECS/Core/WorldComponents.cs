@@ -9,8 +9,12 @@ namespace ME.ECS {
         TComponent AddOrGetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity;
         TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity;
         TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
+
+        TComponent AddComponent<TEntity, TComponent, TComponentType>(Entity entity) where TComponentType : class, IComponent<TState, TEntity>
+                                                                                    where TComponent : class, TComponentType, IComponent<TState, TEntity>, new()
+                                                                                    where TEntity : struct, IEntity;
         TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
-        void ForEachComponent<TEntity, TComponent>(Entity entity, System.Collections.Generic.List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
+        List<IComponent<TState, TEntity>> ForEachComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
         bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;
         void RemoveComponents<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentBase;
         void RemoveComponentsByEntityType<TEntity>(Entity entity) where TEntity : struct, IEntity;
@@ -22,7 +26,7 @@ namespace ME.ECS {
         TComponent AddComponentShared<TComponent>() where TComponent : class, IComponent<TState, SharedEntity>, new();
         TComponent AddComponentShared<TComponent>(IComponent<TState, SharedEntity> data) where TComponent : class, IComponent<TState, SharedEntity>;
         TComponent GetComponentShared<TComponent>() where TComponent : class, IComponent<TState, SharedEntity>;
-        void ForEachComponentShared<TComponent>(System.Collections.Generic.List<TComponent> output) where TComponent : class, IComponent<TState, SharedEntity>;
+        List<IComponent<TState, SharedEntity>> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent<TState, SharedEntity>;
         bool HasComponentShared<TComponent>() where TComponent : IComponent<TState, SharedEntity>;
         void RemoveComponentsShared<TComponent>() where TComponent : class, IComponentBase;
         void RemoveComponentsSharedPredicate<TComponent, TComponentPredicate>(TComponentPredicate predicate) where TComponent : class, IComponent<TState, SharedEntity> where TComponentPredicate : IComponentPredicate<TComponent>;
@@ -63,10 +67,14 @@ namespace ME.ECS {
         #region Regular Components
         public TComponent AddOrGetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity {
 
-            if (this.HasComponent<TEntity, TComponent>(entity) == true) {
-                
-                return this.GetComponent<TEntity, TComponent>(entity);
-                
+            var code = WorldUtilities.GetKey(entity);
+            IComponents<TState> components;
+            if (this.componentsCache.TryGetValue(code, out components) == true) {
+
+                var componentsState = ((Components<TEntity, TState>)components);
+                var element = componentsState.GetFirst<TComponent>(entity.id);
+                if (element != null) return element;
+
             }
 
             return this.AddComponent<TEntity, TComponent>(entity);
@@ -89,6 +97,22 @@ namespace ME.ECS {
         }
 
         /// <summary>
+        /// Add component for current entity only (create component data)
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <typeparam name="TComponentType"></typeparam>
+        public TComponent AddComponent<TEntity, TComponent, TComponentType>(Entity entity) where TComponentType : class, IComponent<TState, TEntity> where TComponent : class, TComponentType, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity {
+
+            TComponent data;
+            data = PoolComponents.Spawn<TComponent>();
+
+            return (TComponent)this.AddComponent<TEntity, TComponentType>(entity, data);
+
+        }
+
+        /// <summary>
         /// Add component for entity
         /// </summary>
         /// <param name="entity"></param>
@@ -102,12 +126,12 @@ namespace ME.ECS {
             if (this.componentsCache.TryGetValue(code, out components) == true) {
 
                 var item = (Components<TEntity, TState>)components;
-                item.Add(entity.id, data);
+                item.Add<TComponent>(entity.id, data);
 
             } else {
 
                 components = PoolClass<Components<TEntity, TState>>.Spawn();
-                ((Components<TEntity, TState>)components).Add(entity.id, data);
+                ((Components<TEntity, TState>)components).Add<TComponent>(entity.id, data);
                 this.componentsCache.Add(code, components);
 
             }
@@ -133,18 +157,19 @@ namespace ME.ECS {
             
         }
 
-        public void ForEachComponent<TEntity, TComponent>(Entity entity, List<TComponent> output) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
+        public List<IComponent<TState, TEntity>> ForEachComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
 
-            output.Clear();
             var code = WorldUtilities.GetKey(entity);
             IComponents<TState> components;
             var result = false;
             result = this.componentsCache.TryGetValue(code, out components);
             if (result == true) {
 
-                ((Components<TEntity, TState>)components).ForEach(entity.id, output);
+                return ((Components<TEntity, TState>)components).ForEach<TComponent>(entity.id);
 
             }
+
+            return null;
 
         }
 
@@ -219,9 +244,12 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                ((Components<TEntity, TState>)componentsContainer).RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate);
-                this.RemoveComponentFromFilter<TEntity>(entity);
-                
+                if (((Components<TEntity, TState>)componentsContainer).RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
+
+                    this.RemoveComponentFromFilter<TEntity>(entity);
+
+                }
+
             }
 
         }
@@ -236,8 +264,11 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                componentsContainer.RemoveAll<TComponent>(entity.id);
-                this.RemoveComponentFromFilter<TEntity>(entity);
+                if (componentsContainer.RemoveAll<TComponent>(entity.id) > 0) {
+                
+                    this.RemoveComponentFromFilter<TEntity>(entity);
+                    
+                }
 
             }
 
@@ -253,8 +284,11 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                componentsContainer.RemoveAll(entity.id);
-                this.RemoveComponentFromFilter<TEntity>(entity);
+                if (componentsContainer.RemoveAll(entity.id) > 0) {
+                
+                    this.RemoveComponentFromFilter<TEntity>(entity);
+                    
+                }
 
             }
 
@@ -270,8 +304,11 @@ namespace ME.ECS {
             IComponents<TState> componentsContainer;
             if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
 
-                componentsContainer.RemoveAllOnce<TComponent>(entity.id);
-                this.RemoveComponentFromFilter<TEntity>(entity);
+                if (componentsContainer.RemoveAllOnce<TComponent>(entity.id) > 0) {
+
+                    this.RemoveComponentFromFilter<TEntity>(entity);
+
+                }
 
             }
 
@@ -279,6 +316,7 @@ namespace ME.ECS {
 
         /// <summary>
         /// Remove all components with type TComponent from all entities
+        /// This method doesn't update any filter, you should call UpdateFilter manually
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
         public void RemoveComponents<TComponent>() where TComponent : class, IComponentBase {
@@ -293,6 +331,7 @@ namespace ME.ECS {
 
         /// <summary>
         /// Remove all components with type TComponent from all entities
+        /// This method doesn't update any filter, you should call UpdateFilter manually
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
         public void RemoveComponentsOnce<TComponent>() where TComponent : class, IComponentOnceBase {
@@ -335,9 +374,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void ForEachComponentShared<TComponent>(System.Collections.Generic.List<TComponent> output) where TComponent : class, IComponent<TState, SharedEntity> {
+        public List<IComponent<TState, SharedEntity>> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent<TState, SharedEntity> {
             
-            this.ForEachComponent<SharedEntity, TComponent>(this.sharedEntity, output);
+            return this.ForEachComponent<SharedEntity, TComponent>(this.sharedEntity);
             
         }
 

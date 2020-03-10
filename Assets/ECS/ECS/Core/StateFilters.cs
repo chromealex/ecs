@@ -4,6 +4,7 @@ using System.Linq;
 namespace ME.ECS {
     
     using EntityId = System.Int32;
+    using ME.ECS.Collections;
 
     internal interface IFilterInternal<TState> where TState : class, IState<TState> {
 
@@ -40,7 +41,7 @@ namespace ME.ECS {
         IFilter<TState, TEntity> WithComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
         IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
 
-        HashSet<Entity> GetData();
+        HashSetCopyable<Entity> GetData();
         
         IFilter<TState, TEntity> Push();
 
@@ -75,6 +76,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public IFilterBase Get(int id) {
 
             return this.filters[id - 1];
@@ -155,7 +157,8 @@ namespace ME.ECS {
         private string name;
         private IFilterNode[] nodes = null;
         private int nodesCount;
-        private HashSet<Entity> data;
+        private HashSetCopyable<EntityId> dataContains;
+        private HashSetCopyable<Entity> data;
 
         private List<IFilterNode> tempNodes;
         private List<IFilterNode> tempNodesCustom;
@@ -163,14 +166,16 @@ namespace ME.ECS {
         void IPoolableSpawn.OnSpawn() {
             
             this.nodes = PoolArray<IFilterNode>.Spawn(1000);
-            this.data = PoolHashSet<Entity>.Spawn();
+            this.data = PoolHashSetCopyable<Entity>.Spawn();
+            this.dataContains = PoolHashSetCopyable<EntityId>.Spawn();
 
         }
 
         void IPoolableRecycle.OnRecycle() {
             
             PoolArray<IFilterNode>.Recycle(ref this.nodes);
-            PoolHashSet<Entity>.Recycle(ref this.data);
+            PoolHashSetCopyable<Entity>.Recycle(ref this.data);
+            PoolHashSetCopyable<EntityId>.Recycle(ref this.dataContains);
             
         }
 
@@ -188,28 +193,31 @@ namespace ME.ECS {
 
             }
             
-            if (this.data != null) PoolHashSet<Entity>.Recycle(ref this.data);
-            this.data = PoolHashSet<Entity>.Spawn(other.data.Count);
-            foreach (var item in other.data) {
+            if (this.data != null) PoolHashSetCopyable<Entity>.Recycle(ref this.data);
+            this.data = PoolHashSetCopyable<Entity>.Spawn(other.data.Count);
+            this.data.CopyFrom(other.data);
 
-                this.data.Add(item);
-
-            }
+            if (this.dataContains != null) PoolHashSetCopyable<EntityId>.Recycle(ref this.dataContains);
+            this.dataContains = PoolHashSetCopyable<EntityId>.Spawn(other.dataContains.Count);
+            this.dataContains.CopyFrom(other.dataContains);
 
         }
 
-        public HashSet<Entity> GetData() {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public HashSetCopyable<Entity> GetData() {
 
             return this.data;
 
         }
 
         public int Count {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return this.data.Count;
             }
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Contains(TEntity data) {
 
             var filter = Worlds<TState>.currentWorld.GetFilter<TEntity>(this.id);
@@ -217,6 +225,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Contains(Entity entity) {
 
             var filter = Worlds<TState>.currentWorld.GetFilter<TEntity>(this.id);
@@ -227,7 +236,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool Contains_INTERNAL(Entity entity) {
 
-            return this.data.Contains(entity);
+            return this.dataContains.Contains(entity.id);
 
         }
 
@@ -243,7 +252,7 @@ namespace ME.ECS {
 
         }
 
-        public HashSet<Entity>.Enumerator GetEnumerator() {
+        public HashSetCopyable<Entity>.Enumerator GetEnumerator() {
 
             return this.data.GetEnumerator();
 
@@ -251,7 +260,7 @@ namespace ME.ECS {
 
         bool IFilterInternal<TState>.OnUpdate(Entity entity) {
 
-            var isExists = this.data.Contains(entity);
+            var isExists = this.Contains_INTERNAL(entity);
             if (isExists == true) {
 
                 for (int i = 0; i < this.nodesCount; ++i) {
@@ -298,6 +307,7 @@ namespace ME.ECS {
 
             }
 
+            this.dataContains.Add(entity.id);
             this.data.Add(entity);
             return true;
 
@@ -305,8 +315,10 @@ namespace ME.ECS {
 
         bool IFilterInternal<TState>.OnRemove(Entity entity) {
 
-            return this.data.Remove(entity);
-            
+            var res = this.dataContains.Remove(entity.id);
+            if (res == true) this.data.Remove(entity);
+            return res;
+
         }
 
         public IFilter<TState, TEntity> Push() {

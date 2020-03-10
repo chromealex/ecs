@@ -134,6 +134,7 @@ namespace ME.ECS.Collections {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private int PeekFree() {
             
             var ienum = this.free.GetEnumerator();
@@ -184,6 +185,7 @@ namespace ME.ECS.Collections {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void UpdateFromTo(int focusIndex) {
 
             this.size = (focusIndex >= this.size ? focusIndex + 1 : this.size);
@@ -191,6 +193,7 @@ namespace ME.ECS.Collections {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsFree(int index) {
 
             return this.free.Contains(index);
@@ -256,6 +259,7 @@ namespace ME.ECS.Collections {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void Resize_INTERNAL(int newLength) {
 
             if (newLength > this.capacity) {

@@ -1,4 +1,5 @@
-﻿#if UNITY_EDITOR || DEVELOPMENT_BUILD
+﻿//#define TICK_THREADED
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 #define CHECKPOINT_COLLECTOR
 #endif
 using System.Collections;
@@ -482,6 +483,7 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         internal Filter<TState, TEntity> GetFilter<TEntity>(int id) where TEntity : struct, IEntity {
 
             return (Filter<TState, TEntity>)this.filtersStorage.Get(id);
@@ -1331,7 +1333,14 @@ namespace ME.ECS {
             if (result == true) {
 
                 var item = (Components<TEntity, TState>)componentsContainer;
-                {
+                var components = item.ForEach<IRunnableComponent<TState, TEntity>>(data.entity.id);
+                foreach (var component in components) {
+                    
+                    if (component is IRunnableComponent<TState, TEntity> runnable) runnable.AdvanceTick(this.currentState, ref data, deltaTime, index);
+                    
+                }
+
+                /*{
                     var dic = item.GetData();
                     HashSet<IComponent<TState, TEntity>> components;
                     if (dic.TryGetValue(data.entity.id, out components) == true) {
@@ -1356,7 +1365,7 @@ namespace ME.ECS {
                         }
 
                     }
-                }
+                }*/
 
             }
 
@@ -1516,6 +1525,7 @@ namespace ME.ECS {
 
         }
 
+        #if TICK_THREADED
         private struct UpdateJob : Unity.Jobs.IJobParallelFor {
 
             public float deltaTime;
@@ -1528,6 +1538,7 @@ namespace ME.ECS {
             }
 
         }
+        #endif
         
         public void Update(float deltaTime) {
 
@@ -1550,12 +1561,16 @@ namespace ME.ECS {
 
             this.UpdateVisualPre(deltaTime);
             
+            #if TICK_THREADED
             var job = new UpdateJob() {
                 deltaTime = deltaTime,
                 prevTick = prevTick,
             };
             var jobHandle = job.Schedule(1, 64);
             jobHandle.Complete();
+            #else
+            this.UpdateLogic(deltaTime, prevTick);
+            #endif
             
             this.UpdateVisualPost(deltaTime);
             

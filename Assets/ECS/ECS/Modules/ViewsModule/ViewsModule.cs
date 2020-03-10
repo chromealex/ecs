@@ -175,7 +175,7 @@ namespace ME.ECS.Views {
     public partial interface IViewModule<TState, TEntity> : IViewModuleBase, IModule<TState> where TState : class, IState<TState> where TEntity : struct, IEntity {
 
         void Register(IView<TEntity> instance);
-        void UnRegister(IView<TEntity> instance);
+        bool UnRegister(IView<TEntity> instance);
 
         ViewId RegisterViewSource<TProvider>(TProvider providerInitializer, IView<TEntity> prefab) where TProvider : struct, IViewsProviderInitializer<TEntity>;
         bool UnRegisterViewSource(IView<TEntity> prefab);
@@ -442,9 +442,9 @@ namespace ME.ECS.Views {
             component.viewInfo = viewInfo;
             component.seed = (uint)this.world.GetSeedValue();
             
-            var destroyRequest = this.world.AddComponent<TEntity, CreateViewComponentRequest<TState, TEntity>>(entity);
-            destroyRequest.viewInfo = viewInfo;
-            destroyRequest.seed = component.seed;
+            var request = this.world.AddComponent<TEntity, CreateViewComponentRequest<TState, TEntity>, IViewComponentRequest<TState, TEntity>>(entity);
+            request.viewInfo = viewInfo;
+            request.seed = component.seed;
 
         }
 
@@ -470,9 +470,9 @@ namespace ME.ECS.Views {
             viewInfo.prefabSourceId = instance.prefabSourceId;
             viewInfo.creationTick = instance.creationTick;
             
-            var destroyRequest = this.world.AddComponent<TEntity, DestroyViewComponentRequest<TState, TEntity>>(instance.entity);
-            destroyRequest.viewInfo = viewInfo;
-            destroyRequest.viewInstance = instance;
+            var request = this.world.AddComponent<TEntity, DestroyViewComponentRequest<TState, TEntity>, IViewComponentRequest<TState, TEntity>>(instance.entity);
+            request.viewInfo = viewInfo;
+            request.viewInstance = instance;
             
             instance = null;
 
@@ -637,14 +637,14 @@ namespace ME.ECS.Views {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void UnRegister(IView<TEntity> instance) {
+        public bool UnRegister(IView<TEntity> instance) {
             
-            this.UnRegister_INTERNAL(instance, removeFromList: true);
+            return this.UnRegister_INTERNAL(instance, removeFromList: true);
             
         }
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void UnRegister_INTERNAL(IView<TEntity> instance, bool removeFromList = true) {
+        private bool UnRegister_INTERNAL(IView<TEntity> instance, bool removeFromList = true) {
             
             instance.OnDeInitialize(this.GetData(instance));
 
@@ -663,11 +663,7 @@ namespace ME.ECS.Views {
             viewInfo.entity = instance.entity;
             viewInfo.prefabSourceId = instance.prefabSourceId;
             viewInfo.creationTick = instance.creationTick;
-            if (this.rendering.Remove(viewInfo) == false) {
-                
-                UnityEngine.Debug.LogError("Rendering remove failed: " + viewInfo.ToString());
-                
-            }
+            return this.rendering.Remove(viewInfo);
 
         }
 
@@ -708,38 +704,40 @@ namespace ME.ECS.Views {
                     
                     aliveEntities.Add(item.entity.id);
 
-                    var components = PoolList<IViewComponentRequest<TState, TEntity>>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_COMPONENTS_CACHE_CAPACITY);
-                    this.world.ForEachComponent<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity, components);
-                    for (int k = 0, kCount = components.Count; k < kCount; ++k) {
-                        
-                        var request = components[k];
-                        if (request is CreateViewComponentRequest<TState, TEntity> createComponentRequest) {
-                            
-                            var instance = this.SpawnView_INTERNAL(createComponentRequest.viewInfo);
-                            // Call ApplyState with deltaTime = current time offset
-                            var dt = UnityEngine.Mathf.Max(0f, (this.world.GetCurrentTick() - createComponentRequest.viewInfo.creationTick) * this.world.GetTickTime());
-                            instance.ApplyState(item, dt, immediately: true);
-                            // Simulate particle systems
-                            instance.SimulateParticles(dt, createComponentRequest.seed);
-                            
-                        } else if (request is DestroyViewComponentRequest<TState, TEntity> destroyComponentRequest) {
+                    //var components = PoolList<IViewComponentRequest<TState, TEntity>>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_COMPONENTS_CACHE_CAPACITY);
+                    var components = this.world.ForEachComponent<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);
+                    if (components != null) {
 
-                            if (this.list.TryGetValue(item.entity.id, out var viewsList) == true) {
+                        foreach (var component in components) {
 
-                                viewsList.Remove(destroyComponentRequest.viewInstance);
+                            if (component is CreateViewComponentRequest<TState, TEntity> createComponentRequest) {
+
+                                var instance = this.SpawnView_INTERNAL(createComponentRequest.viewInfo);
+                                // Call ApplyState with deltaTime = current time offset
+                                var dt = UnityEngine.Mathf.Max(0f, (this.world.GetCurrentTick() - createComponentRequest.viewInfo.creationTick) * this.world.GetTickTime());
+                                instance.ApplyState(item, dt, immediately: true);
+                                // Simulate particle systems
+                                instance.SimulateParticles(dt, createComponentRequest.seed);
+
+                            } else if (component is DestroyViewComponentRequest<TState, TEntity> destroyComponentRequest) {
+
+                                if (this.list.TryGetValue(item.entity.id, out var viewsList) == true) {
+
+                                    viewsList.Remove(destroyComponentRequest.viewInstance);
+
+                                }
+
+                                this.RecycleView_INTERNAL(ref destroyComponentRequest.viewInstance);
 
                             }
 
-                            this.RecycleView_INTERNAL(ref destroyComponentRequest.viewInstance);
-                            
                         }
 
                     }
-                    PoolList<IViewComponentRequest<TState, TEntity>>.Recycle(ref components);
+                    //PoolList<IViewComponentRequest<TState, TEntity>>.Recycle(ref components);
 
-                    this.world.RemoveComponents<TEntity, CreateViewComponentRequest<TState, TEntity>>(item.entity);
-                    this.world.RemoveComponents<TEntity, DestroyViewComponentRequest<TState, TEntity>>(item.entity);
-
+                    this.world.RemoveComponents<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);
+                    
                 }
 
             }

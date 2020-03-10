@@ -51,7 +51,7 @@ namespace ME.ECS {
     #endif
     public class PoolInternalBase {
 
-	    protected Stack<object> cache = new Stack<object>();
+	    protected Stack<object> cache = new Stack<object>(100);
 	    protected System.Func<object> constructor;
 	    protected System.Action<object> desctructor;
 	    

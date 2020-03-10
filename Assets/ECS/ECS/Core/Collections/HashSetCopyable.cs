@@ -191,12 +191,20 @@ namespace ME.ECS.Collections {
         public void CopyFrom(HashSetCopyable<T> other) {
         
             if (this.m_buckets != null) PoolArray<int>.Recycle(ref this.m_buckets);
-            this.m_buckets = PoolArray<int>.Spawn(other.m_buckets.Length);
-            for (int i = 0; i < this.m_buckets.Length; ++i) this.m_buckets[i] = other.m_buckets[i];
+            if (other.m_buckets != null) {
+
+                this.m_buckets = PoolArray<int>.Spawn(other.m_buckets.Length);
+                for (int i = 0; i < this.m_buckets.Length; ++i) this.m_buckets[i] = other.m_buckets[i];
+
+            }
 
             if (this.m_slots != null) PoolArray<Slot>.Recycle(ref this.m_slots);
-            this.m_slots = PoolArray<Slot>.Spawn(other.m_slots.Length);
-            for (int i = 0; i < this.m_slots.Length; ++i) this.m_slots[i] = other.m_slots[i];
+            if (other.m_slots != null) {
+
+                this.m_slots = PoolArray<Slot>.Spawn(other.m_slots.Length);
+                for (int i = 0; i < this.m_slots.Length; ++i) this.m_slots[i] = other.m_slots[i];
+
+            }
 
             this.m_count = other.m_count;
             this.m_lastIndex = other.m_lastIndex;
@@ -223,6 +231,7 @@ namespace ME.ECS.Collections {
         /// Remove all items from this set. This clears the elements but not the underlying 
         /// buckets and slots array. Follow this call by TrimExcess to release these.
         /// </summary>
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Clear() {
             if (m_lastIndex > 0) {
                 // clear the elements so that the gc can reclaim the references.
@@ -241,6 +250,7 @@ namespace ME.ECS.Collections {
         /// </summary>
         /// <param name="item">item to check for containment</param>
         /// <returns>true if item contained; false if not</returns>
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Contains(T item) {
             if (m_buckets != null) {
                 int hashCode = InternalGetHashCode(item);

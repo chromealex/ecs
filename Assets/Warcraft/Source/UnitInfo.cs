@@ -15,9 +15,20 @@ public struct ResourcesStorage {
 [CreateAssetMenu]
 public class UnitInfo : ScriptableObject {
 
+    public string title;
+    
     public int unitTypeId;
     public UnitView viewSource;
+    public UnitView viewSourceDead;
     public Sprite icon;
+
+    public float sightRange = 3f;
+    public float attackRange;
+    public float attackDelay;
+    public float attackTime;
+    public Vector2Int attackDamageRange;
+
+    public int health;
 
     public ActionsGraph actions;
 

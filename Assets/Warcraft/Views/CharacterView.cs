@@ -30,32 +30,37 @@ namespace Warcraft.Views {
         public Frame[] frames;
         public float animationTime;
         public bool cyclic;
+        public bool animate;
         
         private float animationTimer;
         private int frameIndex;
 
         public void ApplySprite(SpriteRenderer spriteRenderer, Vector2 from, Vector2 to, float deltaTime) {
 
-            this.animationTimer += deltaTime;
-            if (this.animationTimer >= this.animationTime) {
+            if (this.animate == true) {
 
-                this.animationTimer -= this.animationTime;
-                if (this.animationTimer > this.animationTime) {
+                this.animationTimer += deltaTime;
+                if (this.animationTimer >= this.animationTime) {
 
-                    this.animationTimer = 0f;
+                    this.animationTimer -= this.animationTime;
+                    if (this.animationTimer > this.animationTime) {
 
-                }
+                        this.animationTimer = 0f;
 
-                ++this.frameIndex;
-                if (this.frameIndex >= this.frames.Length) {
+                    }
 
-                    if (this.cyclic == false) {
+                    ++this.frameIndex;
+                    if (this.frameIndex >= this.frames.Length) {
 
-                        this.frameIndex = this.frames.Length - 1;
+                        if (this.cyclic == false) {
 
-                    } else {
+                            this.frameIndex = this.frames.Length - 1;
 
-                        this.frameIndex = 0;
+                        } else {
+
+                            this.frameIndex = 0;
+
+                        }
 
                     }
 
@@ -88,7 +93,6 @@ namespace Warcraft.Views {
             this.ApplyStateSprites(ref this.deathSprites);
             this.ApplyStateSprites(ref this.attackSprites);
             
-
         }
 
         private void ApplyStateSprites(ref DirectionSprites state) {
@@ -129,14 +133,14 @@ namespace Warcraft.Views {
 
         public override void ApplyState(in UnitEntity data, float deltaTime, bool immediately) {
 
-            ref var spriteGroup = ref this.idleSprites;
-            if (this.IsWalk(in data) == true) {
-
-                spriteGroup = ref this.GetWalkState(in data);
-
-            } else if (this.IsDead(in data) == true) {
+            ref var spriteGroup = ref this.GetIdleState(in data);
+            if (this.IsDead(in data) == true) {
 
                 spriteGroup = ref this.deathSprites;
+
+            } else if (this.IsWalk(in data) == true) {
+
+                spriteGroup = ref this.GetWalkState(in data);
 
             } else if (this.IsAttack(in data) == true) {
 
@@ -146,20 +150,13 @@ namespace Warcraft.Views {
 
             spriteGroup.ApplySprite(this.spriteRenderer, this.tr.position, data.position, deltaTime);
 
-            var comp = Worlds<WarcraftState>.currentWorld.GetComponent<UnitEntity, PathfindingPathComponent>(data.entity);
-            if (comp != null) {
-
-                var nodes = comp.nodes;
-                if (nodes != null && nodes.Count > 0) {
-                
-                    Debug.DrawLine(this.tr.position, (Vector3)nodes[0].position, Color.yellow);
-                    Debug.DrawLine(this.tr.position, (Vector3)nodes[nodes.Count - 1].position, Color.cyan);
-
-                }
-                
-            }
-
             base.ApplyState(in data, deltaTime, immediately);
+
+        }
+
+        protected virtual ref DirectionSprites GetIdleState(in UnitEntity data) {
+
+            return ref this.idleSprites;
 
         }
 

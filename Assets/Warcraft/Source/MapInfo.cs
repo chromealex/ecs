@@ -14,6 +14,7 @@ public class MapInfo : ScriptableObject {
 
     public UnityEngine.Tilemaps.TileBase forestTile;
     public UnityEngine.Tilemaps.TileBase forestFelledTile;
+    public UnityEngine.Tilemaps.TileBase fogOfWarTile;
     public Warcraft.Views.ForestView foresetViewSource = new Warcraft.Views.ForestView();
     public Vector2Int mapSize;
     public MapGrid mapGrid;

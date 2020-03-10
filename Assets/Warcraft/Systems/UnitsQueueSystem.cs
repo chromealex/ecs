@@ -52,13 +52,15 @@ namespace Warcraft.Systems {
                         progress.progress += deltaTime;
                         if (progress.progress >= progress.time) {
                             
-                            this.world.RemoveComponents<UnitEntity, UnitBuildingProgress>(unitItem);
-                            this.world.RemoveComponents<UnitEntity, UnitHiddenView>(unitItem);
                             queue.units.RemoveAt(0);
                             
+                            this.world.RemoveComponents<UnitEntity, UnitBuildingProgress>(unitItem);
+                            this.world.RemoveComponents<UnitEntity, UnitHiddenView>(unitItem);
+                            this.world.AddOrGetComponent<UnitEntity, UnitCompleteComponent>(unitItem);
+
                             var target = this.world.AddOrGetComponent<UnitEntity, CharacterManualTarget>(unitItem);
                             var entranceWorld = this.mapFeature.GetWorldEntrancePosition(unit.position, unit.size, unit.entrance);
-                            target.target = entranceWorld + this.pathfindingFeature.GetWalkableNodeByDirection(entranceWorld, this.world.GetRandomRange(0, 8));
+                            target.target = this.pathfindingFeature.GetWalkableNodeByDirection(entranceWorld, this.world.GetRandomRange(0, 8));
 
                         }
                         

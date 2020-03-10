@@ -49,7 +49,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 37f49366eeb2d46ca87e05c39e0a482c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -67,8 +67,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 213762865
+  m_SortingLayer: 1
   m_SortingOrder: 2
   m_Sprite: {fileID: -4459182644373284261, guid: 1cb04eb5ef2e847819f7994702d92a8a,
     type: 3}
@@ -91,7 +91,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7507356385485268450}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 282e7b5f7c6914df0af66523ffbde655, type: 3}
+  m_Script: {fileID: 11500000, guid: c79f2744ef5ed43bf9157cbd6f99c1b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   particleSystemSimulation:
@@ -108,3 +108,6 @@ MonoBehaviour:
   invalidColor: {r: 1, g: 0, b: 0, a: 0.5}
   spriteRenderer: {fileID: 7507356385485268453}
   size: {x: 2, y: 2}
+  destroyProgressSprites:
+  - {fileID: 1969738430943771820, guid: 8175c21ae7cfe4b1ea37d9966b5e397c, type: 3}
+  - {fileID: -7953413063376654254, guid: 8175c21ae7cfe4b1ea37d9966b5e397c, type: 3}

@@ -13,7 +13,7 @@ TagManager:
   - UI
   - 
   - 
-  - 
+  - Debug
   - 
   - 
   - 
@@ -40,4 +40,10 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Units
+    uniqueID: 213762865
+    locked: 0
+  - name: FOW
+    uniqueID: 3827695045
     locked: 0

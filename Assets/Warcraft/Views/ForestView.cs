@@ -3,7 +3,7 @@
 namespace Warcraft.Views {
     
     using ME.ECS.Views.Providers;
-    using TEntity = Warcraft.Entities.ForestEntity;
+    using TEntity = Warcraft.Entities.UnitEntity;
     
     public class ForestView : NoView<TEntity> {
 
@@ -17,11 +17,13 @@ namespace Warcraft.Views {
         
         public override void OnDeInitialize(in TEntity data) {
 
-            var mapFeature = Worlds<WarcraftState>.currentWorld.GetFeature<Warcraft.Features.MapFeature>();
-            mapFeature.CutDownTree(this.data.position);
+            var world = Worlds<WarcraftState>.currentWorld;
+            
+            var mapFeature = world.GetFeature<Warcraft.Features.MapFeature>();
+            mapFeature.CutDownTree(mapFeature.GetMapPositionFromWorld(this.data.position));
 
-            var pathfindingFeature = Worlds<WarcraftState>.currentWorld.GetFeature<Warcraft.Features.PathfindingFeature>();
-            pathfindingFeature.SetWalkability(this.data.position, true);
+            var pathfindingFeature = world.GetFeature<Warcraft.Features.PathfindingFeature>();
+            pathfindingFeature.SetWalkability(mapFeature.GetMapPositionFromWorld(this.data.position), true);
             
         }
         

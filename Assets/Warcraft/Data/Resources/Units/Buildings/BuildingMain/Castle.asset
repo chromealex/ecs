@@ -12,10 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e650e993fd39d43b3acb8443c2a79249, type: 3}
   m_Name: Castle
   m_EditorClassIdentifier: 
+  title: 
   unitTypeId: 10
   viewSource: {fileID: 1820512939237373680, guid: 0d882fddcb30448f9a9241ccf191d564,
     type: 3}
+  viewSourceDead: {fileID: 1820512939237373680, guid: 0d882fddcb30448f9a9241ccf191d564,
+    type: 3}
   icon: {fileID: 7732812943301869132, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  sightRange: 3
+  attackRange: 0
+  attackDelay: 0
+  attackTime: 0
+  attackDamageRange: {x: 0, y: 0}
+  health: 500
   actions: {fileID: 11400000, guid: 3eb88d5ff03344eaf86e4a46c2ab4415, type: 2}
   buildingTime: 10
   walkable: 0

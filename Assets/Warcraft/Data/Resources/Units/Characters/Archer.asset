@@ -12,13 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6bd23f95d43e41cc9008595887b58fd, type: 3}
   m_Name: Archer
   m_EditorClassIdentifier: 
+  title: 
   unitTypeId: 10002
   viewSource: {fileID: 4810092360561578503, guid: 2fa1c2ad0816b42d7b255a6bc36575b9,
     type: 3}
+  viewSourceDead: {fileID: 4810092360561578503, guid: 2fa1c2ad0816b42d7b255a6bc36575b9,
+    type: 3}
   icon: {fileID: 7246090447554825513, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  sightRange: 2.5
+  attackRange: 1
+  attackDelay: 0.3
+  attackTime: 0.4
+  attackDamageRange: {x: 3, y: 5}
+  health: 30
   actions: {fileID: 0}
   buildingTime: 10
   walkable: 1
   hasEntrancePoint: 0
   entrancePoint: {x: 0, y: 0}
-  movementSpeed: 0.8
+  movementSpeed: 0.9

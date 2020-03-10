@@ -30,6 +30,7 @@ namespace Warcraft.Features {
 
                     var playerEntity = this.world.AddEntity(new PlayerEntity() {
                         index = pd.playerIndex,
+                        colorIndex = pd.playerIndex + 1,
                         goldPercent = 0.5f,
                         forestPercent = 0.5f
                     });
@@ -68,6 +69,19 @@ namespace Warcraft.Features {
 
         protected override void OnDeconstruct() {
             
+        }
+
+        public bool IsNeutralPlayer(Entity entity) {
+
+            this.world.GetEntityData(entity, out PlayerEntity playerData);
+            return playerData.index == 0;
+
+        }
+
+        public System.Collections.Generic.Dictionary<int, Entity> GetAllPlayers() {
+
+            return this.players;
+
         }
 
         public Entity GetActivePlayer() {

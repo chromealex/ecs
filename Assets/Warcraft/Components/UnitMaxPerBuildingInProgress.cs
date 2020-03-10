@@ -5,14 +5,14 @@ namespace Warcraft.Components {
     using TState = WarcraftState;
     using TEntity = Warcraft.Entities.UnitEntity;
     
-    public class UnitsMaxPerBuildingInProgress : IComponentCopyable<TState, TEntity> {
+    public class UnitMaxPerBuildingInProgress : IComponentCopyable<TState, TEntity> {
 
         public int current;
         public int max;
         
         void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
 
-            var _other = (UnitsMaxPerBuildingInProgress)other;
+            var _other = (UnitMaxPerBuildingInProgress)other;
             this.current = _other.current;
             this.max = _other.max;
 

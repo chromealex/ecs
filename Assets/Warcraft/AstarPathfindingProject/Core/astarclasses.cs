@@ -154,7 +154,7 @@ namespace Pathfinding {
 	}
 
 	/// <summary>Nearest node constraint. Constrains which nodes will be returned by the <see cref="AstarPath.GetNearest"/> function</summary>
-	public class NNConstraint {
+	public class NNConstraint : IAstarPooledObject {
 		/// <summary>
 		/// Graphs treated as valid to search on.
 		/// This is a bitmask meaning that bit 0 specifies whether or not the first graph in the graphs list should be able to be included in the search,
@@ -256,6 +256,20 @@ namespace Pathfinding {
 			return true;
 		}
 
+		public virtual void OnEnterPool() {
+
+			this.tags = -1;
+			this.constrainDistance = true;
+			this.constrainTags = true;
+			this.distanceXZ = false;
+			this.walkable = true;
+			this.constrainWalkability = true;
+			this.area = -1;
+			this.constrainArea = true;
+			this.graphMask = -1;
+
+		}
+
 		/// <summary>
 		/// The default NNConstraint.
 		/// Equivalent to new NNConstraint ().
@@ -292,11 +306,17 @@ namespace Pathfinding {
 	/// The default PathNNConstraint will constrain the end point to lie inside the same area as the start point.
 	/// </summary>
 	public class PathNNConstraint : NNConstraint {
+
+		private static PathNNConstraint pathNNConstraintDefault;
 		public static new PathNNConstraint Default {
 			get {
-				return new PathNNConstraint {
-						   constrainArea = true
-				};
+				if (PathNNConstraint.pathNNConstraintDefault == null) {
+					PathNNConstraint.pathNNConstraintDefault = new PathNNConstraint {
+						constrainArea = true
+					};
+				}
+
+				return PathNNConstraint.pathNNConstraintDefault;
 			}
 		}
 

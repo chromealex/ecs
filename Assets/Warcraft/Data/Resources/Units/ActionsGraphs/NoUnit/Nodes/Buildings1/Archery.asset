@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eba06d5af22254b829b1e2d6ab41a1dc, type: 3}
-  m_Name: Wooden
+  m_Name: Archery
   m_EditorClassIdentifier: 
   next: []
   requiredToOpen: []
@@ -18,4 +18,5 @@ MonoBehaviour:
   cost:
     gold: 150
     wood: 350
+  isUpgrade: 0
   building: {fileID: 11400000, guid: e17c9a8fd1ece4a448e9be37f4e8006f, type: 2}

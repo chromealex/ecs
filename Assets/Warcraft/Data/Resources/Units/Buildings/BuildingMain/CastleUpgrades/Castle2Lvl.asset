@@ -12,10 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e650e993fd39d43b3acb8443c2a79249, type: 3}
   m_Name: Castle2Lvl
   m_EditorClassIdentifier: 
+  title: 
   unitTypeId: 12
   viewSource: {fileID: 1820512939237373680, guid: fc4bc7e60c4a347e3ab43af7b623abb1,
     type: 3}
+  viewSourceDead: {fileID: 1820512939237373680, guid: fc4bc7e60c4a347e3ab43af7b623abb1,
+    type: 3}
   icon: {fileID: -3486167937274899560, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  sightRange: 4
+  attackRange: 0
+  attackDelay: 0
+  attackTime: 0
+  attackDamageRange: {x: 0, y: 0}
+  health: 1100
   actions: {fileID: 11400000, guid: 1613172b57101462b9ff6e5b8516e911, type: 2}
   buildingTime: 10
   walkable: 0

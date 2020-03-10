@@ -150,7 +150,7 @@ namespace Pathfinding {
 		protected bool hasBeenReset;
 
 		/// <summary>Constraint for how to search for nodes</summary>
-		public NNConstraint nnConstraint = PathNNConstraint.Default;
+		public NNConstraint nnConstraint;
 
 		/// <summary>
 		/// Internal linked list implementation.
@@ -487,6 +487,13 @@ namespace Pathfinding {
 		/// Warning: Do not call this function manually.
 		/// </summary>
 		protected virtual void OnEnterPool () {
+			if (this.nnConstraint != null) {
+				
+				var obj = this.nnConstraint as PathNNConstraint;
+				Pathfinding.Util.ObjectPool<PathNNConstraint>.Release(ref obj);
+				this.nnConstraint = null;
+
+			}
 			if (vectorPath != null) Pathfinding.Util.ListPool<Vector3>.Release(ref vectorPath);
 			if (path != null) Pathfinding.Util.ListPool<GraphNode>.Release(ref path);
 			// Clear the callback to remove a potential memory leak
@@ -533,7 +540,7 @@ namespace Pathfinding {
 			duration = 0;
 			searchedNodes = 0;
 
-			nnConstraint = PathNNConstraint.Default;
+			nnConstraint = Pathfinding.Util.ObjectPool<PathNNConstraint>.Claim();
 			next = null;
 
 			heuristic = AstarPath.active.heuristic;

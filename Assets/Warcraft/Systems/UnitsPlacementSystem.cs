@@ -27,6 +27,7 @@ namespace Warcraft.Systems {
         private Warcraft.Features.UnitsFeature unitsFeature;
         private Warcraft.Features.MapFeature mapFeature;
         private Warcraft.Features.PathfindingFeature pathfindingFeature;
+        private Warcraft.Features.FogOfWarFeature fogOfWarFeature;
 
         public IWorld<TState> world { get; set; }
 
@@ -49,6 +50,7 @@ namespace Warcraft.Systems {
             if (this.unitsFeature == null) this.unitsFeature = this.world.GetFeature<Warcraft.Features.UnitsFeature>();
             if (this.mapFeature == null) this.mapFeature = this.world.GetFeature<Warcraft.Features.MapFeature>();
             if (this.pathfindingFeature == null) this.pathfindingFeature = this.world.GetFeature<Warcraft.Features.PathfindingFeature>();
+            if (this.fogOfWarFeature == null) this.fogOfWarFeature = this.world.GetFeature<Warcraft.Features.FogOfWarFeature>();
 
             if (this.cancelMarkerExists == true) {
 
@@ -104,9 +106,11 @@ namespace Warcraft.Systems {
 
                             if (this.world.GetEntityData(activePlayer, out PlayerEntity playerEntity) == true) {
 
-                                unit.position = this.mapFeature.GetWorldCellPosition(marker.worldPosition, unit.size);
+                                unit.position = this.mapFeature.GetWorldBuildingPosition(marker.worldPosition, unit.size);
                                 var ghosterComponent = this.world.GetComponent<UnitEntity, UnitGhosterComponent>(unit.entity);
-                                ghosterComponent.isValid = ghosterComponent.actionInfo.IsEnabled(playerEntity) && this.pathfindingFeature.IsValid(unit.position, unit.size);
+                                ghosterComponent.isValid = ghosterComponent.actionInfo.IsEnabled(playerEntity) &&
+                                                           this.pathfindingFeature.IsValid(unit.position, unit.size) &&
+                                                           this.fogOfWarFeature.IsRevealed(playerOwnerComponent.player, unit.position, unit.size);
 
                             }
 
@@ -136,21 +140,24 @@ namespace Warcraft.Systems {
                             var ghosterComponent = this.world.GetComponent<UnitEntity, UnitGhosterComponent>(unit.entity);
                             if (ghosterComponent.isValid == true) {
 
+                                unit.position = this.mapFeature.GetWorldBuildingPosition(marker.worldPosition, unit.size);
+                                
                                 if (this.world.GetEntityData(activePlayer, out Warcraft.Entities.PlayerEntity playerEntity) == true) {
 
                                     if (ghosterComponent.actionInfo.IsEnabled(playerEntity) == false) continue;
+                                    if (this.pathfindingFeature.IsValid(unit.position, unit.size) == false) continue;
+                                    if (this.fogOfWarFeature.IsRevealed(playerOwnerComponent.player, unit.position, unit.size) == false) continue;
                                 
+                                    var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
+                                    playerResources.resources.gold -= ghosterComponent.actionInfo.cost.gold;
+                                    playerResources.resources.wood -= ghosterComponent.actionInfo.cost.wood;
+
+                                    var unitInfoComponent = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity);
+
+                                    this.unitsFeature.SpawnUnit(activePlayer, unitInfoComponent.unitInfo.unitTypeId, unit.position, ghosterComponent.actionInfo.cost);
+                                    this.world.RemoveEntity<UnitEntity>(unit.entity);
+
                                 }
-
-                                var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
-                                playerResources.resources.gold -= ghosterComponent.actionInfo.cost.gold;
-                                playerResources.resources.wood -= ghosterComponent.actionInfo.cost.wood;
-
-                                var unitInfoComponent = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity);
-                                
-                                unit.position = this.mapFeature.GetWorldCellPosition(marker.worldPosition, unit.size);
-                                this.unitsFeature.SpawnUnit(activePlayer, unitInfoComponent.unitInfo.unitTypeId, unit.position, ghosterComponent.actionInfo.cost);
-                                this.world.RemoveEntity<UnitEntity>(unit.entity);
 
                             }
                             

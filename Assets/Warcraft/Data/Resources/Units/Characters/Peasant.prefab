@@ -49,7 +49,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 37f49366eeb2d46ca87e05c39e0a482c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -67,8 +67,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 213762865
+  m_SortingLayer: 1
   m_SortingOrder: 3
   m_Sprite: {fileID: 6255696374129196304, guid: b492773d8ec284a82a4e067199050bec,
     type: 3}
@@ -103,6 +103,7 @@ MonoBehaviour:
       halfEnding: 0.5
     hasDefault: 1
   buildingProgressSprites: []
+  invalidColor: {r: 1, g: 0, b: 0, a: 0.5}
   spriteRenderer: {fileID: 3723455997087645970}
   size: {x: 1, y: 1}
   idleSprites:
@@ -134,6 +135,7 @@ MonoBehaviour:
         flip: 1
     animationTime: 0
     cyclic: 1
+    animate: 0
   walkSprites:
     frames:
     - directions:
@@ -238,35 +240,87 @@ MonoBehaviour:
         flip: 1
     animationTime: 0.12
     cyclic: 1
+    animate: 1
   deathSprites:
     frames:
     - directions:
       - sprite: {fileID: 8633708974732354500, guid: b492773d8ec284a82a4e067199050bec,
           type: 3}
         flip: 0
+      - sprite: {fileID: 8633708974732354500, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
       - sprite: {fileID: 4354704154187041279, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: 4354704154187041279, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: 4354704154187041279, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: 4354704154187041279, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 1
+      - sprite: {fileID: 4354704154187041279, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 1
+      - sprite: {fileID: 8633708974732354500, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 1
+    - directions:
+      - sprite: {fileID: -107567443789245010, guid: b492773d8ec284a82a4e067199050bec,
           type: 3}
         flip: 0
       - sprite: {fileID: -107567443789245010, guid: b492773d8ec284a82a4e067199050bec,
           type: 3}
         flip: 0
       - sprite: {fileID: -5940067548848278014, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: -5940067548848278014, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: -5940067548848278014, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: -5940067548848278014, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 1
+      - sprite: {fileID: -5940067548848278014, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 1
+      - sprite: {fileID: -107567443789245010, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 1
+    - directions:
+      - sprite: {fileID: -6660865665142486433, guid: b492773d8ec284a82a4e067199050bec,
           type: 3}
         flip: 0
       - sprite: {fileID: -6660865665142486433, guid: b492773d8ec284a82a4e067199050bec,
           type: 3}
         flip: 0
-      - sprite: {fileID: -5940067548848278014, guid: b492773d8ec284a82a4e067199050bec,
+      - sprite: {fileID: 2572513147514142363, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: 2572513147514142363, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: 2572513147514142363, guid: b492773d8ec284a82a4e067199050bec,
+          type: 3}
+        flip: 0
+      - sprite: {fileID: 2572513147514142363, guid: b492773d8ec284a82a4e067199050bec,
           type: 3}
         flip: 1
-      - sprite: {fileID: -107567443789245010, guid: b492773d8ec284a82a4e067199050bec,
+      - sprite: {fileID: 2572513147514142363, guid: b492773d8ec284a82a4e067199050bec,
           type: 3}
         flip: 1
-      - sprite: {fileID: 4354704154187041279, guid: b492773d8ec284a82a4e067199050bec,
+      - sprite: {fileID: -6660865665142486433, guid: b492773d8ec284a82a4e067199050bec,
           type: 3}
         flip: 1
-    animationTime: 0
+    animationTime: 0.12
     cyclic: 0
+    animate: 1
   attackSprites:
     frames:
     - directions:
@@ -396,6 +450,7 @@ MonoBehaviour:
         flip: 1
     animationTime: 0.12
     cyclic: 1
+    animate: 1
   walkWithGoldSprites:
     frames:
     - directions:
@@ -525,6 +580,7 @@ MonoBehaviour:
         flip: 1
     animationTime: 0.12
     cyclic: 1
+    animate: 1
   walkWithWoodSprites:
     frames:
     - directions:
@@ -654,3 +710,4 @@ MonoBehaviour:
         flip: 1
     animationTime: 0.12
     cyclic: 1
+    animate: 1

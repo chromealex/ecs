@@ -12,13 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe7dc783d10e428db5362a9c5fe84d35, type: 3}
   m_Name: Swordman
   m_EditorClassIdentifier: 
+  title: 
   unitTypeId: 10001
   viewSource: {fileID: 4810092360561578503, guid: 27c8ec567faf64ca3b8cb8fe1a19c27e,
     type: 3}
+  viewSourceDead: {fileID: 4810092360561578503, guid: 27c8ec567faf64ca3b8cb8fe1a19c27e,
+    type: 3}
   icon: {fileID: 1265753547643453088, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  sightRange: 2
+  attackRange: 0.62
+  attackDelay: 0.3
+  attackTime: 0.5
+  attackDamageRange: {x: 4, y: 5}
+  health: 40
   actions: {fileID: 0}
   buildingTime: 10
   walkable: 1
   hasEntrancePoint: 0
   entrancePoint: {x: 0, y: 0}
-  movementSpeed: 0.8
+  movementSpeed: 0.9

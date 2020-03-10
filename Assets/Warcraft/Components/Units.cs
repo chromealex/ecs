@@ -15,4 +15,8 @@ namespace Warcraft.Components {
 
     public class UnitArcherComponent : IComponent<TState, TEntity> {}
 
+    public class ForestComponent : IComponent<TState, TEntity> {}
+    
+    public class UnitInteractableComponent : IComponent<TState, TEntity> {}
+
 }

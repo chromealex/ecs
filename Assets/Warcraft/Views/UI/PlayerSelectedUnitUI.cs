@@ -16,6 +16,9 @@ namespace Warcraft.Views.UI {
         public UnityEngine.UI.Text unitCaption;
         public UnityEngine.UI.Image unitIcon;
 
+        public UnityEngine.UI.Slider healthProgress;
+        public UnityEngine.UI.Text healthValue;
+
         public UnityEngine.UI.Slider buildingProgress;
         public UnityEngine.UI.Text buildingValue;
 
@@ -30,6 +33,7 @@ namespace Warcraft.Views.UI {
         private ActionsGraphNode[] graphNodeSelected;
         private TEntity playerData;
         private Entity selectedUnit;
+        private bool actionsIsDirty;
         
         public override void OnInitialize(in TEntity data) {
 
@@ -44,32 +48,52 @@ namespace Warcraft.Views.UI {
         }
 
         private void UpdateActions() {
+
+            if (this.actionsIsDirty == false) return;
+            this.actionsIsDirty = false;
             
-            foreach (var button in this.buttons) {
+            var used = PoolList<ButtonActionUI>.Spawn(10);
+            var i = 0;
+            if (this.graphNodeSelected != null) {
 
-                Object.Destroy(button.gameObject);
+                foreach (var item in this.graphNodeSelected) {
 
-            }
+                    var icon = item.GetIcon();
+                    if (icon != null) {
 
-            this.buttons.Clear();
+                        var isExists = (i < this.buttons.Count);
+                        var actionInfo = item;
+                        var button = (isExists == true ? this.buttons[i] : Object.Instantiate(this.buttonSource, this.actionsContainer));
+                        button.gameObject.SetActive(true);
+                        button.SetInfo(actionInfo.cost, icon);
+                        button.button.onClick.RemoveAllListeners();
+                        button.button.onClick.AddListener(() => { this.DoAction(actionInfo); });
+                        button.button.interactable = actionInfo.IsEnabled(this.playerData);
+                        if (isExists == false) this.buttons.Add(button);
 
-            foreach (var item in this.graphNodeSelected) {
+                        used.Add(button);
 
-                var icon = item.GetIcon();
-                if (icon != null) {
+                        ++i;
 
-                    var actionInfo = item;
-                    var button = Object.Instantiate(this.buttonSource, this.actionsContainer);
-                    button.gameObject.SetActive(true);
-                    button.SetInfo(actionInfo.cost, icon);
-                    button.button.onClick.RemoveAllListeners();
-                    button.button.onClick.AddListener(() => { this.DoAction(actionInfo); });
-                    button.button.interactable = actionInfo.IsEnabled(this.playerData);
-                    this.buttons.Add(button);
+                    }
 
                 }
 
             }
+
+            for (i = 0; i < this.buttons.Count; ++i) {
+                    
+                var button = this.buttons[i];
+                if (used.Contains(button) == false) {
+
+                    Object.Destroy(button.gameObject);
+                    this.buttons.RemoveAt(i);
+                    --i;
+
+                }
+            }
+            
+            PoolList<ButtonActionUI>.Recycle(ref used);
 
         }
 
@@ -77,17 +101,12 @@ namespace Warcraft.Views.UI {
             
             var world = Worlds<WarcraftState>.currentWorld;
 
-            foreach (var button in this.queueButtons) {
-
-                Object.Destroy(button.gameObject);
-
-            }
-
-            this.queueButtons.Clear();
-
             var queue = world.GetComponent<UnitEntity, UnitBuildingQueueComponent>(entity);
             if (queue != null) {
 
+                this.queueContainer.gameObject.SetActive(queue.units.Count > 0);
+
+                var used = new System.Collections.Generic.List<ButtonQueueActionUI>();
                 var i = 0;
                 foreach (var unitEntity in queue.units) {
 
@@ -97,15 +116,30 @@ namespace Warcraft.Views.UI {
 
                     var progress = world.GetComponent<UnitEntity, UnitBuildingProgress>(unit);
 
-                    var button = Object.Instantiate(this.queueButtonSource, this.actionsContainer);
+                    var isExists = (i < this.queueButtons.Count);
+                    var button = (isExists == true ? this.queueButtons[i] : Object.Instantiate(this.queueButtonSource, this.queueContainer));
                     button.gameObject.SetActive(true);
                     button.SetInfo(icon, progress.progress / progress.time, i == 0);
                     button.button.onClick.RemoveAllListeners();
                     button.button.onClick.AddListener(() => { this.DoCancelQueue(entity, unit); });
-                    this.queueButtons.Add(button);
+                    if (isExists == false) this.queueButtons.Add(button);
+                    
+                    used.Add(button);
 
                     ++i;
 
+                }
+
+                for (i = 0; i < this.queueButtons.Count; ++i) {
+                    
+                    var button = this.queueButtons[i];
+                    if (used.Contains(button) == false) {
+
+                        Object.Destroy(button.gameObject);
+                        this.queueButtons.RemoveAt(i);
+                        --i;
+
+                    }
                 }
 
             }
@@ -116,9 +150,56 @@ namespace Warcraft.Views.UI {
 
             var world = Worlds<WarcraftState>.currentWorld;
 
-            var inProgress = world.GetComponent<UnitEntity, UnitBuildingProgress>(data.entity);
+            var comp = world.GetComponent<TEntity, Warcraft.Components.PlayerSelectedUnitComponent>(data.entity);
+            if (comp != null) {
+
+                if (this.selectedUnit != comp.unit) {
+                    
+                    if (this.graphNodeSelected != null) this.actionsIsDirty = true;
+                    this.graphNodeSelected = null;
+                    
+                }
+                this.selectedUnit = comp.unit;
+                
+                if (world.GetEntityData(comp.unit, out UnitEntity unitEntity) == true) {
+
+                    var unitInfoComponent = world.GetComponent<UnitEntity, UnitInfoComponent>(unitEntity.entity);
+                    this.SetInfo(unitInfoComponent.unitInfo);
+                
+                } else {
+
+                    if (this.graphNodeSelected != null) this.actionsIsDirty = true;
+                    this.graphNodeSelected = null;
+                    this.selectedUnit = Entity.Empty;
+
+                }
+
+            } else {
+
+                if (this.selectedUnit != Entity.Empty) {
+
+                    if (this.graphNodeSelected != null) this.actionsIsDirty = true;
+                    this.graphNodeSelected = null;
+                    
+                }
+                this.selectedUnit = Entity.Empty;
+                this.SetInfo(this.noUnitInfo);
+                
+            }
+
+        }
+
+        private void SetInfo(UnitInfo unitInfo) {
+            
+            var world = Worlds<WarcraftState>.currentWorld;
+
+            this.unitCaption.text = unitInfo.title;
+            this.unitIcon.sprite = unitInfo.icon;
+
+            var inProgress = world.GetComponent<UnitEntity, UnitBuildingProgress>(this.selectedUnit);
             if (inProgress != null) {
 
+                this.healthProgress.gameObject.SetActive(false);
                 this.actionsContainer.gameObject.SetActive(false);
                 this.queueContainer.gameObject.SetActive(false);
                 this.buildingProgress.gameObject.SetActive(true);
@@ -129,57 +210,39 @@ namespace Warcraft.Views.UI {
 
             }
             
-            this.actionsContainer.gameObject.SetActive(true);
-            this.queueContainer.gameObject.SetActive(false);
-            this.buildingProgress.gameObject.SetActive(false);
+            var health = world.GetComponent<UnitEntity, UnitHealthComponent>(this.selectedUnit);
+            if (health != null) {
 
-            var comp = world.GetComponent<TEntity, Warcraft.Components.PlayerSelectedUnitComponent>(data.entity);
-            if (comp != null) {
-
-                if (this.selectedUnit != comp.unit) this.graphNodeSelected = null;
-                this.selectedUnit = comp.unit;
-                
-                if (world.GetEntityData(comp.unit, out UnitEntity unitEntity) == true) {
-
-                    var unitInfoComponent = world.GetComponent<UnitEntity, UnitInfoComponent>(unitEntity.entity);
-                    this.SetInfo(unitInfoComponent.unitInfo);
-                
-                    this.UpdateQueue(data.entity);
-
-                } else {
-
-                    this.graphNodeSelected = null;
-                    this.selectedUnit = Entity.Empty;
-
-                }
+                var healthProgress = health.value / (float)health.maxValue;
+                this.healthProgress.value = healthProgress;
+                this.healthValue.text = Mathf.FloorToInt(healthProgress * 100f).ToString() + "%";
+                this.healthProgress.gameObject.SetActive(true);
 
             } else {
-
-                if (this.selectedUnit != Entity.Empty) this.graphNodeSelected = null;
-                this.selectedUnit = Entity.Empty;
-                this.SetInfo(this.noUnitInfo);
+                
+                this.healthProgress.gameObject.SetActive(false);
                 
             }
 
-        }
-
-        private void SetInfo(UnitInfo unitInfo) {
-            
-            this.unitCaption.text = unitInfo.name;
-            this.unitIcon.sprite = unitInfo.icon;
+            this.actionsContainer.gameObject.SetActive(true);
+            this.queueContainer.gameObject.SetActive(false);
+            this.buildingProgress.gameObject.SetActive(false);
 
             if (unitInfo.actions != null) {
 
                 var actions = unitInfo.actions.roots;
                 if (this.graphNodeSelected == null) {
 
+                    if (this.graphNodeSelected != actions) this.actionsIsDirty = true;
                     this.graphNodeSelected = actions;
-                    this.UpdateActions();
 
                 }
 
             }
             
+            this.UpdateQueue(this.selectedUnit);
+            this.UpdateActions();
+
         }
 
         private void DoCancelQueue(Entity building, Entity unit) {
@@ -195,8 +258,8 @@ namespace Warcraft.Views.UI {
 
             if (actionInfo.GetNext().Length > 0) {
 
+                if (this.graphNodeSelected != actionInfo.GetNext()) this.actionsIsDirty = true;
                 this.graphNodeSelected = actionInfo.GetNext();
-                this.UpdateActions();
 
             } else {
 

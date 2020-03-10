@@ -25,19 +25,19 @@ namespace Warcraft {
         public Storage<SharedEntity> shared;
         public Storage<PlayerEntity> players;
         public Storage<UnitEntity> units;
-        public Storage<ForestEntity> forest;
         public Storage<CameraEntity> cameras;
         public Storage<SelectionEntity> selections;
         public Storage<SelectionRectEntity> selectionRects;
+        public Storage<DebugEntity> debug;
         // TODO: Place your storages here
 
         public Components<SharedEntity, WarcraftState> sharedComponents;
         public Components<PlayerEntity, WarcraftState> playerComponents;
         public Components<UnitEntity, WarcraftState> unitComponents;
-        public Components<ForestEntity, WarcraftState> forestComponents;
         public Components<CameraEntity, WarcraftState> cameraComponents;
         public Components<SelectionEntity, WarcraftState> selectionComponents;
         public Components<SelectionRectEntity, WarcraftState> selectionRectComponents;
+        public Components<DebugEntity, WarcraftState> debugComponents;
         // TODO: Place your components here
         
         int IStateBase.GetHash() {
@@ -54,19 +54,19 @@ namespace Warcraft {
             world.Register(ref this.shared, freeze, restore);
             world.Register(ref this.players, freeze, restore);
             world.Register(ref this.units, freeze, restore);
-            world.Register(ref this.forest, freeze, restore);
             world.Register(ref this.cameras, freeze, restore);
             world.Register(ref this.selections, freeze, restore);
             world.Register(ref this.selectionRects, freeze, restore);
+            world.Register(ref this.debug, freeze, restore);
             // TODO: Register your storages here
             
             world.Register(ref this.sharedComponents, freeze, restore);
             world.Register(ref this.playerComponents, freeze, restore);
             world.Register(ref this.unitComponents, freeze, restore);
-            world.Register(ref this.forestComponents, freeze, restore);
             world.Register(ref this.cameraComponents, freeze, restore);
             world.Register(ref this.selectionComponents, freeze, restore);
             world.Register(ref this.selectionRectComponents, freeze, restore);
+            world.Register(ref this.debugComponents, freeze, restore);
             // TODO: Register your components here
             
         }
@@ -85,19 +85,19 @@ namespace Warcraft {
             this.shared.CopyFrom(other.shared);
             this.players.CopyFrom(other.players);
             this.units.CopyFrom(other.units);
-            this.forest.CopyFrom(other.forest);
             this.cameras.CopyFrom(other.cameras);
             this.selections.CopyFrom(other.selections);
             this.selectionRects.CopyFrom(other.selectionRects);
+            this.debug.CopyFrom(other.debug);
             // TODO: Call CopyFrom on your storages
 
             this.sharedComponents.CopyFrom(other.sharedComponents);
             this.playerComponents.CopyFrom(other.playerComponents);
             this.unitComponents.CopyFrom(other.unitComponents);
-            this.forestComponents.CopyFrom(other.forestComponents);
             this.cameraComponents.CopyFrom(other.cameraComponents);
             this.selectionComponents.CopyFrom(other.selectionComponents);
             this.selectionRectComponents.CopyFrom(other.selectionRectComponents);
+            this.debugComponents.CopyFrom(other.debugComponents);
             // TODO: Call CopyFrom on your components
 
         }
@@ -112,19 +112,19 @@ namespace Warcraft {
             WorldUtilities.Release(ref this.shared);
             WorldUtilities.Release(ref this.players);
             WorldUtilities.Release(ref this.units);
-            WorldUtilities.Release(ref this.forest);
             WorldUtilities.Release(ref this.cameras);
             WorldUtilities.Release(ref this.selections);
             WorldUtilities.Release(ref this.selectionRects);
+            WorldUtilities.Release(ref this.debug);
             // TODO: Call WorldUtilities.Release on your storages
 
             WorldUtilities.Release(ref this.sharedComponents);
             WorldUtilities.Release(ref this.playerComponents);
             WorldUtilities.Release(ref this.unitComponents);
-            WorldUtilities.Release(ref this.forestComponents);
             WorldUtilities.Release(ref this.cameraComponents);
             WorldUtilities.Release(ref this.selectionComponents);
             WorldUtilities.Release(ref this.selectionRectComponents);
+            WorldUtilities.Release(ref this.debugComponents);
             // TODO: Call WorldUtilities.Release on your components
 
         }

@@ -14,17 +14,28 @@ namespace Warcraft.Views {
         public SpriteRenderer spriteRenderer;
         public Vector2Int size;
 
-        public Vector2Int halfSize {
-            get {
-                return new Vector2Int(this.size.x / 2, this.size.y / 2);
-            }
-        }
+        protected IWorld<WarcraftState> world;
+        protected Warcraft.Features.PlayersFeature playersFeature;
+        protected Warcraft.Features.FogOfWarFeature fowFeature;
+        protected Warcraft.Features.MapFeature mapFeature;
         protected Transform tr;
+        
+        private MaterialPropertyBlock propertyBlock;
+        private int targetColorIndexId;
+        private int mainTextureId;
         
         public override void OnInitialize(in UnitEntity data) {
             
             this.tr = this.transform;
-            
+            this.world = Worlds<WarcraftState>.currentWorld;
+            this.mapFeature = this.world.GetFeature<Warcraft.Features.MapFeature>();
+            this.fowFeature = this.world.GetFeature<Warcraft.Features.FogOfWarFeature>();
+            this.playersFeature = this.world.GetFeature<Warcraft.Features.PlayersFeature>();
+
+            this.propertyBlock = new MaterialPropertyBlock();
+            this.targetColorIndexId = Shader.PropertyToID("_Target");
+            this.mainTextureId = Shader.PropertyToID("_MainTex");
+
         }
         
         public override void OnDeInitialize(in UnitEntity data) {
@@ -36,8 +47,13 @@ namespace Warcraft.Views {
         public override void ApplyState(in UnitEntity data, float deltaTime, bool immediately) {
 
             var world = Worlds<WarcraftState>.currentWorld;
+            var unitPlayerOwnerComponent = world.GetComponent<UnitEntity, Warcraft.Components.UnitPlayerOwnerComponent>(data.entity);
             
-            if (world.HasComponent<UnitEntity, Warcraft.Components.UnitHiddenView>(data.entity) == true) {
+            if (world.HasComponent<UnitEntity, Warcraft.Components.UnitGhosterComponent>(data.entity) == false &&
+                (world.HasComponent<UnitEntity, Warcraft.Components.UnitHiddenView>(data.entity) == true ||
+                 (this.playersFeature.IsNeutralPlayer(unitPlayerOwnerComponent.player) == false &&
+                  this.fowFeature.IsVisibleAny(this.playersFeature.GetActivePlayer(), data.position, data.size) == false)
+                 )) {
 
                 this.tr.position = data.position;
                 this.tr.rotation = data.rotation;
@@ -45,6 +61,8 @@ namespace Warcraft.Views {
                 return;
 
             }
+
+            world.GetEntityData(unitPlayerOwnerComponent.player, out PlayerEntity playerData);
 
             var ghosterComponent = world.GetComponent<Warcraft.Entities.UnitEntity, Warcraft.Components.UnitGhosterComponent>(data.entity);
             if (ghosterComponent != null && ghosterComponent.isValid == false) {
@@ -57,10 +75,17 @@ namespace Warcraft.Views {
 
             }
 
-            var progress = world.GetComponent<UnitEntity, Warcraft.Components.UnitBuildingProgress>(data.entity);
-            if (progress != null && progress.time > 0f && this.buildingProgressSprites.Length > 0) {
+            this.spriteRenderer.sortingOrder = this.mapFeature.GetOrder(data.position);
 
-                var value = Mathf.FloorToInt(progress.progress / progress.time * this.buildingProgressSprites.Length);
+            this.spriteRenderer.GetPropertyBlock(this.propertyBlock, 0);
+            this.propertyBlock.SetFloat(this.targetColorIndexId, playerData.colorIndex);
+            this.propertyBlock.SetTexture(this.mainTextureId, this.spriteRenderer.sprite.texture);
+            this.spriteRenderer.SetPropertyBlock(this.propertyBlock, 0);
+
+            var progress = world.GetComponent<UnitEntity, Warcraft.Components.UnitBuildingProgress>(data.entity);
+            if (progress != null && progress.time > 0f && progress.time < 1f && this.buildingProgressSprites.Length > 0) {
+
+                var value = Mathf.FloorToInt(progress.progress / progress.time * (this.buildingProgressSprites.Length - 1));
                 var sprite = this.buildingProgressSprites[value];
                 this.spriteRenderer.sprite = sprite;
 

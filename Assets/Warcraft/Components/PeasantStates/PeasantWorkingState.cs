@@ -5,8 +5,8 @@ namespace Warcraft.Components.PeasantStates {
     using TState = WarcraftState;
     using TEntity = Warcraft.Entities.UnitEntity;
     
-    public class PeasantWorkingState : IComponent<TState, TEntity> {
-        
-    }
+    public class PeasantIdleState : IComponent<TState, TEntity> {}
+    
+    public class PeasantWorkingState : IComponent<TState, TEntity> {}
     
 }

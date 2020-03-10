@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   forestTile: {fileID: 11400000, guid: 0b1f1c1ea58754cccaaf1825f40debe0, type: 2}
   forestFelledTile: {fileID: 11400000, guid: f51e9bf3be7fa481e979f44bb432be2d, type: 2}
-  mapSize: {x: 66, y: 26}
+  fogOfWarTile: {fileID: 11400000, guid: 0ff671b5f00bf47e2a6b974665e4e841, type: 2}
+  mapSize: {x: 99, y: 26}
   mapGrid: {fileID: -752116106198529332, guid: fddc90aad415f4eb289c5f443e7d1517, type: 3}
   playersData:
   - playerIndex: 0

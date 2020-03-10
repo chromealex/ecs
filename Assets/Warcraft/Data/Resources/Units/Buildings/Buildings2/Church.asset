@@ -12,10 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 664ac9a9132534e85a854666a5fd72e7, type: 3}
   m_Name: Church
   m_EditorClassIdentifier: 
+  title: 
   unitTypeId: 70
   viewSource: {fileID: 1820512939237373680, guid: 13c169559e9414fd9b826e375a75d693,
     type: 3}
+  viewSourceDead: {fileID: 1820512939237373680, guid: 13c169559e9414fd9b826e375a75d693,
+    type: 3}
   icon: {fileID: 2687460013467435267, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  sightRange: 2
+  attackRange: 0
+  attackDelay: 0
+  attackTime: 0
+  attackDamageRange: {x: 0, y: 0}
+  health: 100
   actions: {fileID: 0}
   buildingTime: 5
   walkable: 0

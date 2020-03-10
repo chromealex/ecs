@@ -12,10 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebe1f00623504ad3a6c1a1a95c01a309, type: 3}
   m_Name: GoldMine
   m_EditorClassIdentifier: 
+  title: 
   unitTypeId: 1000
   viewSource: {fileID: 3154739707516078254, guid: c52528247c4fb48609b3a0303bd08cff,
     type: 3}
+  viewSourceDead: {fileID: 3154739707516078254, guid: c52528247c4fb48609b3a0303bd08cff,
+    type: 3}
   icon: {fileID: -1581339107750589905, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  sightRange: 3
+  attackRange: 0
+  attackDelay: 0
+  attackTime: 0
+  attackDamageRange: {x: 0, y: 0}
+  health: 0
   actions: {fileID: 0}
+  buildingTime: 5
   walkable: 0
+  hasEntrancePoint: 1
   entrancePoint: {x: 0, y: 0}

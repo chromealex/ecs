@@ -9,7 +9,7 @@ public class GoldMineUnitInfo : UnitInfo {
 
         var c = world.AddComponent<UnitEntity, GoldMineComponent>(unitEntity);
         c.capacity = 10000;
-        var cMax = world.AddComponent<UnitEntity, GoldMineUnitsMaxPerMine>(unitEntity);
+        var cMax = world.AddComponent<UnitEntity, UnitMaxPerWorkingPlace>(unitEntity);
         cMax.current = 0;
         cMax.max = 10;
 

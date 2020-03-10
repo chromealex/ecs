@@ -5,23 +5,20 @@ namespace Warcraft.Components {
     using TState = WarcraftState;
     using TEntity = Warcraft.Entities.UnitEntity;
     
-    public class GoldMineUnitsMaxPerMine : IComponentCopyable<TState, TEntity> {
+    public class UnitLifesComponent : IComponentCopyable<TState, TEntity> {
 
-        public int current;
-        public int max;
+        public int lifes;
         
         void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
 
-            var _other = (GoldMineUnitsMaxPerMine)other;
-            this.current = _other.current;
-            this.max = _other.max;
+            var _other = (UnitLifesComponent)other;
+            this.lifes = _other.lifes;
 
         }
 
         void IPoolableRecycle.OnRecycle() {
 
-            this.current = default;
-            this.max = default;
+            this.lifes = default;
 
         }
 

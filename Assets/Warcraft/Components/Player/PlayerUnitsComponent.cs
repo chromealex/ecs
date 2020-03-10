@@ -24,7 +24,7 @@ namespace Warcraft.Components {
 
         public void AddUnit(int unitTypeId) {
 
-            this.units |= (ulong)(1 << unitTypeId);
+            this.units |= (ulong)(long)(1 << unitTypeId);
 
         }
         

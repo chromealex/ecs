@@ -11,7 +11,7 @@ namespace Warcraft.Systems {
 
         private const float REACH_DESTINATION_DISTANCE = 0.001f;
         
-        private IFilter<TState, Warcraft.Entities.ForestEntity> forestEntities;
+        private IFilter<TState, Warcraft.Entities.UnitEntity> forestEntities;
         private IFilter<TState, Warcraft.Entities.UnitEntity> castlesEntities;
         private IFilter<TState, Warcraft.Entities.UnitEntity> goldMineEntities;
         private IFilter<TState, Warcraft.Entities.UnitEntity> buildingsInProgressEntities;
@@ -23,6 +23,7 @@ namespace Warcraft.Systems {
         
         private Warcraft.Features.MapFeature mapFeature;
         private Warcraft.Features.PathfindingFeature pathfindingFeature;
+        private Warcraft.Features.FogOfWarFeature fowFeature;
 
         public IWorld<TState> world { get; set; }
 
@@ -30,16 +31,17 @@ namespace Warcraft.Systems {
 
             this.mapFeature = this.world.GetFeature<Warcraft.Features.MapFeature>();
             this.pathfindingFeature = this.world.GetFeature<Warcraft.Features.PathfindingFeature>();
+            this.fowFeature = this.world.GetFeature<Warcraft.Features.FogOfWarFeature>();
             
-            Filter<TState, Warcraft.Entities.ForestEntity>.Create(ref this.forestEntities, "forestEntities").Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.castlesEntities, "castlesEntities").WithComponent<CastleComponent>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.forestEntities, "forestEntities").WithComponent<ForestComponent>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.castlesEntities, "castlesEntities").WithComponent<CastleComponent>().WithComponent<UnitCompleteComponent>().Push();
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.goldMineEntities, "goldMineEntities").WithComponent<GoldMineComponent>().Push();
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.buildingsInProgressEntities, "buildingsInProgressEntities").WithComponent<UnitBuildingProgress>().WithoutComponent<CharacterComponent>().Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantIdleEntities, "peasantIdleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantIdleState>().WithoutComponent<UnitBuildingProgress>().Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantGoToWorkEntities, "peasantGoToWorkEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantGoToWorkState>().Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantWorkingEntities, "peasantWorkingEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantWorkingState>().Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantGoToCastleEntities, "peasantGoToCastleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantGoToCastleState>().WithoutComponent<PeasantWorkingState>().Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantWorkingInCastleEntities, "peasantWorkingInCastleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantGoToCastleState>().WithComponent<PeasantWorkingState>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantIdleEntities, "peasantIdleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantIdleState>().WithoutComponent<UnitBuildingProgress>().WithoutComponent<UnitDeathState>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantGoToWorkEntities, "peasantGoToWorkEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantGoToWorkState>().WithoutComponent<UnitDeathState>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantWorkingEntities, "peasantWorkingEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantWorkingState>().WithoutComponent<UnitDeathState>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantGoToCastleEntities, "peasantGoToCastleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantGoToCastleState>().WithoutComponent<PeasantWorkingState>().WithoutComponent<UnitDeathState>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.peasantWorkingInCastleEntities, "peasantWorkingInCastleEntities").WithComponent<UnitPeasantComponent>().WithComponent<PeasantGoToCastleState>().WithComponent<PeasantWorkingState>().WithoutComponent<UnitDeathState>().Push();
 
         }
         
@@ -87,7 +89,7 @@ namespace Warcraft.Systems {
                     
                     // Put resource to player
                     var unitSpeed = this.world.GetComponent<UnitEntity, UnitSpeedComponent>(unit.entity);
-                    unit.position = this.pathfindingFeature.MoveTowards(unit.entity, unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime);
+                    unit.position = this.pathfindingFeature.MoveTowards(unit.entity, unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime, deltaTime, addLastNode: true);
                     if ((unit.position - unit.jobTargetPos).sqrMagnitude <= PeasantsSystem.REACH_DESTINATION_DISTANCE * PeasantsSystem.REACH_DESTINATION_DISTANCE) {
 
                         this.world.AddComponent<UnitEntity, UnitHiddenView>(unit.entity);
@@ -116,10 +118,17 @@ namespace Warcraft.Systems {
                             
                             this.world.RemoveComponents<UnitEntity, UnitBuildingProgress>(unit.jobTarget);
 
+                            var playerOwner = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.jobTarget);
+                            var unitInfo = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.jobTarget);
+                            var units = this.world.AddOrGetComponent<PlayerEntity, PlayerUnitsComponent>(playerOwner.player);
+                            units.AddUnit(unitInfo.unitInfo.unitTypeId);
+
+                            this.world.AddOrGetComponent<UnitEntity, UnitCompleteComponent>(unit.jobTarget);
+                            
                             var workPlace = this.world.GetComponent<UnitEntity, BuildingInProgressCountAtWorkPlace>(unit.jobTarget);
                             --workPlace.count;
 
-                            var compMax = this.world.GetComponent<UnitEntity, UnitsMaxPerBuildingInProgress>(unit.jobTarget);
+                            var compMax = this.world.GetComponent<UnitEntity, UnitMaxPerBuildingInProgress>(unit.jobTarget);
                             if (compMax != null) {
                                 
                                 --compMax.current;
@@ -128,22 +137,22 @@ namespace Warcraft.Systems {
 
                         } else if (unit.jobTargetType == 1) {
 
-                            var workPlace = this.world.GetComponent<ForestEntity, ForestCountAtWorkPlace>(unit.jobTarget);
+                            var workPlace = this.world.GetComponent<UnitEntity, UnitCountAtWorkPlace>(unit.jobTarget);
                             --workPlace.count;
 
-                            var comp = this.world.GetComponent<ForestEntity, ForestLifesComponent>(unit.jobTarget);
+                            var comp = this.world.GetComponent<UnitEntity, UnitLifesComponent>(unit.jobTarget);
                             if (comp != null) {
 
                                 --comp.lifes;
                                 if (comp.lifes <= 0) {
 
-                                    this.world.RemoveEntity<ForestEntity>(unit.jobTarget);
+                                    this.world.RemoveEntity<UnitEntity>(unit.jobTarget);
                                     
                                 }
 
                             }
                             
-                            var compMax = this.world.GetComponent<ForestEntity, ForestUnitsMaxPerTree>(unit.jobTarget);
+                            var compMax = this.world.GetComponent<UnitEntity, UnitMaxPerWorkingPlace>(unit.jobTarget);
                             if (compMax != null) {
                                 
                                 --compMax.current;
@@ -168,7 +177,7 @@ namespace Warcraft.Systems {
 
                             }
                             
-                            var compMax = this.world.GetComponent<UnitEntity, GoldMineUnitsMaxPerMine>(unit.jobTarget);
+                            var compMax = this.world.GetComponent<UnitEntity, UnitMaxPerWorkingPlace>(unit.jobTarget);
                             if (compMax != null) {
                                 
                                 --compMax.current;
@@ -230,7 +239,7 @@ namespace Warcraft.Systems {
                 } else if (this.peasantGoToWorkEntities.Contains(unit) == true) {
 
                     var unitSpeed = this.world.GetComponent<UnitEntity, UnitSpeedComponent>(unit.entity);
-                    unit.position = this.pathfindingFeature.MoveTowards(unit.entity, unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime);
+                    unit.position = this.pathfindingFeature.MoveTowards(unit.entity, unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime, deltaTime, addLastNode: (unit.jobTargetType != 1));
                     if ((unit.position - unit.jobTargetPos).sqrMagnitude <= PeasantsSystem.REACH_DESTINATION_DISTANCE * PeasantsSystem.REACH_DESTINATION_DISTANCE) {
                         
                         this.world.RemoveComponents<UnitEntity, PeasantGoToWorkState>(unit.entity);
@@ -245,7 +254,7 @@ namespace Warcraft.Systems {
 
                         } else if (unit.jobTargetType == 1) {
                             
-                            var workPlace = this.world.AddOrGetComponent<ForestEntity, ForestCountAtWorkPlace>(unit.jobTarget);
+                            var workPlace = this.world.AddOrGetComponent<UnitEntity, UnitCountAtWorkPlace>(unit.jobTarget);
                             ++workPlace.count;
 
                         } else if (unit.jobTargetType == 2) {
@@ -263,7 +272,7 @@ namespace Warcraft.Systems {
 
                     if (state.peasantsMindTimer < 1f) continue;
 
-                    var unitMapPosition = unit.position;
+                    var unitWorldPosition = unit.position;
                     
                     // Looking for the job
                     var playerOwner = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
@@ -274,7 +283,7 @@ namespace Warcraft.Systems {
                     var dist = float.MaxValue;
                     {
 
-                        UnitsMaxPerBuildingInProgress compMax;
+                        UnitMaxPerBuildingInProgress compMax;
                         foreach (var buildingEntity in this.buildingsInProgressEntities.GetData()) {
 
                             var unitOwner = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(buildingEntity);
@@ -283,23 +292,26 @@ namespace Warcraft.Systems {
                             if (this.world.GetEntityData(buildingEntity, out UnitEntity buildingData) == true) {
 
                                 ref var worldPos = ref buildingData.position;
-                                var halfSize = this.mapFeature.GetWorldPositionFromMap(buildingData.size) * 0.5f;
+                                var halfSize = this.mapFeature.GetWorldSize(buildingData.size) * 0.5f;
                                 for (int bx = 0; bx < buildingData.size.x; ++bx) {
                                  
                                     for (int by = 0; by < buildingData.size.y; ++by) {
 
-                                        var buildingPoint = worldPos - halfSize + this.mapFeature.GetWorldPositionFromMap(new UnityEngine.Vector2Int(bx, by), true, true);
-                                        var d = (buildingPoint - unitMapPosition).sqrMagnitude;
+                                        var mapOffet = new UnityEngine.Vector2Int(bx, by);
+                                        var buildingPoint = worldPos - halfSize + this.mapFeature.GetWorldSize(mapOffet);
+                                        //if (this.fowFeature.IsRevealed(playerOwner.player, this.mapFeature.GetMapPositionFromWorld(buildingPoint)) == false) continue;
+                                        
+                                        var d = (buildingPoint - unitWorldPosition).sqrMagnitude;
                                         if (d <= dist) {
 
-                                            compMax = this.world.GetComponent<UnitEntity, UnitsMaxPerBuildingInProgress>(buildingEntity);
+                                            compMax = this.world.GetComponent<UnitEntity, UnitMaxPerBuildingInProgress>(buildingEntity);
                                             if (compMax != null) {
 
                                                 if (compMax.current >= compMax.max) continue;
 
                                             }
                                     
-                                            if (this.pathfindingFeature.IsPathExists(unitMapPosition, buildingPoint) == false) continue;
+                                            if (this.pathfindingFeature.IsPathExists(unitWorldPosition, buildingPoint) == false) continue;
 
                                             unit.jobTarget = buildingEntity;
                                             unit.jobTargetType = 3;
@@ -319,7 +331,7 @@ namespace Warcraft.Systems {
                         
                         if (found == true) {
 
-                            compMax = this.world.GetComponent<UnitEntity, UnitsMaxPerBuildingInProgress>(unit.jobTarget);
+                            compMax = this.world.GetComponent<UnitEntity, UnitMaxPerBuildingInProgress>(unit.jobTarget);
                             if (compMax != null) {
 
                                 ++compMax.current;
@@ -336,21 +348,26 @@ namespace Warcraft.Systems {
                         var value = this.world.GetRandomRange(0f, fullValue);
                         if (value < playerData.forestPercent) {
 
-                            ForestUnitsMaxPerTree compMax;
+                            UnitMaxPerWorkingPlace compMax;
 
                             // Search for nearest forest
                             dist = float.MaxValue;
-                            foreach (var forestIndex in state.forest) {
+                            foreach (var forestIndex in state.units) {
 
-                                ref var forest = ref state.forest[forestIndex];
+                                ref var forest = ref state.units[forestIndex];
                                 if (this.forestEntities.Contains(forest) == true) {
 
-                                    ref var mapPosition = ref forest.position;
-                                    var worldPos = this.mapFeature.GetWorldPositionFromMap(mapPosition, true, true);
-                                    var d = (worldPos - unitMapPosition).sqrMagnitude;
+                                    ref var worldPos = ref forest.position;
+                                    
+                                    var fow = this.world.GetComponent<UnitEntity, UnitFogOfWarComponent>(forest.entity);
+                                    if (fow.IsRevealed(playerData.index) == false) continue;
+
+                                    //if (this.fowFeature.IsRevealed(playerOwner.player, mapPosition) == false) continue;
+
+                                    var d = (worldPos - unitWorldPosition).sqrMagnitude;
                                     if (d <= dist) {
 
-                                        compMax = this.world.GetComponent<ForestEntity, ForestUnitsMaxPerTree>(forest.entity);
+                                        compMax = this.world.GetComponent<UnitEntity, UnitMaxPerWorkingPlace>(forest.entity);
                                         if (compMax != null) {
 
                                             if (compMax.current >= compMax.max) continue;
@@ -359,7 +376,7 @@ namespace Warcraft.Systems {
                                         
                                         if (this.HasCastleNearby(playerData.index, worldPos) == false) continue;
 
-                                        if (this.pathfindingFeature.IsPathExists(unitMapPosition, worldPos) == false) continue;
+                                        if (this.pathfindingFeature.IsPathExists(unitWorldPosition, worldPos) == false) continue;
                                         
                                         unit.jobTarget = forest.entity;
                                         unit.jobTargetType = 1;
@@ -375,7 +392,7 @@ namespace Warcraft.Systems {
 
                             if (found == true) {
 
-                                compMax = this.world.GetComponent<ForestEntity, ForestUnitsMaxPerTree>(unit.jobTarget);
+                                compMax = this.world.GetComponent<UnitEntity, UnitMaxPerWorkingPlace>(unit.jobTarget);
                                 if (compMax != null) {
 
                                     ++compMax.current;
@@ -386,7 +403,7 @@ namespace Warcraft.Systems {
 
                         } else {
 
-                            GoldMineUnitsMaxPerMine compMax;
+                            UnitMaxPerWorkingPlace compMax;
 
                             // Search for nearest gold mine
                             dist = float.MaxValue;
@@ -395,8 +412,14 @@ namespace Warcraft.Systems {
                                 ref var goldMine = ref state.units[goldIndex];
                                 if (this.goldMineEntities.Contains(goldMine) == true) {
 
-                                    ref var mapPosition = ref goldMine.position;
-                                    var d = (mapPosition - unitMapPosition).sqrMagnitude;
+                                    ref var worldPos = ref goldMine.position;
+                                    
+                                    var fow = this.world.GetComponent<UnitEntity, UnitFogOfWarComponent>(goldMine.entity);
+                                    if (fow.IsRevealed(playerData.index) == false) continue;
+
+                                    //if (this.fowFeature.IsRevealedAny(playerOwner.player, this.mapFeature.GetCellLeftBottomPosition(worldPos, goldMine.size), goldMine.size) == false) continue;
+
+                                    var d = (worldPos - unitWorldPosition).sqrMagnitude;
                                     if (d <= dist) {
 
                                         var comp = this.world.GetComponent<UnitEntity, GoldMineComponent>(goldMine.entity);
@@ -406,7 +429,7 @@ namespace Warcraft.Systems {
 
                                         }
 
-                                        compMax = this.world.GetComponent<UnitEntity, GoldMineUnitsMaxPerMine>(goldMine.entity);
+                                        compMax = this.world.GetComponent<UnitEntity, UnitMaxPerWorkingPlace>(goldMine.entity);
                                         if (compMax != null) {
 
                                             if (compMax.current >= compMax.max) continue;
@@ -415,9 +438,12 @@ namespace Warcraft.Systems {
 
                                         if (this.HasCastleNearby(playerData.index, goldMine.position) == false) continue;
 
+                                        var entrancePos = this.mapFeature.GetWorldEntrancePosition(goldMine.position, goldMine.size, goldMine.entrance);
+                                        if (this.pathfindingFeature.IsPathExists(unitWorldPosition, entrancePos) == false) continue;
+
                                         unit.jobTarget = goldMine.entity;
                                         unit.jobTargetType = 2;
-                                        unit.jobTargetPos = this.mapFeature.GetWorldEntrancePosition(goldMine.position, goldMine.size, goldMine.entrance);
+                                        unit.jobTargetPos = entrancePos;
                                         dist = d;
                                         found = true;
 
@@ -429,7 +455,7 @@ namespace Warcraft.Systems {
 
                             if (found == true) {
 
-                                compMax = this.world.GetComponent<UnitEntity, GoldMineUnitsMaxPerMine>(unit.jobTarget);
+                                compMax = this.world.GetComponent<UnitEntity, UnitMaxPerWorkingPlace>(unit.jobTarget);
                                 if (compMax != null) {
 
                                     ++compMax.current;
@@ -451,7 +477,7 @@ namespace Warcraft.Systems {
                     
                 }
                 
-                this.world.UpdateFilters(unit);
+                //this.world.UpdateFilters(unit);
 
             }
 

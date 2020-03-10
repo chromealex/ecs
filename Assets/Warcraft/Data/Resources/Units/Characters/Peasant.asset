@@ -12,10 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fde3801e3c7641df9acf97e21cd772fd, type: 3}
   m_Name: Peasant
   m_EditorClassIdentifier: 
+  title: 
   unitTypeId: 10000
   viewSource: {fileID: 4810092360561578503, guid: ee133bed86183448cabfc8efecd5fcf8,
     type: 3}
+  viewSourceDead: {fileID: 4810092360561578503, guid: ee133bed86183448cabfc8efecd5fcf8,
+    type: 3}
   icon: {fileID: 4462136848911411873, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  sightRange: 1
+  attackRange: 0
+  attackDelay: 0
+  attackTime: 0
+  attackDamageRange: {x: 0, y: 0}
+  health: 10
   actions: {fileID: 0}
   buildingTime: 2
   walkable: 1

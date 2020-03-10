@@ -7,7 +7,7 @@ namespace Warcraft.Views {
     using Warcraft.Components;
     using Warcraft.Entities;
 
-    public class GoldMineView : UnitView {
+    public class GoldMineView : BuildingView {
 
         public Sprite emptySprite;
         public Sprite workingSprite;

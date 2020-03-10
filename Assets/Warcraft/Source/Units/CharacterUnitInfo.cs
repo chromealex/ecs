@@ -17,6 +17,8 @@ public class CharacterUnitInfo : UnitInfo {
         world.AddComponent<UnitEntity, Warcraft.Components.CharacterStates.CharacterIdleState>(unitEntity);
         world.AddComponent<UnitEntity, CharacterComponent>(unitEntity);
 
+        world.AddComponent<UnitEntity, Warcraft.Components.CharacterAutoTarget>(unitEntity);
+
     }
 
 }

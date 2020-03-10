@@ -39,7 +39,7 @@ namespace Warcraft.Systems {
             this.lastInputDragEndUsed = true;
             this.upgradeMarkerExists = false;
 
-            Filter<Warcraft.WarcraftState, Warcraft.Entities.UnitEntity>.Create(ref this.unitsFilter, "unitsFilter").WithoutComponent<UnitGhosterComponent>().WithoutComponent<UnitHiddenView>().Push();
+            Filter<Warcraft.WarcraftState, Warcraft.Entities.UnitEntity>.Create(ref this.unitsFilter, "unitsFilter").WithoutComponent<UnitGhosterComponent>().WithoutComponent<UnitHiddenView>().WithoutComponent<UnitDeathState>().WithComponent<UnitInteractableComponent>().Push();
 
         }
         

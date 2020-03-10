@@ -6,7 +6,8 @@ using Warcraft.Entities;
 using Warcraft.Components;
 
 public class ActionsGraphNode : ScriptableObject {
-
+    
+    #pragma warning disable 0649
     [SerializeField]
     private ActionsGraphNode[] next;
     [SerializeField]
@@ -15,6 +16,7 @@ public class ActionsGraphNode : ScriptableObject {
     [SerializeField]
     private Sprite icon;
     public ResourcesStorage cost;
+    #pragma warning restore 0649
 
     public virtual ActionsGraphNode[] GetNext() {
 
@@ -39,7 +41,7 @@ public class ActionsGraphNode : ScriptableObject {
         var world = Worlds<Warcraft.WarcraftState>.currentWorld;
         var playerResourcesComponent = world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
         
-        var canBuy = this.cost.gold < playerResourcesComponent.resources.gold && this.cost.wood < playerResourcesComponent.resources.wood;
+        var canBuy = this.cost.gold <= playerResourcesComponent.resources.gold && this.cost.wood <= playerResourcesComponent.resources.wood;
         if (canBuy == true) {
 
             foreach (var node in this.requiredToOpen) {

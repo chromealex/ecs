@@ -199,6 +199,8 @@ namespace Pathfinding {
 
 		#region Properties
 
+		public ME.ECS.Entity userData;
+		
 		/// <summary>
 		/// Holds various bitpacked variables.
 		///

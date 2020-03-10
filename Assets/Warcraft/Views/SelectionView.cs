@@ -33,7 +33,7 @@ namespace Warcraft.Views {
                 
                 this.tr.position = unitData.position.XY();
                 this.tr.localScale = (isHidden == true ? Vector3.zero : Vector3.one);
-                this.spriteRenderer.size = mapFeature.GetWorldPositionFromMap(unitData.size);
+                this.spriteRenderer.size = mapFeature.GetWorldSize(unitData.size);
 
             }
 

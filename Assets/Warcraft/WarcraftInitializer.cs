@@ -14,6 +14,8 @@ namespace Warcraft {
     public class WarcraftInitializer : MonoBehaviour {
 
         public int activePlayerIndex;
+        public float tickTime = 0.033f;
+        public bool debug;
 
         private World<TState> world;
         
@@ -44,7 +46,7 @@ namespace Warcraft {
             if (this.world == null) {
 
                 // Initialize world with 0.033 time step
-                WorldUtilities.CreateWorld(ref this.world, 0.033f);
+                WorldUtilities.CreateWorld(ref this.world, this.tickTime);
                 {
                     // TODO: Add your modules here
                     // Ex: this.world.AddModule<TModule>();
@@ -67,19 +69,23 @@ namespace Warcraft {
                     // btw you can pass custom parameters into features like AddFeature<TFeature, TCustomParameters>(new TCustomParameters(...));
                     this.world.AddFeature<MapFeature>();
                     this.world.AddFeature<PathfindingFeature>();
-                    this.world.AddFeature<PeasantsFeature>();
                     this.world.AddFeature<UnitsFeature>();
                     this.world.AddFeature<PlayersFeature, ConstructParameters<int>>(new ConstructParameters<int>(this.activePlayerIndex));
                     this.world.AddFeature<ForestFeature>();
-                    
+                    this.world.AddFeature<FogOfWarFeature>();
+
+                    this.world.AddFeature<PeasantsFeature>();
                     this.world.AddFeature<UnitsSelectionFeature>();
                     this.world.AddFeature<UnitsPlacementFeature>();
                     this.world.AddFeature<UnitsUpgradesFeature>();
                     this.world.AddFeature<UnitsQueueFeature>();
                     this.world.AddFeature<UnitsMovementFeature>();
+                    this.world.AddFeature<UnitsAttackFeature>();
 
                     this.world.AddFeature<CameraFeature>();
                     this.world.AddFeature<InputFeature>();
+
+                    if (this.debug == true) this.world.AddFeature<DebugFeature>();
 
                 }
                 // Save initialization state

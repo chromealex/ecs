@@ -24,6 +24,25 @@ namespace Warcraft.Components {
 
     }
 
+    public class UnitSightRangeComponent : IComponentCopyable<TState, TEntity> {
+
+        public float range;
+
+        void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
+
+            var _other = (UnitSightRangeComponent)other;
+            this.range = _other.range;
+
+        }
+
+        void IPoolableRecycle.OnRecycle() {
+
+            this.range = default;
+
+        }
+
+    }
+
     public class UnitCostComponent : IComponentCopyable<TState, TEntity> {
 
         public ResourcesStorage cost;
@@ -42,5 +61,7 @@ namespace Warcraft.Components {
         }
 
     }
+
+    public class UnitCompleteComponent : IComponent<TState, TEntity> { }
 
 }

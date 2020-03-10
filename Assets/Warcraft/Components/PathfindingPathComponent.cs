@@ -11,6 +11,8 @@ namespace Warcraft.Components {
         public int index;
         public UnityEngine.Vector2 from;
         public UnityEngine.Vector2 to;
+        public float waitingTimer;
+        public Entity skipEntityCheck;
 
         void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
 
@@ -21,6 +23,8 @@ namespace Warcraft.Components {
             this.index = _other.index;
             this.from = _other.@from;
             this.to = _other.@to;
+            this.waitingTimer = _other.waitingTimer;
+            this.skipEntityCheck = _other.skipEntityCheck;
 
         }
 
@@ -30,6 +34,8 @@ namespace Warcraft.Components {
             this.index = default;
             this.from = default;
             this.to = default;
+            this.waitingTimer = default;
+            this.skipEntityCheck = default;
 
         }
 

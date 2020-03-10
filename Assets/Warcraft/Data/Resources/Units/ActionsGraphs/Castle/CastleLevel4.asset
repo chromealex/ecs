@@ -15,4 +15,3 @@ MonoBehaviour:
   allNodes: []
   roots:
   - {fileID: 11400000, guid: 03e950a60c8fe4fad8de43c2fbe58e8d, type: 2}
-  - {fileID: 11400000, guid: b57ee92cc33f842bcb679a5dd9e65a4c, type: 2}

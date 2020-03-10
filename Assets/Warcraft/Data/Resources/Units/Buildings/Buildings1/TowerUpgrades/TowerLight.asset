@@ -9,13 +9,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 664ac9a9132534e85a854666a5fd72e7, type: 3}
+  m_Script: {fileID: 11500000, guid: e852c44456c44d5582a3dfb529d7330b, type: 3}
   m_Name: TowerLight
   m_EditorClassIdentifier: 
+  title: 
   unitTypeId: 52
   viewSource: {fileID: 1820512939237373680, guid: c03a8c440bf734ea5865e4240024e5c9,
     type: 3}
+  viewSourceDead: {fileID: 1820512939237373680, guid: c03a8c440bf734ea5865e4240024e5c9,
+    type: 3}
   icon: {fileID: -7869515734063598108, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
+  sightRange: 3
+  attackRange: 3
+  attackDelay: 0.45
+  attackTime: 0.8
+  attackDamageRange: {x: 5, y: 8}
+  health: 140
   actions: {fileID: 0}
   buildingTime: 5
   walkable: 0

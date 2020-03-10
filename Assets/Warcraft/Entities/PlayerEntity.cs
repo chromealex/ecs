@@ -7,6 +7,7 @@ namespace Warcraft.Entities {
         public Entity entity { get; set; }
 
         public int index;
+        public int colorIndex;
         public float goldPercent;
         public float forestPercent;
 

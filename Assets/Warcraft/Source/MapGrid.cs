@@ -16,6 +16,8 @@ public class MapGrid : MonoBehaviour {
     public Vector2 cellSize;
     public UnityEngine.Tilemaps.Tilemap[] tilemaps;
     public UnityEngine.Tilemaps.Tilemap forestTilemap;
+    public UnityEngine.Tilemaps.Tilemap fowRevealedTilemap;
+    public UnityEngine.Tilemaps.Tilemap fowTilemap;
     public TilePathfindingData[] tilePathfindingData; 
     public MapSpawnPoint[] spawnPoints;
     

@@ -3,16 +3,16 @@
 namespace Warcraft.Components {
 
     using TState = WarcraftState;
-    using TEntity = Warcraft.Entities.ForestEntity;
+    using TEntity = Warcraft.Entities.UnitEntity;
     
-    public class ForestUnitsMaxPerTree : IComponentCopyable<TState, TEntity> {
+    public class UnitMaxPerWorkingPlace : IComponentCopyable<TState, TEntity> {
 
         public int current;
         public int max;
         
         void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
 
-            var _other = (ForestUnitsMaxPerTree)other;
+            var _other = (UnitMaxPerWorkingPlace)other;
             this.current = _other.current;
             this.max = _other.max;
 

@@ -964,6 +964,7 @@ namespace ME.ECS.Collections {
         /// </summary>
         /// <param name="item"></param>
         /// <returns>hash code</returns>
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private int InternalGetHashCode(T item) {
             return m_comparer.GetHashCode(item) & Lower31BitMask;
         }

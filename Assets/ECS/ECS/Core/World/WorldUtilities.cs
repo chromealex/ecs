@@ -7,6 +7,12 @@ namespace ME.ECS {
     #endif
     public static class WorldUtilities {
 
+        private static class TypesCache<T> {
+
+            internal static int typeId = 0;
+
+        }
+
         public static void SetWorld<TState>(World<TState> world) where TState : class, IState<TState>, new() {
 
             Worlds.currentWorld = world;
@@ -76,7 +82,8 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int GetKey<T>() {
 
-            return typeof(T).GetHashCode();
+            if (TypesCache<T>.typeId == 0) TypesCache<T>.typeId = typeof(T).GetHashCode();
+            return TypesCache<T>.typeId;
 
         }
 
@@ -88,16 +95,10 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey<T>(in T data) where T : struct, IEntity {
+        public static int GetEntityTypeId<TEntity>() where TEntity : struct, IEntity {
 
-            return data.entity.typeId;
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetKey(in Entity data) {
-
-            return data.typeId;
+            if (EntityTypes<TEntity>.typeId < 0) EntityTypes<TEntity>.typeId = ++EntityTypesCounter.counter;
+            return EntityTypes<TEntity>.typeId;
 
         }
 

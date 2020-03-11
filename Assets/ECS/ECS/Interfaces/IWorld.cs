@@ -38,8 +38,6 @@ namespace ME.ECS {
 
         void Simulate(Tick from, Tick to);
 
-        TEntity RunComponents<TEntity>(ref TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
-
     }
 
     public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
@@ -53,9 +51,8 @@ namespace ME.ECS {
         void UpdateFilters<TEntity>(TEntity data) where TEntity : struct, IEntity;
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
 
-        void SetCapacity<T>(int capacity) where T : IEntity;
-        int GetCapacity<T>() where T : IEntity;
-        int GetCapacity<T>(int code);
+        void SetCapacity<TEntity>(int capacity) where TEntity : struct, IEntity;
+        int GetCapacity<TEntity>() where TEntity : struct, IEntity;
 
         bool HasFilter<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity;
         void Register<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity;
@@ -63,7 +60,6 @@ namespace ME.ECS {
         void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity;
         void Register<TEntity>(ref Storage<TEntity> storageRef, bool freeze, bool restore) where TEntity : struct, IEntity;
 
-        void UpdateStorages<TEntity>() where TEntity : struct, IEntity;
         void UpdateStorages<TEntity>(int code) where TEntity : struct, IEntity;
 
         void SetState(TState state);

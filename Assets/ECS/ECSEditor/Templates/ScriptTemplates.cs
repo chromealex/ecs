@@ -373,14 +373,14 @@ MonoBehaviour:
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component Runnable", priority = ScriptTemplates.CREATE_COPYABLE_COMPONENT_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component Copyable", priority = ScriptTemplates.CREATE_COPYABLE_COMPONENT_PRIORITY)]
         public static void CreateComponentCopyable() {
 
             ScriptTemplates.Create("New Copyable Component.cs", "35-ComponentCopyableTemplate");
 
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component Runnable (Once)", priority = ScriptTemplates.CREATE_COPYABLE_COMPONENT_SHARED_PRIORITY)]
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Shared Component Copyable", priority = ScriptTemplates.CREATE_COPYABLE_COMPONENT_SHARED_PRIORITY)]
         public static void CreateComponentSharedCopyable() {
 
             ScriptTemplates.Create("New Shared Copyable Component.cs", "36-ComponentSharedCopyableTemplate");

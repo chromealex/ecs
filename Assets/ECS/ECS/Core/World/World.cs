@@ -304,11 +304,12 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float radius) {
+        public UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float maxRadius) {
 
             #if UNITY_MATHEMATICS
             var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
-            var spherePoint = ((UnityEngine.Vector3)rnd.NextFloat3(-1f, 1f)).normalized * radius;
+            var dir = ((UnityEngine.Vector3)rnd.NextFloat3(-1f, 1f)).normalized;
+            var spherePoint = dir * maxRadius;
             this.currentState.randomState = rnd.state;
             #else
             UnityEngine.Random.state = this.currentState.randomState;

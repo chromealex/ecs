@@ -398,6 +398,6 @@ MonoBehaviour:
       - sprite: {fileID: 8002102945556264086, guid: 3b297ba9e076140d9ae466efa1938d40,
           type: 3}
         flip: 1
-    animationTime: 0.12
-    cyclic: 1
+    animationTime: 0.2
+    cyclic: 0
     animate: 1

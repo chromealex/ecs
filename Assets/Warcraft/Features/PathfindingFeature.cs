@@ -299,7 +299,7 @@ namespace Warcraft.Features {
 
         }
 
-        private Vector2 OnTargetReached(Entity entity, PathfindingPathComponent comp, bool checkLastPoint) {
+        private bool OnTargetReached(ref Vector2 from, Entity entity, PathfindingPathComponent comp, bool checkLastPoint) {
             
             var current = comp.nodes[comp.index];
             var resultNode = comp.nodes[comp.nodes.Count - 1];
@@ -336,17 +336,18 @@ namespace Warcraft.Features {
                     
             this.world.RemoveComponents<UnitEntity, PathfindingPathComponent>(entity);
                     
-            return result.XY();
+            from = result.XY();
+            return true;
 
         }
 
-        public UnityEngine.Vector2 MoveTowards(Entity entity,
-                                               UnityEngine.Vector2 from,
-                                               ref UnityEngine.Vector2 to,
-                                               float movementDelta,
-                                               float deltaTime,
-                                               bool checkLastPoint = false,
-                                               bool addLastNode = false) {
+        public bool MoveTowards(Entity entity,
+                               ref UnityEngine.Vector2 from,
+                               ref UnityEngine.Vector2 to,
+                               float movementDelta,
+                               float deltaTime,
+                               bool checkLastPoint = false,
+                               bool addLastNode = false) {
 
             if (this.world.HasComponent<UnitEntity, PathfindingPathComponent>(entity) == true) {
 
@@ -363,7 +364,7 @@ namespace Warcraft.Features {
                             comp.waitingTimer += deltaTime;
                             if (comp.waitingTimer >= 0f && comp.waitingTimer < 0.1f) {
 
-                                return from;
+                                return false;
 
                             }
 
@@ -420,7 +421,7 @@ namespace Warcraft.Features {
                             //this.world.RemoveComponents<UnitEntity, PathfindingPathComponent>(entity);
                             this.StopMovement(entity, repath: true);
                             this.world.RemoveComponents<UnitEntity, PathfindingPathComponent>(entity);
-                            return this.MoveTowards(entity, from, ref to, movementDelta, deltaTime, checkLastPoint, addLastNode);
+                            return this.MoveTowards(entity, ref from, ref to, movementDelta, deltaTime, checkLastPoint, addLastNode);
 
                         }
 
@@ -448,7 +449,8 @@ namespace Warcraft.Features {
                             var idleComp = this.world.AddComponent<UnitEntity, Warcraft.Components.CharacterStates.CharacterIdleState>(entity);
                             idleComp.idleNode = target;
                             this.world.RemoveComponents<UnitEntity, PathfindingPathComponent>(entity);
-                            return posTo;
+                            from = posTo;
+                            return false;
 
                         }
 
@@ -460,7 +462,7 @@ namespace Warcraft.Features {
 
                         } else {
 
-                            return this.OnTargetReached(entity, comp, checkLastPoint);
+                            return this.OnTargetReached(ref from, entity, comp, checkLastPoint);
 
                         }
 
@@ -478,18 +480,19 @@ namespace Warcraft.Features {
                     this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterStates.CharacterIdleState>(entity);
                     this.world.AddOrGetComponent<UnitEntity, Warcraft.Components.CharacterStates.CharacterMoveState>(entity);
 
-                    return nextStep;
+                    from = nextStep;
+                    return false;
 
                 } else {
 
-                    return this.OnTargetReached(entity, comp, checkLastPoint);
+                    return this.OnTargetReached(ref from, entity, comp, checkLastPoint);
                     
                 }
 
             } else {
 
                 var prevFrom = from;
-                if (this.IsPathExists(ref from, to) == false) return from;
+                if (this.IsPathExists(ref from, to) == false) return false;
                 
                 var result = PoolList<Pathfinding.GraphNode>.Spawn(10);
                 
@@ -501,8 +504,9 @@ namespace Warcraft.Features {
                 if (pathState != Pathfinding.PathCompleteState.Complete || (checkLastPoint == true && this.IsPathValid(result, from, to) == false)) {
                     
                     PoolList<Pathfinding.GraphNode>.Recycle(ref result);
-                    return prevFrom;
-                    
+                    from = prevFrom;
+                    return false;
+
                 }
 
                 if (prevFrom != from) {
@@ -538,7 +542,8 @@ namespace Warcraft.Features {
                 this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterStates.CharacterIdleState>(entity);
                 this.world.AddOrGetComponent<UnitEntity, Warcraft.Components.CharacterStates.CharacterMoveState>(entity);
 
-                return prevFrom;
+                from = prevFrom;
+                return false;
 
             }
 

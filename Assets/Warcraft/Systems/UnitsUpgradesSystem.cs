@@ -15,9 +15,15 @@ namespace Warcraft.Systems {
         private Warcraft.Features.PlayersFeature playersFeature;
         private Warcraft.Features.UnitsFeature unitsFeature;
         
-        public IWorld<TState> world { get; set; }
+        private IFilter<Warcraft.WarcraftState, Warcraft.Entities.PlayerEntity> playersUpgradingQueueFilter;
         
-        void ISystemBase.OnConstruct() {}
+        public IWorld<TState> world { get; set; }
+
+        void ISystemBase.OnConstruct() {
+            
+            Filter<Warcraft.WarcraftState, PlayerEntity>.Create(ref this.playersUpgradingQueueFilter, "playersUpgradingQueueFilter").WithComponent<Warcraft.Components.Player.PlayerUpgradeBuildingComponent>().Push();
+            
+        }
         
         void ISystemBase.OnDeconstruct() {}
 
@@ -26,14 +32,12 @@ namespace Warcraft.Systems {
             if (this.playersFeature == null) this.playersFeature = this.world.GetFeature<Warcraft.Features.PlayersFeature>();
             if (this.unitsFeature == null) this.unitsFeature = this.world.GetFeature<Warcraft.Features.UnitsFeature>();
             
-            if (this.upgradeMarkerExists == true) {
+            foreach (var index in state.players) {
 
-                this.upgradeMarkerExists = false;
-                var marker = this.upgradeMarker;
-                
-                var activePlayer = this.playersFeature.GetActivePlayer();
-                if (this.world.GetEntityData(activePlayer, out Warcraft.Entities.PlayerEntity playerEntity) == true) {
-
+                ref var playerEntity = ref state.players[index];
+                if (this.playersUpgradingQueueFilter.Contains(playerEntity) == true) {
+                    
+                    var marker = this.world.GetComponent<PlayerEntity, Warcraft.Components.Player.PlayerUpgradeBuildingComponent>(playerEntity.entity);
                     if (marker.actionInfo.IsEnabled(playerEntity) == true) {
 
                         var inProgress = this.world.GetComponent<UnitEntity, UnitBuildingProgress>(marker.selectedUnit);
@@ -48,9 +52,24 @@ namespace Warcraft.Systems {
                         }
 
                     }
+                    this.world.RemoveComponents<PlayerEntity, Warcraft.Components.Player.PlayerUpgradeBuildingComponent>(playerEntity.entity);
 
                 }
+
+            }
+            
+            if (this.upgradeMarkerExists == true) {
+
+                this.upgradeMarkerExists = false;
+                var marker = this.upgradeMarker;
                 
+                var activePlayer = this.playersFeature.GetActivePlayer();
+                var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerUpgradeBuildingComponent>(activePlayer);
+                comp.player = activePlayer;
+                comp.actionInfo = marker.actionInfo;
+                comp.selectedUnit = marker.selectedUnit;
+                comp.unitInfo = marker.unitInfo;
+
             }
 
         }

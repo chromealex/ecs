@@ -106,15 +106,19 @@ namespace Warcraft.Features {
             var worldPos = mapFeature.GetWorldBuildingPosition(unitData.position, unitData.size);
             pathfindingFeature.SetWalkability(worldPos, unitData.size, true, unitEntity);
 
-            var unitInfoComponent = this.world.AddComponent<UnitEntity, UnitInfoComponent>(unitEntity);
+            var unitInfoComponent = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unitEntity);
             var unitInfo = unitInfoComponent.unitInfo;
 
-            var newEntity = this.world.AddEntity(new UnitEntity() { position = unitData.position });
+            var compPlayer = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unitEntity);
+            
+            var newEntity = this.world.AddEntity(new UnitEntity() { position = unitData.position, rotation = unitData.rotation, size = unitData.size });
             this.world.AddComponent<UnitEntity, UnitDeathState>(newEntity);
             unitInfoComponent = this.world.AddComponent<UnitEntity, UnitInfoComponent>(newEntity);
             unitInfoComponent.unitInfo = unitInfo;
+            var comp = this.world.AddComponent<UnitEntity, UnitPlayerOwnerComponent>(newEntity);
+            comp.player = compPlayer.player;
 
-            if (this.unitInfoToViews.TryGetValue(unitInfo.unitTypeId, out ViewId sourceId) == true) {
+            if (this.unitInfoToViewsDead.TryGetValue(unitInfo.unitTypeId, out ViewId sourceId) == true) {
                 
                 this.world.InstantiateView<UnitEntity>(sourceId, newEntity);
                 

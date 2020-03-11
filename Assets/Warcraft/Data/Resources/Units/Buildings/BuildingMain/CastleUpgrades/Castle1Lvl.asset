@@ -19,7 +19,7 @@ MonoBehaviour:
   viewSourceDead: {fileID: 1820512939237373680, guid: d84ee5c3a6bca4c26b243d4557d7faec,
     type: 3}
   icon: {fileID: -3547696788722899288, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
-  sightRange: 3.5
+  sightRange: 3
   attackRange: 0
   attackDelay: 0
   attackTime: 0

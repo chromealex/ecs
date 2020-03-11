@@ -15,8 +15,6 @@ MonoBehaviour:
   allNodes:
   - {fileID: 11400000, guid: 0abf5f30540b04c588030a4f3327eeee, type: 2}
   - {fileID: 11400000, guid: a99e06efead3e4e23881e7e8539b9f6c, type: 2}
-  - {fileID: 11400000, guid: 4b18963533b064e8ebb9d07e6711c815, type: 2}
-  - {fileID: 11400000, guid: 25b3e8c1de76a429c82f881c29c5ffa0, type: 2}
   roots:
   - {fileID: 11400000, guid: 0abf5f30540b04c588030a4f3327eeee, type: 2}
   - {fileID: 11400000, guid: a99e06efead3e4e23881e7e8539b9f6c, type: 2}

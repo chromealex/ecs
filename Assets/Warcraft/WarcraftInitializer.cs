@@ -70,6 +70,7 @@ namespace Warcraft {
                     this.world.AddFeature<MapFeature>();
                     this.world.AddFeature<PathfindingFeature>();
                     this.world.AddFeature<UnitsFeature>();
+                    this.world.AddFeature<AIFeature>();
                     this.world.AddFeature<PlayersFeature, ConstructParameters<int>>(new ConstructParameters<int>(this.activePlayerIndex));
                     this.world.AddFeature<ForestFeature>();
                     this.world.AddFeature<FogOfWarFeature>();

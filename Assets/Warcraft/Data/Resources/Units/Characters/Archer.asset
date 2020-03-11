@@ -20,9 +20,9 @@ MonoBehaviour:
     type: 3}
   icon: {fileID: 7246090447554825513, guid: 9a25cce6371924d38b18ed8cf7fad1d1, type: 3}
   sightRange: 2.5
-  attackRange: 1
+  attackRange: 2
   attackDelay: 0.3
-  attackTime: 0.4
+  attackTime: 1
   attackDamageRange: {x: 3, y: 5}
   health: 30
   actions: {fileID: 0}

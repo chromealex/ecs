@@ -22,7 +22,7 @@ MonoBehaviour:
   sightRange: 2
   attackRange: 0.62
   attackDelay: 0.3
-  attackTime: 0.5
+  attackTime: 1
   attackDamageRange: {x: 4, y: 5}
   health: 40
   actions: {fileID: 0}

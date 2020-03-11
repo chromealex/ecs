@@ -22,9 +22,6 @@ namespace Warcraft.Views {
             var mapFeature = world.GetFeature<Warcraft.Features.MapFeature>();
             mapFeature.CutDownTree(mapFeature.GetMapPositionFromWorld(this.data.position));
 
-            var pathfindingFeature = world.GetFeature<Warcraft.Features.PathfindingFeature>();
-            pathfindingFeature.SetWalkability(mapFeature.GetMapPositionFromWorld(this.data.position), true);
-            
         }
         
         public override void ApplyState(in TEntity data, float deltaTime, bool immediately) {

@@ -34,11 +34,19 @@ namespace Warcraft.Views {
         
         private float animationTimer;
         private int frameIndex;
+        private int orientation;
 
-        public void ApplySprite(SpriteRenderer spriteRenderer, Vector2 from, Vector2 to, float deltaTime) {
+        public void ApplySprite(SpriteRenderer spriteRenderer, Vector2 from, Vector2 to, float deltaTime, bool reset) {
 
             if (this.animate == true) {
 
+                if (reset == true) {
+                    
+                    this.animationTimer = 0f;
+                    this.frameIndex = 0;
+
+                }
+                
                 this.animationTimer += deltaTime;
                 if (this.animationTimer >= this.animationTime) {
 
@@ -68,12 +76,16 @@ namespace Warcraft.Views {
 
             }
 
-            MathUtils.GetOrientation(out int orientation, from.XY(), to);
-            var dir = this.frames[this.frameIndex].directions[orientation];
-            
+            if (from != to) {
+                
+                MathUtils.GetOrientation(out this.orientation, from.XY(), to);
+                
+            }
+            var dir = this.frames[this.frameIndex].directions[this.orientation];
+
             spriteRenderer.sprite = dir.sprite;
             spriteRenderer.flipX = dir.flip;
-            
+
         }
 
     }
@@ -84,6 +96,8 @@ namespace Warcraft.Views {
         public DirectionSprites walkSprites;
         public DirectionSprites deathSprites;
         public DirectionSprites attackSprites;
+        
+        private int lastIndex;
         
         [ContextMenu("Setup")]
         public void SetupFromSpriteRenderer() {
@@ -133,22 +147,34 @@ namespace Warcraft.Views {
 
         public override void ApplyState(in UnitEntity data, float deltaTime, bool immediately) {
 
+            var reset = false;
             ref var spriteGroup = ref this.GetIdleState(in data);
             if (this.IsDead(in data) == true) {
 
+                reset = (this.lastIndex != 1);
+                this.lastIndex = 1;
                 spriteGroup = ref this.deathSprites;
 
             } else if (this.IsWalk(in data) == true) {
 
+                reset = (this.lastIndex != 2);
+                this.lastIndex = 2;
                 spriteGroup = ref this.GetWalkState(in data);
 
             } else if (this.IsAttack(in data) == true) {
 
+                reset = (this.lastIndex != 3);
+                this.lastIndex = 3;
                 spriteGroup = ref this.attackSprites;
 
+            } else {
+                
+                reset = (this.lastIndex != 0);
+                this.lastIndex = 0;
+                
             }
 
-            spriteGroup.ApplySprite(this.spriteRenderer, this.tr.position, data.position, deltaTime);
+            spriteGroup.ApplySprite(this.spriteRenderer, this.tr.position, data.position, deltaTime, reset);
 
             base.ApplyState(in data, deltaTime, immediately);
 

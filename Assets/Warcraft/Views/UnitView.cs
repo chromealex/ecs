@@ -83,9 +83,9 @@ namespace Warcraft.Views {
             this.spriteRenderer.SetPropertyBlock(this.propertyBlock, 0);
 
             var progress = world.GetComponent<UnitEntity, Warcraft.Components.UnitBuildingProgress>(data.entity);
-            if (progress != null && progress.time > 0f && progress.time < 1f && this.buildingProgressSprites.Length > 0) {
+            if (progress != null && progress.time > 0f && progress.progress < progress.time && this.buildingProgressSprites.Length > 0) {
 
-                var value = Mathf.FloorToInt(progress.progress / progress.time * (this.buildingProgressSprites.Length - 1));
+                var value = Mathf.FloorToInt(progress.progress / progress.time * this.buildingProgressSprites.Length);
                 var sprite = this.buildingProgressSprites[value];
                 this.spriteRenderer.sprite = sprite;
 

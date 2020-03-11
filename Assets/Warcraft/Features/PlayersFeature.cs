@@ -48,6 +48,10 @@ namespace Warcraft.Features {
                         this.world.InstantiateView<PlayerEntity>(uiViewId, playerEntity);
                         this.world.InstantiateView<PlayerEntity>(uiUnitSelectedViewId, playerEntity);
 
+                    } else {
+
+                        this.world.AddComponent<PlayerEntity, AIComponent>(playerEntity);
+
                     }
 
                 }

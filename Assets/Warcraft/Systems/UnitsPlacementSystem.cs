@@ -29,6 +29,8 @@ namespace Warcraft.Systems {
         private Warcraft.Features.PathfindingFeature pathfindingFeature;
         private Warcraft.Features.FogOfWarFeature fogOfWarFeature;
 
+        private IFilter<Warcraft.WarcraftState, Warcraft.Entities.PlayerEntity> playersPlaceBuildingsFilter;
+        
         public IWorld<TState> world { get; set; }
 
         void ISystemBase.OnConstruct() {
@@ -39,6 +41,7 @@ namespace Warcraft.Systems {
             this.cancelMarkerExists = false;
             
             Filter<TState, UnitEntity>.Create(ref this.ghostersFilter, "ghostersFilter").WithComponent<UnitGhosterComponent>().Push();
+            Filter<Warcraft.WarcraftState, PlayerEntity>.Create(ref this.playersPlaceBuildingsFilter, "playersPlaceBuildingsFilter").WithComponent<Warcraft.Components.Player.PlayerPlaceBuildingComponent>().Push();
 
         }
         
@@ -52,6 +55,33 @@ namespace Warcraft.Systems {
             if (this.pathfindingFeature == null) this.pathfindingFeature = this.world.GetFeature<Warcraft.Features.PathfindingFeature>();
             if (this.fogOfWarFeature == null) this.fogOfWarFeature = this.world.GetFeature<Warcraft.Features.FogOfWarFeature>();
 
+            foreach (var index in state.players) {
+
+                ref var playerEntity = ref state.players[index];
+                if (this.playersPlaceBuildingsFilter.Contains(playerEntity) == true) {
+                    
+                    var marker = this.world.GetComponent<PlayerEntity, Warcraft.Components.Player.PlayerPlaceBuildingComponent>(playerEntity.entity);
+                    if (marker.actionInfo.IsEnabled(playerEntity) == true &&
+                        this.pathfindingFeature.IsValid(marker.position, marker.size) == true &&
+                        this.fogOfWarFeature.IsRevealed(playerEntity.entity, marker.position, marker.size) == true) {
+   
+                        UnityEngine.Debug.Log("Spawn placement accepted");
+                        UnityEngine.Debug.DrawLine(marker.position, marker.position + UnityEngine.Vector3.up.XY(), UnityEngine.Color.red, 2f);
+                        
+                        var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
+                        playerResources.resources.gold -= marker.actionInfo.cost.gold;
+                        playerResources.resources.wood -= marker.actionInfo.cost.wood;
+
+                        this.unitsFeature.SpawnUnit(playerEntity.entity, marker.unitInfo.unitTypeId, marker.position, marker.actionInfo.cost);
+
+                    }
+
+                    this.world.RemoveComponents<PlayerEntity, Warcraft.Components.Player.PlayerPlaceBuildingComponent>(playerEntity.entity);
+
+                }
+
+            }
+            
             if (this.cancelMarkerExists == true) {
 
                 this.cancelMarkerExists = false;
@@ -144,19 +174,17 @@ namespace Warcraft.Systems {
                                 
                                 if (this.world.GetEntityData(activePlayer, out Warcraft.Entities.PlayerEntity playerEntity) == true) {
 
-                                    if (ghosterComponent.actionInfo.IsEnabled(playerEntity) == false) continue;
-                                    if (this.pathfindingFeature.IsValid(unit.position, unit.size) == false) continue;
-                                    if (this.fogOfWarFeature.IsRevealed(playerOwnerComponent.player, unit.position, unit.size) == false) continue;
-                                
-                                    var playerResources = this.world.GetComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity.entity);
-                                    playerResources.resources.gold -= ghosterComponent.actionInfo.cost.gold;
-                                    playerResources.resources.wood -= ghosterComponent.actionInfo.cost.wood;
+                                    var unitInfo = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity).unitInfo;
 
-                                    var unitInfoComponent = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity);
-
-                                    this.unitsFeature.SpawnUnit(activePlayer, unitInfoComponent.unitInfo.unitTypeId, unit.position, ghosterComponent.actionInfo.cost);
+                                    var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerPlaceBuildingComponent>(activePlayer);
+                                    comp.player = activePlayer;
+                                    comp.position = unit.position;
+                                    comp.size = unit.size;
+                                    comp.actionInfo = ghosterComponent.actionInfo;
+                                    comp.unitInfo = unitInfo;
+                                    
                                     this.world.RemoveEntity<UnitEntity>(unit.entity);
-
+                                    
                                 }
 
                             }

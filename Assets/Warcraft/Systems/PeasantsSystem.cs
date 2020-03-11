@@ -89,8 +89,7 @@ namespace Warcraft.Systems {
                     
                     // Put resource to player
                     var unitSpeed = this.world.GetComponent<UnitEntity, UnitSpeedComponent>(unit.entity);
-                    unit.position = this.pathfindingFeature.MoveTowards(unit.entity, unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime, deltaTime, addLastNode: true);
-                    if ((unit.position - unit.jobTargetPos).sqrMagnitude <= PeasantsSystem.REACH_DESTINATION_DISTANCE * PeasantsSystem.REACH_DESTINATION_DISTANCE) {
+                    if (this.pathfindingFeature.MoveTowards(unit.entity, ref unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime, deltaTime, addLastNode: true) == true) {
 
                         this.world.AddComponent<UnitEntity, UnitHiddenView>(unit.entity);
                         this.world.AddComponent<UnitEntity, PeasantWorkingState>(unit.entity);
@@ -146,6 +145,8 @@ namespace Warcraft.Systems {
                                 --comp.lifes;
                                 if (comp.lifes <= 0) {
 
+                                    this.world.GetEntityData(unit.jobTarget, out UnitEntity treeEntityData);
+                                    this.pathfindingFeature.SetWalkability(this.mapFeature.GetMapPositionFromWorld(treeEntityData.position), true, Entity.Empty);
                                     this.world.RemoveEntity<UnitEntity>(unit.jobTarget);
                                     
                                 }
@@ -161,7 +162,7 @@ namespace Warcraft.Systems {
                             }
                             
                             var resValue = this.world.AddComponent<UnitEntity, PeasantCarryWood>(unit.entity);
-                            resValue.value = 1;
+                            resValue.value = 5;
 
                             carryToCastle = true;
 
@@ -186,7 +187,7 @@ namespace Warcraft.Systems {
                             }
 
                             var resValue = this.world.AddComponent<UnitEntity, PeasantCarryGold>(unit.entity);
-                            resValue.value = 1;
+                            resValue.value = 10;
 
                             carryToCastle = true;
 
@@ -239,8 +240,7 @@ namespace Warcraft.Systems {
                 } else if (this.peasantGoToWorkEntities.Contains(unit) == true) {
 
                     var unitSpeed = this.world.GetComponent<UnitEntity, UnitSpeedComponent>(unit.entity);
-                    unit.position = this.pathfindingFeature.MoveTowards(unit.entity, unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime, deltaTime, addLastNode: (unit.jobTargetType != 1));
-                    if ((unit.position - unit.jobTargetPos).sqrMagnitude <= PeasantsSystem.REACH_DESTINATION_DISTANCE * PeasantsSystem.REACH_DESTINATION_DISTANCE) {
+                    if (this.pathfindingFeature.MoveTowards(unit.entity, ref unit.position, ref unit.jobTargetPos, unitSpeed.speed * deltaTime, deltaTime, addLastNode: (unit.jobTargetType != 1)) == true) {
                         
                         this.world.RemoveComponents<UnitEntity, PeasantGoToWorkState>(unit.entity);
                         this.world.AddComponent<UnitEntity, PeasantWorkingState>(unit.entity);

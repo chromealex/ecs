@@ -1,7 +1,20 @@
 ﻿using EntityId = System.Int32;
 
 namespace ME.ECS {
-    
+
+    public static class EntityTypesCounter {
+
+        public static int counter = -1;
+
+    }
+
+    public static class EntityTypes<TEntity> where TEntity : IEntity {
+
+        public static int typeId = -1;
+        public static int capacity = 100;
+
+    }
+
     [System.Serializable]
     public struct Entity : System.IEquatable<Entity> {
 
@@ -47,7 +60,8 @@ namespace ME.ECS {
                 
             }
 
-            var entity = new Entity(id, -1, WorldUtilities.GetKey<TEntity>());
+            //var typeId = WorldUtilities.GetKey<TEntity>();
+            var entity = new Entity(id, -1, EntityTypes<TEntity>.typeId);
             return entity;
 
         }

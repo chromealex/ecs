@@ -10,6 +10,24 @@ namespace ME.ECS {
 
         private static System.Collections.Generic.Dictionary<int, PoolInternalBase> pools = new System.Collections.Generic.Dictionary<int, PoolInternalBase>();
 
+        public static void Resize(int index, ref T[] arr) {
+
+            if (arr == null) arr = PoolArray<T>.Spawn(index + 1);
+            if (index < arr.Length) return;
+            PoolArray<T>.Resize(index, ref arr, arr.Length * 2);
+        }
+
+        public static void Resize(int index, ref T[] arr, int newLength) {
+
+            if (newLength == 0 || newLength <= index) newLength = index + 1;
+        
+            var newArr = PoolArray<T>.Spawn(newLength);
+            System.Array.Copy(arr, newArr, arr.Length);
+            PoolArray<T>.Recycle(ref arr);
+            arr = newArr;
+
+        }
+
         public static T[] Spawn(int length) {
 
             T[] result;

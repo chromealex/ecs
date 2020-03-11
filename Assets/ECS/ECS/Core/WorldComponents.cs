@@ -3,6 +3,12 @@ using EntityId = System.Int32;
 
 namespace ME.ECS {
 
+    public partial interface IWorldBase {
+        
+        TEntity RunComponents<TEntity>(ref TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
+
+    }
+
     public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
 
         #region Regular Components
@@ -49,30 +55,49 @@ namespace ME.ECS {
 
         private const int COMPONENTS_CAPACITY = 100;
         
-        private Dictionary<int, IComponents<TState>> componentsCache; // key = typeof(T:IData), value = list of T:Components
+        //private Dictionary<int, IComponents<TState>> componentsCache; // key = typeof(T:IData), value = list of T:Components
+        private IComponents<TState>[] componentsCache;
         private Entity sharedEntity;
         
         partial void OnSpawnComponents() {
-            
-            this.componentsCache = PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
+
+            this.componentsCache = PoolArray<IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY); //PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
 
         }
 
         partial void OnRecycleComponents() {
             
-            PoolDictionary<int, IComponents<TState>>.Recycle(ref this.componentsCache);
+            PoolArray<IComponents<TState>>.Recycle(ref this.componentsCache);
+            //PoolDictionary<int, IComponents<TState>>.Recycle(ref this.componentsCache);
             
         }
         
         #region Regular Components
+        public TEntity RunComponents<TEntity>(ref TEntity data, float deltaTime, int index) where TEntity : struct, IEntity {
+
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
+
+                var components = ((Components<TEntity, TState>)this.componentsCache[code]).ForEach<IRunnableComponent<TState, TEntity>>(data.entity.id);
+                foreach (var component in components) {
+                    
+                    if (component is IRunnableComponent<TState, TEntity> runnable) runnable.AdvanceTick(this.currentState, ref data, deltaTime, index);
+                    
+                }
+                
+            }
+
+            return data;
+
+        }
+
         public TComponent AddOrGetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> components;
-            if (this.componentsCache.TryGetValue(code, out components) == true) {
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
 
-                var componentsState = ((Components<TEntity, TState>)components);
-                var element = componentsState.GetFirst<TComponent>(entity.id);
+                ref var components = ref this.componentsCache[code];
+                var element = ((Components<TEntity, TState>)components).GetFirst<TComponent>(entity.id);
                 if (element != null) return element;
 
             }
@@ -121,19 +146,19 @@ namespace ME.ECS {
         /// <typeparam name="TComponent"></typeparam>
         public TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> components;
-            if (this.componentsCache.TryGetValue(code, out components) == true) {
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
 
-                var item = (Components<TEntity, TState>)components;
-                item.Add<TComponent>(entity.id, data);
+                ((Components<TEntity, TState>)this.componentsCache[code]).Add<TComponent>(entity.id, data);
 
             } else {
+                
+                var components = PoolClass<Components<TEntity, TState>>.Spawn();
+                components.Add<TComponent>(entity.id, data);
 
-                components = PoolClass<Components<TEntity, TState>>.Spawn();
-                ((Components<TEntity, TState>)components).Add<TComponent>(entity.id, data);
-                this.componentsCache.Add(code, components);
-
+                PoolArray<IComponents<TState>>.Resize(code, ref this.componentsCache);
+                this.componentsCache[code] = components;
+                
             }
 
             this.AddComponentToFilter<TEntity>(entity);
@@ -143,13 +168,10 @@ namespace ME.ECS {
 
         public TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> components;
-            var result = false;
-            result = this.componentsCache.TryGetValue(code, out components);
-            if (result == true) {
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
 
-                return ((Components<TEntity, TState>)components).GetFirst<TComponent>(entity.id);
+                return ((Components<TEntity, TState>)this.componentsCache[code]).GetFirst<TComponent>(entity.id);
 
             }
 
@@ -159,14 +181,11 @@ namespace ME.ECS {
 
         public List<IComponent<TState, TEntity>> ForEachComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> components;
-            var result = false;
-            result = this.componentsCache.TryGetValue(code, out components);
-            if (result == true) {
-
-                return ((Components<TEntity, TState>)components).ForEach<TComponent>(entity.id);
-
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
+                
+                return ((Components<TEntity, TState>)this.componentsCache[code]).ForEach<TComponent>(entity.id);
+                
             }
 
             return null;
@@ -182,12 +201,11 @@ namespace ME.ECS {
         /// <returns></returns>
         public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> components;
-            if (this.componentsCache.TryGetValue(code, out components) == true) {
-
-                return ((Components<TEntity, TState>)components).Contains<TComponent>(entity.id);
-
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
+                
+                return ((Components<TEntity, TState>)this.componentsCache[code]).Contains<TComponent>(entity.id);
+                
             }
 
             return false;
@@ -203,12 +221,11 @@ namespace ME.ECS {
         /// <returns></returns>
         public bool HasComponentOnce<TEntity, TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> where TEntity : struct, IEntity {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> components;
-            if (this.componentsCache.TryGetValue(code, out components) == true) {
-
-                return ((Components<TEntity, TState>)components).ContainsOnce<TComponent>(entity.id);
-
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
+                
+                return ((Components<TEntity, TState>)this.componentsCache[code]).ContainsOnce<TComponent>(entity.id);
+                
             }
 
             return false;
@@ -240,12 +257,11 @@ namespace ME.ECS {
         /// <param name="entity"></param>
         public void RemoveComponentsPredicate<TComponent, TComponentPredicate, TEntity>(Entity entity, TComponentPredicate predicate) where TEntity : struct, IEntity where TComponent : class, IComponent<TState, TEntity> where TComponentPredicate : IComponentPredicate<TComponent> {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> componentsContainer;
-            if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
-
-                if (((Components<TEntity, TState>)componentsContainer).RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
-
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
+                
+                if (((Components<TEntity, TState>)this.componentsCache[code]).RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
+                    
                     this.RemoveComponentFromFilter<TEntity>(entity);
 
                 }
@@ -260,14 +276,13 @@ namespace ME.ECS {
         /// <param name="entity"></param>
         public void RemoveComponents<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentBase {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> componentsContainer;
-            if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
-
-                if (componentsContainer.RemoveAll<TComponent>(entity.id) > 0) {
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
                 
-                    this.RemoveComponentFromFilter<TEntity>(entity);
+                if (this.componentsCache[code].RemoveAll<TComponent>(entity.id) > 0) {
                     
+                    this.RemoveComponentFromFilter<TEntity>(entity);
+
                 }
 
             }
@@ -280,14 +295,13 @@ namespace ME.ECS {
         /// <param name="entity"></param>
         public void RemoveComponentsByEntityType<TEntity>(Entity entity) where TEntity : struct, IEntity {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> componentsContainer;
-            if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
-
-                if (componentsContainer.RemoveAll(entity.id) > 0) {
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
                 
-                    this.RemoveComponentFromFilter<TEntity>(entity);
+                if (this.componentsCache[code].RemoveAll(entity.id) > 0) {
                     
+                    this.RemoveComponentFromFilter<TEntity>(entity);
+
                 }
 
             }
@@ -300,12 +314,11 @@ namespace ME.ECS {
         /// <param name="entity"></param>
         public void RemoveComponentsOnce<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentOnceBase {
 
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> componentsContainer;
-            if (this.componentsCache.TryGetValue(code, out componentsContainer) == true) {
-
-                if (componentsContainer.RemoveAllOnce<TComponent>(entity.id) > 0) {
-
+            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+            if (code >= 0 && code < this.componentsCache.Length) {
+                
+                if (this.componentsCache[code].RemoveAllOnce<TComponent>(entity.id) > 0) {
+                    
                     this.RemoveComponentFromFilter<TEntity>(entity);
 
                 }
@@ -321,9 +334,10 @@ namespace ME.ECS {
         /// <typeparam name="TComponent"></typeparam>
         public void RemoveComponents<TComponent>() where TComponent : class, IComponentBase {
 
-            foreach (var components in this.componentsCache) {
-
-                components.Value.RemoveAll<TComponent>();
+            for (var i = 0; i < this.componentsCache.Length; ++i) {
+                
+                var components = this.componentsCache[i];
+                if (components != null) components.RemoveAll<TComponent>();
 
             }
 
@@ -336,10 +350,11 @@ namespace ME.ECS {
         /// <typeparam name="TComponent"></typeparam>
         public void RemoveComponentsOnce<TComponent>() where TComponent : class, IComponentOnceBase {
 
-            foreach (var components in this.componentsCache) {
-
-                components.Value.RemoveAllOnce<TComponent>();
-
+            for (var i = 0; i < this.componentsCache.Length; ++i) {
+                
+                var components = this.componentsCache[i];
+                if (components != null) components.RemoveAllOnce<TComponent>();
+                
             }
 
         }

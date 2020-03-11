@@ -38,8 +38,8 @@ namespace ME.ECS {
         
         public static void UnRegister(IWorld<TState> world) {
             
-            Worlds.registeredWorlds.Remove(world);
-            Worlds<TState>.cache.Remove(world.id);
+            if (Worlds.registeredWorlds != null) Worlds.registeredWorlds.Remove(world);
+            if (Worlds<TState>.cache != null) Worlds<TState>.cache.Remove(world.id);
             
         }
 

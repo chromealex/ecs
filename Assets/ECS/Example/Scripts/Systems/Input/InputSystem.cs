@@ -78,8 +78,6 @@ namespace ME.Example.Game.Systems {
 
             }
             
-            this.world.UpdateStorages<Unit>();
-            
         }
 
     }

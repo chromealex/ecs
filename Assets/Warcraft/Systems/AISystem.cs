@@ -30,8 +30,8 @@ namespace Warcraft.Systems {
             Filter<TState, UnitEntity>.Create(ref this.aiCastles, "aiCastles").WithComponent<UnitPlayerOwnerComponent>().WithComponent<CastleComponent>().WithoutComponent<UnitDeathState>().Push();
             Filter<TState, UnitEntity>.Create(ref this.aiBuildings, "aiBuildings").WithComponent<UnitPlayerOwnerComponent>().WithoutComponent<CharacterComponent>().WithoutComponent<CastleComponent>().WithoutComponent<UnitDeathState>().Push();
             Filter<TState, UnitEntity>.Create(ref this.aiGoldMines, "aiGoldMines").WithComponent<GoldMineComponent>().WithoutComponent<UnitDeathState>().Push();
-            Filter<TState, UnitEntity>.Create(ref this.aiCharacters, "aiCharacters").WithComponent<UnitPlayerOwnerComponent>().WithComponent<CharacterComponent>().WithoutComponent<UnitPeasantComponent>().WithoutComponent<CharacterManualTarget>().WithComponent<Warcraft.Components.CharacterStates.CharacterIdleState>().WithoutComponent<UnitDeathState>().Push();
-
+            Filter<TState, UnitEntity>.Create(ref this.aiCharacters, "aiCharacters").WithComponent<UnitPlayerOwnerComponent>().WithComponent<CharacterComponent>().WithComponent<UnitCompleteComponent>().WithoutComponent<UnitPeasantComponent>().WithoutComponent<CharacterManualTarget>().WithComponent<Warcraft.Components.CharacterStates.CharacterIdleState>().WithoutComponent<UnitDeathState>().Push();
+            
             this.noUnitSelected = UnityEngine.Resources.Load<UnitInfo>("Units/_NoUnit");
 
         }
@@ -49,16 +49,20 @@ namespace Warcraft.Systems {
                 ref var unit = ref state.units[index];
                 if (this.aiCharacters.Contains(unit) == true) {
 
-                    var playerComp = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
-                    if (this.aiPlayers.Contains(playerComp.player) == false) continue;
-                    
-                    var toPos = this.world.GetRandomInSphere(unit.position, 2f);
-                    
-                    this.world.RemoveComponents<UnitEntity, CharacterAutoTarget>(unit.entity);
-                    var target = this.world.AddOrGetComponent<UnitEntity, CharacterManualTarget>(unit.entity);
-                    target.target = toPos;
-                    this.pathfindingFeature.StopMovement(unit.entity, repath: true);
-                    
+                    if (this.world.GetRandomRange(0, 50) == 5) {
+
+                        var playerComp = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
+                        if (this.aiPlayers.Contains(playerComp.player) == false) continue;
+
+                        var toPos = this.world.GetRandomInSphere(unit.position, 2f).XY();
+
+                        this.world.RemoveComponents<UnitEntity, CharacterAutoTarget>(unit.entity);
+                        var target = this.world.AddOrGetComponent<UnitEntity, CharacterManualTarget>(unit.entity);
+                        target.target = toPos;
+                        this.pathfindingFeature.StopMovement(unit.entity, repath: true);
+
+                    }
+
                 }
 
                 if (this.aiBuildings.Contains(unit) == true) {
@@ -78,7 +82,7 @@ namespace Warcraft.Systems {
                             if (actionBuildingInfo.isUpgrade == true) {
                                 
                                 // Upgrade building
-                                if (actionBuildingInfo.building != null && this.world.GetRandomRange(0, 50) == 5) {
+                                if (actionBuildingInfo.building != null && this.world.GetRandomRange(0, 500) == 5) {
 
                                     if (action.IsEnabled(playerData) == false) continue;
                                 
@@ -95,7 +99,7 @@ namespace Warcraft.Systems {
                             } else {
 
                                 // Build chars
-                                if (actionBuildingInfo.building != null && actionBuildingInfo.building is CharacterUnitInfo && this.world.GetRandomRange(0, 10) == 5) {
+                                if (actionBuildingInfo.building != null && actionBuildingInfo.building is CharacterUnitInfo && this.world.GetRandomRange(0, 2) == 0) {
 
                                     if (action.IsEnabled(playerData) == false) continue;
 

@@ -46,12 +46,18 @@ namespace Warcraft.Systems {
                     
                     var target = this.world.GetComponent<UnitEntity, CharacterManualTarget>(unit.entity);
                     var unitSpeed = this.world.GetComponent<UnitEntity, UnitSpeedComponent>(unit.entity);
-                    if (pathfindingFeature.MoveTowards(unit.entity, ref unit.position, ref target.target, unitSpeed.speed * deltaTime, deltaTime, checkLastPoint: true) == true) {
+                    if (pathfindingFeature.MoveTowards(unit.entity, ref unit.position, ref target.target, unitSpeed.speed * deltaTime, deltaTime, out var failed, checkLastPoint: true) == true) {
                     
                         this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterManualTarget>(unit.entity);
                         this.world.AddOrGetComponent<UnitEntity, CharacterAutoTarget>(unit.entity);
                         pathfindingFeature.StopMovement(unit.entity, repath: true);
                         
+                    } else if (failed == true) {
+                            
+                        this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterManualTarget>(unit.entity);
+                        this.world.AddOrGetComponent<UnitEntity, CharacterAutoTarget>(unit.entity);
+                        pathfindingFeature.StopMovement(unit.entity, repath: true);
+
                     }
 
                 }

@@ -14,7 +14,7 @@ namespace Warcraft.Components.Player {
 
         void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
 
-            var _other = (PlayerBuildingQueueComponent)other;
+            var _other = (PlayerUpgradeBuildingComponent)other;
 
             this.player = _other.player;
             this.selectedUnit = _other.selectedUnit;

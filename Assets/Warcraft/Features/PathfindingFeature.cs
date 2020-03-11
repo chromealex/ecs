@@ -342,13 +342,28 @@ namespace Warcraft.Features {
         }
 
         public bool MoveTowards(Entity entity,
-                               ref UnityEngine.Vector2 from,
-                               ref UnityEngine.Vector2 to,
-                               float movementDelta,
-                               float deltaTime,
-                               bool checkLastPoint = false,
-                               bool addLastNode = false) {
+                                ref UnityEngine.Vector2 from,
+                                ref UnityEngine.Vector2 to,
+                                float movementDelta,
+                                float deltaTime,
+                                bool checkLastPoint = false,
+                                bool addLastNode = false) {
 
+            return this.MoveTowards(entity, ref from, ref to, movementDelta, deltaTime, out _, checkLastPoint, addLastNode);
+
+        }
+
+        public bool MoveTowards(Entity entity,
+                                ref UnityEngine.Vector2 from,
+                                ref UnityEngine.Vector2 to,
+                                float movementDelta,
+                                float deltaTime,
+                                out bool failed,
+                                bool checkLastPoint = false,
+                                bool addLastNode = false) {
+
+            failed = false;
+            
             if (this.world.HasComponent<UnitEntity, PathfindingPathComponent>(entity) == true) {
 
                 var comp = this.world.GetComponent<UnitEntity, PathfindingPathComponent>(entity);
@@ -492,7 +507,12 @@ namespace Warcraft.Features {
             } else {
 
                 var prevFrom = from;
-                if (this.IsPathExists(ref from, to) == false) return false;
+                if (this.IsPathExists(ref from, to) == false) {
+
+                    failed = true;
+                    return false;
+                    
+                }
                 
                 var result = PoolList<Pathfinding.GraphNode>.Spawn(10);
                 
@@ -505,6 +525,7 @@ namespace Warcraft.Features {
                     
                     PoolList<Pathfinding.GraphNode>.Recycle(ref result);
                     from = prevFrom;
+                    failed = true;
                     return false;
 
                 }

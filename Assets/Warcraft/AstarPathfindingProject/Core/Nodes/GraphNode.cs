@@ -258,8 +258,12 @@ namespace Pathfinding {
 			set {
 				flags = flags & ~FlagsWalkableMask | (value ? 1U : 0U) << FlagsWalkableOffset;
 				AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
+				AstarPath.active.hierarchicalGraph.RecalculateIfNecessary();
+				this.OnWalkabilityDirty(value);
 			}
 		}
+
+		public virtual void OnWalkabilityDirty(bool state) {}
 
 		/// <summary>
 		/// Hierarchical Node that contains this node.

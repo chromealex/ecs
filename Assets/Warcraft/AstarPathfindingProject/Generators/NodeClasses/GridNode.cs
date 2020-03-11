@@ -41,6 +41,34 @@ namespace Pathfinding {
 			}
 		}
 
+		public override void OnWalkabilityDirty(bool state) {
+			
+			/*if (state == true) {
+
+				var cnt = 0;
+				var area = 0u;
+				for (int i = 0; i < 8; ++i) {
+					
+					GridGraph gg = GetGridGraph(GraphIndex);
+					var n = NodeInGridIndex + gg.neighbourOffsets[i];
+					if (n < 0 || n >= gg.nodes.Length) continue;
+					
+					var node = gg.nodes[n];
+					if (node.Walkable == false) continue;
+
+					if (node.Area != this.Area) {
+
+						this.Area = node.Area;
+						break;
+
+					}
+
+				}
+				
+			}*/
+				
+		}
+		
 		/// <summary>
 		/// True if the node has a connection in the specified direction.
 		/// The dir parameter corresponds to directions in the grid as:

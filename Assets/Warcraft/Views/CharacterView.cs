@@ -99,6 +99,7 @@ namespace Warcraft.Views {
         
         private int lastIndex;
         
+        #if UNITY_EDITOR
         [ContextMenu("Setup")]
         public void SetupFromSpriteRenderer() {
 
@@ -144,6 +145,7 @@ namespace Warcraft.Views {
             }
             
         }
+        #endif
 
         public override void ApplyState(in UnitEntity data, float deltaTime, bool immediately) {
 

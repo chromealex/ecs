@@ -256,10 +256,13 @@ namespace Pathfinding {
 				return (flags & FlagsWalkableMask) != 0;
 			}
 			set {
+				var oldValue = this.Walkable;
 				flags = flags & ~FlagsWalkableMask | (value ? 1U : 0U) << FlagsWalkableOffset;
-				AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
-				AstarPath.active.hierarchicalGraph.RecalculateIfNecessary();
-				this.OnWalkabilityDirty(value);
+				if (oldValue != value) {
+					AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
+					AstarPath.active.hierarchicalGraph.RecalculateIfNecessary();
+					this.OnWalkabilityDirty(value);
+				}
 			}
 		}
 

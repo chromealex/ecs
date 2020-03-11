@@ -132,7 +132,7 @@ namespace ME.ECS {
                 }*/
                 for (int i = 0; i < this.arr.Length; ++i) {
 
-                    count += this.arr[i].components.Length;
+                    if (this.arr[i].components != null) count += this.arr[i].components.Length;
 
                 }
 

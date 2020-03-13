@@ -4,7 +4,7 @@ using RPCId = System.Int32;
 
 namespace ME.ECS {
 
-    public partial interface IWorld<TState> where TState : class, IState<TState> {
+    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
         void SetNetworkModule(Network.INetworkModule<TState> module);
 
@@ -80,7 +80,7 @@ namespace ME.ECS.Network {
 
     }
 
-    public interface INetworkModule<TState> : INetworkModuleBase, IModule<TState> where TState : class, IState<TState> {
+    public interface INetworkModule<TState> : INetworkModuleBase, IModule<TState> where TState : class, IState<TState>, new() {
 
     }
 
@@ -102,7 +102,7 @@ namespace ME.ECS.Network {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public abstract class NetworkModule<TState> : INetworkModule<TState>, StatesHistory.IEventRunner, IModuleValidation where TState : class, IState<TState> {
+    public abstract class NetworkModule<TState> : INetworkModule<TState>, StatesHistory.IEventRunner, IModuleValidation where TState : class, IState<TState>, new() {
 
         private const RPCId PING_RPC_ID = -1;
         private const RPCId SYNC_RPC_ID = -2;

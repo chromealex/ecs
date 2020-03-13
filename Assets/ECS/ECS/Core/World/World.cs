@@ -89,6 +89,7 @@ namespace ME.ECS {
         private static class EntitiesDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
 
             internal static RefList<TEntity>[] entitiesList;
+            internal static TEntity defaultRef;
 
         }
 
@@ -425,11 +426,30 @@ namespace ME.ECS {
             }
 
             ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
-            if (list == null || this.id < 0 || this.id >= list.Length) return false;
+            if (list == null || this.id < 0 || this.id >= list.Length || list[this.id].IsFree(entity.storageIdx) == true) return false;
             
-            if (list[this.id].IsFree(entity.storageIdx) == true) return false;
             data = list[this.id][entity.storageIdx];
             return true;
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ref TEntity GetEntityDataRef<TEntity>(Entity entity) where TEntity : struct, IEntity {
+            
+            if (entity.id == 0) {
+
+                return ref EntitiesDirectCache<TState, TEntity>.defaultRef;
+                
+            }
+            
+            ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
+            if (list == null || this.id < 0 || this.id >= list.Length || list[this.id].IsFree(entity.storageIdx) == true) {
+                
+                return ref EntitiesDirectCache<TState, TEntity>.defaultRef;
+                
+            }
+            
+            return ref list[this.id][entity.storageIdx];
             
         }
 
@@ -464,6 +484,13 @@ namespace ME.ECS {
         internal Filter<TState, TEntity> GetFilter<TEntity>(int id) where TEntity : struct, IEntity {
 
             return (Filter<TState, TEntity>)this.filtersStorage.Get(id);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal IFilter<TState> GetFilter(int id) {
+
+            return (IFilter<TState>)this.filtersStorage.Get(id);
 
         }
 
@@ -784,7 +811,7 @@ namespace ME.ECS {
             
         }
 
-        public void AddToFilters<TEntity>(Entity entity) where TEntity : struct, IEntity {
+        /*public void AddToFilters<TEntity>(Entity entity) where TEntity : struct, IEntity {
             
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
             HashSet<int> filters;
@@ -798,7 +825,7 @@ namespace ME.ECS {
 
             }
             
-        }
+        }*/
 
         public void RemoveFromFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
             
@@ -821,7 +848,7 @@ namespace ME.ECS {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnRemove(entity);
+                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).Remove_INTERNAL(entity);
 
                 }
 
@@ -855,7 +882,7 @@ namespace ME.ECS {
 
             }
 
-            this.AddToFilters<TEntity>(data.entity);
+            //this.AddToFilters<TEntity>(data.entity); // Why we need to add empty entity into filters?
             this.UpdateEntityCache(data);
 
             return data.entity;
@@ -1401,7 +1428,7 @@ namespace ME.ECS {
                         if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.VisualTick);
                         #endif
 
-                        this.systems[i].Update(state, deltaTime);
+                        if (this.systems[i] is ISystemUpdate<TState> sys) sys.Update(state, deltaTime);
 
                         #if CHECKPOINT_COLLECTOR
                         if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.VisualTick);
@@ -1563,8 +1590,32 @@ namespace ME.ECS {
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);
                             #endif
 
-                            this.systems[i].AdvanceTick(state, fixedDeltaTime);
-                            
+                            switch (this.systems[i]) {
+                                
+                                case ISystemFilter<TState> sysFilter: {
+
+                                    var filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
+                                    if (filter != null) {
+
+                                        foreach (var entity in filter) {
+
+                                            sysFilter.AdvanceTick(entity, state, fixedDeltaTime);
+
+                                        }
+
+                                    }
+
+                                    break;
+                                }
+
+                                case ISystemAdvanceTick<TState> sys:
+                                    
+                                    sys.AdvanceTick(state, fixedDeltaTime);
+                                    
+                                    break;
+                                
+                            }
+
                             #if CHECKPOINT_COLLECTOR
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);
                             #endif

@@ -20,19 +20,17 @@ namespace ME.ECS {
 
         public readonly EntityId id;
         public int storageIdx;
-        public readonly int typeId;
 
         public static Entity Empty {
             get {
-                return new Entity(0, 0, 0);
+                return new Entity(0, 0);
             }
         }
 
-        internal Entity(EntityId id, int storageIdx, int typeId) {
+        internal Entity(EntityId id, int storageIdx) {
 
             this.id = id;
             this.storageIdx = storageIdx;
-            this.typeId = typeId;
 
         }
 
@@ -56,19 +54,19 @@ namespace ME.ECS {
 
             if (noCheck == false && id <= 0) {
                 
-                throw new System.ArgumentOutOfRangeException("id", "Couldn't create entity with negative value!");
+                throw new System.ArgumentOutOfRangeException("id", "Couldn't create entity with negative or zero id!");
                 
             }
 
             //var typeId = WorldUtilities.GetKey<TEntity>();
-            var entity = new Entity(id, -1, EntityTypes<TEntity>.typeId);
+            var entity = new Entity(id, -1);
             return entity;
 
         }
         
         public static bool operator ==(Entity e1, Entity e2) {
 
-            return e1.id == e2.id && e1.storageIdx == e2.storageIdx && e1.typeId == e2.typeId;
+            return e1.id == e2.id && e1.storageIdx == e2.storageIdx;
 
         }
 
@@ -92,13 +90,13 @@ namespace ME.ECS {
 
         public override int GetHashCode() {
             
-            return this.id ^ this.storageIdx ^ this.typeId;
+            return this.id ^ this.storageIdx;
             
         }
 
         public override string ToString() {
             
-            return "Entity Id: " + this.id.ToString() + " (type: " + this.typeId.ToString() + "), Storage Index: " + this.storageIdx.ToString();
+            return "Entity Id: " + this.id.ToString() + " Storage Index: " + this.storageIdx.ToString();
             
         }
 

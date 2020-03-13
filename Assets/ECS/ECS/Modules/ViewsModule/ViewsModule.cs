@@ -8,7 +8,7 @@ namespace ME.ECS {
     
     using ME.ECS.Views;
     
-    public partial interface IWorld<TState> where TState : class, IState<TState> {
+    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
         
         ViewId RegisterViewSource<TEntity, TProvider>(TProvider providerInitializer, IView<TEntity> prefab) where TEntity : struct, IEntity where TProvider : struct, IViewsProviderInitializer<TEntity>;
         bool UnRegisterViewSource<TEntity>(IView<TEntity> prefab) where TEntity : struct, IEntity;
@@ -172,7 +172,7 @@ namespace ME.ECS.Views {
 
     }
 
-    public partial interface IViewModule<TState, TEntity> : IViewModuleBase, IModule<TState> where TState : class, IState<TState> where TEntity : struct, IEntity {
+    public partial interface IViewModule<TState, TEntity> : IViewModuleBase, IModule<TState> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
 
         void Register(IView<TEntity> instance);
         bool UnRegister(IView<TEntity> instance);
@@ -335,7 +335,7 @@ namespace ME.ECS.Views {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public partial class ViewsModule<TState, TEntity> : IViewModule<TState, TEntity> where TState : class, IState<TState> where TEntity : struct, IEntity {
+    public partial class ViewsModule<TState, TEntity> : IViewModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
 
         private const int REGISTRY_PROVIDERS_CAPACITY = 100;
         private const int REGISTRY_CAPACITY = 100;

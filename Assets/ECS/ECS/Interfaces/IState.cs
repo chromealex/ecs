@@ -18,7 +18,7 @@ namespace ME.ECS {
 
     }
 
-    public interface IState<T> : IStateBase, IPoolableRecycle where T : class, IState<T> {
+    public interface IState<T> : IStateBase, IPoolableRecycle where T : class, IState<T>, new() {
 
         void Initialize(IWorld<T> world, bool freeze, bool restore);
         void CopyFrom(T other);

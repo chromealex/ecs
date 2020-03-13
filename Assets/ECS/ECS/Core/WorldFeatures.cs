@@ -66,9 +66,9 @@ namespace ME.ECS {
 
     }
 
-    public abstract class Feature<TState> : Feature<TState, ConstructParameters> where TState : class, IState<TState> { }
+    public abstract class Feature<TState> : Feature<TState, ConstructParameters> where TState : class, IState<TState>, new() { }
 
-    public abstract class Feature<TState, TConstructParameters> : IFeature<TState, TConstructParameters> where TState : class, IState<TState> where TConstructParameters : IConstructParameters {
+    public abstract class Feature<TState, TConstructParameters> : IFeature<TState, TConstructParameters> where TState : class, IState<TState>, new() where TConstructParameters : IConstructParameters {
 
         public IWorld<TState> world { get; set; }
 

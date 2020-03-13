@@ -6,7 +6,7 @@ namespace ME.Example.Game.Systems {
     using ME.Example.Game.Components;
     using ME.Example.Game.Entities;
     
-    public class UnitsSystem : ISystem<State> {
+    public class UnitsSystem : ISystem<State>, ISystemAdvanceTick<State>, ISystemUpdate<State> {
 
         public IWorld<State> world { get; set; }
 
@@ -45,7 +45,7 @@ namespace ME.Example.Game.Systems {
         
         void ISystemBase.OnDeconstruct() { }
 
-        void ISystem<State>.AdvanceTick(State state, float deltaTime) {
+        void ISystemAdvanceTick<State>.AdvanceTick(State state, float deltaTime) {
 
             this.world.Checkpoint("Update Units");
             foreach (var index in state.units) {
@@ -87,7 +87,7 @@ namespace ME.Example.Game.Systems {
 
         }
 
-        void ISystem<State>.Update(State state, float deltaTime) { }
+        void ISystemUpdate<State>.Update(State state, float deltaTime) { }
 
     }
 

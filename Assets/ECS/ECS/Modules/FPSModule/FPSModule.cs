@@ -15,7 +15,7 @@ namespace ME.ECS {
 
     }
 
-    public interface IFPSModule<TState> : IFPSModuleBase, IModule<TState> where TState : class, IState<TState> {
+    public interface IFPSModule<TState> : IFPSModuleBase, IModule<TState> where TState : class, IState<TState>, new() {
 
     }
 
@@ -24,7 +24,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class FPSModule<TState> : IFPSModule<TState> where TState : class, IState<TState> {
+    public class FPSModule<TState> : IFPSModule<TState> where TState : class, IState<TState>, new() {
 
         private float timeElapsed;
         private int framesElapsed;

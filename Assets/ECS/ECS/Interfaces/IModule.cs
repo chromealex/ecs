@@ -7,7 +7,7 @@ namespace ME.ECS {
 
     }
 
-    public interface IModule<TState> : IModuleBase where TState : class, IState<TState> {
+    public interface IModule<TState> : IModuleBase where TState : class, IState<TState>, new() {
 
         IWorld<TState> world { get; set; }
 

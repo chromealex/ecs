@@ -9,7 +9,7 @@ namespace ME.ECS {
 
     }
 
-    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
+    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState>, new() {
 
         #region Regular Components
         TComponent AddOrGetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity;
@@ -22,8 +22,12 @@ namespace ME.ECS {
         TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
         List<IComponent<TState, TEntity>> ForEachComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
         bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;
+        bool HasComponentOnce<TEntity, TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> where TEntity : struct, IEntity;
         void RemoveComponents<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentBase;
         void RemoveComponentsByEntityType<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        void RemoveComponentsOnce<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentOnceBase;
+        void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
+        void RemoveComponentsOnce<TComponent>() where TComponent : class, IComponentOnceBase;
         void RemoveComponentsPredicate<TComponent, TComponentPredicate, TEntity>(Entity entity, TComponentPredicate predicate) where TEntity : struct, IEntity where TComponent : class, IComponent<TState, TEntity> where TComponentPredicate : IComponentPredicate<TComponent>;
         #endregion
         

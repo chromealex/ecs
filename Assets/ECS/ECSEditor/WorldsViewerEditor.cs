@@ -191,11 +191,11 @@ namespace ME.ECSEditor {
 
             }
 
-            public Dictionary<int, ME.ECS.IComponentsBase> GetComponentsStorage() {
+            /*public Dictionary<int, ME.ECS.IComponentsBase> GetComponentsStorage() {
 
                 return WorldHelper.GetComponentsStorage(this.world);
 
-            }
+            }*/
 
             public Dictionary<int, IList> GetEntitiesStorage() {
 
@@ -409,7 +409,7 @@ namespace ME.ECSEditor {
 
                     var modules = world.GetModules();
 
-                    var componentsStorage = world.GetComponentsStorage();
+                    //var componentsStorage = world.GetComponentsStorage();
                     var entitiesStorage = world.GetEntitiesStorage();
                     foreach (var entityStorage in entitiesStorage) {
 
@@ -460,8 +460,9 @@ namespace ME.ECSEditor {
                                                         var foldoutComponents = world.IsFoldOutComponents(storage, entityData.entity.id);
                                                         GUILayoutExt.FoldOut(ref foldoutComponents, "Components", () => {
 
-                                                            ME.ECS.IComponentsBase components;
-                                                            if (componentsStorage.TryGetValue(entityData.entity.typeId, out components) == true) {
+                                                            GUILayout.Label("Due to technical issues components list is not supported for now", EditorStyles.miniBoldLabel);
+                                                            /*ME.ECS.IComponentsBase components;
+                                                            if (componentsStorage.TryGetValue(entityData.entity.id, out components) == true) {
 
                                                                 var componentsDic = components.GetData(entityData.entity.id);
                                                                 foreach (var component in componentsDic) {
@@ -482,12 +483,6 @@ namespace ME.ECSEditor {
                                                                                 margin,
                                                                                 () => {
 
-                                                                                    /*if (component is IGUIEditor componentEditor) {
-
-                                                                                        componentEditor.OnDrawGUI();
-
-                                                                                    }*/
-
                                                                                     GUILayout.Label("Data", EditorStyles.miniBoldLabel);
                                                                                     GUILayoutExt.DrawFields(component, 120f);
 
@@ -497,7 +492,7 @@ namespace ME.ECSEditor {
 
                                                                 }
 
-                                                            }
+                                                            }*/
 
                                                         });
                                                         world.SetFoldOutComponents(storage, entityData.entity.id, foldoutComponents);

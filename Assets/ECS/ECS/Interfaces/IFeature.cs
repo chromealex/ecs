@@ -6,7 +6,7 @@ namespace ME.ECS {
 
     }
 
-    public interface IFeature<TState, TConstructParameters> : IFeatureBase where TState : class, IState<TState> where TConstructParameters : IConstructParameters {
+    public interface IFeature<TState, TConstructParameters> : IFeatureBase where TState : class, IState<TState>, new() where TConstructParameters : IConstructParameters {
 
         IWorld<TState> world { get; set; }
 

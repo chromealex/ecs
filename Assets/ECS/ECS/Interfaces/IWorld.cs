@@ -40,7 +40,7 @@ namespace ME.ECS {
 
     }
 
-    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
+    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState>, new() {
 
         UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float radius);
         int GetRandomRange(int from, int to);
@@ -95,6 +95,7 @@ namespace ME.ECS {
 
         //Entity GetEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
         bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity;
+        ref TEntity GetEntityDataRef<TEntity>(Entity entity) where TEntity : struct, IEntity;
 
         void Update(float deltaTime);
 

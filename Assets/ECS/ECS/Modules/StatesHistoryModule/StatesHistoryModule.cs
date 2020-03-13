@@ -13,7 +13,7 @@ namespace ME.ECS {
 
     }
 
-    public partial interface IWorld<TState> where TState : class, IState<TState> {
+    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
         void SetStatesHistoryModule(StatesHistory.IStatesHistoryModule<TState> module);
 
@@ -300,7 +300,7 @@ namespace ME.ECS.StatesHistory {
 
     }
 
-    public interface IStatesHistoryModule<TState> : IStatesHistoryModuleBase, IModule<TState> where TState : class, IState<TState> {
+    public interface IStatesHistoryModule<TState> : IStatesHistoryModuleBase, IModule<TState> where TState : class, IState<TState>, new() {
 
         void AddEvents(IList<HistoryEvent> historyEvents);
         void AddEvent(HistoryEvent historyEvent);

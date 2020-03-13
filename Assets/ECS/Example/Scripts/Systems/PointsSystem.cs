@@ -3,7 +3,7 @@ using Unity.Jobs;
 
 namespace ME.Example.Game.Systems {
     
-    public class PointsSystem : ISystem<State> {
+    public class PointsSystem : ISystem<State>, ISystemAdvanceTick<State>, ISystemUpdate<State> {
 
         //[BurstCompile(CompileSynchronously = true, FloatMode = FloatMode.Deterministic, FloatPrecision = FloatPrecision.Standard)]
         /*private struct TestJob : IJobParallelFor {
@@ -26,7 +26,7 @@ namespace ME.Example.Game.Systems {
         void ISystemBase.OnConstruct() { }
         void ISystemBase.OnDeconstruct() { }
 
-        void ISystem<State>.AdvanceTick(State state, float deltaTime) {
+        void ISystemAdvanceTick<State>.AdvanceTick(State state, float deltaTime) {
 
             /*var job = new TestJob() {
                 deltaTime = deltaTime
@@ -45,7 +45,7 @@ namespace ME.Example.Game.Systems {
 
         }
 
-        void ISystem<State>.Update(State state, float deltaTime) { }
+        void ISystemUpdate<State>.Update(State state, float deltaTime) { }
 
     }
 

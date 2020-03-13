@@ -8,7 +8,7 @@ namespace ME.ECS {
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
 
-    public partial interface IWorld<TState> where TState : class, IState<TState> {
+    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource<TEntity>(DrawMeshViewSourceBase prefab) where TEntity : struct, IEntity;
         void InstantiateView<TEntity>(DrawMeshViewSourceBase prefab, Entity entity) where TEntity : struct, IEntity;
@@ -39,7 +39,7 @@ namespace ME.ECS.Views {
     
     using ME.ECS.Views.Providers;
     
-    public partial interface IViewModule<TState, TEntity> where TState : class, IState<TState> where TEntity : struct, IEntity {
+    public partial interface IViewModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
 
         ViewId RegisterViewSource(DrawMeshViewSourceBase prefab);
         void UnRegisterViewSource(DrawMeshViewSourceBase prefab);
@@ -47,7 +47,7 @@ namespace ME.ECS.Views {
 
     }
 
-    public partial class ViewsModule<TState, TEntity> where TState : class, IState<TState> where TEntity : struct, IEntity {
+    public partial class ViewsModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(DrawMeshViewSourceBase prefab) {

@@ -9,7 +9,7 @@ namespace ME.Example.Game.Systems {
     using ME.Example.Game.Components;
     using ME.Example.Game.Entities;
 
-    public class InputSystem : ISystem<State> {
+    public class InputSystem : ISystem<State>, ISystemAdvanceTick<State>, ISystemUpdate<State> {
 
         public Entity p1;
         public Entity p2;
@@ -32,9 +32,9 @@ namespace ME.Example.Game.Systems {
 
         }
 
-        void ISystem<State>.AdvanceTick(State state, float deltaTime) {}
+        void ISystemAdvanceTick<State>.AdvanceTick(State state, float deltaTime) {}
 
-        void ISystem<State>.Update(State state, float deltaTime) {
+        void ISystemUpdate<State>.Update(State state, float deltaTime) {
             
             ME.Example.Game.Components.UI.UIAddUnit marker;
             if (this.world.GetMarker(out marker) == true) {

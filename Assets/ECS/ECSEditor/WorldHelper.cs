@@ -17,20 +17,20 @@ namespace ME.ECSEditor {
 
         }
 
-        public static Dictionary<int, ME.ECS.IComponentsBase> GetComponentsStorage(IWorldBase world) {
+        /*public static Dictionary<int, ME.ECS.IComponentsBase> GetComponentsStorage(IWorldBase world) {
 
             var field = world.GetType().GetField("componentsCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            var dic = (IDictionary)field.GetValue(world);
+            var dic = (IList)field.GetValue(world);
             WorldHelper.componentsCache.Clear();
-            foreach (DictionaryEntry item in dic) {
+            foreach (var item in dic) {
 
-                WorldHelper.componentsCache.Add((int)item.Key, (ME.ECS.IComponentsBase)item.Value);
+                WorldHelper.componentsCache.Add(, (ME.ECS.IComponentsBase)item);
 
             }
 
             return WorldHelper.componentsCache;
 
-        }
+        }*/
 
         public static Dictionary<int, IList> GetEntitiesStorage(IWorldBase world) {
 

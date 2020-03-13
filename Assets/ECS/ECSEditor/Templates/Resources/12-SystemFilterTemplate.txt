@@ -1,0 +1,27 @@
+﻿using ME.ECS;
+
+namespace #NAMESPACE# {
+
+    using TState = #STATENAME#;
+    using TEntity = YOUR_ENTITY_TYPE;
+    
+    public class #SCRIPTNAME# : ISystemFilter<TState> {
+        
+        public IWorld<TState> world { get; set; }
+        
+        void ISystemBase.OnConstruct() {}
+        
+        void ISystemBase.OnDeconstruct() {}
+        
+        IFilter<TState> ISystemFilter<TState>.filter { get; set; }
+        IFilter<TState> ISystemFilter<TState>.CreateFilter() {
+            
+            return Filter<TState, TEntity>.Create("Filter-#SCRIPTNAME#").Push();
+            
+        }
+
+        void ISystemFilter<TState>.AdvanceTick(Entity entity, TState state, float deltaTime) {}
+
+    }
+    
+}

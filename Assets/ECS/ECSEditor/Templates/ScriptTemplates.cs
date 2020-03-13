@@ -14,9 +14,10 @@ namespace ME.ECSEditor {
         
         private const int CREATE_FEATURE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 11;
         private const int CREATE_SYSTEM_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 12;
-        private const int CREATE_MODULE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 13;
-        private const int CREATE_ENTITY_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 14;
-        private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 15;
+        private const int CREATE_SYSTEM_FILTER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 13;
+        private const int CREATE_MODULE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 14;
+        private const int CREATE_ENTITY_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 15;
+        private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 16;
         
         private const int CREATE_COMPONENT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 40;
         private const int CREATE_COMPONENT_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 41;
@@ -293,6 +294,13 @@ MonoBehaviour:
         public static void CreateSystem() {
 
             ScriptTemplates.Create("New System.cs", "11-SystemTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/System with Filter", priority = ScriptTemplates.CREATE_SYSTEM_FILTER_PRIORITY)]
+        public static void CreateSystemFilter() {
+
+            ScriptTemplates.Create("New System with Filter.cs", "12-SystemFilterTemplate");
 
         }
 

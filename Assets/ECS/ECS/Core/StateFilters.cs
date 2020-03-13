@@ -6,13 +6,19 @@ namespace ME.ECS {
     using EntityId = System.Int32;
     using ME.ECS.Collections;
 
-    internal interface IFilterInternal<TState> where TState : class, IState<TState> {
+    internal interface IFilterInternal<TState> where TState : class, IState<TState>, new() {
 
         bool OnUpdate(Entity entity);
-        bool OnAdd(Entity entity);
-        bool OnRemove(Entity entity);
+        bool CheckAdd(Entity entity);
+        bool CheckRemove(Entity entity);
         bool OnAddComponent(Entity entity);
         bool OnRemoveComponent(Entity entity);
+
+        HashSetCopyable<Entity> GetData();
+        List<FilterRequest> GetRequests();
+        bool forEachMode { get; set; }
+        void Add_INTERNAL(Entity entity);
+        bool Remove_INTERNAL(Entity entity);
 
     }
 
@@ -31,19 +37,26 @@ namespace ME.ECS {
 
     }
 
-    public interface IFilter<TState, TEntity> : IFilterBase, IEnumerable<Entity> where TState : class, IState<TState> where TEntity : struct, IEntity {
+    public interface IFilter<TState> : IFilterBase, IEnumerable<Entity> where TState : class, IState<TState>, new() {
+
+        bool Contains(Entity entity);
+        
+        HashSetCopyable<Entity> GetData();
+        new FilterEnumerator<TState> GetEnumerator();
+
+    }
+
+    public interface IFilter<TState, TEntity> : IFilter<TState> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
 
         bool Contains(TEntity entity);
-        bool Contains(Entity entity);
 
         IFilter<TState, TEntity> Custom(IFilterNode filter);
         IFilter<TState, TEntity> Custom<TFilter>() where TFilter : class, IFilterNode, new();
         IFilter<TState, TEntity> WithComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
         IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
 
-        HashSetCopyable<Entity> GetData();
-        
         IFilter<TState, TEntity> Push();
+        new FilterEnumerator<TState> GetEnumerator();
 
     }
 
@@ -115,6 +128,62 @@ namespace ME.ECS {
 
     }
 
+    public struct FilterEnumerator<TState> : IEnumerator<Entity> where TState : class, IState<TState>, new() {
+            
+        private readonly IFilterInternal<TState> set;
+        private HashSetCopyable<Entity>.Enumerator setEnumerator;
+            
+        internal FilterEnumerator(IFilterInternal<TState> set) {
+                
+            this.set = set;
+            this.setEnumerator = this.set.GetData().GetEnumerator();
+            this.set.forEachMode = true;
+                
+        }
+ 
+        public void Dispose() {
+
+            this.set.forEachMode = false;
+
+            var requests = this.set.GetRequests();
+            for (int i = 0, count = requests.Count; i < count; ++i) {
+
+                this.set.OnUpdate(requests[i].entity);
+
+            }
+            requests.Clear();
+
+        }
+ 
+        public bool MoveNext() {
+                
+            return this.setEnumerator.MoveNext();
+                
+        }
+ 
+        public Entity Current {
+            get {
+                return this.setEnumerator.Current;
+            }
+        }
+ 
+        System.Object System.Collections.IEnumerator.Current {
+            get {
+                throw new AllocationException();
+            }
+        }
+ 
+        void System.Collections.IEnumerator.Reset() {
+                
+        }
+    }
+
+    internal struct FilterRequest {
+
+        public Entity entity;
+
+    }
+
     public class Filter<TState, TEntity> : IFilterInternal<TState>, IFilter<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
 
         public Filter() {}
@@ -155,16 +224,19 @@ namespace ME.ECS {
 
         public int id { get; set; }
         private string name;
-        private IFilterNode[] nodes = null;
+        private IFilterNode[] nodes;
         private int nodesCount;
         private HashSetCopyable<EntityId> dataContains;
         private HashSetCopyable<Entity> data;
-
+        bool IFilterInternal<TState>.forEachMode { get; set; }
+        private List<FilterRequest> requests;
+        
         private List<IFilterNode> tempNodes;
         private List<IFilterNode> tempNodesCustom;
 
         void IPoolableSpawn.OnSpawn() {
-            
+
+            this.requests = PoolList<FilterRequest>.Spawn(100);
             this.nodes = PoolArray<IFilterNode>.Spawn(1000);
             this.data = PoolHashSetCopyable<Entity>.Spawn();
             this.dataContains = PoolHashSetCopyable<EntityId>.Spawn();
@@ -173,6 +245,7 @@ namespace ME.ECS {
 
         void IPoolableRecycle.OnRecycle() {
             
+            PoolList<FilterRequest>.Recycle(ref this.requests);
             PoolArray<IFilterNode>.Recycle(ref this.nodes);
             PoolHashSetCopyable<Entity>.Recycle(ref this.data);
             PoolHashSetCopyable<EntityId>.Recycle(ref this.dataContains);
@@ -207,6 +280,18 @@ namespace ME.ECS {
         public HashSetCopyable<Entity> GetData() {
 
             return this.data;
+
+        }
+        
+        HashSetCopyable<Entity> IFilterInternal<TState>.GetData() {
+
+            return this.data;
+
+        }
+
+        List<FilterRequest> IFilterInternal<TState>.GetRequests() {
+
+            return this.requests;
 
         }
 
@@ -252,34 +337,32 @@ namespace ME.ECS {
 
         }
 
-        public HashSetCopyable<Entity>.Enumerator GetEnumerator() {
+        public FilterEnumerator<TState> GetEnumerator() {
 
-            return this.data.GetEnumerator();
+            return new FilterEnumerator<TState>(this);
 
         }
 
         bool IFilterInternal<TState>.OnUpdate(Entity entity) {
 
-            var isExists = this.Contains_INTERNAL(entity);
-            if (isExists == true) {
+            var cast = (IFilterInternal<TState>)this;
+            if (cast.forEachMode == true) {
 
-                for (int i = 0; i < this.nodesCount; ++i) {
-
-                    if (this.nodes[i].Execute(entity) == false) {
-
-                        return ((IFilterInternal<TState>)this).OnRemove(entity);
-
-                    }
-
-                }
-
-            } else {
-
-                return ((IFilterInternal<TState>)this).OnAdd(entity);
+                this.requests.Add(new FilterRequest() { entity = entity });
+                return false;
 
             }
 
-            return false;
+            var isExists = this.Contains_INTERNAL(entity);
+            if (isExists == true) {
+
+                return ((IFilterInternal<TState>)this).CheckRemove(entity);
+
+            } else {
+
+                return ((IFilterInternal<TState>)this).CheckAdd(entity);
+
+            }
 
         }
 
@@ -295,7 +378,29 @@ namespace ME.ECS {
 
         }
 
-        bool IFilterInternal<TState>.OnAdd(Entity entity) {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        void IFilterInternal<TState>.Add_INTERNAL(Entity entity) {
+            
+            this.dataContains.Add(entity.id);
+            this.data.Add(entity);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        bool IFilterInternal<TState>.Remove_INTERNAL(Entity entity) {
+            
+            var res = this.dataContains.Remove(entity.id);
+            if (res == true) {
+                    
+                this.data.Remove(entity);
+                    
+            }
+
+            return res;
+
+        }
+
+        bool IFilterInternal<TState>.CheckAdd(Entity entity) {
 
             for (int i = 0; i < this.nodesCount; ++i) {
 
@@ -307,17 +412,26 @@ namespace ME.ECS {
 
             }
 
-            this.dataContains.Add(entity.id);
-            this.data.Add(entity);
+            var cast = (IFilterInternal<TState>)this;
+            cast.Add_INTERNAL(entity);
+
             return true;
 
         }
 
-        bool IFilterInternal<TState>.OnRemove(Entity entity) {
+        bool IFilterInternal<TState>.CheckRemove(Entity entity) {
 
-            var res = this.dataContains.Remove(entity.id);
-            if (res == true) this.data.Remove(entity);
-            return res;
+            for (int i = 0; i < this.nodesCount; ++i) {
+
+                if (this.nodes[i].Execute(entity) == false) {
+
+                    return ((IFilterInternal<TState>)this).Remove_INTERNAL(entity);
+
+                }
+
+            }
+
+            return false;
 
         }
 
@@ -377,6 +491,13 @@ namespace ME.ECS {
             f.tempNodesCustom = new List<IFilterNode>();
             filter = f;
             return filter;
+
+        }
+
+        public static IFilter<TState, TEntity> Create(string customName = null) {
+
+            IFilter<TState, TEntity> filter = null;
+            return Filter<TState, TEntity>.Create(ref filter, customName);
 
         }
 

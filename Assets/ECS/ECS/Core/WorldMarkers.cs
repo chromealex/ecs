@@ -4,7 +4,7 @@ using EntityId = System.Int32;
 
 namespace ME.ECS {
 
-    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState> {
+    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState>, new() {
 
         bool AddMarker<TMarker>(TMarker marker) where TMarker : struct, IMarker;
         bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker;

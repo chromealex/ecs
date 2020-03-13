@@ -11,7 +11,7 @@ namespace ME.ECS {
 
     }
 
-    public interface IComponents<TState> : IComponentsBase, IPoolableRecycle where TState : class, IState<TState> {
+    public interface IComponents<TState> : IComponentsBase, IPoolableRecycle where TState : class, IState<TState>, new() {
 
         int Count { get; }
 
@@ -41,7 +41,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Components<TEntity, TState> : IComponents<TState> where TEntity : struct, IEntity where TState : class, IState<TState> {
+    public class Components<TEntity, TState> : IComponents<TState> where TEntity : struct, IEntity where TState : class, IState<TState>, new() {
 
         private static class ComponentType<TComponent, TEntityInner, TStateInner> {
 

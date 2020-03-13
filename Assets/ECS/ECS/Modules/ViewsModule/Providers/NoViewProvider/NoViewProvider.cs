@@ -7,7 +7,7 @@ namespace ME.ECS {
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
     
-    public partial interface IWorld<TState> where TState : class, IState<TState> {
+    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource<TEntity>(NoViewBase prefab) where TEntity : struct, IEntity;
         void InstantiateView<TEntity>(NoViewBase prefab, Entity entity) where TEntity : struct, IEntity;

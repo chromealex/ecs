@@ -4,7 +4,7 @@ namespace #NAMESPACE# {
 
     using TState = #STATENAME#;
     
-    public class #SCRIPTNAME# : ISystem<TState> {
+    public class #SCRIPTNAME# : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
         
         public IWorld<TState> world { get; set; }
         
@@ -12,9 +12,9 @@ namespace #NAMESPACE# {
         
         void ISystemBase.OnDeconstruct() {}
         
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {}
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {}
         
-        void ISystem<TState>.Update(TState state, float deltaTime) {}
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {}
         
     }
     

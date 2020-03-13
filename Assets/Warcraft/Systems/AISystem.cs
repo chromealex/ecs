@@ -6,7 +6,7 @@ namespace Warcraft.Systems {
     using Warcraft.Entities;
     using Warcraft.Components;
     
-    public class AISystem : ISystem<TState> {
+    public class AISystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
 
         private Warcraft.Features.MapFeature mapFeature;
         private Warcraft.Features.PathfindingFeature pathfindingFeature;
@@ -38,70 +38,151 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
 
             if (this.mapFeature == null) this.mapFeature = this.world.GetFeature<Warcraft.Features.MapFeature>();
             if (this.pathfindingFeature == null) this.pathfindingFeature = this.world.GetFeature<Warcraft.Features.PathfindingFeature>();
             if (this.fogOfWarFeature == null) this.fogOfWarFeature = this.world.GetFeature<Warcraft.Features.FogOfWarFeature>();
-            
-            foreach (var index in state.units) {
 
-                ref var unit = ref state.units[index];
-                if (this.aiCharacters.Contains(unit) == true) {
+            foreach (var entity in this.aiCharacters) {
+                
+                if (this.world.GetRandomRange(0, 50) == 5) {
 
-                    if (this.world.GetRandomRange(0, 50) == 5) {
+                    ref var unit = ref this.world.GetEntityDataRef<UnitEntity>(entity);
+                    
+                    var playerComp = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
+                    if (this.aiPlayers.Contains(playerComp.player) == false) continue;
 
-                        var playerComp = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
-                        if (this.aiPlayers.Contains(playerComp.player) == false) continue;
+                    var toPos = this.world.GetRandomInSphere(unit.position, 2f).XY();
 
-                        var toPos = this.world.GetRandomInSphere(unit.position, 2f).XY();
+                    this.world.RemoveComponents<UnitEntity, CharacterAutoTarget>(unit.entity);
+                    var target = this.world.AddOrGetComponent<UnitEntity, CharacterManualTarget>(unit.entity);
+                    target.target = toPos;
+                    this.pathfindingFeature.StopMovement(unit.entity, repath: true);
 
-                        this.world.RemoveComponents<UnitEntity, CharacterAutoTarget>(unit.entity);
-                        var target = this.world.AddOrGetComponent<UnitEntity, CharacterManualTarget>(unit.entity);
-                        target.target = toPos;
-                        this.pathfindingFeature.StopMovement(unit.entity, repath: true);
+                }
+                
+            }
+
+            foreach (var entity in this.aiBuildings) {
+                
+                ref var unit = ref this.world.GetEntityDataRef<UnitEntity>(entity);
+                
+                var playerComp = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
+                if (this.aiPlayers.Contains(playerComp.player) == false) continue;
+                this.world.GetEntityData(playerComp.player, out PlayerEntity playerData);
+                var unitInfo = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity);
+
+                if (unitInfo.unitInfo.actions == null) continue;
+
+                var actionsGraph = unitInfo.unitInfo.actions.roots;
+                foreach (var action in actionsGraph) {
+
+                    if (action is ActionBuildingNode actionBuildingInfo) {
+
+                        if (actionBuildingInfo.isUpgrade == true) {
+                            
+                            // Upgrade building
+                            if (actionBuildingInfo.building != null && this.world.GetRandomRange(0, 500) == 5) {
+
+                                if (action.IsEnabled(playerData) == false) continue;
+                            
+                                var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerUpgradeBuildingComponent>(playerComp.player);
+                                comp.player = playerComp.player;
+                                comp.actionInfo = actionBuildingInfo;
+                                comp.selectedUnit = unit.entity;
+                                comp.unitInfo = actionBuildingInfo.building;
+                                //found = true;
+                                break;
+
+                            }
+
+                        } else {
+
+                            // Build chars
+                            if (actionBuildingInfo.building != null && actionBuildingInfo.building is CharacterUnitInfo && this.world.GetRandomRange(0, 2) == 0) {
+
+                                if (action.IsEnabled(playerData) == false) continue;
+
+                                var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerBuildingQueueComponent>(playerComp.player);
+                                comp.player = playerComp.player;
+                                comp.actionInfo = actionBuildingInfo;
+                                comp.selectedUnit = unit.entity;
+                                comp.unitInfo = actionBuildingInfo.building;
+                                //found = true;
+                                break;
+
+                            }
+
+                        }
+
+                    }
+
+                }
+                
+            }
+
+            foreach (var entity in this.aiCastles) {
+                
+                ref var unit = ref this.world.GetEntityDataRef<UnitEntity>(entity);
+
+                var playerComp = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
+                if (this.aiPlayers.Contains(playerComp.player) == false) continue;
+                this.world.GetEntityData(playerComp.player, out PlayerEntity playerData);
+                var unitInfo = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity);
+                
+                var peasantsCount = 0;
+                foreach (var idx in state.units) {
+
+                    ref var peasant = ref state.units[idx];
+                    if (this.aiGoldMines.Contains(peasant) == true) {
+                
+                        this.TryToPlaceBuildings(unit, playerData, playerComp, null);
+
+                    }
+
+                    if (this.aiPeasants.Contains(peasant) == true) {
+                        
+                        var playerCompPeasant = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
+                        if (this.aiPlayers.Contains(playerCompPeasant.player) == false) continue;
+
+                        ++peasantsCount;
 
                     }
 
                 }
 
-                if (this.aiBuildings.Contains(unit) == true) {
-                    
-                    var playerComp = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
-                    if (this.aiPlayers.Contains(playerComp.player) == false) continue;
-                    this.world.GetEntityData(playerComp.player, out PlayerEntity playerData);
-                    var unitInfo = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity);
+                //var found = false;
+                var actionsGraph = unitInfo.unitInfo.actions.roots;
+                foreach (var action in actionsGraph) {
 
-                    if (unitInfo.unitInfo.actions == null) continue;
+                    if (action is ActionBuildingNode actionBuildingInfo) {
 
-                    var actionsGraph = unitInfo.unitInfo.actions.roots;
-                    foreach (var action in actionsGraph) {
+                        if (actionBuildingInfo.isUpgrade == true) {
+                            
+                            // Upgrade castle
+                            if (actionBuildingInfo.building != null && this.world.GetRandomRange(0, 50) == 5) {
 
-                        if (action is ActionBuildingNode actionBuildingInfo) {
+                                if (action.IsEnabled(playerData) == false) continue;
+                            
+                                var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerUpgradeBuildingComponent>(playerComp.player);
+                                comp.player = playerComp.player;
+                                comp.actionInfo = actionBuildingInfo;
+                                comp.selectedUnit = unit.entity;
+                                comp.unitInfo = actionBuildingInfo.building;
+                                //found = true;
+                                break;
 
-                            if (actionBuildingInfo.isUpgrade == true) {
-                                
-                                // Upgrade building
-                                if (actionBuildingInfo.building != null && this.world.GetRandomRange(0, 500) == 5) {
+                            }
 
-                                    if (action.IsEnabled(playerData) == false) continue;
-                                
-                                    var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerUpgradeBuildingComponent>(playerComp.player);
-                                    comp.player = playerComp.player;
-                                    comp.actionInfo = actionBuildingInfo;
-                                    comp.selectedUnit = unit.entity;
-                                    comp.unitInfo = actionBuildingInfo.building;
-                                    //found = true;
-                                    break;
+                        } else {
 
-                                }
+                            // Build chars
+                            if (actionBuildingInfo.building != null && actionBuildingInfo.building is CharacterUnitInfo && this.world.GetRandomRange(0, 10) == 5) {
 
-                            } else {
+                                if (action.IsEnabled(playerData) == false) continue;
 
-                                // Build chars
-                                if (actionBuildingInfo.building != null && actionBuildingInfo.building is CharacterUnitInfo && this.world.GetRandomRange(0, 2) == 0) {
-
-                                    if (action.IsEnabled(playerData) == false) continue;
+                                if (peasantsCount <= 15) {
 
                                     var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerBuildingQueueComponent>(playerComp.player);
                                     comp.player = playerComp.player;
@@ -118,89 +199,11 @@ namespace Warcraft.Systems {
                         }
 
                     }
-                    
-                } else if (this.aiCastles.Contains(unit) == true) {
-                    
-                    var playerComp = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
-                    if (this.aiPlayers.Contains(playerComp.player) == false) continue;
-                    this.world.GetEntityData(playerComp.player, out PlayerEntity playerData);
-                    var unitInfo = this.world.GetComponent<UnitEntity, UnitInfoComponent>(unit.entity);
-                    
-                    var peasantsCount = 0;
-                    foreach (var idx in state.units) {
 
-                        ref var peasant = ref state.units[idx];
-                        if (this.aiGoldMines.Contains(peasant) == true) {
-                    
-                            this.TryToPlaceBuildings(unit, playerData, playerComp, null);
-
-                        }
-
-                        if (this.aiPeasants.Contains(peasant) == true) {
-                            
-                            var playerCompPeasant = this.world.GetComponent<UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
-                            if (this.aiPlayers.Contains(playerCompPeasant.player) == false) continue;
-
-                            ++peasantsCount;
-
-                        }
-
-                    }
-
-                    //var found = false;
-                    var actionsGraph = unitInfo.unitInfo.actions.roots;
-                    foreach (var action in actionsGraph) {
-
-                        if (action is ActionBuildingNode actionBuildingInfo) {
-
-                            if (actionBuildingInfo.isUpgrade == true) {
-                                
-                                // Upgrade castle
-                                if (actionBuildingInfo.building != null && this.world.GetRandomRange(0, 50) == 5) {
-
-                                    if (action.IsEnabled(playerData) == false) continue;
-                                
-                                    var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerUpgradeBuildingComponent>(playerComp.player);
-                                    comp.player = playerComp.player;
-                                    comp.actionInfo = actionBuildingInfo;
-                                    comp.selectedUnit = unit.entity;
-                                    comp.unitInfo = actionBuildingInfo.building;
-                                    //found = true;
-                                    break;
-
-                                }
-
-                            } else {
-
-                                // Build chars
-                                if (actionBuildingInfo.building != null && actionBuildingInfo.building is CharacterUnitInfo && this.world.GetRandomRange(0, 10) == 5) {
-
-                                    if (action.IsEnabled(playerData) == false) continue;
-
-                                    if (peasantsCount <= 15) {
-
-                                        var comp = this.world.AddComponent<PlayerEntity, Warcraft.Components.Player.PlayerBuildingQueueComponent>(playerComp.player);
-                                        comp.player = playerComp.player;
-                                        comp.actionInfo = actionBuildingInfo;
-                                        comp.selectedUnit = unit.entity;
-                                        comp.unitInfo = actionBuildingInfo.building;
-                                        //found = true;
-                                        break;
-
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    this.TryToPlaceBuildings(unit, playerData, playerComp, unitInfo);
-                    
                 }
 
+                this.TryToPlaceBuildings(unit, playerData, playerComp, unitInfo);
+                
             }
 
         }
@@ -257,7 +260,7 @@ namespace Warcraft.Systems {
 
         }
 
-        void ISystem<TState>.Update(TState state, float deltaTime) {}
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {}
         
     }
     

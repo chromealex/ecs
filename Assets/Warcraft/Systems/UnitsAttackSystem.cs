@@ -6,7 +6,7 @@ namespace Warcraft.Systems {
     using Warcraft.Entities;
     using Warcraft.Components;
     
-    public class UnitsAttackSystem : ISystem<TState> {
+    public class UnitsAttackSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
 
         private IFilter<TState, UnitEntity> unitsFilter;
         private IFilter<TState, UnitEntity> unitTargetsFilter;
@@ -30,7 +30,7 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
 
             foreach (var index in state.units) {
 
@@ -151,7 +151,7 @@ namespace Warcraft.Systems {
 
         }
         
-        void ISystem<TState>.Update(TState state, float deltaTime) {}
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {}
         
     }
     

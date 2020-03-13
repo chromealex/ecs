@@ -6,7 +6,7 @@ namespace Warcraft.Systems {
     using Warcraft.Entities;
     using Warcraft.Components;
     
-    public class UnitsSystem : ISystem<TState> {
+    public class UnitsSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
         
         public IWorld<TState> world { get; set; }
 
@@ -16,11 +16,11 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
 
         }
         
-        void ISystem<TState>.Update(TState state, float deltaTime) {}
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {}
         
     }
     

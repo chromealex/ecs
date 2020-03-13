@@ -10,6 +10,7 @@ namespace Warcraft.Features {
     public class PlayersFeature : Feature<TState, ConstructParameters<int>> {
 
         private System.Collections.Generic.Dictionary<int, Entity> players = new System.Collections.Generic.Dictionary<int, Entity>();
+        private Entity neutralPlayerEntity;
         private int activePlayer;
         
         protected override void OnConstruct(ref ConstructParameters<int> parameters) {
@@ -34,7 +35,8 @@ namespace Warcraft.Features {
                         goldPercent = 0.5f,
                         forestPercent = 0.5f
                     });
-                    
+
+                    if (pd.playerIndex == 0) this.neutralPlayerEntity = playerEntity;
                     this.players.Add(pd.playerIndex, playerEntity);
 
                     var comp = this.world.AddComponent<PlayerEntity, PlayerResourcesComponent>(playerEntity);
@@ -77,8 +79,7 @@ namespace Warcraft.Features {
 
         public bool IsNeutralPlayer(Entity entity) {
 
-            this.world.GetEntityData(entity, out PlayerEntity playerData);
-            return playerData.index == 0;
+            return this.neutralPlayerEntity == entity;
 
         }
 

@@ -7,7 +7,7 @@ namespace Warcraft.Systems {
     using Warcraft.Markers;
     using Warcraft.Components;
     
-    public class UnitsPlacementSystem : ISystem<TState> {
+    public class UnitsPlacementSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
         
         private IFilter<TState, UnitEntity> ghostersFilter;
         
@@ -47,7 +47,7 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
             
             if (this.playersFeature == null) this.playersFeature = this.world.GetFeature<Warcraft.Features.PlayersFeature>();
             if (this.unitsFeature == null) this.unitsFeature = this.world.GetFeature<Warcraft.Features.UnitsFeature>();
@@ -199,7 +199,7 @@ namespace Warcraft.Systems {
 
         }
 
-        void ISystem<TState>.Update(TState state, float deltaTime) {
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {
             
             if (this.world.GetMarker(out InputUnitPlacement marker) == true) {
 

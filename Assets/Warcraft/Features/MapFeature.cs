@@ -30,7 +30,15 @@ namespace Warcraft.Features {
             this.grid.forestTilemap.SetTile(new Vector3Int(mapPosition.x, mapPosition.y, 0), this.mapInfo.forestFelledTile);
             
         }
-        
+
+        public Vector2Int ClampToMap(Vector2Int point) {
+
+            point.x = Mathf.Clamp(point.x, 0, this.mapInfo.mapSize.x);
+            point.y = Mathf.Clamp(point.y, 0, this.mapInfo.mapSize.y);
+            return point;
+
+        }
+
         public void ClampCamera(Vector2 cameraSize, ref Vector3 position) {
 
             var worldSize = this.GetWorldSize(this.mapInfo.mapSize);

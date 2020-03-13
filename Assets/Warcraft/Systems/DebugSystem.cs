@@ -9,7 +9,7 @@ namespace Warcraft.Systems {
     using Warcraft.Components;
     using Warcraft.Components.CharacterStates;
     
-    public class DebugSystem : ISystem<TState> {
+    public class DebugSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
 
         private IFilter<TState, UnitEntity> allCharacterUnits;
         private ViewId debugViewSourceId;
@@ -41,7 +41,7 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
 
             var graph = AstarPath.active.graphs[0] as Pathfinding.GridGraph;
             foreach (var index in state.debug) {
@@ -62,7 +62,7 @@ namespace Warcraft.Systems {
 
         }
 
-        void ISystem<TState>.Update(TState state, float deltaTime) {
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {
 
             foreach (var index in state.units) {
 

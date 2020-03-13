@@ -7,7 +7,7 @@ namespace Warcraft.Systems {
     using Warcraft.Components;
     using Warcraft.Markers;
     
-    public class UnitsMovementSystem : ISystem<TState> {
+    public class UnitsMovementSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
 
         private const float REACH_DESTINATION_DISTANCE = 0.01f;
         
@@ -34,31 +34,27 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
             
             var playerFeature = this.world.GetFeature<Warcraft.Features.PlayersFeature>();
             var pathfindingFeature = this.world.GetFeature<Warcraft.Features.PathfindingFeature>();
 
-            foreach (var index in state.units) {
+            foreach (var unitEntity in this.unitsHasTargetFilter) {
 
-                ref var unit = ref state.units[index];
-                if (this.unitsHasTargetFilter.Contains(unit) == true) {
+                ref var unit = ref this.world.GetEntityDataRef<UnitEntity>(unitEntity);
+                var target = this.world.GetComponent<UnitEntity, CharacterManualTarget>(unit.entity);
+                var unitSpeed = this.world.GetComponent<UnitEntity, UnitSpeedComponent>(unit.entity);
+                if (pathfindingFeature.MoveTowards(unit.entity, ref unit.position, ref target.target, unitSpeed.speed * deltaTime, deltaTime, out var failed, checkLastPoint: true) == true) {
+                
+                    this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterManualTarget>(unit.entity);
+                    this.world.AddOrGetComponent<UnitEntity, CharacterAutoTarget>(unit.entity);
+                    pathfindingFeature.StopMovement(unit.entity, repath: true);
                     
-                    var target = this.world.GetComponent<UnitEntity, CharacterManualTarget>(unit.entity);
-                    var unitSpeed = this.world.GetComponent<UnitEntity, UnitSpeedComponent>(unit.entity);
-                    if (pathfindingFeature.MoveTowards(unit.entity, ref unit.position, ref target.target, unitSpeed.speed * deltaTime, deltaTime, out var failed, checkLastPoint: true) == true) {
-                    
-                        this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterManualTarget>(unit.entity);
-                        this.world.AddOrGetComponent<UnitEntity, CharacterAutoTarget>(unit.entity);
-                        pathfindingFeature.StopMovement(unit.entity, repath: true);
+                } else if (failed == true) {
                         
-                    } else if (failed == true) {
-                            
-                        this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterManualTarget>(unit.entity);
-                        this.world.AddOrGetComponent<UnitEntity, CharacterAutoTarget>(unit.entity);
-                        pathfindingFeature.StopMovement(unit.entity, repath: true);
-
-                    }
+                    this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterManualTarget>(unit.entity);
+                    this.world.AddOrGetComponent<UnitEntity, CharacterAutoTarget>(unit.entity);
+                    pathfindingFeature.StopMovement(unit.entity, repath: true);
 
                 }
 
@@ -118,7 +114,7 @@ namespace Warcraft.Systems {
 
         }
 
-        void ISystem<TState>.Update(TState state, float deltaTime) {
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {
 
             if (this.world.GetMarker(out InputRightClick moveUnitsMarker) == true) {
 

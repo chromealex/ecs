@@ -7,7 +7,7 @@ namespace Warcraft.Systems {
     using Warcraft.Entities;
     using Warcraft.Components;
     
-    public class UnitsUpgradesSystem : ISystem<TState> {
+    public class UnitsUpgradesSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
         
         private InputUnitUpgrade upgradeMarker;
         private bool upgradeMarkerExists;
@@ -27,7 +27,7 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
             
             if (this.playersFeature == null) this.playersFeature = this.world.GetFeature<Warcraft.Features.PlayersFeature>();
             if (this.unitsFeature == null) this.unitsFeature = this.world.GetFeature<Warcraft.Features.UnitsFeature>();
@@ -74,7 +74,7 @@ namespace Warcraft.Systems {
 
         }
 
-        void ISystem<TState>.Update(TState state, float deltaTime) {
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {
             
             if (this.world.GetMarker(out InputUnitUpgrade marker) == true) {
 

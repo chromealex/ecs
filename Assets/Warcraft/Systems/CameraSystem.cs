@@ -4,7 +4,7 @@ namespace Warcraft.Systems {
 
     using TState = WarcraftState;
     
-    public class CameraSystem : ISystem<TState> {
+    public class CameraSystem : ISystem<TState>, ISystemUpdate<TState> {
 
         private IFilter<TState, Warcraft.Entities.CameraEntity> cameras;
         
@@ -18,9 +18,7 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
         
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {}
-
-        void ISystem<TState>.Update(TState state, float deltaTime) {
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {
 
             var dir = UnityEngine.Vector2.zero;
             if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftArrow) == true) {

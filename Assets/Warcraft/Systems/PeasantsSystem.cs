@@ -7,7 +7,7 @@ namespace Warcraft.Systems {
     using Warcraft.Components;
     using Warcraft.Components.PeasantStates;
     
-    public class PeasantsSystem : ISystem<TState> {
+    public class PeasantsSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
 
         private const float REACH_DESTINATION_DISTANCE = 0.001f;
         
@@ -47,7 +47,7 @@ namespace Warcraft.Systems {
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
 
             state.peasantsMindTimer += deltaTime;
 
@@ -515,7 +515,7 @@ namespace Warcraft.Systems {
 
         }
 
-        void ISystem<TState>.Update(TState state, float deltaTime) {}
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {}
         
     }
     

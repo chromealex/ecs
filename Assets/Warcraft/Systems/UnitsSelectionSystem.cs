@@ -6,7 +6,7 @@ namespace Warcraft.Systems {
     using Warcraft.Markers;
     using Warcraft.Components;
     
-    public class UnitsSelectionSystem : ISystem<TState> {
+    public class UnitsSelectionSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
 
         private const int MAX_SELECTION_COUNT = 12;
         
@@ -38,14 +38,14 @@ namespace Warcraft.Systems {
             this.lastInputDragMoveUsed = true;
             this.lastInputDragEndUsed = true;
             this.upgradeMarkerExists = false;
-
+            
             Filter<Warcraft.WarcraftState, Warcraft.Entities.UnitEntity>.Create(ref this.unitsFilter, "unitsFilter").WithoutComponent<UnitGhosterComponent>().WithoutComponent<UnitHiddenView>().WithoutComponent<UnitDeathState>().WithComponent<UnitInteractableComponent>().Push();
 
         }
         
         void ISystemBase.OnDeconstruct() {}
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
             
             var mapFeature = this.world.GetFeature<Warcraft.Features.MapFeature>();
             var playerFeature = this.world.GetFeature<Warcraft.Features.PlayersFeature>();
@@ -158,7 +158,7 @@ namespace Warcraft.Systems {
 
         }
 
-        void ISystem<TState>.Update(TState state, float deltaTime) {
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {
 
             if (this.world.GetMarker(out InputUnitUpgrade marker) == true) {
 

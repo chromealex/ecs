@@ -6,7 +6,7 @@ namespace Warcraft.Systems {
     using Warcraft.Components;
     using Warcraft.Entities;
     
-    public class FogOfWarSystem : ISystem<TState> {
+    public class FogOfWarSystem : ISystem<TState>, ISystemAdvanceTick<TState>, ISystemUpdate<TState> {
 
         private const float FOW_RANGE_FOR_BUILDINGS_IN_PROGRESS = 1f;
         
@@ -32,8 +32,8 @@ namespace Warcraft.Systems {
         void ISystemBase.OnConstruct() {
 
             Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.unitsFilter, "unitsFilter").WithoutComponent<UnitGhosterComponent>().WithComponent<UnitCompleteComponent>().WithoutComponent<UnitHiddenView>().Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.unitsSightFilter, "unitsSightFilter").WithComponent<UnitSightRangeComponent>().WithoutComponent<UnitGhosterComponent>().WithComponent<UnitCompleteComponent>().WithoutComponent<UnitHiddenView>().WithoutComponent<UnitDeathState>().Push();
-            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.unitsSightBuildingsInProgressFilter, "unitsSightFilterBuildingsInProgress").WithComponent<UnitSightRangeComponent>().WithoutComponent<UnitGhosterComponent>().WithoutComponent<UnitCompleteComponent>().WithoutComponent<CharacterComponent>().WithoutComponent<UnitHiddenView>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.unitsSightFilter, "unitsSightFilter").WithComponent<UnitSightRangeComponent>().WithComponent<UnitPlayerOwnerComponent>().WithoutComponent<UnitGhosterComponent>().WithComponent<UnitCompleteComponent>().WithoutComponent<UnitHiddenView>().WithoutComponent<UnitDeathState>().Push();
+            Filter<TState, Warcraft.Entities.UnitEntity>.Create(ref this.unitsSightBuildingsInProgressFilter, "unitsSightFilterBuildingsInProgress").WithComponent<UnitSightRangeComponent>().WithComponent<UnitPlayerOwnerComponent>().WithoutComponent<UnitGhosterComponent>().WithoutComponent<UnitCompleteComponent>().WithoutComponent<CharacterComponent>().WithoutComponent<UnitHiddenView>().Push();
 
             this.mapFeature = this.world.GetFeature<Warcraft.Features.MapFeature>();
             this.playersFeature = this.world.GetFeature<Warcraft.Features.PlayersFeature>();
@@ -77,7 +77,7 @@ namespace Warcraft.Systems {
             
         }
 
-        void ISystem<TState>.AdvanceTick(TState state, float deltaTime) {
+        void ISystemAdvanceTick<TState>.AdvanceTick(TState state, float deltaTime) {
 
             foreach (var index in state.players) {
                 
@@ -86,63 +86,58 @@ namespace Warcraft.Systems {
 
             }
 
-            foreach (var index in state.units) {
+            foreach (var unitEntity in this.unitsSightFilter) {
 
-                ref var unit = ref state.units[index];
-                if (this.unitsSightFilter.Contains(unit) == true) {
+                ref var unit = ref this.world.GetEntityDataRef<UnitEntity>(unitEntity);
+                var playerOwner = this.world.GetComponent<Warcraft.Entities.UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
+                if (this.playersFeature.IsNeutralPlayer(playerOwner.player) == false) {
 
-                    var playerOwner = this.world.GetComponent<Warcraft.Entities.UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
-                    if (this.playersFeature.IsNeutralPlayer(playerOwner.player) == false) {
-
-                        var sightRange = this.world.GetComponent<Warcraft.Entities.UnitEntity, UnitSightRangeComponent>(unit.entity);
-                        this.RevealRange(playerOwner.player, unit.position, sightRange.range);
-
-                    }
-
-                } else if (this.unitsSightBuildingsInProgressFilter.Contains(unit) == true) {
-
-                    var playerOwner = this.world.GetComponent<Warcraft.Entities.UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
-                    if (this.playersFeature.IsNeutralPlayer(playerOwner.player) == false) {
-
-                        this.RevealRange(playerOwner.player, unit.position, FogOfWarSystem.FOW_RANGE_FOR_BUILDINGS_IN_PROGRESS);
-
-                    }
+                    var sightRange = this.world.GetComponent<Warcraft.Entities.UnitEntity, UnitSightRangeComponent>(unit.entity);
+                    this.RevealRange(playerOwner.player, unit.position, sightRange.range);
 
                 }
 
             }
-            
-            foreach (var index in state.units) {
 
-                ref var unit = ref state.units[index];
-                if (this.unitsFilter.Contains(unit) == true) {
+            foreach (var unitEntity in this.unitsSightBuildingsInProgressFilter) {
 
-                    foreach (var pIndex in state.players) {
+                ref var unit = ref this.world.GetEntityDataRef<UnitEntity>(unitEntity);
+                var playerOwner = this.world.GetComponent<Warcraft.Entities.UnitEntity, UnitPlayerOwnerComponent>(unit.entity);
+                if (this.playersFeature.IsNeutralPlayer(playerOwner.player) == false) {
 
-                        ref var player = ref state.players[pIndex];
-                        if (this.playersFeature.IsNeutralPlayer(player.entity) == true) continue;
+                    this.RevealRange(playerOwner.player, unit.position, FogOfWarSystem.FOW_RANGE_FOR_BUILDINGS_IN_PROGRESS);
 
-                        var comp = this.world.AddOrGetComponent<UnitEntity, UnitFogOfWarComponent>(unit.entity);
-                        this.GetAnyRevealedAndVisible(player.entity, unit.position, unit.size, out var isRev, out var isVis);
-                        if (isRev == true) {
+                }
 
-                            comp.playersRevealed |= (ulong)(long)(1 << player.index);
+            }
 
-                        } else {
+            foreach (var unitEntity in this.unitsFilter) {
 
-                            comp.playersRevealed &= ~(ulong)(1 << player.index);
+                ref var unit = ref this.world.GetEntityDataRef<UnitEntity>(unitEntity);
+                foreach (var pIndex in state.players) {
 
-                        }
+                    ref var player = ref state.players[pIndex];
+                    if (this.playersFeature.IsNeutralPlayer(player.entity) == true) continue;
 
-                        if (isVis == true) {
+                    var comp = this.world.AddOrGetComponent<UnitEntity, UnitFogOfWarComponent>(unit.entity);
+                    this.GetAnyRevealedAndVisible(player.entity, unit.position, unit.size, out var isRev, out var isVis);
+                    if (isRev == true) {
 
-                            comp.playersVisible |= (ulong)(long)(1 << player.index);
+                        comp.playersRevealed |= (ulong)(long)(1 << player.index);
 
-                        } else {
+                    } else {
 
-                            comp.playersVisible &= ~(ulong)(1 << player.index);
+                        comp.playersRevealed &= ~(ulong)(1 << player.index);
 
-                        }
+                    }
+
+                    if (isVis == true) {
+
+                        comp.playersVisible |= (ulong)(long)(1 << player.index);
+
+                    } else {
+
+                        comp.playersVisible &= ~(ulong)(1 << player.index);
 
                     }
 
@@ -152,7 +147,7 @@ namespace Warcraft.Systems {
 
         }
 
-        void ISystem<TState>.Update(TState state, float deltaTime) {
+        void ISystemUpdate<TState>.Update(TState state, float deltaTime) {
             
             var tilemap = this.mapFeature.grid.fowTilemap;
             var tilemapRevealed = this.mapFeature.grid.fowRevealedTilemap;
@@ -367,12 +362,14 @@ namespace Warcraft.Systems {
             var cellRangeSqr = cellRange * cellRange;
             var bottomLeft = cellPosition - rangeSize;
             var topRight = cellPosition + rangeSize;
+            bottomLeft = this.mapFeature.ClampToMap(bottomLeft);
+            topRight = this.mapFeature.ClampToMap(topRight);
             for (int x = bottomLeft.x; x < topRight.x; ++x) {
              
                 for (int y = bottomLeft.y; y < topRight.y; ++y) {
                     
                     var cellPos = new UnityEngine.Vector2Int(x, y);
-                    if (this.mapFeature.IsExists(cellPos) == true && (cellPosition - cellPos).sqrMagnitude <= cellRangeSqr) {
+                    if ((cellPosition - cellPos).sqrMagnitude <= cellRangeSqr) {
 
                         this.RevealCell(playerFogOfWar, playerCache, playerEntity, cellPos);
 

@@ -53,7 +53,7 @@ namespace Warcraft.Systems {
                 var playerEntity = playerItem.Value;
                 
                 var comp = this.world.AddComponent<PlayerEntity, PlayerFogOfWarComponent>(playerEntity);
-                comp.revealed = PoolArray<byte>.Spawn(this.mapFeature.mapInfo.mapSize.x * this.mapFeature.mapInfo.mapSize.y);
+                comp.revealed = new Unity.Collections.NativeArray<byte>(this.mapFeature.mapInfo.mapSize.x * this.mapFeature.mapInfo.mapSize.y, Unity.Collections.Allocator.Persistent, Unity.Collections.NativeArrayOptions.ClearMemory);
 
                 if (this.playersFeature.IsNeutralPlayer(playerEntity) == true) this.world.AddComponent<PlayerEntity, IsNeutral>(playerEntity);
                 
@@ -319,7 +319,7 @@ namespace Warcraft.Systems {
                 //System.Array.Clear(playerFogOfWar.revealed, 0, playerFogOfWar.revealed.Length);
                 for (int i = 0; i < playerFogOfWar.revealed.Length; ++i) {
 
-                    ref var rev = ref playerFogOfWar.revealed[i];
+                    var rev = playerFogOfWar.revealed[i];
                     if (rev >= 1) {
 
                         //playerCache.tilesRevealed[i] = this.mapFeature.mapInfo.fogOfWarTile;
@@ -330,6 +330,7 @@ namespace Warcraft.Systems {
                         rev = 0;
 
                     }
+                    playerFogOfWar.revealed[i] = rev;
 
                 }
 

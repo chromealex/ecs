@@ -12,7 +12,7 @@ namespace Warcraft.Components {
         void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {
 
             var _other = (PlayerFogOfWarComponent)other;
-            ArrayUtilities.Copy(_other.revealed, ref this.revealed);
+            ArrayUtils.Copy(_other.revealed, ref this.revealed);
             
         }
 

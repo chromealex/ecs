@@ -25,6 +25,15 @@ namespace ME.ECS {
 
     }
 
+    public interface IComponents<TEntity, TState> : IComponents<TState> where TEntity : struct, IEntity where TState : class, IState<TState>, new() {
+
+        TComponent GetFirst<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity>;
+        TComponent GetFirstOnce<TComponent>(EntityId entityId) where TComponent : class, IComponentOnce<TState, TEntity>;
+
+        void CopyFrom(Components<TEntity, TState> other);
+
+    }
+
     public static class ComponentExtensions {
 
         public static bool GetEntityData<TState, TEntity, TEntitySource>(this IComponent<TState, TEntitySource> _, Entity entity, out TEntity data) where TEntity : struct, IEntity where TEntitySource : struct, IEntity where TState : class, IState<TState>, new() {
@@ -61,8 +70,29 @@ namespace ME.ECS {
         private bool freeze;
         private int capacity;
 
+        public void Initialize(int capacity) {
+
+            this.arr = PoolArray<Bucket>.Spawn(capacity);
+            
+        }
+
+        public void SetFreeze(bool freeze) {
+
+            this.freeze = freeze;
+
+        }
+
         void IPoolableRecycle.OnRecycle() {
 
+            this.CleanUp_INTERNAL();
+            
+            this.freeze = default;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void CleanUp_INTERNAL() {
+            
             for (int i = 0; i < this.arr.Length; ++i) {
 
                 ref var bucket = ref this.arr[i];
@@ -88,9 +118,6 @@ namespace ME.ECS {
             }
             PoolArray<Bucket>.Recycle(ref this.arr);
             
-            this.freeze = default;
-            this.capacity = default;
-
         }
 
         public int Count {
@@ -113,29 +140,23 @@ namespace ME.ECS {
         public int RemoveAllPredicate<TComponent, TComponentPredicate>(EntityId entityId, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
 
             var count = 0;
-            var typeId = this.GetTypeId<TComponent>();
-            if (typeId >= 0 && typeId < this.arr.Length) {
+            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
+            if (typeId < 0 || typeId >= this.arr.Length) return count;
 
-                ref var bucket = ref this.arr[typeId];
-                if (bucket.components != null && entityId >= 0 && entityId < bucket.components.Length) {
+            ref var bucket = ref this.arr[typeId];
+            if (bucket.components == null || entityId < 0 || entityId >= bucket.components.Length) return count;
 
-                    ref var list = ref bucket.components[entityId];
-                    if (list == null) return 0;
-                    
-                    for (int i = list.Count - 1; i >= 0; --i) {
+            ref var list = ref bucket.components[entityId];
+            if (list == null) return count;
+            
+            for (int i = list.Count - 1; i >= 0; --i) {
 
-                        var tComp = list[i] as TComponent;
-                        if (predicate.Execute(tComp) == true) {
+                var tComp = list[i] as TComponent;
+                if (predicate.Execute(tComp) == false) continue;
                             
-                            PoolComponents.Recycle(ref tComp);
-                            list.RemoveAt(i);
-                            ++count;
-
-                        }
-
-                    }
-                    
-                }
+                PoolComponents.Recycle(ref tComp);
+                list.RemoveAt(i);
+                ++count;
 
             }
 
@@ -205,28 +226,24 @@ namespace ME.ECS {
         private int RemoveAll_INTERNAL<TComponent>(EntityId entityId) where TComponent : class, IComponentBase {
 
             var count = 0;
-            var typeId = this.GetTypeId<TComponent>();
-            if (typeId >= 0 && typeId < this.arr.Length) {
+            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
+            if (typeId < 0 || typeId >= this.arr.Length) return count;
 
-                ref var bucket = ref this.arr[typeId];
-                if (bucket.components != null && entityId >= 0 && entityId < bucket.components.Length) {
+            ref var bucket = ref this.arr[typeId];
+            if (bucket.components == null || entityId < 0 || entityId >= bucket.components.Length) return count;
 
-                    var list = bucket.components[entityId];
-                    if (list == null) return 0;
+            var list = bucket.components[entityId];
+            if (list == null) return 0;
                     
-                    for (int i = list.Count - 1; i >= 0; --i) {
+            for (int i = list.Count - 1; i >= 0; --i) {
 
-                        var tComp = list[i] as TComponent;
-                        PoolComponents.Recycle(ref tComp);
-                        list.RemoveAt(i);
-                        ++count;
-
-                    }
-                    
-                }
+                var tComp = list[i] as TComponent;
+                PoolComponents.Recycle(ref tComp);
+                list.RemoveAt(i);
+                ++count;
 
             }
-            
+
             return count;
 
         }
@@ -255,7 +272,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private int GetTypeId<TComponent>() {
+        private static int GetTypeId<TComponent>() {
 
             if (ComponentType<TComponent, TEntity, TState>.id < 0) {
 
@@ -270,11 +287,10 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void Add_INTERNAL(int typeId, EntityId entityId, IComponent<TState, TEntity> data) {
 
-            PoolArray<Bucket>.Resize(typeId, ref this.arr);
+            ArrayUtils.Resize(typeId, ref this.arr);
             
             ref var bucket = ref this.arr[typeId];
-            if (bucket.components == null) bucket.components = PoolArray<List<IComponent<TState, TEntity>>>.Spawn(entityId + 1);
-            PoolArray<List<IComponent<TState, TEntity>>>.Resize(entityId, ref bucket.components);
+            ArrayUtils.Resize(entityId, ref bucket.components);
 
             if (bucket.components[entityId] == null) bucket.components[entityId] = PoolList<IComponent<TState, TEntity>>.Spawn(1);
             bucket.components[entityId].Add(data);
@@ -283,7 +299,7 @@ namespace ME.ECS {
 
         public void Add<TComponent>(EntityId entityId, IComponent<TState, TEntity> data) where TComponent : class, IComponent<TState, TEntity> {
 
-            var typeId = this.GetTypeId<TComponent>();
+            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
             this.Add_INTERNAL(typeId, entityId, data);
             
         }
@@ -291,7 +307,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private TComponent Get_INTERNAL<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity> {
             
-            var typeId = this.GetTypeId<TComponent>();
+            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -326,7 +342,7 @@ namespace ME.ECS {
 
         public List<IComponent<TState, TEntity>> ForEach<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity> {
             
-            var typeId = this.GetTypeId<TComponent>();
+            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -342,7 +358,7 @@ namespace ME.ECS {
 
         public bool ContainsOnce<TComponent>(EntityId entityId) where TComponent : IComponentOnce<TState, TEntity> {
 
-            var typeId = this.GetTypeId<TComponent>();
+            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -358,7 +374,7 @@ namespace ME.ECS {
 
         public bool Contains<TComponent>(EntityId entityId) where TComponent : IComponent<TState, TEntity> {
 
-            var typeId = this.GetTypeId<TComponent>();
+            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -393,46 +409,10 @@ namespace ME.ECS {
 
         }
 
-        public void Initialize(int capacity) {
-
-            this.capacity = capacity;
-            this.arr = PoolArray<Bucket>.Spawn(capacity);
-            
-        }
-
-        public void SetFreeze(bool freeze) {
-
-            this.freeze = freeze;
-
-        }
-
         public void CopyFrom(Components<TEntity, TState> other) {
 
             // Clean up current array
-            for (int i = 0; i < this.arr.Length; ++i) {
-
-                ref var bucket = ref this.arr[i];
-                if (bucket.components != null) {
-
-                    for (int j = 0; j < bucket.components.Length; ++j) {
-
-                        var list = bucket.components[j];
-                        if (list != null) {
-
-                            PoolComponents.Recycle(list);
-                            PoolList<IComponent<TState, TEntity>>.Recycle(ref list);
-                            bucket.components[j] = null;
-
-                        }
-
-                    }
-
-                    PoolArray<List<IComponent<TState, TEntity>>>.Recycle(ref bucket.components);
-
-                }
-
-            }
-            PoolArray<Bucket>.Recycle(ref this.arr);
+            this.CleanUp_INTERNAL();
             
             // Clone other array
             this.arr = PoolArray<Bucket>.Spawn(other.arr.Length);

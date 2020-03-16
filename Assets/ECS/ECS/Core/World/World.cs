@@ -497,8 +497,7 @@ namespace ME.ECS {
         public bool HasFilter<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity {
             
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
-            HashSet<int> filters;
-            if (dic.TryGetValue(this.id, out filters) == true) {
+            if (dic.TryGetValue(this.id, out HashSet<int> filters) == true) {
 
                 return filters.Contains(filterRef.id);
 
@@ -513,8 +512,7 @@ namespace ME.ECS {
             this.filtersStorage.Register(filterRef);
 
             ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
-            HashSet<int> filters;
-            if (dic.TryGetValue(this.id, out filters) == true) {
+            if (dic.TryGetValue(this.id, out HashSet<int> filters) == true) {
 
                 filters.Add(filterRef.id);
 
@@ -530,7 +528,7 @@ namespace ME.ECS {
 
         public void Register(ref FiltersStorage filtersRef, bool freeze, bool restore) {
 
-            const int capacity = 100;
+            const int capacity = 10;
             if (filtersRef == null) {
 
                 filtersRef = PoolClass<FiltersStorage>.Spawn();
@@ -572,7 +570,7 @@ namespace ME.ECS {
 
                 if (code < 0 || code >= this.componentsCache.Length) {
                 
-                    PoolArray<IComponents<TState>>.Resize(code, ref this.componentsCache);
+                    ArrayUtils.Resize(code, ref this.componentsCache);
                     
                 }
                 this.componentsCache[code] = componentsRef;
@@ -617,7 +615,7 @@ namespace ME.ECS {
 
             if (freeze == false) {
 
-                PoolArray<IList>.Resize(code, ref this.storagesCache);
+                ArrayUtils.Resize(code, ref this.storagesCache);
                 var list = this.storagesCache[code];
                 if (list != null) {
                     
@@ -867,7 +865,7 @@ namespace ME.ECS {
             if (data.entity.id == 0) data.entity = this.CreateNewEntity<TEntity>();
 
             RefList<TEntity> entitiesList;
-            PoolArray<RefList<TEntity>>.Resize(this.id, ref EntitiesDirectCache<TState, TEntity>.entitiesList);
+            ArrayUtils.Resize(this.id, ref EntitiesDirectCache<TState, TEntity>.entitiesList);
             entitiesList = EntitiesDirectCache<TState, TEntity>.entitiesList[this.id];
             if (entitiesList == null) {
                 

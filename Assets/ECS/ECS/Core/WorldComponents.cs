@@ -170,7 +170,7 @@ namespace ME.ECS {
                 var components = PoolClass<Components<TEntity, TState>>.Spawn();
                 components.Add<TComponent>(entity.id, data);
 
-                PoolArray<IComponents<TState>>.Resize(code, ref this.componentsCache);
+                ArrayUtils.Resize(code, ref this.componentsCache);
                 this.componentsCache[code] = components;
                 
             }

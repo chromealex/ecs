@@ -29,6 +29,7 @@ namespace ME.ECS {
 
         void Recycle();
         IFilterBase Clone();
+        void CopyFrom(IFilterBase other);
 
     }
 
@@ -74,7 +75,8 @@ namespace ME.ECS {
 
         void IPoolableRecycle.OnRecycle() {
 
-            this.freeze = false;
+            this.freeze = default;
+            
             if (this.filters != null) {
 
                 for (int i = 0, count = this.filters.Count; i < count; ++i) {
@@ -122,8 +124,8 @@ namespace ME.ECS {
         }
 
         public void CopyFrom(FiltersStorage other) {
-
-            if (this.filters != null) {
+            
+            /*if (this.filters != null) {
 
                 for (int i = 0, count = this.filters.Count; i < count; ++i) {
                     
@@ -138,10 +140,32 @@ namespace ME.ECS {
 
             for (int i = 0, count = other.filters.Count; i < count; ++i) {
                 
-                this.filters.Add(other.filters[i].Clone());
+                var copy = other.filters[i].Clone();
+                this.filters.Add(copy);
+                UnityEngine.Debug.Log("Copy filter: " + i + " :: " + other.filters[i].id + " >> " + this.filters.Count + " (" + copy.id + ")");
+                
+            }*/
+
+            if (this.filters == null) {
+                
+                this.filters = PoolList<IFilterBase>.Spawn(other.filters.Count);
                 
             }
+            
+            for (int i = 0, count = other.filters.Count; i < count; ++i) {
 
+                if (i >= this.filters.Count) {
+                    
+                    this.filters.Add(other.filters[i].Clone());
+                    
+                } else {
+
+                    this.filters[i].CopyFrom(other.filters[i]);
+
+                }
+
+            }
+            
         }
 
     }
@@ -279,13 +303,19 @@ namespace ME.ECS {
             
         }
 
+        public void CopyFrom(IFilterBase other) {
+            
+            this.CopyFrom(other as Filter<TState, TEntity>);
+            
+        }
+        
         public void CopyFrom(Filter<TState, TEntity> other) {
 
             this.id = other.id;
             this.name = other.name;
             this.nodesCount = other.nodesCount;
             
-            PoolArray<IFilterNode>.Copy(other.nodes, ref this.nodes);
+            ArrayUtils.Copy(other.nodes, ref this.nodes);
             
             if (this.data != null) PoolHashSetCopyable<Entity>.Recycle(ref this.data);
             this.data = PoolHashSetCopyable<Entity>.Spawn(other.data.Count);

@@ -9,7 +9,6 @@ namespace ME.Example.Game.Components.UI {
         public int count;
         public ViewId viewSourceId;
         public ViewId viewSourceId2;
-        public bool topSpawn;
 
     }
 

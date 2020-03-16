@@ -682,12 +682,24 @@ namespace ME.ECS.Views {
 
         void IModule<TState>.AdvanceTick(TState state, float deltaTime) {}
 
-        /*[System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private bool IsRenderingNow(ref ViewInfo viewInfo) {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private bool IsRenderingNow(in ViewInfo viewInfo) {
 
             return this.rendering.Contains(viewInfo);
 
-        }*/
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void CreateVisualInstance(in TEntity data, in uint seed, in ViewInfo viewInfo) {
+            
+            var instance = this.SpawnView_INTERNAL(viewInfo);
+            // Call ApplyState with deltaTime = current time offset
+            var dt = UnityEngine.Mathf.Max(0f, (this.world.GetCurrentTick() - viewInfo.creationTick) * this.world.GetTickTime());
+            instance.ApplyState(in data, dt, immediately: true);
+            // Simulate particle systems
+            instance.SimulateParticles(dt, seed);
+            
+        }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void UpdateRequests() {
@@ -701,25 +713,20 @@ namespace ME.ECS.Views {
                     // For each entity in state
                     ref var item = ref allEntities[j];
                     if (allEntities.IsFree(j) == true) continue;
-                    
+
                     aliveEntities.Add(item.entity.id);
 
-                    //var components = PoolList<IViewComponentRequest<TState, TEntity>>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_COMPONENTS_CACHE_CAPACITY);
-                    var components = this.world.ForEachComponent<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);
-                    if (components != null) {
+                    // Get all requests
+                    /*var requests = this.world.ForEachComponent<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);
+                    if (requests != null) {
 
-                        foreach (var component in components) {
+                        foreach (var request in requests) {
 
-                            if (component is CreateViewComponentRequest<TState, TEntity> createComponentRequest) {
+                            if (request is CreateViewComponentRequest<TState, TEntity> createComponentRequest) {
 
-                                var instance = this.SpawnView_INTERNAL(createComponentRequest.viewInfo);
-                                // Call ApplyState with deltaTime = current time offset
-                                var dt = UnityEngine.Mathf.Max(0f, (this.world.GetCurrentTick() - createComponentRequest.viewInfo.creationTick) * this.world.GetTickTime());
-                                instance.ApplyState(item, dt, immediately: true);
-                                // Simulate particle systems
-                                instance.SimulateParticles(dt, createComponentRequest.seed);
-
-                            } else if (component is DestroyViewComponentRequest<TState, TEntity> destroyComponentRequest) {
+                                this.CreateVisualInstance(in item, in createComponentRequest.seed, in createComponentRequest.viewInfo);
+                                
+                            } else if (request is DestroyViewComponentRequest<TState, TEntity> destroyComponentRequest) {
 
                                 if (this.list.TryGetValue(item.entity.id, out var viewsList) == true) {
 
@@ -734,10 +741,27 @@ namespace ME.ECS.Views {
                         }
 
                     }
-                    //PoolList<IViewComponentRequest<TState, TEntity>>.Recycle(ref components);
+                    this.world.RemoveComponents<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);*/
 
-                    this.world.RemoveComponents<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);
-                    
+                    // Get all views
+                    var allViews = this.world.ForEachComponent<TEntity, ViewComponent<TState, TEntity>>(item.entity);
+                    if (allViews != null) {
+                        
+                        // Comparing current state views to current rendering
+                        foreach (var viewComponent in allViews) {
+
+                            var view = (ViewComponent<TState, TEntity>)viewComponent;
+                            if (this.IsRenderingNow(in view.viewInfo) == false) {
+                                
+                                // current data doesn't represent any visual instance
+                                this.CreateVisualInstance(in item, in view.seed, in view.viewInfo);
+
+                            }
+
+                        }
+
+                    }
+
                 }
 
             }

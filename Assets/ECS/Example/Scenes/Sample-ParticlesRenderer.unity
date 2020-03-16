@@ -542,19 +542,15 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 1, g: 0, b: 0, a: 1}
   moveSide: 5
-  spawnUnitsCount: 1000
+  spawnUnitsCount: 2
   pointsFeatureInitParameters:
     p1Position: {x: 0, y: 0, z: 3}
     p2Position: {x: 0, y: 0, z: -3}
     pointViewSourceId: 0
     p1:
-      id: 0
       storageIdx: 0
-      typeId: 0
     p2:
-      id: 0
       storageIdx: 0
-      typeId: 0
   pointSourceGameObject: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
     type: 3}
   unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
@@ -1709,19 +1705,15 @@ MonoBehaviour:
   deltaTimeMultiplier: 1
   playerColor: {r: 0, g: 0.43311167, b: 1, a: 1}
   moveSide: -5
-  spawnUnitsCount: 50
+  spawnUnitsCount: 2
   pointsFeatureInitParameters:
     p1Position: {x: 0, y: 0, z: 3}
     p2Position: {x: 0, y: 0, z: -3}
     pointViewSourceId: 0
     p1:
-      id: 0
       storageIdx: 0
-      typeId: 0
     p2:
-      id: 0
       storageIdx: 0
-      typeId: 0
   pointSourceGameObject: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
     type: 3}
   unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,

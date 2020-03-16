@@ -27,6 +27,7 @@ namespace ME.ECS {
         int id { get; set; }
         int Count { get; }
 
+        void Recycle();
         IFilterBase Clone();
 
     }
@@ -60,7 +61,7 @@ namespace ME.ECS {
 
     }
 
-    public class FiltersStorage {
+    public class FiltersStorage : IPoolableRecycle {
 
         private List<IFilterBase> filters;
         private bool freeze;
@@ -69,6 +70,23 @@ namespace ME.ECS {
             get {
                 return this.filters.Count;
             }
+        }
+
+        void IPoolableRecycle.OnRecycle() {
+
+            this.freeze = false;
+            if (this.filters != null) {
+
+                for (int i = 0, count = this.filters.Count; i < count; ++i) {
+                    
+                    this.filters[i].Recycle();
+
+                }
+
+                PoolList<IFilterBase>.Recycle(ref this.filters);
+                
+            }
+            
         }
 
         public void Initialize(int capacity) {
@@ -109,8 +127,8 @@ namespace ME.ECS {
 
                 for (int i = 0, count = this.filters.Count; i < count; ++i) {
                     
-                    PoolFilters.Recycle(this.filters[i]);
-                    
+                    this.filters[i].Recycle();
+
                 }
 
                 PoolList<IFilterBase>.Recycle(ref this.filters);
@@ -194,6 +212,12 @@ namespace ME.ECS {
 
         }
 
+        public void Recycle() {
+            
+            PoolFilters.Recycle(this);
+            
+        }
+
         public IFilterBase Clone() {
 
             var instance = PoolFilters.Spawn<Filter<TState, TEntity>>();
@@ -222,6 +246,9 @@ namespace ME.ECS {
 
         }
 
+        private const int REQUESTS_CAPACITY = 4;
+        private const int NODES_CAPACITY = 4;
+
         public int id { get; set; }
         private string name;
         private IFilterNode[] nodes;
@@ -236,8 +263,8 @@ namespace ME.ECS {
 
         void IPoolableSpawn.OnSpawn() {
 
-            this.requests = PoolList<FilterRequest>.Spawn(100);
-            this.nodes = PoolArray<IFilterNode>.Spawn(1000);
+            this.requests = PoolList<FilterRequest>.Spawn(Filter<TState, TEntity>.REQUESTS_CAPACITY);
+            this.nodes = PoolArray<IFilterNode>.Spawn(Filter<TState, TEntity>.NODES_CAPACITY);
             this.data = PoolHashSetCopyable<Entity>.Spawn();
             this.dataContains = PoolHashSetCopyable<EntityId>.Spawn();
 
@@ -258,13 +285,7 @@ namespace ME.ECS {
             this.name = other.name;
             this.nodesCount = other.nodesCount;
             
-            if (this.nodes != null) PoolArray<IFilterNode>.Recycle(ref this.nodes);
-            this.nodes = PoolArray<IFilterNode>.Spawn(other.nodes.Length);
-            for (int i = 0; i < this.nodes.Length; ++i) {
-
-                this.nodes[i] = other.nodes[i];
-
-            }
+            PoolArray<IFilterNode>.Copy(other.nodes, ref this.nodes);
             
             if (this.data != null) PoolHashSetCopyable<Entity>.Recycle(ref this.data);
             this.data = PoolHashSetCopyable<Entity>.Spawn(other.data.Count);

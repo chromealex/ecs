@@ -347,12 +347,12 @@ namespace ME.ECS.Network {
                 evt.groupId = key.groupId;
                 evt.storeInHistory = storeInHistory;
                 
-                //UnityEngine.Debug.Log("CallRPC: " + evt);
-                
+                var storedInHistory = false;
                 if (storeInHistory == true && (this.GetNetworkType() & NetworkType.RunLocal) != 0) {
 
                     this.statesHistoryModule.AddEvent(evt);
-                    
+                    storedInHistory = true;
+
                 }
 
                 if ((this.GetNetworkType() & NetworkType.SendToNet) != 0) {
@@ -363,6 +363,13 @@ namespace ME.ECS.Network {
 
                     }
 
+                }
+
+                if (storedInHistory == false && parameters != null) {
+                    
+                    // Return parameters into pool if we are not storing them locally
+                    PoolArray<object>.Recycle(ref parameters);
+                    
                 }
 
             } else {

@@ -82,13 +82,23 @@ namespace ME.ECS {
             var code = WorldUtilities.GetEntityTypeId<TEntity>();
             if (code >= 0 && code < this.componentsCache.Length) {
 
-                var components = ((Components<TEntity, TState>)this.componentsCache[code]).ForEach<IRunnableComponent<TState, TEntity>>(data.entity.id);
-                foreach (var component in components) {
+                var entityId = data.entity.id;
+                var buckets = ((Components<TEntity, TState>)this.componentsCache[code]).GetAllBuckets();
+                foreach (var bucket in buckets) {
+
+                    if (bucket.components == null || entityId < 0 || entityId >= bucket.components.Length) continue;
+
+                    var bucketComponents = bucket.components[entityId];
+                    if (bucketComponents == null) continue;
                     
-                    if (component is IRunnableComponent<TState, TEntity> runnable) runnable.AdvanceTick(this.currentState, ref data, deltaTime, index);
-                    
+                    foreach (var component in bucketComponents) {
+
+                        if (component is IRunnableComponent<TState, TEntity> runnable) runnable.AdvanceTick(this.currentState, ref data, deltaTime, index);
+
+                    }
+
                 }
-                
+
             }
 
             return data;

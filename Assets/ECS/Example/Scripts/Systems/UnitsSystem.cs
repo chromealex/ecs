@@ -20,8 +20,7 @@ namespace ME.Example.Game.Systems {
 
                 if (Worlds<State>.currentWorld.GetEntityData(data, out Unit entityData) == true) {
 
-                    Point toData;
-                    if (Worlds<State>.currentWorld.GetEntityData(entityData.pointTo, out toData) == true) {
+                    if (Worlds<State>.currentWorld.GetEntityData(entityData.pointTo, out Point toData) == true) {
 
                         return ((toData.position - entityData.position).sqrMagnitude <= 0.01f);
 

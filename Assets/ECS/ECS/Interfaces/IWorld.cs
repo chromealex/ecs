@@ -47,7 +47,7 @@ namespace ME.ECS {
         float GetRandomRange(float from, float to);
         float GetRandomValue();
         int GetSeedValue();
-
+        
         void UpdateFilters<TEntity>(TEntity data) where TEntity : struct, IEntity;
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
 
@@ -60,6 +60,7 @@ namespace ME.ECS {
         void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity;
         void Register<TEntity>(ref Storage<TEntity> storageRef, bool freeze, bool restore) where TEntity : struct, IEntity;
 
+        void UpdateStorages<TEntity>() where TEntity : struct, IEntity;
         void UpdateStorages<TEntity>(int code) where TEntity : struct, IEntity;
 
         void SetState(TState state);

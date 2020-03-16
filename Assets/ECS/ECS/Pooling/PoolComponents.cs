@@ -14,20 +14,8 @@ namespace ME.ECS {
 	    public static T Spawn<T>() where T : class, IComponentBase, new() {
 
 		    var key = WorldUtilities.GetKey<T>();
-		    PoolInternalBase pool;
-		    if (PoolComponents.pool.TryGetValue(key, out pool) == true) {
-
-			    var obj = pool.Spawn();
-			    if (obj != null) return (T)obj;
-
-		    } else {
-                
-			    pool = new PoolInternalBase(null, null);
-			    var obj = (T)pool.Spawn();
-			    PoolComponents.pool.Add(key, pool);
-			    if (obj != null) return obj;
-
-		    }
+		    var obj = (T)PoolComponents.Spawn_INTERNAL(key);
+		    if (obj != null) return obj;
 
 		    return PoolInternalBase.Create<T>();
 
@@ -36,6 +24,12 @@ namespace ME.ECS {
 	    public static object Spawn(System.Type type) {
 
 		    var key = WorldUtilities.GetKey(type);
+		    return PoolComponents.Spawn_INTERNAL(key);
+
+	    }
+
+	    private static object Spawn_INTERNAL(int key) {
+		    
 		    PoolInternalBase pool;
 		    if (PoolComponents.pool.TryGetValue(key, out pool) == true) {
 
@@ -62,9 +56,8 @@ namespace ME.ECS {
 
 	    }
 
-	    public static void Recycle<T>(T system) where T : class, IComponentBase {
-
-		    var key = WorldUtilities.GetKey<T>();
+	    private static void Recycle_INTERNAL<T>(int key, T system) where T : class, IComponentBase {
+		    
 		    PoolInternalBase pool;
 		    if (PoolComponents.pool.TryGetValue(key, out pool) == true) {
 
@@ -77,6 +70,20 @@ namespace ME.ECS {
 			    PoolComponents.pool.Add(key, pool);
                 
 		    }
+		    
+	    }
+
+	    public static void Recycle<T>(T system) where T : class, IComponentBase {
+
+		    var key = WorldUtilities.GetKey<T>();
+		    PoolComponents.Recycle_INTERNAL(key, system);
+		    
+	    }
+
+	    public static void Recycle<T>(T system, System.Type type) where T : class, IComponentBase {
+
+		    var key = WorldUtilities.GetKey(type);
+		    PoolComponents.Recycle_INTERNAL(key, system);
 
 	    }
 
@@ -95,7 +102,7 @@ namespace ME.ECS {
 
 		    for (int i = 0; i < list.Count; ++i) {
 			    
-			    PoolComponents.Recycle(list[i]);
+			    PoolComponents.Recycle(list[i], list[i].GetType());
 			    
 		    }
 		    list.Clear();

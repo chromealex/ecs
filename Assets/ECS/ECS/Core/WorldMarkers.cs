@@ -20,71 +20,68 @@ namespace ME.ECS {
     #endif
     public partial class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
-        private const int MARKERS_CAPACITY = 10;
-        
+        private const int MARKERS_CAPACITY = 4;
+
         private static class MarkersDirectCache<TStateInner, TMarker> where TMarker : struct, IMarker where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<int, TMarker> data = new Dictionary<int, TMarker>(World<TState>.MARKERS_CAPACITY);
+            internal static TMarker[] data = new TMarker[World<TState>.MARKERS_CAPACITY];
+            internal static bool[] exists = new bool[World<TState>.MARKERS_CAPACITY];
 
         }
 
-        private Dictionary<int, HashSet<IDictionary>> allMarkers;
+        private HashSet<bool[]> allExistMarkers;
 
         partial void OnSpawnMarkers() {
             
-            this.allMarkers = PoolDictionary<int, HashSet<IDictionary>>.Spawn(4);
+            this.allExistMarkers = PoolHashSet<bool[]>.Spawn(World<TState>.MARKERS_CAPACITY);
 
         }
 
         partial void OnRecycleMarkers() {
             
-            PoolDictionary<int, HashSet<IDictionary>>.Recycle(ref this.allMarkers);
+            PoolHashSet<bool[]>.Recycle(ref this.allExistMarkers);
 
         }
 
         private void RemoveMarkers() {
 
-            HashSet<IDictionary> markersCache;
-            if (this.allMarkers.TryGetValue(this.id, out markersCache) == true) {
+            foreach (var item in this.allExistMarkers) {
 
-                foreach (var item in markersCache) {
-                    
-                    item.Clear();
-                    
-                }
-
+                item[this.id] = false;
+                
             }
 
         }
 
         public bool AddMarker<TMarker>(TMarker markerData) where TMarker : struct, IMarker {
 
-            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
+            ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
+            ref var cache = ref World<TState>.MarkersDirectCache<TState, TMarker>.data;
 
-            TMarker marker;
-            if (cache.TryGetValue(this.id, out marker) == true) {
+            if (PoolArray<bool>.WillResize(this.id, ref exists) == true) {
+
+                this.allExistMarkers.Remove(exists);
+
+            }
+            
+            PoolArray<bool>.Resize(this.id, ref exists);
+            PoolArray<TMarker>.Resize(this.id, ref cache);
+            
+            if (this.allExistMarkers.Contains(exists) == false) {
+
+                this.allExistMarkers.Add(exists);
+
+            }
+
+            if (exists[this.id] == true) {
 
                 cache[this.id] = markerData;
                 return false;
 
-            } else {
-
-                cache.Add(this.id, markerData);
-
-                HashSet<IDictionary> markersCache;
-                if (this.allMarkers.TryGetValue(this.id, out markersCache) == true) {
-                    
-                    if (markersCache.Contains(cache) == false) markersCache.Add(cache);
-                    
-                } else {
-
-                    markersCache = PoolHashSet<IDictionary>.Spawn(World<TState>.MARKERS_CAPACITY);
-                    markersCache.Add(cache);
-                    this.allMarkers.Add(this.id, markersCache);
-                    
-                }
-
             }
+
+            exists[this.id] = true;
+            cache[this.id] = markerData;
 
             return true;
 
@@ -92,39 +89,40 @@ namespace ME.ECS {
 
         public bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker {
             
-            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            if (cache.TryGetValue(this.id, out marker) == true) {
+            ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
+            if (this.id >= 0 && this.id < exists.Length && exists[this.id] == true) {
 
+                ref var cache = ref World<TState>.MarkersDirectCache<TState, TMarker>.data;
+                marker = cache[this.id];
                 return true;
 
             }
 
+            marker = default;
             return false;
 
         }
 
         public bool HasMarker<TMarker>() where TMarker : struct, IMarker {
             
-            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            return cache.ContainsKey(this.id);
+            ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
+            return this.id >= 0 && this.id < exists.Length && exists[this.id] == true;
 
         }
 
         public bool RemoveMarker<TMarker>() where TMarker : struct, IMarker {
             
-            var cache = World<TState>.MarkersDirectCache<TState, TMarker>.data;
-            var removed = cache.Remove(this.id);
-            if (removed == true) {
+            ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
+            if (this.id >= 0 && this.id < exists.Length && exists[this.id] == true) {
 
-                if (this.allMarkers.TryGetValue(this.id, out var list) == true) {
-
-                    list.Remove(cache);
-
-                }
+                ref var cache = ref World<TState>.MarkersDirectCache<TState, TMarker>.data;
+                cache[this.id] = default;
+                exists[this.id] = false;
+                return true;
 
             }
 
-            return removed;
+            return false;
 
         }
 

@@ -5,7 +5,7 @@ namespace ME.ECS {
     
     using ME.ECS.Collections;
     
-    public interface IStorage : IPoolableRecycle {
+    public interface IStorage : IPoolableRecycle, IEnumerable {
 
         int Count { get; }
         int FromIndex { get; }
@@ -20,16 +20,37 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Storage<TEntity> : IStorage, IEnumerable<int> where TEntity : struct, IEntity {
+    public class Storage<TEntity> : IStorage where TEntity : struct, IEntity {
 
-        private class StorageEnumerator : IEnumerator<int> {
+        public struct StorageEnumerator : IEnumerator<int> {
 
             private Storage<TEntity> storage;
             private int index;
 
-            public void SetInfo(Storage<TEntity> storage) {
+            public StorageEnumerator(Storage<TEntity> storage) {
                 
                 this.storage = storage;
+                this.index = this.storage.ToIndex;
+
+            }
+
+            public int Current {
+                get {
+                    return this.index;
+                }
+            }
+
+            public bool MoveNext() {
+
+                do {
+                    --this.index;
+                } while (this.storage.IsFree(this.index) == true);
+                return this.index >= this.storage.FromIndex;
+
+            }
+
+            public void Reset() {
+
                 this.index = this.storage.ToIndex;
 
             }
@@ -42,16 +63,7 @@ namespace ME.ECS {
 
             bool IEnumerator.MoveNext() {
 
-                do {
-                    --this.index;
-                } while (this.storage.IsFree(this.index) == true);
-                return this.index >= this.storage.FromIndex;
-
-            }
-
-            void IEnumerator.Reset() {
-
-                this.index = this.storage.ToIndex;
+                throw new AllocationException();
 
             }
 
@@ -62,8 +74,6 @@ namespace ME.ECS {
             }
 
             void System.IDisposable.Dispose() {
-                
-                PoolClass<StorageEnumerator>.Recycle(this);
                 
             }
 
@@ -125,14 +135,13 @@ namespace ME.ECS {
 
         }
 
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() {
+        public StorageEnumerator GetEnumerator() {
 
-            var instance = PoolClass<StorageEnumerator>.Spawn();
-            instance.SetInfo(this);
-            return instance;
+            return new StorageEnumerator(this);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsFree(int index) {
 
             return this.list.IsFree(index);

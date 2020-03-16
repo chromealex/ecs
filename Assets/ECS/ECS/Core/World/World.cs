@@ -82,7 +82,7 @@ namespace ME.ECS {
         private const int FEATURES_CAPACITY = 100;
         private const int SYSTEMS_CAPACITY = 100;
         private const int MODULES_CAPACITY = 100;
-        internal const int ENTITIES_CACHE_CAPACITY = 1000;
+        internal const int ENTITIES_CACHE_CAPACITY = 100;
         private const int STORAGES_CAPACITY = 100;
         private const int CAPACITIES_CAPACITY = 100;
         
@@ -555,7 +555,7 @@ namespace ME.ECS {
             
             var code = WorldUtilities.GetEntityTypeId<TEntity>();
             
-            const int capacity = 100;
+            const int capacity = 4;
             if (componentsRef == null) {
 
                 componentsRef = PoolClass<Components<TEntity, TState>>.Spawn();
@@ -636,7 +636,7 @@ namespace ME.ECS {
             if (this.sharedEntity.id == 0 && typeof(TEntity) == typeof(SharedEntity)) {
                 
                 // Create shared entity which should store shared components
-                this.sharedEntity = this.AddEntity(new SharedEntity() { entity = Entity.Create<SharedEntity>(-1, noCheck: true) }, updateStorages: false);
+                this.sharedEntity = this.AddEntity(new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);
 
             }
 
@@ -658,6 +658,12 @@ namespace ME.ECS {
 
         }
 
+        public void UpdateStorages<TEntity>() where TEntity : struct, IEntity {
+        
+            this.UpdateStorages<TEntity>(WorldUtilities.GetEntityTypeId<TEntity>());
+            
+        }
+        
         public void UpdateStorages<TEntity>(int code) where TEntity : struct, IEntity {
 
             if (code < 0 || code >= this.storagesCache.Length) return;
@@ -897,7 +903,7 @@ namespace ME.ECS {
             if (list == null || this.id < 0 || this.id >= list.Length) return false;
 
             output = list[this.id];
-            return true;
+            return output != null;
             
         }
 

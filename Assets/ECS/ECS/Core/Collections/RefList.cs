@@ -20,8 +20,9 @@ namespace ME.ECS.Collections {
     }
 
     public class RefList<T> : IRefList, IPoolableRecycle, IPoolableSpawn {
-
+        
         private T[] arr;
+        // TODO: Add int[] next array which determine next index in arr (useful for enumeration)
         private int count;
         private int size;
         private int capacity;
@@ -243,9 +244,7 @@ namespace ME.ECS.Collections {
 
         public void CopyFrom(RefList<T> other) {
 
-            if (this.arr != null) PoolArray<T>.Recycle(ref this.arr);
-            this.arr = PoolArray<T>.Spawn(other.arr.Length);
-            System.Array.Copy(other.arr, this.arr, other.arr.Length);
+            PoolArray<T>.Copy(other.arr, ref this.arr);
             
             if (this.free != null) PoolHashSetCopyable<int>.Recycle(ref this.free);
             this.free = PoolHashSetCopyable<int>.Spawn(other.free.Count);
@@ -276,15 +275,8 @@ namespace ME.ECS.Collections {
 
                 }
 
-                var arr = PoolArray<T>.Spawn(this.capacity);
-                if (this.arr != null) {
-                    
-                    System.Array.Copy(this.arr, arr, this.arr.Length);
-                    PoolArray<T>.Recycle(ref this.arr);
-                    
-                }
-                this.arr = arr;
-
+                PoolArray<T>.Resize(this.capacity - 1, ref this.arr);
+                
                 for (int i = oldCapacity; i < this.capacity; ++i) {
 
                     this.free.Add(i);

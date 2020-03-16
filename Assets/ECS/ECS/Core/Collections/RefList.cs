@@ -244,7 +244,7 @@ namespace ME.ECS.Collections {
 
         public void CopyFrom(RefList<T> other) {
 
-            PoolArray<T>.Copy(other.arr, ref this.arr);
+            ArrayUtils.Copy(other.arr, ref this.arr);
             
             if (this.free != null) PoolHashSetCopyable<int>.Recycle(ref this.free);
             this.free = PoolHashSetCopyable<int>.Spawn(other.free.Count);
@@ -275,7 +275,7 @@ namespace ME.ECS.Collections {
 
                 }
 
-                PoolArray<T>.Resize(this.capacity - 1, ref this.arr);
+                ArrayUtils.Resize(this.capacity - 1, ref this.arr);
                 
                 for (int i = oldCapacity; i < this.capacity; ++i) {
 

@@ -58,14 +58,14 @@ namespace ME.ECS {
             ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
             ref var cache = ref World<TState>.MarkersDirectCache<TState, TMarker>.data;
 
-            if (PoolArray<bool>.WillResize(this.id, ref exists) == true) {
+            if (ArrayUtils.WillResize(this.id, ref exists) == true) {
 
                 this.allExistMarkers.Remove(exists);
 
             }
             
-            PoolArray<bool>.Resize(this.id, ref exists);
-            PoolArray<TMarker>.Resize(this.id, ref cache);
+            ArrayUtils.Resize(this.id, ref exists);
+            ArrayUtils.Resize(this.id, ref cache);
             
             if (this.allExistMarkers.Contains(exists) == false) {
 

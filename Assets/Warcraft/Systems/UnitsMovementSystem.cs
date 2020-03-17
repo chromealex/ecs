@@ -49,7 +49,7 @@ namespace Warcraft.Systems {
                     this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterManualTarget>(unit.entity);
                     this.world.AddOrGetComponent<UnitEntity, CharacterAutoTarget>(unit.entity);
                     pathfindingFeature.StopMovement(unit.entity, repath: true);
-                    
+
                 } else if (failed == true) {
                         
                     this.world.RemoveComponents<UnitEntity, Warcraft.Components.CharacterManualTarget>(unit.entity);

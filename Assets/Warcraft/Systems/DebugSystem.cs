@@ -1,5 +1,4 @@
 ﻿using ME.ECS;
-using ViewId = System.UInt64;
 
 namespace Warcraft.Systems {
 

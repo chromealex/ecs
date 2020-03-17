@@ -1,7 +1,14 @@
 using UnityEngine;
-using EntityId = System.Int32;
-using RPCId = System.Int32;
-using ViewId = System.UInt64; 
+
+#region Namespaces
+namespace Warcraft.Entities {}
+namespace Warcraft.Systems {}
+namespace Warcraft.Components {}
+namespace Warcraft.Modules {}
+namespace Warcraft.Features {}
+namespace Warcraft.Markers {}
+namespace Warcraft.Views {}
+#endregion
 
 namespace Warcraft {
     
@@ -10,7 +17,7 @@ namespace Warcraft {
     using ME.ECS.Views.Providers;
     using Modules;
     using Features;
-    
+
     public class WarcraftInitializer : MonoBehaviour {
 
         public int activePlayerIndex;

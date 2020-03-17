@@ -1,6 +1,4 @@
 ﻿using ME.ECS;
-using ME.ECS.Views.Providers;
-using ViewId = System.UInt64;
 using UnityEngine;
 
 namespace Warcraft.Features {

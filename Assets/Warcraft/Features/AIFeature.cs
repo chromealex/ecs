@@ -8,7 +8,7 @@ namespace Warcraft.Features {
 
         protected override void OnConstruct(ref ConstructParameters parameters) {
 
-            this.AddSystem<Warcraft.Systems.AISystem>();
+            //this.AddSystem<Warcraft.Systems.AISystem>();
 
         }
 

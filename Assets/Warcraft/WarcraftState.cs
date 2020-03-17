@@ -1,5 +1,3 @@
-using EntityId = System.Int32;
-using Tick = System.UInt64;
 #if UNITY_MATHEMATICS
 using RandomState = System.UInt32;
 #else

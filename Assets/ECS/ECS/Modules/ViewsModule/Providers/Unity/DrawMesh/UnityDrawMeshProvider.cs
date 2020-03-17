@@ -1,8 +1,4 @@
 ﻿#if DRAWMESH_VIEWS_MODULE_SUPPORT
-using EntityId = System.Int32;
-using ViewId = System.UInt64;
-using Tick = System.UInt64;
-
 namespace ME.ECS {
     
     using ME.ECS.Views;
@@ -295,7 +291,7 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public override void Update(System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {
+        public override void Update(System.Collections.Generic.Dictionary<EntityId, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {
             
             this.ValidateMatrices();
             

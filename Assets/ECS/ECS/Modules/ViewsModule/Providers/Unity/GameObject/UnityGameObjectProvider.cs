@@ -1,8 +1,4 @@
 ﻿#if GAMEOBJECT_VIEWS_MODULE_SUPPORT
-using EntityId = System.Int32;
-using ViewId = System.UInt64;
-using Tick = System.UInt64;
-
 namespace ME.ECS {
 
     using ME.ECS.Views;

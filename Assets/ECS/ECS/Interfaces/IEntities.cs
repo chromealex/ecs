@@ -1,6 +1,4 @@
-﻿using EntityId = System.Int32;
-using Tick = System.UInt64;
-using RandomState = UnityEngine.Random.State;
+﻿using RandomState = UnityEngine.Random.State;
 
 namespace ME.ECS {
 

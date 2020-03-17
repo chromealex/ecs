@@ -1,5 +1,5 @@
+using ME.ECS;
 using UnityEngine;
-using ViewId = System.UInt64;
 
 namespace ME.Example.Game.Components.UI {
 

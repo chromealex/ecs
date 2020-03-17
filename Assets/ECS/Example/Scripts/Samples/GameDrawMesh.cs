@@ -1,7 +1,4 @@
 ﻿using UnityEngine;
-using EntityId = System.Int32;
-using RPCId = System.Int32;
-using ViewId = System.UInt64; 
 using ME.ECS;
 using ME.ECS.Views.Providers;
 

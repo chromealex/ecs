@@ -5,9 +5,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Jobs;
-using EntityId = System.Int32;
-using Tick = System.UInt64;
-using RPCId = System.Int32;
 
 namespace ME.ECS {
     

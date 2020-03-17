@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Collections;
-using EntityId = System.Int32;
 
 namespace ME.ECS {
 

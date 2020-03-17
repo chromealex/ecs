@@ -1,7 +1,14 @@
 ﻿using UnityEngine;
-using EntityId = System.Int32;
-using RPCId = System.Int32;
-using ViewId = System.UInt64; 
+
+#region Namespaces
+namespace #NAMESPACE#.Entities {}
+namespace #NAMESPACE#.Systems {}
+namespace #NAMESPACE#.Components {}
+namespace #NAMESPACE#.Modules {}
+namespace #NAMESPACE#.Features {}
+namespace #NAMESPACE#.Markers {}
+namespace #NAMESPACE#.Views {}
+#endregion
 
 namespace #NAMESPACE# {
     

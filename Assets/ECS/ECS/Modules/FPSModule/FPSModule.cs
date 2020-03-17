@@ -1,8 +1,5 @@
 ﻿#if FPS_MODULE_SUPPORT
 using System.Collections.Generic;
-using EntityId = System.Int32;
-using ViewId = System.UInt64;
-using Tick = System.UInt64;
 
 namespace ME.ECS {
 

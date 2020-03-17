@@ -3,7 +3,6 @@ using System.Linq;
 
 namespace ME.ECS {
     
-    using EntityId = System.Int32;
     using ME.ECS.Collections;
 
     internal interface IFilterInternal<TState> where TState : class, IState<TState>, new() {
@@ -15,7 +14,7 @@ namespace ME.ECS {
         bool OnRemoveComponent(Entity entity);
 
         HashSetCopyable<Entity> GetData();
-        List<FilterRequest> GetRequests();
+        HashSet<Entity> GetRequests();
         bool forEachMode { get; set; }
         void Add_INTERNAL(Entity entity);
         bool Remove_INTERNAL(Entity entity);
@@ -188,9 +187,9 @@ namespace ME.ECS {
             this.set.forEachMode = false;
 
             var requests = this.set.GetRequests();
-            for (int i = 0, count = requests.Count; i < count; ++i) {
+            foreach (var entity in requests) {
 
-                this.set.OnUpdate(requests[i].entity);
+                this.set.OnUpdate(entity);
 
             }
             requests.Clear();
@@ -218,12 +217,6 @@ namespace ME.ECS {
         void System.Collections.IEnumerator.Reset() {
                 
         }
-    }
-
-    internal struct FilterRequest {
-
-        public Entity entity;
-
     }
 
     public class Filter<TState, TEntity> : IFilterInternal<TState>, IFilter<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
@@ -280,14 +273,14 @@ namespace ME.ECS {
         private HashSetCopyable<EntityId> dataContains;
         private HashSetCopyable<Entity> data;
         bool IFilterInternal<TState>.forEachMode { get; set; }
-        private List<FilterRequest> requests;
+        private HashSet<Entity> requests;
         
         private List<IFilterNode> tempNodes;
         private List<IFilterNode> tempNodesCustom;
 
         void IPoolableSpawn.OnSpawn() {
 
-            this.requests = PoolList<FilterRequest>.Spawn(Filter<TState, TEntity>.REQUESTS_CAPACITY);
+            this.requests = PoolHashSet<Entity>.Spawn(Filter<TState, TEntity>.REQUESTS_CAPACITY);
             this.nodes = PoolArray<IFilterNode>.Spawn(Filter<TState, TEntity>.NODES_CAPACITY);
             this.data = PoolHashSetCopyable<Entity>.Spawn();
             this.dataContains = PoolHashSetCopyable<EntityId>.Spawn();
@@ -296,7 +289,7 @@ namespace ME.ECS {
 
         void IPoolableRecycle.OnRecycle() {
             
-            PoolList<FilterRequest>.Recycle(ref this.requests);
+            PoolHashSet<Entity>.Recycle(ref this.requests);
             PoolArray<IFilterNode>.Recycle(ref this.nodes);
             PoolHashSetCopyable<Entity>.Recycle(ref this.data);
             PoolHashSetCopyable<EntityId>.Recycle(ref this.dataContains);
@@ -340,7 +333,7 @@ namespace ME.ECS {
 
         }
 
-        List<FilterRequest> IFilterInternal<TState>.GetRequests() {
+        HashSet<Entity> IFilterInternal<TState>.GetRequests() {
 
             return this.requests;
 
@@ -399,7 +392,7 @@ namespace ME.ECS {
             var cast = (IFilterInternal<TState>)this;
             if (cast.forEachMode == true) {
 
-                this.requests.Add(new FilterRequest() { entity = entity });
+                if (this.requests.Contains(entity) == false) this.requests.Add(entity);
                 return false;
 
             }

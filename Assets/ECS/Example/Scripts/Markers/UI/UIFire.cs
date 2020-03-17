@@ -1,5 +1,3 @@
-using ViewId = System.UInt64;
-
 namespace ME.Example.Game.Components.UI {
 
     using ME.ECS;

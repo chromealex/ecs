@@ -1,6 +1,4 @@
 #if STATES_HISTORY_MODULE_SUPPORT && NETWORK_MODULE_SUPPORT
-using Tick = System.UInt64;
-using RPCId = System.Int32;
 
 namespace ME.ECS {
 
@@ -104,8 +102,8 @@ namespace ME.ECS.Network {
     #endif
     public abstract class NetworkModule<TState> : INetworkModule<TState>, StatesHistory.IEventRunner, IModuleValidation where TState : class, IState<TState>, new() {
 
-        private const RPCId PING_RPC_ID = -1;
-        private const RPCId SYNC_RPC_ID = -2;
+        private static readonly RPCId PING_RPC_ID = -1;
+        private static readonly RPCId SYNC_RPC_ID = -2;
         
         private RPCId rpcId;
         private System.Collections.Generic.Dictionary<int, System.Reflection.MethodInfo> registry;

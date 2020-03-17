@@ -1,6 +1,4 @@
-﻿using EntityId = System.Int32;
-
-namespace ME.ECS {
+﻿namespace ME.ECS {
 
     public static class EntityTypesCounter {
 
@@ -18,7 +16,7 @@ namespace ME.ECS {
     [System.Serializable]
     public struct Entity : System.IEquatable<Entity> {
 
-        public readonly EntityId id;
+        public readonly int id;
         public int storageIdx;
 
         public static Entity Empty {

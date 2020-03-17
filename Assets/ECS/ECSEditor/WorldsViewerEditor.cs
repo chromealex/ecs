@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor;
-using EntityId = System.Int32;
-using ViewId = System.UInt64;
-using Tick = System.UInt64;
 
 namespace ME.ECSEditor {
     

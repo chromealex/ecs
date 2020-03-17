@@ -1,7 +1,5 @@
 ﻿using ME.ECS;
 using UnityEngine;
-using RPCId = System.Int32;
-using ViewId = System.UInt64;
 
 namespace ME.Example.Game.Systems {
 

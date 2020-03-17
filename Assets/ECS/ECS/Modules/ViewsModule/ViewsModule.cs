@@ -1,8 +1,5 @@
 ﻿#if VIEWS_MODULE_SUPPORT
 using System.Collections.Generic;
-using EntityId = System.Int32;
-using ViewId = System.UInt64;
-using Tick = System.UInt64;
 
 namespace ME.ECS {
     
@@ -206,7 +203,7 @@ namespace ME.ECS.Views {
 
         public override int GetHashCode() {
                 
-            return this.entity.id ^ (int)this.prefabSourceId ^ (int)this.creationTick;
+            return this.entity.id ^ this.prefabSourceId.GetHashCode() ^ this.creationTick.GetHashCode();
                 
         }
             
@@ -717,7 +714,7 @@ namespace ME.ECS.Views {
                     aliveEntities.Add(item.entity.id);
 
                     // Get all requests
-                    /*var requests = this.world.ForEachComponent<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);
+                    var requests = this.world.ForEachComponent<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);
                     if (requests != null) {
 
                         foreach (var request in requests) {
@@ -741,7 +738,7 @@ namespace ME.ECS.Views {
                         }
 
                     }
-                    this.world.RemoveComponents<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);*/
+                    this.world.RemoveComponents<TEntity, IViewComponentRequest<TState, TEntity>>(item.entity);
 
                     // Get all views
                     var allViews = this.world.ForEachComponent<TEntity, ViewComponent<TState, TEntity>>(item.entity);

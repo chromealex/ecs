@@ -1,7 +1,5 @@
 ﻿#if STATES_HISTORY_MODULE_SUPPORT
 using System.Collections.Generic;
-using Tick = System.UInt64;
-using RPCId = System.Int32;
 
 namespace ME.ECS {
     
@@ -40,7 +38,7 @@ namespace ME.ECS {
 
         }
 
-        partial void PlayPlugin1ForTick(ulong tick) {
+        partial void PlayPlugin1ForTick(Tick tick) {
             
             if (this.statesHistoryModule != null) this.statesHistoryModule.PlayEventsForTick(tick);
             
@@ -217,7 +215,7 @@ namespace ME.ECS.StatesHistory {
         /// <summary>
         /// Event tick
         /// </summary>
-        public Tick tick;
+        public ulong tick;
         /// <summary>
         /// Global event order (for example: you have 30 players on the map, each has it's own index)
         /// </summary>
@@ -241,7 +239,7 @@ namespace ME.ECS.StatesHistory {
         /// <summary>
         /// Rpc Id is a method Id (see NetworkModule::RegisterRPC) 
         /// </summary>
-        public RPCId rpcId;
+        public int rpcId;
         /// <summary>
         /// Parameters of method
         /// </summary>
@@ -344,7 +342,7 @@ namespace ME.ECS.StatesHistory {
         void IModuleBase.OnConstruct() {
             
             this.states = new CircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
-            this.events = PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
+            this.events = PoolDictionary<Tick, SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
             this.syncHash = PoolDictionary<Tick, int>.Spawn(StatesHistoryModule<TState>.POOL_SYNCHASH_CAPACITY);
             PoolSortedList<int, HistoryEvent>.Prewarm(StatesHistoryModule<TState>.POOL_HISTORY_SIZE, StatesHistoryModule<TState>.POOL_HISTORY_CAPACITY);
             
@@ -367,7 +365,7 @@ namespace ME.ECS.StatesHistory {
                 item.Value.Clear();
 
             }
-            PoolDictionary<ulong, SortedList<long, HistoryEvent>>.Recycle(ref this.events);
+            PoolDictionary<Tick, SortedList<long, HistoryEvent>>.Recycle(ref this.events);
             PoolDictionary<Tick, int>.Recycle(ref this.syncHash);
 
             this.states.Recycle();
@@ -577,7 +575,7 @@ namespace ME.ECS.StatesHistory {
         public Tick GetTickByTime(double seconds) {
 
             var tick = (seconds / this.world.GetTickTime());
-            return (Tick)System.Math.Floor(tick);
+            return System.Math.Floor(tick);
 
         }
 

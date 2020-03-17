@@ -4,7 +4,7 @@ namespace ME.ECS {
 
         public static void Copy<T>(Unity.Collections.NativeArray<T> fromArr, ref Unity.Collections.NativeArray<T> arr) where T : struct {
             
-            if (arr == null) {
+            if (arr == null || arr.IsCreated == false) {
 
                 arr = new Unity.Collections.NativeArray<T>(fromArr.Length, Unity.Collections.Allocator.Persistent, Unity.Collections.NativeArrayOptions.ClearMemory);
 

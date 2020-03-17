@@ -524,6 +524,19 @@ namespace ME.ECS {
                 
             }
 
+            if (this.ForEachEntity<TEntity>(out var allEntities) == true) {
+
+                for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
+                    
+                    ref var item = ref allEntities[j];
+                    if (allEntities.IsFree(j) == true) continue;
+                    
+                    this.UpdateFilters(item);
+                    
+                }
+                
+            }
+
         }
 
         public void Register(ref FiltersStorage filtersRef, bool freeze, bool restore) {

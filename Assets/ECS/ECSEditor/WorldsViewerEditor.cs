@@ -194,7 +194,7 @@ namespace ME.ECSEditor {
 
             }*/
 
-            public Dictionary<int, IList> GetEntitiesStorage() {
+            public IList[] GetEntitiesStorage() {
 
                 return WorldHelper.GetEntitiesStorage(this.world);
 
@@ -410,9 +410,13 @@ namespace ME.ECSEditor {
                     var entitiesStorage = world.GetEntitiesStorage();
                     foreach (var entityStorage in entitiesStorage) {
 
-                        var storages = entityStorage.Value.Cast<ME.ECS.IStorage>().ToList();
+                        if (entityStorage == null) continue;
+
+                        var storages = entityStorage.Cast<ME.ECS.IStorage>().ToList();
                         foreach (var storage in storages) {
 
+                            if (storage == null) continue;
+                            
                             GUILayout.BeginVertical();
                             {
                                 var foldout = world.IsFoldOut(storage);
@@ -795,10 +799,14 @@ namespace ME.ECSEditor {
                                 });
 
                                 var entitiesCount = 0;
-                                foreach (var item in entitiesStorage) {
+                                foreach (var entityStorage in entitiesStorage) {
 
-                                    var storages = item.Value.Cast<ME.ECS.IStorage>().ToList();
+                                    if (entityStorage == null) continue;
+                                    
+                                    var storages = entityStorage.Cast<ME.ECS.IStorage>().ToList();
                                     foreach (var storage in storages) {
+                                        
+                                        if (storage == null) continue;
 
                                         entitiesCount += storage.Count;
 
@@ -819,33 +827,33 @@ namespace ME.ECSEditor {
 
                                         GUILayout.BeginHorizontal();
                                         {
-                                            GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Caption", EditorStyles.miniBoldLabel); }, tableStyle,
+                                            /*GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Caption", EditorStyles.miniBoldLabel); }, tableStyle,
                                                              GUILayout.Width(col1),
-                                                             GUILayout.Height(cellHeight));
+                                                             GUILayout.Height(cellHeight));*/
                                             GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Data", EditorStyles.miniBoldLabel); }, tableStyle,
                                                              GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
                                         }
                                         GUILayout.EndHorizontal();
 
+                                        GUILayout.BeginVertical();
                                         foreach (var entityStorage in entitiesStorage) {
 
-                                            var storages = entityStorage.Value.Cast<ME.ECS.IStorage>().ToList();
+                                            if (entityStorage == null) continue;
+
+                                            var storages = entityStorage.Cast<ME.ECS.IStorage>().ToList();
                                             foreach (var storage in storages) {
 
+                                                if (storage == null) continue;
+                                                
                                                 GUILayout.BeginHorizontal();
                                                 {
                                                     GUILayoutExt.Box(
                                                         padding,
                                                         margin,
-                                                        () => { GUILayoutExt.TypeLabel(storage.GetType()); },
-                                                        tableStyle,
-                                                        GUILayout.Width(col1), GUILayout.Height(cellHeight));
-                                                }
-                                                {
-                                                    GUILayoutExt.Box(
-                                                        padding,
-                                                        margin,
-                                                        () => { GUILayout.Label(storage.ToString(), dataStyle); },
+                                                        () => {
+                                                            GUILayoutExt.TypeLabel(storage.GetType());
+                                                            GUILayout.Label(storage.ToString(), dataStyle);
+                                                        },
                                                         tableStyle,
                                                         GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
                                                 }
@@ -854,6 +862,7 @@ namespace ME.ECSEditor {
                                             }
 
                                         }
+                                        GUILayout.EndVertical();
 
                                     });
 
@@ -869,29 +878,40 @@ namespace ME.ECSEditor {
                                     var tableStyle = (GUIStyle)"Box";
                                     var dataStyle = new GUIStyle(EditorStyles.label);
                                     dataStyle.richText = true;
-                                    foreach (var filter in filters.GetData()) {
+                                    GUILayoutExt.Padding(4f, () => {
 
                                         GUILayout.BeginHorizontal();
                                         {
-                                            GUILayoutExt.Box(
-                                                padding,
-                                                margin,
-                                                () => { GUILayoutExt.TypeLabel(filter.GetType()); },
-                                                tableStyle,
-                                                GUILayout.Width(col1), GUILayout.Height(cellHeight));
-                                        }
-                                        {
-                                            GUILayoutExt.Box(
-                                                padding,
-                                                margin,
-                                                () => { GUILayout.Label(filter.ToString(), dataStyle); },
-                                                tableStyle,
-                                                GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
+                                            /*GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Caption", EditorStyles.miniBoldLabel); }, tableStyle,
+                                                             GUILayout.Width(col1),
+                                                             GUILayout.Height(cellHeight));*/
+                                            GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Data", EditorStyles.miniBoldLabel); }, tableStyle,
+                                                             GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
                                         }
                                         GUILayout.EndHorizontal();
 
-                                    }
+                                        GUILayout.BeginVertical();
+                                        foreach (var filter in filters.GetData()) {
 
+                                            GUILayout.BeginHorizontal();
+                                            {
+                                                GUILayoutExt.Box(
+                                                    padding,
+                                                    margin,
+                                                    () => {
+                                                        GUILayoutExt.TypeLabel(filter.GetType());
+                                                        GUILayout.Label(filter.ToString(), dataStyle);
+                                                    },
+                                                    tableStyle,
+                                                    GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
+                                            }
+                                            GUILayout.EndHorizontal();
+
+                                        }
+                                        GUILayout.EndVertical();
+
+                                    });
+                                    
                                 });
 
                             });

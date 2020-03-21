@@ -145,26 +145,40 @@ namespace ME.ECS {
                 
             }*/
 
-            if (this.filters == null) {
-                
-                this.filters = PoolList<IFilterBase>.Spawn(other.filters.Count);
-                
-            }
-            
-            for (int i = 0, count = other.filters.Count; i < count; ++i) {
+            if (this.freeze == true) {
 
-                if (i >= this.filters.Count) {
-                    
-                    this.filters.Add(other.filters[i].Clone());
-                    
-                } else {
+                // Just copy is filters storage is in freeze mode
+                if (this.filters == null) {
+
+                    this.filters = PoolList<IFilterBase>.Spawn(other.filters.Count);
+
+                }
+
+                for (int i = 0, count = other.filters.Count; i < count; ++i) {
+
+                    if (i >= this.filters.Count) {
+
+                        this.filters.Add(other.filters[i].Clone());
+
+                    } else {
+
+                        this.filters[i].CopyFrom(other.filters[i]);
+
+                    }
+
+                }
+
+            } else {
+                
+                // Filters storage is not in a freeze mode, so it is an active state filters
+                for (int i = 0, count = other.filters.Count; i < count; ++i) {
 
                     this.filters[i].CopyFrom(other.filters[i]);
 
                 }
-
+                
             }
-            
+
         }
 
     }

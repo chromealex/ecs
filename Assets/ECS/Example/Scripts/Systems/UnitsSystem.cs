@@ -3,16 +3,15 @@ using Unity.Jobs;
 
 namespace ME.Example.Game.Systems {
 
+    using TState = State;
     using ME.Example.Game.Components;
     using ME.Example.Game.Entities;
     
-    public class UnitsSystem : ISystem<State>, ISystemAdvanceTick<State>, ISystemUpdate<State> {
+    public class UnitsSystem : ISystemFilter<State>, ISystemAdvanceTick<State> {
 
         public IWorld<State> world { get; set; }
 
         private IFilter<State, Unit> unitsFilter;
-        private IFilter<State, Unit> unitsFilter2;
-        private IFilter<State, Unit> unitsFilter3;
 
         private class CustomFilter : IFilterNode {
 
@@ -34,40 +33,40 @@ namespace ME.Example.Game.Systems {
 
         }
         
-        void ISystemBase.OnConstruct() {
-
-            Filter<State, Unit>.Create(ref this.unitsFilter, nameof(this.unitsFilter)).WithoutComponent<UnitFollowFromTo>().Push();
-            Filter<State, Unit>.Create(ref this.unitsFilter2, nameof(this.unitsFilter2)).WithComponent<UnitGravity>().WithComponent<UnitFollowFromTo>().Push();
-            Filter<State, Unit>.Create(ref this.unitsFilter3, nameof(this.unitsFilter3)).WithComponent<UnitGravity>().WithComponent<UnitFollowFromTo>().Custom<CustomFilter>().Push();
-            
-        }
+        void ISystemBase.OnConstruct() {}
         
         void ISystemBase.OnDeconstruct() { }
+
+        IFilter<TState> ISystemFilter<TState>.filter { get; set; }
+        IFilter<State> ISystemFilter<State>.CreateFilter() {
+            
+            return Filter<State, Unit>.Create("Filter-UnitsSystemFilter").WithComponent<UnitGravity>().WithComponent<UnitFollowFromTo>().Custom<CustomFilter>().Push();
+            
+        }
+
+        void ISystemFilter<TState>.AdvanceTick(Entity entity, TState state, float deltaTime) {
+            
+            ref var data = ref this.world.GetEntityDataRef<Unit>(entity);
+            var from = data.pointFrom;
+            var to = data.pointTo;
+            data.pointTo = from;
+            data.pointFrom = to;
+            this.world.RemoveComponents<Unit, UnitFollowFromTo>(data.entity);
+            var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
+            comp.@from = data.pointFrom;
+            comp.to = data.pointTo;
+                
+            --data.lifes;
+
+        }
 
         void ISystemAdvanceTick<State>.AdvanceTick(State state, float deltaTime) {
 
             this.world.Checkpoint("Update Units");
             foreach (var index in state.units) {
-                
+
                 ref var data = ref state.units[index];
                 this.world.RunComponents(ref data, deltaTime, index);
-                
-                if (this.unitsFilter3.Contains(data) == true) {
-                
-                    var from = data.pointFrom;
-                    var to = data.pointTo;
-                    data.pointTo = from;
-                    data.pointFrom = to;
-                    this.world.RemoveComponents<Unit, UnitFollowFromTo>(data.entity);
-                    var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
-                    comp.@from = data.pointFrom;
-                    comp.to = data.pointTo;
-                
-                    --data.lifes;
-
-                }
-
-                this.world.UpdateFilters(data);
 
             }
             this.world.Checkpoint("Update Units");
@@ -85,8 +84,6 @@ namespace ME.Example.Game.Systems {
             this.world.Checkpoint("Remove Units");
 
         }
-
-        void ISystemUpdate<State>.Update(State state, float deltaTime) { }
 
     }
 

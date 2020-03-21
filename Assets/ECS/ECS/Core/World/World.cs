@@ -1608,10 +1608,10 @@ namespace ME.ECS {
                                 
                                 case ISystemFilter<TState> sysFilter: {
 
-                                    var filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
-                                    if (filter != null) {
+                                    sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
+                                    if (sysFilter.filter != null) {
 
-                                        foreach (var entity in filter) {
+                                        foreach (var entity in sysFilter.filter) {
 
                                             sysFilter.AdvanceTick(entity, state, fixedDeltaTime);
 

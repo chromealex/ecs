@@ -32,10 +32,10 @@ namespace ME.ECSEditor {
 
         }*/
 
-        public static Dictionary<int, IList> GetEntitiesStorage(IWorldBase world) {
+        public static IList[] GetEntitiesStorage(IWorldBase world) {
 
             var field = world.GetType().GetField("storagesCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            return (Dictionary<int, IList>)field.GetValue(world);
+            return (IList[])field.GetValue(world);
 
         }
 

@@ -977,10 +977,6 @@ namespace ME.ECS.Collections {
             internal T value;
         }
  
-#if !SILVERLIGHT
-        [Serializable()]
-        [System.Security.Permissions.HostProtection(MayLeakOnAbort = true)]
-#endif
         public struct Enumerator : IEnumerator<T>, System.Collections.IEnumerator {
             private HashSetCopyable<T> set;
             private int index;

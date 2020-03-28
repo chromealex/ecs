@@ -3,6 +3,7 @@
 namespace #NAMESPACE# {
     
     using TState = #STATENAME#;
+    using Entities; using Components; using Modules; using Systems; using Features;
     
     public class #SCRIPTNAME# : Feature<TState> {
 

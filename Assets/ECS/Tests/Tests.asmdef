@@ -4,7 +4,9 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "ECSExample",
-        "ECSAssembly"
+        "ECSAssembly",
+        "Unity.PerformanceTesting",
+        "Unity.PerformanceTesting.Editor"
     ],
     "includePlatforms": [
         "Editor"

@@ -819,7 +819,7 @@ namespace ME.ECSEditor {
                                     var cellHeight = 25f;
                                     var padding = 2f;
                                     var margin = 1f;
-                                    var col1 = 80f;
+                                    //var col1 = 80f;
                                     var tableStyle = (GUIStyle)"Box";
                                     var dataStyle = new GUIStyle(EditorStyles.label);
                                     dataStyle.richText = true;
@@ -874,7 +874,7 @@ namespace ME.ECSEditor {
                                     var cellHeight = 25f;
                                     var padding = 2f;
                                     var margin = 1f;
-                                    var col1 = 80f;
+                                    //var col1 = 80f;
                                     var tableStyle = (GUIStyle)"Box";
                                     var dataStyle = new GUIStyle(EditorStyles.label);
                                     dataStyle.richText = true;

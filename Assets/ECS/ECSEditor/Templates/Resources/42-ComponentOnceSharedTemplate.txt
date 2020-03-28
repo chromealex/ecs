@@ -4,12 +4,6 @@ namespace #NAMESPACE# {
     
     using TState = #STATENAME#;
     
-    public class #SCRIPTNAME# : IComponentSharedOnce<TState> {
-        
-        void IComponent<TState, SharedEntity>.CopyFrom(IComponent<TState, SharedEntity> other) {}
-        
-        void IPoolableRecycle.OnRecycle() {}
-
-    }
+    public class #SCRIPTNAME# : IComponentSharedOnce<TState> {}
     
 }

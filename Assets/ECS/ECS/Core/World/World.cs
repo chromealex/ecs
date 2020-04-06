@@ -641,7 +641,7 @@ namespace ME.ECS {
 
             }
 
-            if (this.sharedEntity.id == 0 && typeof(TEntity) == typeof(SharedEntity)) {
+            if (freeze == false && this.sharedEntity.id == 0 && typeof(TEntity) == typeof(SharedEntity)) {
                 
                 // Create shared entity which should store shared components
                 this.sharedEntity = this.AddEntity(new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);
@@ -725,7 +725,7 @@ namespace ME.ECS {
             var rnd = new Unity.Mathematics.Random(1u);
             state.randomState = rnd.state;
             #else
-            UnityEngine.Random.InitState(0);
+            UnityEngine.Random.InitState(1);
             state.randomState = UnityEngine.Random.state;
             #endif
 
@@ -774,6 +774,17 @@ namespace ME.ECS {
             }*/
 
             this.UpdateFilters(data);
+
+        }
+
+        public void UpdateAllFilters() {
+            
+            var filters = this.filtersStorage.GetData();
+            foreach (var filter in filters) {
+
+                filter.Update();
+
+            }
 
         }
 
@@ -862,7 +873,7 @@ namespace ME.ECS {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).Remove_INTERNAL(entity);
+                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnRemoveEntity(entity);
 
                 }
 
@@ -1249,6 +1260,12 @@ namespace ME.ECS {
             this.statesSystems.Add(ModuleState.AllActive);
             instance.OnConstruct();
 
+            if (instance is ISystemFilter<TState> systemFilter) {
+
+                systemFilter.filter = systemFilter.CreateFilter();
+
+            }
+
             return true;
 
         }
@@ -1484,17 +1501,25 @@ namespace ME.ECS {
 
         }
         #endif
-        
+
+        private Tick simulationStartTick;
+        public void SetFrameStartTick(Tick simulationStartTick) {
+
+            //UnityEngine.Debug.LogWarning("SetFrameStartTick: " + this.simulationStartTick);
+            this.simulationStartTick = simulationStartTick;
+
+        }
+
         public void Update(float deltaTime) {
 
             if (deltaTime < 0f) return;
-            
+
             #if CHECKPOINT_COLLECTOR
             if (this.checkpointCollector != null) this.checkpointCollector.Reset();
             #endif
 
             var state = this.GetState();
-            var prevTick = state.tick;
+            this.simulationStartTick = (state != null ? state.tick : Tick.Zero);
             
             // Setup current static variables
             WorldUtilities.SetWorld(this);
@@ -1514,9 +1539,9 @@ namespace ME.ECS {
             var jobHandle = job.Schedule(1, 64);
             jobHandle.Complete();
             #else
-            this.UpdateLogic(deltaTime, prevTick);
+            this.UpdateLogic(deltaTime, this.simulationStartTick);
             #endif
-            
+
             this.UpdateVisualPost(deltaTime);
             
             ////////////////
@@ -1535,7 +1560,8 @@ namespace ME.ECS {
             }
 
             var state = this.GetState();
-            
+
+            //UnityEngine.Debug.Log("Simulate " + from + " to " + to);
             var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
             for (Tick tick = from; tick < to; ++tick) {
 

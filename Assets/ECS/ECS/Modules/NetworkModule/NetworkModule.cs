@@ -35,6 +35,7 @@ namespace ME.ECS.Network {
 
     public interface ITransporter {
 
+        bool IsConnected();
         void Send(byte[] bytes);
         byte[] Receive();
         
@@ -335,6 +336,8 @@ namespace ME.ECS.Network {
             Key key;
             if (this.objectToKey.TryGetValue(instance, out key) == true) {
 
+                if (this.transporter.IsConnected() == false) return;
+                
                 var evt = new ME.ECS.StatesHistory.HistoryEvent();
                 evt.tick = this.world.GetStateTick() + 1UL;//this.world.GetCurrentTick() + 1UL; // Call RPC on next tick
                 evt.order = this.GetRPCOrder();
@@ -422,7 +425,7 @@ namespace ME.ECS.Network {
 
         void IModule<TState>.Update(TState state, float deltaTime) {
 
-            this.localOrderIndex = 0;
+            //this.localOrderIndex = 0;
 
             this.pingTime += deltaTime;
             if (this.pingTime >= 1f) {
@@ -445,16 +448,21 @@ namespace ME.ECS.Network {
                 
             }
             
-            if (this.transporter != null) {
+            if (this.transporter != null && this.serializer != null) {
 
-                var bytes = this.transporter.Receive();
-                if (bytes != null && bytes.Length > 0 && this.serializer != null) {
+                this.statesHistoryModule.BeginAddEvents();
+                byte[] bytes = null;
+                do {
+
+                    bytes = this.transporter.Receive();
+                    if (bytes == null) break;
+                    if (bytes.Length == 0) continue;
 
                     var evt = this.serializer.Deserialize(bytes);
                     if ((this.GetNetworkType() & NetworkType.RunLocal) != 0 && evt.order == this.GetRPCOrder()) {
 
                         // Skip events from local owner is it was run already
-                        return;
+                        continue;
 
                     }
 
@@ -475,7 +483,8 @@ namespace ME.ECS.Network {
                     this.syncedTick = st.tick;
                     this.syncHash = this.statesHistoryModule.GetStateHash(st);
 
-                }
+                } while (bytes != null);
+                this.statesHistoryModule.EndAddEvents();
 
             }
 

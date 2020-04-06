@@ -39,10 +39,11 @@ namespace ME.ECS.Views.Providers {
             base.DoValidate(reset);
             
             var filters = this.GetComponentsInChildren<UnityEngine.MeshFilter>(true);
+            var renderers = this.GetComponentsInChildren<UnityEngine.MeshRenderer>(true);
             var particleSystems = this.GetComponentsInChildren<UnityEngine.ParticleSystem>(true);
 
             if (this.data == null) this.data = new T();
-            this.data.OnValidate(this.transform.position, this.transform.rotation.eulerAngles, this.transform.localScale, filters, particleSystems, reset);
+            this.data.OnValidate(this.transform.position, this.transform.rotation.eulerAngles, this.transform.localScale, filters, renderers, particleSystems, reset);
             
         }
 

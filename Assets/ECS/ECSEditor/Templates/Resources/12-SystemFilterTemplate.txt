@@ -4,6 +4,7 @@ namespace #NAMESPACE# {
 
     using TState = #STATENAME#;
     using TEntity = YOUR_ENTITY_TYPE;
+    using Entities; using Components; using Modules; using Systems; using Features;
     
     public class #SCRIPTNAME# : ISystemFilter<TState> {
         

@@ -500,8 +500,7 @@ namespace ME.ECS.Views {
 
             this.UnRegister(instance);
 
-            IViewsProvider<TEntity> provider;
-            if (this.registryPrefabToProvider.TryGetValue(instance.prefabSourceId, out provider) == true) {
+            if (this.registryPrefabToProvider.TryGetValue(instance.prefabSourceId, out var provider) == true) {
 
                 provider.Destroy(ref instance);
                 
@@ -512,8 +511,7 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void DestroyAllViews(Entity entity) {
 
-            List<IView<TEntity>> list;
-            if (this.list.TryGetValue(entity.id, out list) == true) {
+            if (this.list.TryGetValue(entity.id, out var list) == true) {
 
                 for (int i = 0, count = list.Count; i < count; ++i) {
                     
@@ -529,8 +527,7 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public IView<TEntity> GetViewSource(ViewId viewSourceId) {
 
-            IView<TEntity> prefab;
-            if (this.registryIdToPrefab.TryGetValue(viewSourceId, out prefab) == true) {
+            if (this.registryIdToPrefab.TryGetValue(viewSourceId, out var prefab) == true) {
 
                 return prefab;
 
@@ -543,8 +540,7 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId GetViewSourceId(IView<TEntity> prefab) {
 
-            ViewId viewId;
-            if (this.registryPrefabToId.TryGetValue(prefab, out viewId) == true) {
+            if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
 
                 return viewId;
 
@@ -562,8 +558,7 @@ namespace ME.ECS.Views {
 
             }
 
-            ViewId viewId;
-            if (this.registryPrefabToId.TryGetValue(prefab, out viewId) == true) {
+            if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
 
                 return viewId;
 
@@ -590,8 +585,7 @@ namespace ME.ECS.Views {
 
             }
 
-            ViewId viewId;
-            if (this.registryPrefabToId.TryGetValue(prefab, out viewId) == true) {
+            if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
 
                 var provider = this.registryPrefabToProvider[viewId];
                 provider.OnDeconstruct();
@@ -610,8 +604,7 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Register(IView<TEntity> instance) {
 
-            List<IView<TEntity>> list;
-            if (this.list.TryGetValue(instance.entity.id, out list) == true) {
+            if (this.list.TryGetValue(instance.entity.id, out var list) == true) {
                 
                 list.Add(instance);
                 
@@ -623,10 +616,11 @@ namespace ME.ECS.Views {
                 
             }
 
-            var viewInfo = new ViewInfo();
-            viewInfo.entity = instance.entity;
-            viewInfo.prefabSourceId = instance.prefabSourceId;
-            viewInfo.creationTick = instance.creationTick;
+            var viewInfo = new ViewInfo {
+                entity = instance.entity,
+                prefabSourceId = instance.prefabSourceId,
+                creationTick = instance.creationTick
+            };
             this.rendering.Add(viewInfo);
 
             instance.OnInitialize(this.GetData(instance));
@@ -647,8 +641,7 @@ namespace ME.ECS.Views {
 
             if (removeFromList == true) {
 
-                List<IView<TEntity>> list;
-                if (this.list.TryGetValue(instance.entity.id, out list) == true) {
+                if (this.list.TryGetValue(instance.entity.id, out var list) == true) {
 
                     list.Remove(instance);
 
@@ -656,18 +649,19 @@ namespace ME.ECS.Views {
 
             }
 
-            var viewInfo = new ViewInfo();
-            viewInfo.entity = instance.entity;
-            viewInfo.prefabSourceId = instance.prefabSourceId;
-            viewInfo.creationTick = instance.creationTick;
+            var viewInfo = new ViewInfo {
+                entity = instance.entity,
+                prefabSourceId = instance.prefabSourceId,
+                creationTick = instance.creationTick
+            };
             return this.rendering.Remove(viewInfo);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private TEntity GetData(IViewBase view) {
-            
-            TEntity data;
-            if (this.world.GetEntityData(view.entity, out data) == true) {
+
+            if (this.world.GetEntityData(view.entity, out TEntity data) == true) {
 
                 return data;
 
@@ -678,13 +672,6 @@ namespace ME.ECS.Views {
         }
 
         void IModule<TState>.AdvanceTick(TState state, float deltaTime) {}
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private bool IsRenderingNow(in ViewInfo viewInfo) {
-
-            return this.rendering.Contains(viewInfo);
-
-        }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void CreateVisualInstance(in TEntity data, in uint seed, in ViewInfo viewInfo) {
@@ -699,13 +686,77 @@ namespace ME.ECS.Views {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private bool IsRenderingNow(in ViewInfo viewInfo) {
+
+            return this.rendering.Contains(viewInfo);
+
+        }
+
+        private HashSet<ViewInfo> prevList = new HashSet<ViewInfo>();
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void UpdateRequests() {
             
             var aliveEntities = PoolHashSet<EntityId>.Spawn(ViewsModule<TState, TEntity>.INTERNAL_ENTITIES_CACHE_CAPACITY);
-            RefList<TEntity> allEntities;
-            if (this.world.ForEachEntity(out allEntities) == true) {
+            if (this.world.ForEachEntity(out RefList<TEntity> allEntities) == true) {
 
                 for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
+
+                    if (allEntities.IsFree(j) == true) continue;
+                    ref var item = ref allEntities[j];
+
+                    aliveEntities.Add(item.entity.id);
+                    
+                    var allViews = this.world.ForEachComponent<TEntity, ViewComponent<TState, TEntity>>(item.entity);
+                    if (allViews != null) {
+
+                        // Comparing current state views to current rendering
+                        foreach (var viewComponent in allViews) {
+
+                            var view = (ViewComponent<TState, TEntity>)viewComponent;
+                            if (this.IsRenderingNow(in view.viewInfo) == true) {
+                                
+                                // is rendering now
+                                //this.prevList.Add(view.viewInfo);
+
+                            } else {
+                                
+                                // is not rendering now
+                                // create required instance
+                                this.CreateVisualInstance(in item, in view.seed, in view.viewInfo);
+                                
+                            }
+
+                        }
+
+                    }
+
+                }
+                
+            }
+            
+            foreach (var item in this.list) {
+
+                if (aliveEntities.Contains(item.Key) == false) {
+
+                    var list = item.Value;
+                    for (int i = 0, count = list.Count; i < count; ++i) {
+
+                        var instance = list[i];
+                        this.RecycleView_INTERNAL(ref instance);
+                        --i;
+                        --count;
+
+                    }
+
+                    list.Clear();
+
+                }
+
+            }
+
+            {
+                
+                /*for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
 
                     // For each entity in state
                     ref var item = ref allEntities[j];
@@ -759,13 +810,12 @@ namespace ME.ECS.Views {
 
                     }
 
-                }
+                }*/
 
             }
-            
             // Iterate all current view instances
             // Search for views that doesn't represent any entity and destroy them
-            foreach (var item in this.list) {
+            /*foreach (var item in this.list) {
 
                 if (aliveEntities.Contains(item.Key) == false) {
 
@@ -783,7 +833,7 @@ namespace ME.ECS.Views {
 
                 }
 
-            }
+            }*/
             
             PoolHashSet<EntityId>.Recycle(ref aliveEntities);
             

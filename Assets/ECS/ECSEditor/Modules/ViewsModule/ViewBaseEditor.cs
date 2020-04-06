@@ -43,9 +43,10 @@ namespace ME.ECSEditor {
                 foreach (var target in targets) {
                     
                     ((IDoValidate)target).DoValidate();
-                    
+                    UnityEditor.EditorUtility.SetDirty(target);
+    
                 }
-
+                
             }
 
             UnityEngine.GUILayout.FlexibleSpace();

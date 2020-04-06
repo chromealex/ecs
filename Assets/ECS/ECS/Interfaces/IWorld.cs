@@ -22,12 +22,15 @@ namespace ME.ECS {
 
         int GetStateHash();
 
+        void SetFrameStartTick(Tick simulationStartTick);
         Tick GetStateTick();
         void SetTickTime(float tickTime);
         float GetTickTime();
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
 
+        void UpdateAllFilters();
+        
         bool HasResetState();
         void SaveResetState();
         

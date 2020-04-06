@@ -1,6 +1,7 @@
 #if STATES_HISTORY_MODULE_SUPPORT
 namespace ME.ECSEditor {
 
+    using ME.ECS;
     using ME.ECS.StatesHistory;
     
     [CustomEditor(typeof(IStatesHistoryModuleBase))]
@@ -22,7 +23,18 @@ namespace ME.ECSEditor {
             
             UnityEngine.GUILayout.Label("<b>Events:</b> " + dataCount.ToString(), style);
             UnityEngine.GUILayout.Label("<b>Events Added:</b> " + this.target.GetEventsAddedCount().ToString(), style);
-            
+            UnityEngine.GUILayout.Label("<b>Events Played:</b> " + this.target.GetEventsPlayedCount().ToString(), style);
+
+            var dataStates = this.target.GetDataStates();
+            var entries = dataStates.GetEntries();
+            foreach (var entryData in entries) {
+
+                var entry = entryData as ME.ECS.Network.IStatesHistoryEntry;
+                var state = entry.GetData() as IStateBase;
+                UnityEngine.GUILayout.Label("Tick: " + state.tick + ", State: " + state.entityId + ", Hash: " + state.GetHash());
+                
+            }
+
         }
 
     }

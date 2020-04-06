@@ -124,10 +124,11 @@ namespace ME.ECS.Views.Providers {
             UnityEngine.Vector3 rootRotation,
             UnityEngine.Vector3 rootScale,
             UnityEngine.MeshFilter[] filters,
+            UnityEngine.Renderer[] renderers,
             UnityEngine.ParticleSystem[] particleSystems,
             bool reset) {
 
-            if (this.items.Length != filters.Length + particleSystems.Length) {
+            if (this.items == null || this.items.Length != filters.Length + particleSystems.Length) {
 
                 reset = true;
 
@@ -151,6 +152,7 @@ namespace ME.ECS.Views.Providers {
                     itemData.material = tr.GetComponent<UnityEngine.Renderer>().sharedMaterial;
                     itemData.mesh = filters[i].sharedMesh;
                     itemData.meshFilter = filters[i];
+                    itemData.meshRenderer = renderers[i];
                     itemData.localPosition = tr.position - rootPosition;
                     itemData.localRotation = tr.rotation.eulerAngles - rootRotation;
                     itemData.localScale = UnityEngine.Vector3.Scale(tr.lossyScale, new UnityEngine.Vector3(1f / rootScale.x, 1f / rootScale.y, 1f / rootScale.z));
@@ -224,6 +226,7 @@ namespace ME.ECS.Views.Providers {
         public ParticleSystemSimulationItem psSimulation;
         public UnityEngine.ParticleSystem psSource;
         public UnityEngine.Mesh mesh;
+        public UnityEngine.Renderer meshRenderer;
         public UnityEngine.MeshFilter meshFilter;
         public UnityEngine.Material material;
         public UnityEngine.Vector3 localPosition;
@@ -257,7 +260,9 @@ namespace ME.ECS.Views.Providers {
 
             }
 
-            return MathUtils.GetKey(this.material.GetInstanceID(), (this.mesh != null ? this.mesh.GetInstanceID() : this.meshFilter.GetInstanceID()));
+            var shadowCastingMode = (this.meshRenderer != null ? this.meshRenderer.shadowCastingMode : UnityEngine.Rendering.ShadowCastingMode.Off);
+            var receiveShadows = (this.meshRenderer != null ? (this.meshRenderer.receiveShadows == true ? 1 : 0) : 0);
+            return MathUtils.GetKey(this.material.GetInstanceID(), (this.mesh != null ? this.mesh.GetInstanceID() : this.meshFilter.GetInstanceID())) ^ (int)shadowCastingMode ^ receiveShadows;
             
         }
 
@@ -385,6 +390,9 @@ namespace ME.ECS.Views.Providers {
             particleSystemRenderer = particleSystem.GetComponent<UnityEngine.ParticleSystemRenderer>();
             particleSystemRenderer.alignment = UnityEngine.ParticleSystemRenderSpace.World;
                     
+            particleSystemRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            particleSystemRenderer.receiveShadows = true;
+            
             //particleSystem.Play(true);
 
         }

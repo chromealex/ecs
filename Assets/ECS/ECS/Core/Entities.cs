@@ -13,6 +13,30 @@
 
     }
 
+    public static class EntityExtensions {
+
+        public static TComponent GetComponent<TState, TEntity, TComponent>(this Entity entity)
+            where TState : class, IState<TState>, new()
+            where TEntity : struct, IEntity
+            where TComponent : class, IComponent<TState, TEntity>
+        {
+        
+            return Worlds<TState>.currentWorld.GetComponent<TEntity, TComponent>(entity);
+            
+        }
+
+        public static TComponent GetComponent<TState, TEntity, TComponent>(this TEntity entity)
+            where TState : class, IState<TState>, new()
+            where TEntity : struct, IEntity
+            where TComponent : class, IComponent<TState, TEntity>
+        {
+        
+            return Worlds<TState>.currentWorld.GetComponent<TEntity, TComponent>(entity.entity);
+            
+        }
+
+    }
+
     [System.Serializable]
     public struct Entity : System.IEquatable<Entity> {
 

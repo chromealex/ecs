@@ -72,142 +72,8 @@ namespace ME.ECS {
 
 namespace ME.ECS.StatesHistory {
 
-    #if ECS_COMPILE_IL2CPP_OPTIONS
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-    #endif
-    public class CircularQueue<TState> where TState : class, IState<TState>, new() {
-
-        private Dictionary<Tick, TState> data;
-        private readonly uint capacity;
-        private readonly uint ticksPerState;
-        private bool beginSet;
-
-        public CircularQueue(uint ticksPerState, uint capacity) {
-
-            this.data = PoolDictionary<Tick, TState>.Spawn((int)capacity);
-            this.capacity = capacity;
-            this.ticksPerState = ticksPerState;
-            this.beginSet = false;
-
-        }
-
-        public void Recycle() {
-
-            foreach (var item in this.data) {
-
-                var st = item.Value;
-                WorldUtilities.ReleaseState(ref st);
-                
-            }
-            
-            PoolDictionary<Tick, TState>.Recycle(ref this.data);
-
-        }
-
-        public TState Get(Tick tick) {
-
-            Tick nearestTick = tick - tick % this.ticksPerState;
-            TState state;
-            if (this.data.TryGetValue(nearestTick, out state) == true) {
-
-                return state;
-
-            }
-
-            return default;
-
-        }
-
-        public void BeginSet() {
-
-            this.beginSet = true;
-
-        }
-
-        public void EndSet() {
-            
-            this.beginSet = false;
-            
-        }
-
-        private void RemoveAllTillTick(Tick tick) {
-            
-            // Remove all records after this tick
-            var dic = PoolDictionary<Tick, TState>.Spawn((int)this.capacity);
-            foreach (var item in this.data) {
-
-                if (item.Key < tick) {
-                    
-                    dic.Add(item.Key, item.Value);
-                    
-                } else {
-
-                    var st = item.Value;
-                    WorldUtilities.ReleaseState(ref st);
-                    
-                }
-
-            }
-            this.data.Clear();
-            PoolDictionary<Tick, TState>.Recycle(ref this.data);
-            this.data = dic;
-
-        }
-
-        public void Set(Tick tick, TState data) {
-
-            TState result;
-            
-            this.RemoveAllTillTick(tick);
-
-            // Remove oldest state
-            var nearestTick = (long)(tick - tick % this.ticksPerState);
-            var oldestTick = nearestTick - this.ticksPerState * this.capacity;
-            if (oldestTick < 0L) oldestTick = 0L;
-            if (oldestTick >= 0L) {
-
-                var key = (Tick)oldestTick;
-                if (this.data.TryGetValue(key, out result) == true) {
-
-                    // we've found oldest-tick record - need to remove it
-                    WorldUtilities.ReleaseState(ref result);
-                    this.data.Remove(key);
-
-                }
-
-            }
-
-            //
-            var searchTick = (Tick)nearestTick;
-            if (this.data.TryGetValue(searchTick, out result) == true) {
-
-                this.data[searchTick] = data;
-                WorldUtilities.ReleaseState(ref result);
-                return;
-
-            } else {
-                
-                this.data.Add(searchTick, data);
-                
-            }
-
-            if (this.beginSet == false && this.data.Count > this.capacity) {
-
-                throw new OutOfBoundsException("CircularQueue is out of bounds."+
-                                               " Count: " + this.data.Count.ToString() +
-                                               ", Capacity: " + this.capacity.ToString() +
-                                               ", SourceTick: " + tick.ToString() +
-                                               ", NearestTick: " + nearestTick.ToString() +
-                                               ", OldestTick: " + oldestTick.ToString());
-                
-            }
-
-        }
-        
-    }
-
+    using ME.ECS.Collections;
+    
     [System.Serializable]
     public struct HistoryEvent {
 
@@ -261,26 +127,13 @@ namespace ME.ECS.StatesHistory {
 
     }
 
-    public class OutOfBoundsException : System.Exception {
-
-        public OutOfBoundsException() : base("ME.ECS Exception") { }
-        public OutOfBoundsException(string message) : base(message) { }
-
-    }
-    
-    public class StateNotFoundException : System.Exception {
-
-        public StateNotFoundException() : base("ME.ECS Exception") { }
-        public StateNotFoundException(string message) : base(message) { }
-
-    }
-
     public interface IStatesHistoryModuleBase {
 
         void BeginAddEvents();
         void EndAddEvents();
 
         System.Collections.IDictionary GetData();
+        ME.ECS.Network.IStatesHistory GetDataStates();
 
         Tick GetTick();
         void SetTick(Tick tick);
@@ -295,6 +148,7 @@ namespace ME.ECS.StatesHistory {
         void SetSyncHash(Tick tick, int hash);
 
         int GetEventsAddedCount();
+        int GetEventsPlayedCount();
 
     }
 
@@ -325,23 +179,27 @@ namespace ME.ECS.StatesHistory {
         private const uint DEFAULT_QUEUE_CAPACITY = 10u;
         private const uint DEFAULT_TICKS_PER_STATE = 100u;
         
-        private CircularQueue<TState> states;
+        //private StatesCircularQueue<TState> states;
+        private ME.ECS.Network.StatesHistory<TState> statesHistory;
         private Dictionary<Tick, SortedList<long, HistoryEvent>> events;
         private Dictionary<Tick, int> syncHash;
         private Tick currentTick;
         private Tick maxTick;
         private bool prewarmed;
         private Tick beginAddEventsTick;
+        private int beginAddEventsCount;
         private bool beginAddEvents;
         private IEventRunner eventRunner;
 
         private int statEventsAdded;
+        private int statPlayedEvents;
 
         public IWorld<TState> world { get; set; }
 
         void IModuleBase.OnConstruct() {
             
-            this.states = new CircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
+            this.statesHistory = new ME.ECS.Network.StatesHistory<TState>(this.world, this.GetQueueCapacity());
+            //this.states = new StatesCircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
             this.events = PoolDictionary<Tick, SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
             this.syncHash = PoolDictionary<Tick, int>.Spawn(StatesHistoryModule<TState>.POOL_SYNCHASH_CAPACITY);
             PoolSortedList<int, HistoryEvent>.Prewarm(StatesHistoryModule<TState>.POOL_HISTORY_SIZE, StatesHistoryModule<TState>.POOL_HISTORY_CAPACITY);
@@ -351,6 +209,8 @@ namespace ME.ECS.StatesHistory {
         }
 
         void IModuleBase.OnDeconstruct() {
+            
+            this.statesHistory.DiscardAll();
             
             this.world.SetStatesHistoryModule(null);
             
@@ -368,8 +228,8 @@ namespace ME.ECS.StatesHistory {
             PoolDictionary<Tick, SortedList<long, HistoryEvent>>.Recycle(ref this.events);
             PoolDictionary<Tick, int>.Recycle(ref this.syncHash);
 
-            this.states.Recycle();
-            this.states = null;
+            //this.states.Recycle();
+            //this.states = null;
 
         }
 
@@ -401,19 +261,26 @@ namespace ME.ECS.StatesHistory {
 
         }
 
+        public int GetEventsPlayedCount() {
+
+            return this.statPlayedEvents;
+
+        }
+
         public void BeginAddEvents() {
 
-            this.beginAddEventsTick = 0UL;
+            this.beginAddEventsCount = 0;
+            this.beginAddEventsTick = this.currentTick;
             this.beginAddEvents = true;
 
         }
 
         public void EndAddEvents() {
 
-            if (this.beginAddEvents == true) {
+            if (this.beginAddEvents == true && this.beginAddEventsCount > 0) {
                 
-                this.world.Simulate(this.beginAddEventsTick, this.currentTick);
-                
+                this.Simulate(this.beginAddEventsTick, this.currentTick);
+
             }
             
             this.beginAddEvents = false;
@@ -434,10 +301,10 @@ namespace ME.ECS.StatesHistory {
             
             this.ValidatePrewarm();
 
-            if (historyEvent.tick <= 0UL) {
+            if (historyEvent.tick <= Tick.Zero) {
 
                 // Tick fix if it is zero
-                historyEvent.tick = 1UL;
+                historyEvent.tick = Tick.One;
 
             }
 
@@ -456,61 +323,47 @@ namespace ME.ECS.StatesHistory {
 
             if (this.currentTick >= historyEvent.tick) {
 
-                this.Simulate(historyEvent.tick, this.currentTick);
-                
+                if (this.beginAddEvents == false) {
+
+                    this.Simulate(historyEvent.tick, this.currentTick);
+
+                } else {
+
+                    ++this.beginAddEventsCount;
+                    if (this.beginAddEventsTick > historyEvent.tick) {
+
+                        this.beginAddEventsTick = historyEvent.tick;
+
+                    }
+
+                }
+
             }
 
         }
 
         public void Simulate(Tick currentTick, Tick targetTick) {
-            
-            var searchTick = currentTick - 1;
-            var historyState = this.GetStateBeforeTick(searchTick);
+
+            TState state;
+            var historyState = this.GetStateBeforeTick(currentTick);
             if (historyState != null) {
                 
                 // State found - simulate from this state to current tick
-                this.world.GetState().CopyFrom(historyState);
-                //this.world.GetState().tick = tick;
-                if (this.beginAddEvents == false) {
-                        
-                    //this.world.SetPreviousTick(historyState.tick);
-                    this.world.Simulate(historyState.tick, targetTick);
-
-                } else {
-
-                    if (this.beginAddEventsTick > historyState.tick) {
-
-                        this.beginAddEventsTick = historyState.tick;
-
-                    }
-
-                }
-
+                state = historyState;
+                
             } else {
                 
                 // Previous state was not found - need to rewind from initial state
-                var resetState = this.world.GetResetState();
-                this.world.GetState().CopyFrom(resetState);
-                //this.world.GetState().tick = tick;
-                if (this.beginAddEvents == false) {
-                        
-                    //this.world.SetPreviousTick(resetState.tick);
-                    this.world.Simulate(resetState.tick, targetTick);
-                        
-                } else {
-                    
-                    if (this.beginAddEventsTick > resetState.tick) {
-
-                        this.beginAddEventsTick = resetState.tick;
-
-                    }
-
-                }
-
-                //throw new StateNotFoundException("Tick: " + searchTick);
-
+                state = this.world.GetResetState();
+                this.statPlayedEvents = 0;
+                
             }
             
+            this.world.GetState().CopyFrom(state);
+            this.world.GetState().tick = targetTick;
+            this.world.Simulate(state.tick, targetTick);
+            this.world.SetFrameStartTick(targetTick);
+
         }
 
         public void SetSyncHash(Tick tick, int hash) {
@@ -546,10 +399,16 @@ namespace ME.ECS.StatesHistory {
         public TState GetStateBeforeTick(Tick tick) {
 
             this.ValidatePrewarm();
-            
+
+            if (this.statesHistory.FindClosestEntry(tick, out var state) == true) {
+
+                return state;
+
+            }
+
             //TState state = default;
             //var minDelta = long.MaxValue;
-            var state = this.states.Get(tick);
+            //var state = this.states.GetBefore(tick);
             /*for (int i = 0; i < arr.Length; ++i) {
 
                 var item = arr[i];
@@ -568,7 +427,7 @@ namespace ME.ECS.StatesHistory {
 
             }*/
 
-            return state;
+            return default;
 
         }
 
@@ -641,6 +500,12 @@ namespace ME.ECS.StatesHistory {
 
         }
 
+        public ME.ECS.Network.IStatesHistory GetDataStates() {
+
+            return this.statesHistory;
+
+        }
+
         public System.Collections.IDictionary GetData() {
 
             return this.events;
@@ -648,8 +513,14 @@ namespace ME.ECS.StatesHistory {
         }
 
         public void RunEvent(HistoryEvent historyEvent) {
+
+            if (historyEvent.storeInHistory == true) {
+                
+                ++this.statPlayedEvents;
+                //UnityEngine.Debug.LogError("Run event tick: " + historyEvent.tick + ", method: " + historyEvent.localOrder + ", currentTick: " + this.currentTick);
+                
+            }
             
-            //UnityEngine.Debug.LogError("Run event tick: " + historyEvent.tick + ", method: " + historyEvent.id);
             if (this.eventRunner != null) this.eventRunner.RunEvent(historyEvent);
             
         }
@@ -667,13 +538,13 @@ namespace ME.ECS.StatesHistory {
 
         private void Prewarm() {
 
-            this.states.BeginSet();
+            /*this.states.BeginSet();
             for (uint i = 0; i < this.GetQueueCapacity(); ++i) {
                 
                 this.StoreState(i * this.GetTicksPerState(), isPrewarm: true);
                 
             }
-            this.states.EndSet();
+            this.states.EndSet();*/
 
         }
 
@@ -691,13 +562,15 @@ namespace ME.ECS.StatesHistory {
             }*/
 
             {
-                var newState = WorldUtilities.CreateState<TState>();
-                newState.Initialize(this.world, freeze: true, restore: false);
-                var state = this.world.GetState();
+                //var newState = WorldUtilities.CreateState<TState>();
+                //newState.Initialize(this.world, freeze: true, restore: false);
+                /*var state = this.world.GetState();
                 newState.CopyFrom(state);
                 newState.tick = tick;
+                this.states.Set(tick, newState);*/
 
-                this.states.Set(tick, newState);
+                this.statesHistory.Store(tick, this.world.GetState());
+
             }
 
         }

@@ -11,7 +11,7 @@ namespace ME.ECS {
     
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct ViewId : IComparable, IConvertible, IFormattable, IComparable<TType>, IEquatable<TType>, ISerializable {
+    public readonly struct ViewId : IComparable, IConvertible, IFormattable, IComparable<TName>, IEquatable<TName>, ISerializable {
 
         public readonly TType v; // Do not rename (binary serialization)
 
@@ -44,35 +44,17 @@ namespace ME.ECS {
         // If object is not of type Int32, this method throws an ArgumentException.
         // 
         public int CompareTo(Object value) {
-            if (value == null) {
-                return 1;
-            }
-
-            if (value is TName i) {
-                // NOTE: Cannot use return (_value - value) as this causes a wrap
-                // around in cases where _value - value > MaxValue.
-                if (this.v < i) {
-                    return -1;
-                }
-
-                if (this.v > i) {
-                    return 1;
-                }
-
-                return 0;
-            }
-
-            throw new ArgumentException("Arg_MustBeInt32");
+            throw new AllocationException();
         }
 
-        public int CompareTo(TType value) {
+        public int CompareTo(TName value) {
             // NOTE: Cannot use return (_value - value) as this causes a wrap
             // around in cases where _value - value > MaxValue.
-            if (this.v < value) {
+            if (this.v < value.v) {
                 return -1;
             }
 
-            if (this.v > value) {
+            if (this.v > value.v) {
                 return 1;
             }
 
@@ -80,15 +62,11 @@ namespace ME.ECS {
         }
 
         public override bool Equals(Object obj) {
-            if (!(obj is TName)) {
-                return false;
-            }
-
-            return this.v == ((TName)obj).v;
+            throw new AllocationException();
         }
 
-        public bool Equals(TType obj) {
-            return this.v == obj;
+        public bool Equals(TName obj) {
+            return this.v == obj.v;
         }
 
         // The absolute value of the int contained.

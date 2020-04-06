@@ -12,9 +12,11 @@ namespace ME.ECS {
         bool CheckRemove(Entity entity);
         bool OnAddComponent(Entity entity);
         bool OnRemoveComponent(Entity entity);
+        bool OnRemoveEntity(Entity entity);
 
         HashSetCopyable<Entity> GetData();
         HashSet<Entity> GetRequests();
+        HashSet<Entity> GetRequestsRemoveEntity();
         bool forEachMode { get; set; }
         void Add_INTERNAL(Entity entity);
         bool Remove_INTERNAL(Entity entity);
@@ -29,7 +31,10 @@ namespace ME.ECS {
         void Recycle();
         IFilterBase Clone();
         void CopyFrom(IFilterBase other);
+        void Update();
 
+        HashSetCopyable<Entity> GetData();
+        
     }
 
     public interface IFilterNode {
@@ -42,7 +47,6 @@ namespace ME.ECS {
 
         bool Contains(Entity entity);
         
-        HashSetCopyable<Entity> GetData();
         new FilterEnumerator<TState> GetEnumerator();
 
     }
@@ -152,7 +156,7 @@ namespace ME.ECS {
 
             if (this.freeze == true) {
 
-                // Just copy is filters storage is in freeze mode
+                // Just copy if filters storage is in freeze mode
                 if (this.filters == null) {
 
                     this.filters = PoolList<IFilterBase>.Spawn(other.filters.Count);
@@ -205,14 +209,28 @@ namespace ME.ECS {
 
             this.set.forEachMode = false;
 
-            var requests = this.set.GetRequests();
-            foreach (var entity in requests) {
+            {
+                var requests = this.set.GetRequests();
+                foreach (var entity in requests) {
 
-                this.set.OnUpdate(entity);
+                    this.set.OnUpdate(entity);
 
+                }
+
+                requests.Clear();
             }
-            requests.Clear();
 
+            {
+                var requests = this.set.GetRequestsRemoveEntity();
+                foreach (var entity in requests) {
+
+                    this.set.Remove_INTERNAL(entity);
+
+                }
+
+                requests.Clear();
+            }
+            
         }
  
         public bool MoveNext() {
@@ -259,6 +277,23 @@ namespace ME.ECS {
             
         }
 
+        public void Update() {
+
+            if (Worlds<TState>.currentWorld.ForEachEntity(out RefList<TEntity> list) == true) {
+
+                for (int i = list.FromIndex; i < list.SizeCount; ++i) {
+
+                    var entity = list[i];
+                    if (list.IsFree(i) == true) continue;
+                    
+                    ((IFilterInternal<TState>)this).OnUpdate(entity.entity);
+
+                }
+
+            }
+
+        }
+
         public IFilterBase Clone() {
 
             var instance = PoolFilters.Spawn<Filter<TState, TEntity>>();
@@ -298,6 +333,7 @@ namespace ME.ECS {
         private HashSetCopyable<Entity> data;
         bool IFilterInternal<TState>.forEachMode { get; set; }
         private HashSet<Entity> requests;
+        private HashSet<Entity> requestsRemoveEntity;
         
         private List<IFilterNode> tempNodes;
         private List<IFilterNode> tempNodesCustom;
@@ -305,6 +341,7 @@ namespace ME.ECS {
         void IPoolableSpawn.OnSpawn() {
 
             this.requests = PoolHashSet<Entity>.Spawn(Filter<TState, TEntity>.REQUESTS_CAPACITY);
+            this.requestsRemoveEntity = PoolHashSet<Entity>.Spawn(Filter<TState, TEntity>.REQUESTS_CAPACITY);
             this.nodes = PoolArray<IFilterNode>.Spawn(Filter<TState, TEntity>.NODES_CAPACITY);
             this.data = PoolHashSetCopyable<Entity>.Spawn();
             this.dataContains = PoolHashSetCopyable<EntityId>.Spawn();
@@ -313,10 +350,11 @@ namespace ME.ECS {
 
         void IPoolableRecycle.OnRecycle() {
             
-            PoolHashSet<Entity>.Recycle(ref this.requests);
-            PoolArray<IFilterNode>.Recycle(ref this.nodes);
-            PoolHashSetCopyable<Entity>.Recycle(ref this.data);
             PoolHashSetCopyable<EntityId>.Recycle(ref this.dataContains);
+            PoolHashSetCopyable<Entity>.Recycle(ref this.data);
+            PoolArray<IFilterNode>.Recycle(ref this.nodes);
+            PoolHashSet<Entity>.Recycle(ref this.requestsRemoveEntity);
+            PoolHashSet<Entity>.Recycle(ref this.requests);
             
         }
 
@@ -360,6 +398,12 @@ namespace ME.ECS {
         HashSet<Entity> IFilterInternal<TState>.GetRequests() {
 
             return this.requests;
+
+        }
+
+        HashSet<Entity> IFilterInternal<TState>.GetRequestsRemoveEntity() {
+
+            return this.requestsRemoveEntity;
 
         }
 
@@ -443,6 +487,20 @@ namespace ME.ECS {
         bool IFilterInternal<TState>.OnRemoveComponent(Entity entity) {
 
             return ((IFilterInternal<TState>)this).OnUpdate(entity);
+
+        }
+
+        bool IFilterInternal<TState>.OnRemoveEntity(Entity entity) {
+            
+            var cast = (IFilterInternal<TState>)this;
+            if (cast.forEachMode == true) {
+
+                if (this.requestsRemoveEntity.Contains(entity) == false) this.requestsRemoveEntity.Add(entity);
+                return false;
+
+            }
+
+            return ((IFilterInternal<TState>)this).Remove_INTERNAL(entity);
 
         }
 

@@ -11,8 +11,10 @@ namespace ME.ECS {
     
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct Tick : IComparable, IConvertible, IFormattable, IComparable<TType>, IEquatable<TType>, ISerializable {
+    public readonly struct Tick : IComparable, IConvertible, IFormattable, IComparable<TName>, IEquatable<TName>, ISerializable {
 
+        public static readonly Tick Zero = 0UL;
+        public static readonly Tick One = 1UL;
         public static readonly Tick MinValue = 0UL;
         public static readonly Tick MaxValue = ulong.MaxValue;
         
@@ -47,35 +49,17 @@ namespace ME.ECS {
         // If object is not of type Int32, this method throws an ArgumentException.
         // 
         public int CompareTo(Object value) {
-            if (value == null) {
-                return 1;
-            }
-
-            if (value is TName i) {
-                // NOTE: Cannot use return (_value - value) as this causes a wrap
-                // around in cases where _value - value > MaxValue.
-                if (this.v < i) {
-                    return -1;
-                }
-
-                if (this.v > i) {
-                    return 1;
-                }
-
-                return 0;
-            }
-
-            throw new ArgumentException("Arg_MustBeInt32");
+            throw new AllocationException();
         }
 
-        public int CompareTo(TType value) {
+        public int CompareTo(TName value) {
             // NOTE: Cannot use return (_value - value) as this causes a wrap
             // around in cases where _value - value > MaxValue.
-            if (this.v < value) {
+            if (this.v < value.v) {
                 return -1;
             }
 
-            if (this.v > value) {
+            if (this.v > value.v) {
                 return 1;
             }
 
@@ -83,15 +67,11 @@ namespace ME.ECS {
         }
 
         public override bool Equals(Object obj) {
-            if (!(obj is TName)) {
-                return false;
-            }
-
-            return this.v == ((TName)obj).v;
+            throw new AllocationException();
         }
 
-        public bool Equals(TType obj) {
-            return this.v == obj;
+        public bool Equals(TName obj) {
+            return this.v == obj.v;
         }
 
         // The absolute value of the int contained.
@@ -129,6 +109,36 @@ namespace ME.ECS {
             var r = TType.TryParse(s, style, NumberFormatInfo.GetInstance(provider), out var res);
             result = res;
             return r;
+        }
+
+        public static TName operator -(TName value, TName value2) {
+
+            return (TType)value - (TType)value2;
+
+        }
+
+        public static TName operator +(TName value, TName value2) {
+
+            return (TType)value + (TType)value2;
+
+        }
+
+        public static TName operator %(TName value, TName value2) {
+
+            return (TType)value % (TType)value2;
+
+        }
+
+        public static TName operator *(TName value, TName value2) {
+
+            return (TType)value * (TType)value2;
+
+        }
+
+        public static TName operator /(TName value, TName value2) {
+
+            return (TType)value / (TType)value2;
+
         }
 
         public static implicit operator TType(TName value) {

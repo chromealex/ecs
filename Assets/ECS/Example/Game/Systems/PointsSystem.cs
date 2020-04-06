@@ -17,14 +17,17 @@ namespace ME.Example.Game.Systems {
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<TState, TEntity>.Create("Filter-PointsSystemFilter").Push();
+            return Filter<TState, TEntity>.Create("Filter-PointsSystemFilter").WithComponent<PointAddPositionDelta>().Push();
             
         }
 
         void ISystemFilter<TState>.AdvanceTick(Entity entity, TState state, float deltaTime) {
             
             ref var data = ref this.world.GetEntityDataRef<TEntity>(entity);
-            this.world.RunComponents(ref data, deltaTime, 0);
+            var positionDelta = entity.GetComponent<TState, TEntity, PointAddPositionDelta>().positionDelta;
+            data.position += positionDelta;// * deltaTime;
+            this.world.RemoveComponents<TEntity, PointAddPositionDelta>(entity);
+            //this.world.RunComponents(ref data, deltaTime, 0);
 
         }
 

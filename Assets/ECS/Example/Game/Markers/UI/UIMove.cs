@@ -9,7 +9,7 @@ namespace ME.Example.Game.Components.UI {
 
         public int pointId;
         public Color color;
-        public float moveSide;
+        public Vector2 moveSide;
 
     }
 

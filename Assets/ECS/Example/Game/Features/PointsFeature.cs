@@ -19,8 +19,24 @@ namespace ME.Example.Game.Features {
             parameters.p1 = p1;
             parameters.p2 = p2;
             
-            this.AddSystem<PointsSystem>();
+            {
+                var entity = this.world.AddEntity(new PlayerZone() { position = this.world.GetState().worldPosition + parameters.zone1Position, scale = parameters.zone1Scale, color = parameters.playersColor[Game.Repeat(1, parameters.playersColor.Length)] });
+                this.world.InstantiateView<PlayerZone>(parameters.playerZoneViewSourceId, entity);
+                
+                entity = this.world.AddEntity(new PlayerZone() { position = this.world.GetState().worldPosition + parameters.zone2Position, scale = parameters.zone2Scale, color = parameters.playersColor[Game.Repeat(2, parameters.playersColor.Length)] });
+                this.world.InstantiateView<PlayerZone>(parameters.playerZoneViewSourceId, entity);
+                
+                entity = this.world.AddEntity(new PlayerZone() { position = this.world.GetState().worldPosition + parameters.zone3Position, scale = parameters.zone3Scale, color = parameters.playersColor[Game.Repeat(3, parameters.playersColor.Length)] });
+                this.world.InstantiateView<PlayerZone>(parameters.playerZoneViewSourceId, entity);
+                
+                entity = this.world.AddEntity(new PlayerZone() { position = this.world.GetState().worldPosition + parameters.zone4Position, scale = parameters.zone4Scale, color = parameters.playersColor[Game.Repeat(4, parameters.playersColor.Length)] });
+                this.world.InstantiateView<PlayerZone>(parameters.playerZoneViewSourceId, entity);
+            }
             
+            this.AddSystem<PointsSystem>();
+            this.AddSystem<PointsColorSystem>();
+            this.AddSystem<PlayerZonesSystem>();
+
         }
 
         protected override void OnDeconstruct() {

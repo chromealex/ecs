@@ -32,16 +32,26 @@ namespace ME.Example.Game.UI {
                 var time = world.GetTimeSinceStart();
                 var historyModule = world.GetModule<ME.ECS.StatesHistory.IStatesHistoryModule<State>>();
                 var eventsAddedCount = historyModule.GetEventsAddedCount();
+                var eventsPlayedCount = historyModule.GetEventsPlayedCount();
                 var networkModule = world.GetModule<ME.ECS.Network.NetworkModule<State>>();
                 var eventsSentCount = networkModule.GetEventsSentCount();
                 var eventsReceivedCount = networkModule.GetEventsReceivedCount();
 
-                this.text.text = "World Id: " + world.id.ToString() +
+                var roomInfo = string.Empty;
+                if (Photon.Pun.PhotonNetwork.InRoom == true) {
+
+                    roomInfo += "Name: " + Photon.Pun.PhotonNetwork.CurrentRoom.Name;
+                    roomInfo += ", Players: " + Photon.Pun.PhotonNetwork.CurrentRoom.PlayerCount.ToString();
+
+                }
+
+                this.text.text = "Connection Status: " + Photon.Pun.PhotonNetwork.NetworkClientState.ToString() + ", roomInfo: " + roomInfo + 
+                                 "\nWorld Id: " + world.id.ToString() +
                                  "\nDT Multiplier: " + this.game.deltaTimeMultiplier.ToString() +
-                                 "\nConnected World: " + this.game.worldConnectionId.ToString() +
                                  "\nTick: " + tick.ToString() +
                                  "\nTime: " + time.ToString() +
                                  "\nEvents Added: " + eventsAddedCount.ToString() +
+                                 "\nEvents Played: " + eventsPlayedCount.ToString() +
                                  "\nSent: " + eventsSentCount.ToString() +
                                  "\nReceived: " + eventsReceivedCount.ToString() +
                                  "\nSyncTick: " + networkModule.GetSyncTick().ToString() +

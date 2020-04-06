@@ -4,22 +4,15 @@ namespace ME.Example.Game.Components {
 
     using ME.Example.Game.Entities;
 
-    public class UnitGravity : IRunnableComponent<State, Unit> {
+    public class UnitGravity : IComponentCopyable<State, Unit> {
 
         public float gravity = 9.8f;
 
-        public void AdvanceTick(State state, ref Unit data, float deltaTime, int index) {
+        void IPoolableRecycle.OnRecycle() {
 
-            data.position.y -= this.gravity * deltaTime;
-            if (data.position.y <= state.worldPosition.y) {
-
-                data.position.y = state.worldPosition.y;
-
-            }
+            this.gravity = 9.8f;
 
         }
-
-        void IPoolableRecycle.OnRecycle() {}
 
         void IComponentCopyable<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
 

@@ -8,8 +8,12 @@ namespace ME.Example.Game.Features {
 
         protected override void OnConstruct(ref ConstructParameters parameters) {
             
-            this.AddSystem<UnitsSystem>();
-            
+            this.AddSystem<UnitsReachPointSystem>();
+            this.AddSystem<UnitsColorSystem>();
+            this.AddSystem<UnitsDeathSystem>();
+            this.AddSystem<UnitsFollowSystem>();
+            this.AddSystem<UnitsGravitySystem>();
+
         }
 
         protected override void OnDeconstruct() {

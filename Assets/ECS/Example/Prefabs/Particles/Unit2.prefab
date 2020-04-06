@@ -91,15 +91,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd028e56374734b4f8ba6bf25edd26c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  particleSystemSimulation:
-    particleItems: []
   data:
     items:
     - itemData:
+        psSimulation:
+          particleItem:
+            particleSystem: {fileID: 0}
+          settings:
+            simulationType: 0
+            minSimulationTime: 0
+            minEndingTime: 0
+            halfEnding: 0
+          hasDefault: 0
+        psSource: {fileID: 0}
         mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+        meshRenderer: {fileID: 201435987506025184}
         meshFilter: {fileID: 201435987506025185}
         material: {fileID: 2100000, guid: 8e88c1b6a2edf4dd1852c02cf6eda7fe, type: 2}
         localPosition: {x: 0, y: 0, z: 0}
-        localRotation: {x: -0, y: 0, z: 0}
-        localScale: {x: 0.3, y: 0.3, z: 0.3}
+        localRotation: {x: 0, y: 0, z: 0}
+        localScale: {x: 1, y: 1, z: 1}
     lerpSpeed: 3

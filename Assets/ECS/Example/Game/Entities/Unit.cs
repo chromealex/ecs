@@ -12,8 +12,6 @@ namespace ME.Example.Game.Entities {
         public Quaternion rotation;
         public Vector3 scale;
         public float speed;
-        public Entity pointFrom;
-        public Entity pointTo;
         public float lifes;
 
     }

@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/ECS/Example/Scenes/Sample-ParticlesRenderer.unity
+    path: Assets/ECS/Example/Scenes/Sample-Photon.unity
     guid: 37990f44f6e624707a01bd7a467f8c18
   m_configObjects: {}

@@ -63,11 +63,9 @@ namespace ME.Example.Game.Systems {
                 var unit = this.world.AddEntity(new Unit() {
                     position = this.world.GetRandomInSphere(p1Position, 1f),
                     scale = Vector3.one * 0.3f,
-                    lifes = 1,
-                    speed = this.world.GetRandomRange(1f, 2f),
-                    pointFrom = this.p1,
-                    pointTo = this.p2
-                }, updateStorages: false);
+                    lifes = 3,
+                    speed = this.world.GetRandomRange(1f, 2f)
+                });
                 var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
                 followComponent.@from = this.p1;
                 followComponent.to = this.p2;
@@ -80,8 +78,8 @@ namespace ME.Example.Game.Systems {
                 //this.world.InstantiateView<Unit>(viewSourceId2, unit);
 
             }
-            
-            this.world.UpdateStorages<Unit>();
+
+            //this.world.UpdateStorages<Unit>();
             
         }
 

@@ -4,17 +4,15 @@ namespace ME.Example.Game.Components {
 
     using ME.Example.Game.Entities;
 
-    public class PointSetColor : IRunnableComponentOnce<State, Point> {
+    public class PointSetColor : IComponentCopyable<State, Point> {
 
         public UnityEngine.Color color;
 
-        public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
+        void IPoolableRecycle.OnRecycle() {
 
-            data.color = this.color;
+            this.color = default;
 
         }
-
-        void IPoolableRecycle.OnRecycle() {}
 
         void IComponentCopyable<State, Point>.CopyFrom(IComponent<State, Point> other) {
 

@@ -19,7 +19,7 @@ namespace ME.Example.Game.Systems {
         void ISystemBase.OnConstruct() {
 
             var network = this.world.GetModule<ME.ECS.Network.INetworkModuleBase>();
-            this.testEventCallId = network.RegisterRPC(new System.Action<Entity, Color, float>(this.MovePointEvent_RPC).Method);
+            this.testEventCallId = network.RegisterRPC(new System.Action<Entity, Color, Vector2>(this.MovePointEvent_RPC).Method);
             network.RegisterObject(this, 2);
 
         }
@@ -45,20 +45,20 @@ namespace ME.Example.Game.Systems {
 
         }
 
-        private void AddEventUIButtonClick(Entity point, Color color, float moveSide) {
+        private void AddEventUIButtonClick(Entity point, Color color, Vector2 moveSide) {
 
             var networkModule = this.world.GetModule<NetworkModule>();
             networkModule.RPC(this, this.testEventCallId, point, color, moveSide);
 
         }
 
-        private void MovePointEvent_RPC(Entity point, Color color, float moveSide) {
+        private void MovePointEvent_RPC(Entity point, Color color, Vector2 moveSide) {
 
             var componentColor = this.world.AddComponent<Point, PointSetColor>(point);
             componentColor.color = color;
 
             var componentPos = this.world.AddComponent<Point, PointAddPositionDelta>(point);
-            componentPos.positionDelta = Vector3.left * moveSide;
+            componentPos.positionDelta = new Vector3(moveSide.x, 0f, moveSide.y);
 
         }
 

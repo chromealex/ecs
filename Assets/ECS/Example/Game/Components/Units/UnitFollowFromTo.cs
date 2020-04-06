@@ -4,25 +4,17 @@ namespace ME.Example.Game.Components {
 
     using ME.Example.Game.Entities;
 
-    public class UnitFollowFromTo : IRunnableComponent<State, Unit> {
+    public class UnitFollowFromTo : IComponentCopyable<State, Unit> {
 
         public Entity from;
         public Entity to;
 
-        public void AdvanceTick(State state, ref Unit data, float deltaTime, int index) {
+        void IPoolableRecycle.OnRecycle() {
 
-            Point toData;
-            if (this.GetEntityData(this.to, out toData) == true) {
-
-                var toPos = toData.position;
-                data.position = UnityEngine.Vector3.MoveTowards(data.position, toPos, data.speed * deltaTime);
-                data.position.y = toPos.y;
-
-            }
+            this.from = default;
+            this.to = default;
 
         }
-
-        void IPoolableRecycle.OnRecycle() {}
 
         void IComponentCopyable<State, Unit>.CopyFrom(IComponent<State, Unit> other) {
 

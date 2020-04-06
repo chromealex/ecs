@@ -4,17 +4,15 @@ namespace ME.Example.Game.Components {
 
     using ME.Example.Game.Entities;
 
-    public class PointAddPositionDelta : IRunnableComponentOnce<State, Point> {
+    public class PointAddPositionDelta : IComponentCopyable<State, Point> {
 
         public UnityEngine.Vector3 positionDelta;
 
-        public void AdvanceTick(State state, ref Point data, float deltaTime, int index) {
+        void IPoolableRecycle.OnRecycle() {
 
-            data.position += this.positionDelta * deltaTime;
+            this.positionDelta = default;
 
         }
-
-        void IPoolableRecycle.OnRecycle() {}
 
         void IComponentCopyable<State, Point>.CopyFrom(IComponent<State, Point> other) {
 

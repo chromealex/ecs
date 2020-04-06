@@ -76,6 +76,12 @@ namespace ME.Example.Game.Modules {
 
         }
 
+        public bool IsConnected() {
+
+            return true;
+
+        }
+
         public void Send(byte[] bytes) {
 
             UnityEngine.Random.InitState(this.randomState);

@@ -22,7 +22,6 @@ namespace ME.ECS {
 
         int GetStateHash();
 
-        void SetFrameStartTick(Tick simulationStartTick);
         Tick GetStateTick();
         void SetTickTime(float tickTime);
         float GetTickTime();
@@ -38,6 +37,7 @@ namespace ME.ECS {
         bool HasStep(WorldStep step);
 
         void Simulate(Tick from, Tick to);
+        void SetFromToTicks(Tick from, Tick to);
 
     }
 

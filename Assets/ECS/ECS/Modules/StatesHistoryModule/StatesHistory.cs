@@ -19,15 +19,27 @@
 
         public class Entry : IStatesHistoryEntry {
 
-			public long tick;
+            private bool isEmpty;
+            public Tick tick {
+                get {
+                    if (this.isEmpty == true) return Tick.Invalid;
+                    return this.state.tick;
+                }
+            }
             public TState state;
 
             public Entry(IWorld<TState> world) {
 
-                this.tick = -1;
+                this.isEmpty = true;
                 this.state = WorldUtilities.CreateState<TState>();
                 this.state.Initialize(world, freeze: true, restore: false);
 
+            }
+
+            public void SetEmpty() {
+                
+                this.isEmpty = true;
+                
             }
 
             public object GetData() {
@@ -36,12 +48,12 @@
 
             }
 
-            public long Store(long tick, TState state) {
+            public long Store(Tick tick, TState state) {
 
                 var overwritedTick = this.tick;
-                this.tick = tick;
                 this.state.CopyFrom(state);
                 this.state.tick = tick;
+                this.isEmpty = false;
 
                 return overwritedTick;
 
@@ -49,6 +61,7 @@
 
             public void Discard() {
                 
+                this.isEmpty = true;
                 WorldUtilities.ReleaseState(ref this.state);
                 
             }
@@ -63,7 +76,7 @@
 
         private readonly LinkedList<Entry> entries = new LinkedList<Entry>();
         private LinkedListNode<Entry> currentEntryNode;
-        public long oldestTick;
+        public Tick oldestTick;
         public readonly long capacity;
         private IWorld<TState> world;
 
@@ -95,7 +108,7 @@
 
         }
 
-		public long Store(long tick, TState state) {
+		public long Store(Tick tick, TState state) {
 
             var overwritedTick = this.currentEntryNode.Value.Store(tick, state);
             this.currentEntryNode = this.IterateForward(this.currentEntryNode);
@@ -145,10 +158,10 @@
         }
 
 
-		public bool FindClosestEntry(long maxTick, out TState state/*, out long tick*/) {
+		public bool FindClosestEntry(Tick maxTick, out TState state, out Tick tick) {
 
             state = null;
-            //tick = -1L;
+            tick = Tick.Invalid;
 
             var marker = this.currentEntryNode;
             marker = this.IterateBackward(marker);
@@ -157,7 +170,7 @@
 
                 var entry = marker.Value;
 
-                if (entry.tick == -1) {
+                if (entry.tick == Tick.Invalid) {
 
                     return false;
 
@@ -166,7 +179,7 @@
                 if (entry.tick <= maxTick) {
 
                     state = entry.state;
-                    //tick = entry.tick;
+                    tick = entry.tick;
                     
                     return true;
 
@@ -180,7 +193,7 @@
 
         }
 
-		public void InvalidateEntriesAfterTick(long tick) {
+		public void InvalidateEntriesAfterTick(Tick tick) {
 
             var prev = this.IterateBackward(this.currentEntryNode);
             var marker = prev;
@@ -190,7 +203,7 @@
                 var entry = marker.Value;
                 if (entry.tick <= tick) break;
 
-                entry.tick = -1;
+                entry.SetEmpty();
                 marker = this.IterateBackward(marker);
 
             } while (marker != prev);
@@ -199,7 +212,7 @@
 
         }
 
-		public long GetOldestEntryTick() {
+		public Tick GetOldestEntryTick() {
 
             var marker = this.currentEntryNode;
             marker = this.IterateForward(marker);
@@ -207,13 +220,13 @@
             while (marker != this.currentEntryNode) {
 
                 var tick = marker.Value.tick;
-                if (tick != -1) return tick;
+                if (tick != Tick.Invalid) return tick;
 
                 marker = this.IterateForward(marker);
 
             }
 
-            return -1;
+            return Tick.Invalid;
 
         }
 
@@ -227,7 +240,7 @@
 
             this.entries.Clear();
             this.currentEntryNode = null;
-            this.oldestTick = 0L;
+            this.oldestTick = Tick.Zero;
 
         }
 

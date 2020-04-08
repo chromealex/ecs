@@ -6,15 +6,16 @@ namespace ME.ECS {
     using System.Runtime.Serialization;
     using System.Security.Permissions;
 
-    using TType = System.UInt64;
+    using TType = System.Int64;
     using TName = Tick;
     
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct Tick : IComparable, IConvertible, IFormattable, IComparable<TName>, IEquatable<TName>, ISerializable {
 
-        public static readonly Tick Zero = 0UL;
-        public static readonly Tick One = 1UL;
+        public static readonly Tick Zero = 0L;
+        public static readonly Tick One = 1L;
+        public static readonly Tick Invalid = -1L;
         public static readonly Tick MinValue = 0UL;
         public static readonly Tick MaxValue = ulong.MaxValue;
         
@@ -28,7 +29,7 @@ namespace ME.ECS {
 
         private Tick(SerializationInfo info, StreamingContext context) {
             
-            this.v = info.GetUInt64("v");
+            this.v = info.GetInt64("v");
             
         }
 
@@ -165,13 +166,13 @@ namespace ME.ECS {
 
         }
 
-        public static implicit operator long(TName value) {
+        public static implicit operator ulong(TName value) {
 
-            return (long)value.v;
+            return (ulong)value.v;
 
         }
         
-        public static implicit operator TName(long value) {
+        public static implicit operator TName(ulong value) {
 
             return new TName((TType)value);
 

@@ -164,9 +164,11 @@ namespace ME.ECS.Views.Providers {
             
         }
 
+        public virtual void DoCopyFrom(DrawMeshViewBase source) { }
+
     }
 
-    public abstract class DrawMeshView<TEntity> : DrawMeshViewBase, IView<TEntity> where TEntity : struct, IEntity {
+    public abstract class DrawMeshView<T, TEntity> : DrawMeshViewBase, IView<TEntity> where TEntity : struct, IEntity where T : DrawMeshView<T, TEntity> {
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
@@ -175,6 +177,19 @@ namespace ME.ECS.Views.Providers {
         public virtual void OnInitialize(in TEntity data) { }
         public virtual void OnDeInitialize(in TEntity data) { }
         public abstract void ApplyState(in TEntity data, float deltaTime, bool immediately);
+
+        public override void DoCopyFrom(DrawMeshViewBase source) {
+
+            var sourceView = (T)source;
+            this.entity = sourceView.entity;
+            this.prefabSourceId = sourceView.prefabSourceId;
+            this.creationTick = sourceView.creationTick;
+
+            this.CopyFrom((T)source);
+
+        }
+
+        public virtual void CopyFrom(T source) {}
 
     }
     
@@ -234,16 +249,15 @@ namespace ME.ECS.Views.Providers {
                 
             }
 
-            var prefabSource = (DrawMeshView<TEntity>)prefab;
-            var particleViewBase = (DrawMeshView<TEntity>)obj;
+            var prefabSource = (DrawMeshViewBase)prefab;
+            var particleViewBase = (DrawMeshViewBase)obj;
             particleViewBase.items = PoolArray<DrawMeshViewBase.Item>.Spawn(prefabSource.items.Length);
             for (int i = 0; i < particleViewBase.items.Length; ++i) {
 
                 particleViewBase.items[i] = prefabSource.items[i];
 
             }
-            particleViewBase.entity = prefabSource.entity;
-            particleViewBase.prefabSourceId = prefabSource.prefabSourceId;
+            particleViewBase.DoCopyFrom(prefabSource);
             
             long key;
             for (int i = 0; i < prefabSource.items.Length; ++i) {

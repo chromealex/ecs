@@ -217,7 +217,7 @@ namespace ME.Example.Tests {
             world.SaveResetState();
 
             // Rewind to 100th tick
-            ((IWorldBase)world).Simulate((Tick)100);
+            //((IWorldBase)world).Simulate((Tick)100);
 
             // Add events
             var history = world.GetModule<StatesHistoryModule>();
@@ -282,7 +282,7 @@ namespace ME.Example.Tests {
             
             // Restore state
             world.SetState((State)savedState);
-            ((IWorldBase)world).Simulate(savedState.tick);
+            //((IWorldBase)world).Simulate(savedState.tick);
 
             Assert.IsTrue(((State)savedState).points.Count == 1);
             Assert.IsTrue(((State)savedState).pointComponents.Count == 1);

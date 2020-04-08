@@ -1372,12 +1372,10 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void UpdateLogic(float deltaTime, Tick prevTick) {
+        public void UpdateLogic(float deltaTime) {
             
             if (deltaTime < 0f) return;
 
-            var state = this.GetState();
-            
             ////////////////
             // Update Logic Tick
             ////////////////
@@ -1385,7 +1383,7 @@ namespace ME.ECS {
             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("Simulate", WorldStep.None);
             #endif
 
-            this.Simulate(prevTick + 1, state.tick + 1);
+            this.Simulate(this.simulationFromTick, this.simulationToTick);
 
             #if CHECKPOINT_COLLECTOR
             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("Simulate", WorldStep.None);
@@ -1491,25 +1489,18 @@ namespace ME.ECS {
         private struct UpdateJob : Unity.Jobs.IJobParallelFor {
 
             public float deltaTime;
-            public Tick prevTick;
 
             void Unity.Jobs.IJobParallelFor.Execute(int index) {
 
-                Worlds<TState>.currentWorld.UpdateLogic(this.deltaTime, this.prevTick);
+                Worlds<TState>.currentWorld.UpdateLogic(this.deltaTime);
 
             }
 
         }
         #endif
-
-        private Tick simulationStartTick;
-        public void SetFrameStartTick(Tick simulationStartTick) {
-
-            //UnityEngine.Debug.LogWarning("SetFrameStartTick: " + this.simulationStartTick);
-            this.simulationStartTick = simulationStartTick;
-
-        }
-
+        
+        private Tick simulationFromTick;
+        private Tick simulationToTick;
         public void Update(float deltaTime) {
 
             if (deltaTime < 0f) return;
@@ -1519,7 +1510,6 @@ namespace ME.ECS {
             #endif
 
             var state = this.GetState();
-            this.simulationStartTick = (state != null ? state.tick : Tick.Zero);
             
             // Setup current static variables
             WorldUtilities.SetWorld(this);
@@ -1534,12 +1524,11 @@ namespace ME.ECS {
             #if TICK_THREADED
             var job = new UpdateJob() {
                 deltaTime = deltaTime,
-                prevTick = prevTick,
             };
             var jobHandle = job.Schedule(1, 64);
             jobHandle.Complete();
             #else
-            this.UpdateLogic(deltaTime, this.simulationStartTick);
+            this.UpdateLogic(deltaTime);
             #endif
 
             this.UpdateVisualPost(deltaTime);
@@ -1548,6 +1537,14 @@ namespace ME.ECS {
             this.currentStep = WorldStep.None;
             ////////////////
             
+        }
+
+        public void SetFromToTicks(Tick from, Tick to) {
+
+            //UnityEngine.Debug.Log("Set FromTo: " + from + " >> " + to);
+            this.simulationFromTick = from;
+            this.simulationToTick = to;
+
         }
 
         public void Simulate(Tick from, Tick to) {
@@ -1563,10 +1560,8 @@ namespace ME.ECS {
 
             //UnityEngine.Debug.Log("Simulate " + from + " to " + to);
             var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
-            for (Tick tick = from; tick < to; ++tick) {
+            for (state.tick = from; state.tick < to; ++state.tick) {
 
-                state.tick = tick;
-                
                 ////////////////
                 this.currentStep = WorldStep.ModulesLogicTick;
                 ////////////////
@@ -1606,7 +1601,7 @@ namespace ME.ECS {
                     if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("PlayPluginsForTick", WorldStep.None);
                     #endif
 
-                    this.PlayPluginsForTick(tick);
+                    this.PlayPluginsForTick(state.tick);
                     
                     #if CHECKPOINT_COLLECTOR
                     if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("PlayPluginsForTick", WorldStep.None);

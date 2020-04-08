@@ -206,9 +206,11 @@ namespace ME.ECS.Views.Providers {
             
         }
 
+        public abstract void DoCopyFrom(ParticleViewBase source);
+
     }
 
-    public abstract class ParticleView<TEntity> : ParticleViewBase, IView<TEntity> where TEntity : struct, IEntity {
+    public abstract class ParticleView<T, TEntity> : ParticleViewBase, IView<TEntity> where TEntity : struct, IEntity where T : ParticleView<T, TEntity> {
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
@@ -217,6 +219,19 @@ namespace ME.ECS.Views.Providers {
         public virtual void OnInitialize(in TEntity data) { }
         public virtual void OnDeInitialize(in TEntity data) { }
         public abstract void ApplyState(in TEntity data, float deltaTime, bool immediately);
+
+        public override void DoCopyFrom(ParticleViewBase source) {
+
+            var sourceView = (T)source;
+            this.entity = sourceView.entity;
+            this.prefabSourceId = sourceView.prefabSourceId;
+            this.creationTick = sourceView.creationTick;
+
+            this.CopyFrom((T)source);
+
+        }
+
+        public virtual void CopyFrom(T source) {}
 
     }
     
@@ -399,7 +414,7 @@ namespace ME.ECS.Views.Providers {
         
         public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {
 
-            var prefabSource = (ParticleView<TEntity>)prefab;
+            var prefabSource = (ParticleViewBase)prefab;
             
             var obj = this.pool.Spawn();
             if (obj == null) {
@@ -408,7 +423,7 @@ namespace ME.ECS.Views.Providers {
                 
             }
 
-            var particleViewBase = (ParticleView<TEntity>)obj;
+            var particleViewBase = (ParticleViewBase)obj;
             particleViewBase.items = PoolArray<ParticleViewBase.Item>.Spawn(prefabSource.items.Length);
             for (int i = 0; i < particleViewBase.items.Length; ++i) {
 
@@ -416,8 +431,7 @@ namespace ME.ECS.Views.Providers {
 
             }
             
-            particleViewBase.entity = prefabSource.entity;
-            particleViewBase.prefabSourceId = prefabSource.prefabSourceId;
+            particleViewBase.DoCopyFrom(prefabSource);
 
             var maxParticleCount = 0;
             long key;

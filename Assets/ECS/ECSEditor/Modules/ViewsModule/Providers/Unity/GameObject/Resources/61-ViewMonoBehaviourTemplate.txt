@@ -16,6 +16,16 @@ namespace #NAMESPACE# {
         }
         
         public override void ApplyState(in TEntity data, float deltaTime, bool immediately) {
+        
+            if (immediately == true) {
+                
+                // TODO: Apply view data here immediately
+                
+            } else {
+                
+                // TODO: Apply view data here for example by lerp function
+                
+            }
             
         }
         

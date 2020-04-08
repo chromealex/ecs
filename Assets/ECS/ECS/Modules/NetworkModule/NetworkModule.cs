@@ -339,7 +339,7 @@ namespace ME.ECS.Network {
                 if (this.transporter.IsConnected() == false) return;
                 
                 var evt = new ME.ECS.StatesHistory.HistoryEvent();
-                evt.tick = this.world.GetStateTick() + 1UL;//this.world.GetCurrentTick() + 1UL; // Call RPC on next tick
+                evt.tick = this.world.GetStateTick() + Tick.One; // Call RPC on next tick
                 evt.order = this.GetRPCOrder();
                 evt.localOrder = ++this.localOrderIndex;
                 evt.parameters = parameters;
@@ -478,14 +478,48 @@ namespace ME.ECS.Network {
 
                     }
 
-                    var st = this.statesHistoryModule.GetStateBeforeTick(evt.tick);
-                    if (st == null) st = this.world.GetResetState();
+                    var st = this.statesHistoryModule.GetStateBeforeTick(evt.tick, out var syncTick);
+                    if (st == null || syncTick == Tick.Invalid) st = this.world.GetResetState();
                     this.syncedTick = st.tick;
                     this.syncHash = this.statesHistoryModule.GetStateHash(st);
 
-                } while (bytes != null);
+                } while (true);
                 this.statesHistoryModule.EndAddEvents();
 
+            }
+
+            {
+
+                var tick = this.world.GetCurrentTick();
+                
+                var timeSinceGameStart = (long)(this.world.GetTimeSinceStart() * 1000L);
+                var targetTick = (Tick)System.Math.Floor(timeSinceGameStart / (this.world.GetTickTime() * 1000d));
+                var oldestEventTick = this.statesHistoryModule.GetAndResetOldestTick(tick);
+                if (oldestEventTick == Tick.Invalid || oldestEventTick >= tick) {
+
+                    // No events found
+                    this.world.SetFromToTicks(tick, targetTick);
+                    return;
+
+                }
+
+                var sourceState = this.statesHistoryModule.GetStateBeforeTick(oldestEventTick, out var sourceTick);
+                if (sourceState == null) {
+
+                    sourceState = this.world.GetResetState();
+                    targetTick = tick;
+                    
+                }
+                //UnityEngine.Debug.Log("Rollback. Oldest: " + oldestEventTick + ", sourceTick: " + sourceTick + ", targetTick: " + targetTick);
+
+                this.statesHistoryModule.InvalidateEntriesAfterTick(sourceTick);
+
+                // Applying old state.
+                var currentState = this.world.GetState();
+                currentState.CopyFrom(sourceState);
+                
+                this.world.SetFromToTicks(sourceTick, targetTick);
+                
             }
 
         }

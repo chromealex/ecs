@@ -29,6 +29,7 @@ namespace ME.Example.Game.UI {
 
                 var world = (ME.ECS.IWorld<State>)this.game.world;
                 var tick = world.GetStateTick();
+                var hash = world.GetStateHash();
                 var time = world.GetTimeSinceStart();
                 var historyModule = world.GetModule<ME.ECS.StatesHistory.IStatesHistoryModule<State>>();
                 var eventsAddedCount = historyModule.GetEventsAddedCount();
@@ -49,6 +50,7 @@ namespace ME.Example.Game.UI {
                                  "\nWorld Id: " + world.id.ToString() +
                                  "\nDT Multiplier: " + this.game.deltaTimeMultiplier.ToString() +
                                  "\nTick: " + tick.ToString() +
+                                 "\nState Hash: " + hash.ToString() +
                                  "\nTime: " + time.ToString() +
                                  "\nEvents Added: " + eventsAddedCount.ToString() +
                                  "\nEvents Played: " + eventsPlayedCount.ToString() +

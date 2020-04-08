@@ -8,16 +8,17 @@ namespace ME.Example.Game.Views {
     public class ApplyUnitStateToParticleView : ParticleViewSource<ApplyUnitStateParticle> { }
 
     [System.Serializable]
-    public class ApplyUnitStateParticle : ParticleView<Unit> {
+    public class ApplyUnitStateParticle : ParticleView<ApplyUnitStateParticle, Unit> {
 
         public float lerpSpeed = 3f;
+        public bool forceNoInterpolation;
 
         public override void ApplyState(in Unit data, float deltaTime, bool immediately) {
 
             ref var rootData = ref this.GetRootData();
             rootData.startColor = data.color;
 
-            if (immediately == true) {
+            if (immediately == true || this.forceNoInterpolation == true) {
 
                 rootData.position = data.position;
                 rootData.rotation3D = data.rotation.eulerAngles;
@@ -32,6 +33,13 @@ namespace ME.Example.Game.Views {
             }
 
             this.SetRootData(ref rootData);
+
+        }
+
+        public override void CopyFrom(ApplyUnitStateParticle source) {
+
+            this.lerpSpeed = source.lerpSpeed;
+            this.forceNoInterpolation = source.forceNoInterpolation;
 
         }
 

@@ -26,6 +26,7 @@ namespace ME.Example.Game.Systems {
             ref var data = ref this.world.GetEntityDataRef<Unit>(entity);
             if (data.lifes <= 0) {
 
+                ++state.unitsCount;
                 this.world.RemoveEntity<Unit>(entity);
 
             }

@@ -16,6 +16,7 @@ namespace ME.Example.Game {
         public RandomState randomState { get; set; }
         
         public UnityEngine.Vector3 worldPosition;
+        public int unitsCount;
 
         public FiltersStorage filters;
 
@@ -58,6 +59,7 @@ namespace ME.Example.Game {
             this.randomState = other.randomState;
 
             this.worldPosition = other.worldPosition;
+            this.unitsCount = other.unitsCount;
             
             this.filters.CopyFrom(other.filters);
             
@@ -74,6 +76,9 @@ namespace ME.Example.Game {
         }
 
         void IPoolableRecycle.OnRecycle() {
+
+            this.worldPosition = default;
+            this.unitsCount = default;
             
             WorldUtilities.Release(ref this.filters);
             

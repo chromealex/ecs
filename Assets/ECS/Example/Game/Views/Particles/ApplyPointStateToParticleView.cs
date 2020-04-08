@@ -8,7 +8,7 @@ namespace ME.Example.Game.Views {
     public class ApplyPointStateToParticleView : ParticleViewSource<ApplyPointStateParticle> { }
 
     [System.Serializable]
-    public class ApplyPointStateParticle : ParticleView<Point> {
+    public class ApplyPointStateParticle : ParticleView<ApplyPointStateParticle, Point> {
 
         public float lerpSpeed = 3f;
         public bool forceNoInterpolation;
@@ -31,6 +31,13 @@ namespace ME.Example.Game.Views {
             }
 
             this.SetRootData(ref rootData);
+
+        }
+
+        public override void CopyFrom(ApplyPointStateParticle source) {
+
+            this.lerpSpeed = source.lerpSpeed;
+            this.forceNoInterpolation = source.forceNoInterpolation;
 
         }
 

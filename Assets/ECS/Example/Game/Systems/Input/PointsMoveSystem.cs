@@ -13,7 +13,7 @@ namespace ME.Example.Game.Systems {
         public Entity p2;
         
         public IWorld<State> world { get; set; }
-        private RPCId testEventCallId;
+        public RPCId testEventCallId;
         private RPCId createUnitCallId;
 
         void ISystemBase.OnConstruct() {

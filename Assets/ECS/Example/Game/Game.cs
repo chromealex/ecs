@@ -96,7 +96,39 @@ namespace ME.Example.Game {
         private void InputKeys() {
 
             if (Photon.Pun.PhotonNetwork.IsConnected == false || Photon.Pun.PhotonNetwork.InRoom == false) return;
-            
+
+            if (Input.GetKeyDown(KeyCode.S) == true) {
+
+                var targetTick = this.world.GetCurrentTick();
+                var state = (this.world.GetState() as IState<State>);
+                state.CopyFrom(this.world.GetResetState());
+                state.tick = targetTick;
+                this.world.GetModule<StatesHistoryModule>().ResetEventsPlayedCount();
+                this.world.Simulate(Tick.Zero, targetTick);
+                
+            }
+
+            if (Input.GetKeyDown(KeyCode.P) == true) {
+
+                this.deltaTimeMultiplier = (this.deltaTimeMultiplier > 0f ? 0f : 1f);
+
+            }
+
+            if (Input.GetKeyDown(KeyCode.E) == true) {
+
+                var statesHistoryModule = this.world.GetModule<StatesHistoryModule>();
+                var evt = new ME.ECS.StatesHistory.HistoryEvent();
+                evt.order = 2;
+                evt.tick = this.world.GetCurrentTick() - Random.Range(2, 50);
+                evt.objId = 2;
+                evt.groupId = 0;
+                evt.rpcId = this.world.GetSystem<PointsMoveSystem>().testEventCallId;
+                evt.storeInHistory = true;
+                evt.parameters = new object[] { this.world.GetSystem<PointsMoveSystem>().p1, Color.red, Vector2.zero };
+                statesHistoryModule.AddEvent(evt);
+
+            }
+
             var hasInput = false;
             var dir = Vector2.zero;
             if (Input.GetKey(KeyCode.LeftArrow) == true) {
@@ -124,7 +156,7 @@ namespace ME.Example.Game {
                 this.world.AddMarker(new ME.Example.Game.Components.UI.UIMove() {
                     pointId = 1,
                     color = this.playersColor[Game.Repeat(Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber, this.playersColor.Length)],
-                    moveSide = dir * (Time.deltaTime * this.inputKeysMoveSpeed)
+                    moveSide = dir * this.inputKeysMoveSpeed
                 });
                 
             }

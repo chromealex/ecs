@@ -8,7 +8,7 @@ namespace ME.Example.Game.Views {
     public class PlayerZoneView : ParticleViewSource<ApplyPlayerZoneViewStateParticle> { }
     
     [System.Serializable]
-    public class ApplyPlayerZoneViewStateParticle : ParticleView<TEntity> {
+    public class ApplyPlayerZoneViewStateParticle : ParticleView<ApplyPlayerZoneViewStateParticle, TEntity> {
         
         public override void ApplyState(in TEntity data, float deltaTime, bool immediately) {
             

@@ -308,7 +308,7 @@ namespace ME.ECS {
             this.currentState.randomState = rnd.state;
             #else
             UnityEngine.Random.state = this.currentState.randomState;
-            var spherePoint = UnityEngine.Random.insideUnitSphere * radius;
+            var spherePoint = UnityEngine.Random.insideUnitSphere * maxRadius;
             this.currentState.randomState = UnityEngine.Random.state;
             #endif
             return spherePoint + center;

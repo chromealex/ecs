@@ -8,7 +8,7 @@ namespace ME.Example.Game.Views {
     public class ApplyUnitStateToDrawMeshView : DrawMeshViewSource<ApplyUnitStateDrawMesh> { }
 
     [System.Serializable]
-    public class ApplyUnitStateDrawMesh : DrawMeshView<Unit> {
+    public class ApplyUnitStateDrawMesh : DrawMeshView<ApplyUnitStateDrawMesh, Unit> {
 
         public float lerpSpeed = 3f;
 

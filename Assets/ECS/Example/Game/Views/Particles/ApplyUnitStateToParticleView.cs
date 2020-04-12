@@ -8,7 +8,7 @@ namespace ME.Example.Game.Views {
     public class ApplyUnitStateToParticleView : ParticleViewSource<ApplyUnitStateParticle> { }
 
     [System.Serializable]
-    public class ApplyUnitStateParticle : ParticleView<Unit> {
+    public class ApplyUnitStateParticle : ParticleView<ApplyUnitStateParticle, Unit> {
 
         public float lerpSpeed = 3f;
 
@@ -32,6 +32,14 @@ namespace ME.Example.Game.Views {
             }
 
             this.SetRootData(ref rootData);
+
+        }
+
+        public override void CopyFrom(ApplyUnitStateParticle source) {
+            
+            base.CopyFrom(source);
+
+            this.lerpSpeed = source.lerpSpeed;
 
         }
 

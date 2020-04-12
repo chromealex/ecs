@@ -8,7 +8,7 @@ namespace ME.Example.Game.Views {
     public class ApplyPointStateToDrawMeshView : DrawMeshViewSource<ApplyPointStateDrawMesh> { }
 
     [System.Serializable]
-    public class ApplyPointStateDrawMesh : DrawMeshView<Point> {
+    public class ApplyPointStateDrawMesh : DrawMeshView<ApplyPointStateDrawMesh, Point> {
 
         public float lerpSpeed = 3f;
 
@@ -29,6 +29,14 @@ namespace ME.Example.Game.Views {
             }
 
             this.SetRootData(ref rootData);
+
+        }
+
+        public override void CopyFrom(ApplyPointStateDrawMesh source) {
+            
+            base.CopyFrom(source);
+
+            this.lerpSpeed = source.lerpSpeed;
 
         }
 

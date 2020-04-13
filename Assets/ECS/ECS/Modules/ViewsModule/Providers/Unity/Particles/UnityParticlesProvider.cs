@@ -356,8 +356,8 @@ namespace ME.ECS.Views.Providers {
             mainModule.startSize = 1f;
 
             var subEmittersModule = particleSystem.subEmitters;
-            subEmittersModule.enabled = true;
-
+            subEmittersModule.enabled = false;
+            
             particleSystemRenderer.enabled = false;
             particleSystemRenderer.renderMode = UnityEngine.ParticleSystemRenderMode.Billboard;
 
@@ -386,13 +386,19 @@ namespace ME.ECS.Views.Providers {
             particleSystem.randomSeed = 1u;
             
             var main = particleSystem.main;
-            main.duration = float.MaxValue;
             main.loop = false;
             main.prewarm = false;
             main.playOnAwake = false;
-            main.startLifetime = float.MaxValue;
             main.startSpeed = 0f;
+            #if UNITY_WEBGL
+            main.duration = 10000;
+            main.maxParticles = 10000;
+            main.startLifetime = 10000;
+            #else
+            main.duration = float.MaxValue;
             main.maxParticles = int.MaxValue;
+            main.startLifetime = float.MaxValue;
+            #endif
             main.ringBufferMode = UnityEngine.ParticleSystemRingBufferMode.PauseUntilReplaced;
             main.simulationSpace = UnityEngine.ParticleSystemSimulationSpace.World;
                     
@@ -408,6 +414,10 @@ namespace ME.ECS.Views.Providers {
             particleSystemRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
             particleSystemRenderer.receiveShadows = true;
             
+            #if UNITY_WEBGL
+            particleSystemRenderer.enableGPUInstancing = false;
+            #endif
+
             //particleSystem.Play(true);
 
         }
@@ -446,13 +456,13 @@ namespace ME.ECS.Views.Providers {
                     
                     psItem = source.itemData;
 
-                    var subEmittersModule = this.mainParticleSystem.subEmitters;
-
                     var idx = -1;
                     var idxInheritedLifetime = -1;
                     UnityEngine.ParticleSystem particleSystem;
                     if (psItem.psSource != null) {
 
+                        var subEmittersModule = this.mainParticleSystem.subEmitters;
+                        subEmittersModule.enabled = true;
                         particleSystem = UnityEngine.ParticleSystem.Instantiate(psItem.psSource, this.mainParticleSystem.transform);
 
                         idx = subEmittersModule.subEmittersCount;
@@ -491,9 +501,9 @@ namespace ME.ECS.Views.Providers {
                         emissionModule.rateOverTime = new UnityEngine.ParticleSystem.MinMaxCurve(0f);
                         emissionModule.rateOverDistance = new UnityEngine.ParticleSystem.MinMaxCurve(0f);
                         emissionModule.burstCount = 1;
-                        emissionModule.SetBurst(0, new UnityEngine.ParticleSystem.Burst(0f, 1));
-
-                        idx = subEmittersModule.subEmittersCount;
+                        emissionModule.SetBurst(0, new UnityEngine.ParticleSystem.Burst(0f, 1));*/
+                        
+                        /*idx = subEmittersModule.subEmittersCount;
                         subEmittersModule.AddSubEmitter(
                             particleSystem,
                             UnityEngine.ParticleSystemSubEmitterType.Manual,
@@ -639,8 +649,13 @@ namespace ME.ECS.Views.Providers {
                                 } else {
                                     
                                     // Static mesh with material
+                                    #if UNITY_WEBGL
+                                    element.particleData.remainingLifetime = 10000;
+                                    element.particleData.startLifetime = 10000;
+                                    #else
                                     element.particleData.remainingLifetime = float.MaxValue;
                                     element.particleData.startLifetime = float.MaxValue;
+                                    #endif
 
                                     this.particlesStatic[staticK] = element.particleData;
                                     ++staticK;

@@ -3,8 +3,9 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
@@ -12,10 +13,4 @@ MonoBehaviour:
   m_Name: PunSceneSettingsFile
   m_EditorClassIdentifier: 
   SceneSettingsListFoldoutOpen: 1
-  MinViewIdPerScene:
-  - sceneName: 123
-    minViewId: 47
-  - sceneName: 123
-    minViewId: 1
-  - sceneName: 456
-    minViewId: 1
+  MinViewIdPerScene: []

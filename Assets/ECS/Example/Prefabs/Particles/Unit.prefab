@@ -25,9 +25,9 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2101994514088952722}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 2, z: 0}
-  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_Children: []
   m_Father: {fileID: 4210135071268562877}
   m_RootOrder: 0
@@ -46,6 +46,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -77,7 +78,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2101994514088952722}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &4210135071268562876
 GameObject:
   m_ObjectHideFlags: 0
@@ -134,6 +135,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -201,11 +203,12 @@ MonoBehaviour:
             halfEnding: 0
           hasDefault: 0
         psSource: {fileID: 0}
-        mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+        mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
         meshRenderer: {fileID: 3488507588091491751}
         meshFilter: {fileID: 4018696153121638935}
         material: {fileID: 2100000, guid: 8e88c1b6a2edf4dd1852c02cf6eda7fe, type: 2}
         localPosition: {x: 0, y: 0.6, z: 0}
         localRotation: {x: 0, y: 0, z: 0}
-        localScale: {x: 1.2, y: 1.2, z: 1.2}
+        localScale: {x: 0.5, y: 0.5, z: 0.5}
     lerpSpeed: 3
+    forceNoInterpolation: 0

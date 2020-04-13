@@ -55,6 +55,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -112,3 +113,4 @@ MonoBehaviour:
         localRotation: {x: 0, y: 0, z: 0}
         localScale: {x: 1, y: 1, z: 1}
     lerpSpeed: 3
+    forceNoInterpolation: 0

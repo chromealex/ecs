@@ -73,7 +73,7 @@ namespace ME.Example.Game.Systems {
                 this.world.AddComponent<Unit, UnitGravity>(unit);
                 var setColor = this.world.AddComponent<Unit, UnitSetColor>(unit);
                 setColor.color = color;
-
+                
                 this.world.InstantiateView<Unit>(viewSourceId, unit);
                 //this.world.InstantiateView<Unit>(viewSourceId2, unit);
 

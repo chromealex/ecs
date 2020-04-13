@@ -175,18 +175,20 @@ namespace ME.Example.Game {
 
         public virtual void AddEventUIButtonClick(int pointId) {
 
+            var idx = Game.Repeat(Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber, this.playersColor.Length);
             this.world.AddMarker(new ME.Example.Game.Components.UI.UIMove() {
                 pointId = pointId,
-                color = this.playersColor[Game.Repeat(Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber, this.playersColor.Length)],
-                moveSide = this.moveSides[Game.Repeat(Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber, this.playersColor.Length)]
+                color = this.playersColor[idx],
+                moveSide = this.moveSides[idx]
             });
             
         }
 
         public virtual void AddUnitButtonClick() {
 
+            var idx = Game.Repeat(Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber, this.playersColor.Length);
             this.world.AddMarker(new ME.Example.Game.Components.UI.UIAddUnit() {
-                color = this.playersColor[Game.Repeat(Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber, this.playersColor.Length)],
+                color = this.playersColor[idx],
                 count = this.spawnUnitsCount,
                 viewSourceId = this.unitViewSourceId,
                 viewSourceId2 = this.unitViewSourceId2,

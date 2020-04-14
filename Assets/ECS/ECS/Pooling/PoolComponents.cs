@@ -56,7 +56,7 @@ namespace ME.ECS {
 
 	    }
 
-	    private static void Recycle_INTERNAL<T>(int key, T system) where T : class, IComponentBase {
+	    private static void Recycle_INTERNAL(int key, object system) {
 		    
 		    PoolInternalBase pool;
 		    if (PoolComponents.pool.TryGetValue(key, out pool) == true) {
@@ -70,6 +70,13 @@ namespace ME.ECS {
 			    PoolComponents.pool.Add(key, pool);
                 
 		    }
+		    
+	    }
+
+	    public static void Recycle(object system) {
+
+		    var key = WorldUtilities.GetKey(system.GetType());
+		    PoolComponents.Recycle_INTERNAL(key, system);
 		    
 	    }
 

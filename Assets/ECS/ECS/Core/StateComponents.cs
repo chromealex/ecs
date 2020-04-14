@@ -371,7 +371,7 @@ namespace ME.ECS {
 
         }
 
-        public bool Contains<TComponent>(EntityId entityId) where TComponent : IComponent<TState, TEntity> {
+        public bool Contains<TComponent>(EntityId entityId) where TComponent : IComponentBase {
 
             var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {

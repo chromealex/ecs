@@ -38,15 +38,21 @@
             return result;
             
         }
-        
+
         public static void Recycle(ref T[] buffer) {
+            
+            PoolArray<T>.Recycle(buffer);
+            buffer = null;
+            
+        }
+
+        public static void Recycle(T[] buffer) {
 
             var length = buffer.Length;
             
             if (length == 0) return;
             if (length > PoolArray<T>.BLOCK_SIZE) {
 
-                buffer = null;
                 return;
                 
             }
@@ -54,13 +60,11 @@
             if (PoolArray<T>.pools.TryGetValue(length, out pool) == true) {
 
                 pool.Recycle(buffer);
-                buffer = null;
 
             } else {
                 
                 pool = PoolArray<T>.CreatePool(length);
                 pool.Recycle(buffer);
-                buffer = null;
                 PoolArray<T>.pools.Add(length, pool);
                 
             }

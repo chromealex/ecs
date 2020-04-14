@@ -13,7 +13,32 @@
 
     }
 
+    public static class ComponentTypesCounter {
+
+        public static int counter = -1;
+
+    }
+
+    public static class ComponentTypes<TComponent> where TComponent : IStructComponent {
+
+        public static int typeId = -1;
+        public static int capacity = 100;
+
+    }
+
     public static class EntityExtensions {
+
+        public static TComponent GetData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
+            
+            return Worlds.currentWorld.GetData<TComponent>(entity);
+            
+        }
+
+        public static void SetData<TComponent>(this Entity entity, TComponent data) where TComponent : struct, IStructComponent {
+            
+            Worlds.currentWorld.SetData<TComponent>(entity, data);
+            
+        }
 
         public static TComponent GetComponent<TState, TEntity, TComponent>(this Entity entity)
             where TState : class, IState<TState>, new()

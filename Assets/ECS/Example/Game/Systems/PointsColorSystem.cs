@@ -14,18 +14,20 @@ namespace ME.Example.Game.Systems {
         
         void ISystemBase.OnDeconstruct() {}
         
+        bool ISystemFilter<TState>.jobs => false;
+        int ISystemFilter<TState>.jobsBatchCount => 128;
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<TState, TEntity>.Create("Filter-PointsColorSystem").WithComponent<PointSetColor>().Push();
+            return Filter<TState, TEntity>.Create("Filter-PointsColorSystem").WithStructComponent<PointSetColor>().Push();
             
         }
 
         void ISystemFilter<TState>.AdvanceTick(Entity entity, TState state, float deltaTime) {
             
             ref var data = ref this.world.GetEntityDataRef<Point>(entity);
-            data.color = this.world.GetComponent<Point, PointSetColor>(entity).color;
-            this.world.RemoveComponents<Point, PointSetColor>(entity);
+            data.color = this.world.GetData<PointSetColor>(entity).color;
+            this.world.RemoveData<PointSetColor>(entity);
 
         }
 

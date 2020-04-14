@@ -66,13 +66,10 @@ namespace ME.Example.Game.Systems {
                     lifes = 3,
                     speed = this.world.GetRandomRange(1f, 2f)
                 });
-                var followComponent = this.world.AddComponent<Unit, UnitFollowFromTo>(unit);
-                followComponent.@from = this.p1;
-                followComponent.to = this.p2;
-
-                this.world.AddComponent<Unit, UnitGravity>(unit);
-                var setColor = this.world.AddComponent<Unit, UnitSetColor>(unit);
-                setColor.color = color;
+                
+                this.world.SetData(unit, new UnitFollowFromTo() { from = this.p1, to = this.p2 });
+                this.world.SetData(unit, new UnitGravity() { gravity = 9.8f });
+                this.world.SetData(unit, new UnitSetColor() { color = color });
                 
                 this.world.InstantiateView<Unit>(viewSourceId, unit);
                 //this.world.InstantiateView<Unit>(viewSourceId2, unit);

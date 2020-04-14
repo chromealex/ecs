@@ -16,10 +16,12 @@ namespace ME.Example.Game.Systems {
         
         void ISystemBase.OnDeconstruct() {}
         
+        bool ISystemFilter<TState>.jobs => false;
+        int ISystemFilter<TState>.jobsBatchCount => 64;
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<TState, TEntity>.Create("Filter-UnitsFollowSystem").WithComponent<ME.Example.Game.Components.UnitFollowFromTo>().Push();
+            return Filter<TState, TEntity>.Create("Filter-UnitsFollowSystem").WithStructComponent<UnitFollowFromTo>().Push();
             
         }
 
@@ -29,7 +31,7 @@ namespace ME.Example.Game.Systems {
 
             { // Follow
                     
-                var follow = this.world.GetComponent<Unit, UnitFollowFromTo>(entity);
+                var follow = this.world.GetData<UnitFollowFromTo>(entity);
                 Point toData;
                 if (this.world.GetEntityData(follow.to, out toData) == true) {
 

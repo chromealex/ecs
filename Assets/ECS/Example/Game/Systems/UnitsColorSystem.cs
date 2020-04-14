@@ -14,10 +14,12 @@ namespace ME.Example.Game.Systems {
         
         void ISystemBase.OnDeconstruct() {}
         
+        bool ISystemFilter<TState>.jobs => false;
+        int ISystemFilter<TState>.jobsBatchCount => 64;
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<TState, TEntity>.Create("Filter-UnitsColorSystem").WithComponent<UnitSetColor>().Push();
+            return Filter<TState, TEntity>.Create("Filter-UnitsColorSystem").WithStructComponent<UnitSetColor>().Push();
             
         }
 
@@ -25,9 +27,9 @@ namespace ME.Example.Game.Systems {
             
             ref var data = ref this.world.GetEntityDataRef<Unit>(entity);
 
-            var colorComp = this.world.GetComponent<Unit, UnitSetColor>(entity);
+            var colorComp = this.world.GetData<UnitSetColor>(entity);
             data.color = colorComp.color;
-            this.world.RemoveComponents<Unit, UnitSetColor>(entity);
+            this.world.RemoveData<UnitSetColor>(entity);
 
         }
 

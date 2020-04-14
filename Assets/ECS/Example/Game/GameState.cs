@@ -19,6 +19,7 @@ namespace ME.Example.Game {
         public int unitsCount;
 
         public FiltersStorage filters;
+        public StructComponentsContainer structComponents;
 
         public Storage<SharedEntity> shared;
         public Storage<Point> points;
@@ -39,6 +40,7 @@ namespace ME.Example.Game {
         void IState<State>.Initialize(IWorld<State> world, bool freeze, bool restore) {
 
             world.Register(ref this.filters, freeze, restore);
+            world.Register(ref this.structComponents, freeze, restore);
             
             world.Register(ref this.shared, freeze, restore);
             world.Register(ref this.points, freeze, restore);
@@ -62,6 +64,7 @@ namespace ME.Example.Game {
             this.unitsCount = other.unitsCount;
             
             this.filters.CopyFrom(other.filters);
+            this.structComponents.CopyFrom(other.structComponents);
             
             this.shared.CopyFrom(other.shared);
             this.points.CopyFrom(other.points);
@@ -81,6 +84,7 @@ namespace ME.Example.Game {
             this.unitsCount = default;
             
             WorldUtilities.Release(ref this.filters);
+            WorldUtilities.Release(ref this.structComponents);
             
             WorldUtilities.Release(ref this.shared);
             WorldUtilities.Release(ref this.points);

@@ -54,12 +54,9 @@ namespace ME.Example.Game.Systems {
 
         private void MovePointEvent_RPC(Entity point, Color color, Vector2 moveSide) {
 
-            var componentColor = this.world.AddComponent<Point, PointSetColor>(point);
-            componentColor.color = color;
-
-            var componentPos = this.world.AddComponent<Point, PointAddPositionDelta>(point);
-            componentPos.positionDelta = new Vector3(moveSide.x, 0f, moveSide.y);
-
+            this.world.SetData(point, new PointSetColor() { color = color });
+            this.world.SetData(point, new PointAddPositionDelta() { positionDelta = new Vector3(moveSide.x, 0f, moveSide.y) });
+            
         }
 
     }

@@ -13,21 +13,22 @@ namespace ME.Example.Game.Systems {
         void ISystemBase.OnConstruct() {}
         
         void ISystemBase.OnDeconstruct() {}
-        
+
+        bool ISystemFilter<TState>.jobs => false;
+        int ISystemFilter<TState>.jobsBatchCount => 64;
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<TState, TEntity>.Create("Filter-PointsSystemFilter").WithComponent<PointAddPositionDelta>().Push();
+            return Filter<TState, TEntity>.Create("Filter-PointsSystemFilter").WithStructComponent<PointAddPositionDelta>().Push();
             
         }
 
         void ISystemFilter<TState>.AdvanceTick(Entity entity, TState state, float deltaTime) {
             
             ref var data = ref this.world.GetEntityDataRef<TEntity>(entity);
-            var positionDelta = entity.GetComponent<TState, TEntity, PointAddPositionDelta>().positionDelta;
-            data.position += positionDelta;// * deltaTime;
-            this.world.RemoveComponents<TEntity, PointAddPositionDelta>(entity);
-            //this.world.RunComponents(ref data, deltaTime, 0);
+            var positionDelta = this.world.GetData<PointAddPositionDelta>(entity).positionDelta;
+            data.position += positionDelta;
+            this.world.RemoveData<PointAddPositionDelta>(entity);
 
         }
 

@@ -15,10 +15,12 @@ namespace ME.Example.Game.Systems {
         
         void ISystemBase.OnDeconstruct() { }
 
+        bool ISystemFilter<TState>.jobs => false;
+        int ISystemFilter<TState>.jobsBatchCount => 8;
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<State> ISystemFilter<State>.CreateFilter() {
             
-            return Filter<State, Unit>.Create("Filter-UnitsReachPointSystem").WithComponent<UnitFollowFromTo>().Push();
+            return Filter<State, Unit>.Create("Filter-UnitsReachPointSystem").WithStructComponent<UnitFollowFromTo>().Push();
             
         }
 
@@ -26,8 +28,8 @@ namespace ME.Example.Game.Systems {
 
             ref var data = ref this.world.GetEntityDataRef<Unit>(entity);
 
-            var follow = this.world.GetComponent<Unit, UnitFollowFromTo>(entity);
-            if (Worlds<State>.currentWorld.GetEntityData(follow.to, out Point toData) == true) {
+            var follow = this.world.GetData<UnitFollowFromTo>(entity);
+            if (this.world.GetEntityData(follow.to, out Point toData) == true) {
 
                 if ((toData.position - data.position).sqrMagnitude > 0.01f) {
 
@@ -35,13 +37,9 @@ namespace ME.Example.Game.Systems {
 
                 }
 
-                var from = follow.from;
-                var to = follow.to;
-                this.world.RemoveComponents<Unit, UnitFollowFromTo>(data.entity);
-                var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
-                comp.@from = to;
-                comp.to = from;
-            
+                this.world.RemoveData<UnitFollowFromTo>(data.entity);
+                this.world.SetData(data.entity, new UnitFollowFromTo() { from = follow.to, to = follow.from });
+                
                 --data.lifes;
 
             }

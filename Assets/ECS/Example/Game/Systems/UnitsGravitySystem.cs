@@ -14,10 +14,12 @@ namespace ME.Example.Game.Systems {
         
         void ISystemBase.OnDeconstruct() {}
         
+        bool ISystemFilter<TState>.jobs => false;
+        int ISystemFilter<TState>.jobsBatchCount => 64;
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<TState, TEntity>.Create("Filter-UnitsGravitySystem").Push();
+            return Filter<TState, TEntity>.Create("Filter-UnitsGravitySystem").WithStructComponent<UnitGravity>().Push();
             
         }
 
@@ -27,7 +29,7 @@ namespace ME.Example.Game.Systems {
 
             { // Gravity
                     
-                var gravity = this.world.GetComponent<Unit, UnitGravity>(entity);
+                var gravity = this.world.GetData<UnitGravity>(entity);
                 data.position.y -= gravity.gravity * deltaTime;
                 if (data.position.y <= state.worldPosition.y) {
 

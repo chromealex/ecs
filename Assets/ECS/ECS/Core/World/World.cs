@@ -90,7 +90,7 @@ namespace ME.ECS {
 
         }
 
-        private static class FiltersDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
+        private static class FiltersDirectCache<TStateInner> where TStateInner : class, IState<TState> {
 
             internal static Dictionary<int, HashSet<int>> dic = new Dictionary<int, HashSet<int>>(4);
 
@@ -491,9 +491,9 @@ namespace ME.ECS {
 
         }
 
-        public bool HasFilter<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity {
+        public bool HasFilter(IFilter<TState> filterRef) {
             
-            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            ref var dic = ref FiltersDirectCache<TState>.dic;
             if (dic.TryGetValue(this.id, out HashSet<int> filters) == true) {
 
                 return filters.Contains(filterRef.id);
@@ -504,11 +504,11 @@ namespace ME.ECS {
 
         }
 
-        public void Register<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity {
+        public void Register<TEntity>(IFilter<TState> filterRef) where TEntity : struct, IEntity {
 
             this.filtersStorage.Register(filterRef);
 
-            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            ref var dic = ref FiltersDirectCache<TState>.dic;
             if (dic.TryGetValue(this.id, out HashSet<int> filters) == true) {
 
                 filters.Add(filterRef.id);
@@ -528,7 +528,7 @@ namespace ME.ECS {
                     ref var item = ref allEntities[j];
                     if (allEntities.IsFree(j) == true) continue;
                     
-                    this.UpdateFilters(item);
+                    this.UpdateFilters(item.entity);
                     
                 }
                 
@@ -773,7 +773,7 @@ namespace ME.ECS {
 
             }*/
 
-            this.UpdateFilters(data);
+            this.UpdateFilters(data.entity);
 
         }
 
@@ -788,15 +788,15 @@ namespace ME.ECS {
 
         }
 
-        public void UpdateFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
+        public void UpdateFilters(Entity entity) {
 
-            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            ref var dic = ref FiltersDirectCache<TState>.dic;
             HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnUpdate(data.entity);
+                    ((IFilterInternal<TState>)this.GetFilter(filterId)).OnUpdate(entity);
 
                 }
 
@@ -804,15 +804,15 @@ namespace ME.ECS {
 
         }
 
-        public void AddComponentToFilter<TEntity>(Entity entity) where TEntity : struct, IEntity {
+        public void AddComponentToFilter(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            ref var dic = ref FiltersDirectCache<TState>.dic;
             HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnAddComponent(entity);
+                    ((IFilterInternal<TState>)this.GetFilter(filterId)).OnAddComponent(entity);
 
                 }
 
@@ -820,15 +820,15 @@ namespace ME.ECS {
             
         }
 
-        public void RemoveComponentFromFilter<TEntity>(Entity entity) where TEntity : struct, IEntity {
+        public void RemoveComponentFromFilter(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            ref var dic = ref FiltersDirectCache<TState>.dic;
             HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnRemoveComponent(entity);
+                    ((IFilterInternal<TState>)this.GetFilter(filterId)).OnRemoveComponent(entity);
 
                 }
 
@@ -854,26 +854,26 @@ namespace ME.ECS {
 
         public void RemoveFromFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
             
-            this.RemoveFromFilters_INTERNAL<TEntity>(data.entity);
+            this.RemoveFromFilters_INTERNAL(data.entity);
             
         }
 
-        public void RemoveFromFilters<TEntity>(Entity data) where TEntity : struct, IEntity {
+        public void RemoveFromFilters(Entity data) {
 
-            this.RemoveFromFilters_INTERNAL<TEntity>(data);
+            this.RemoveFromFilters_INTERNAL(data);
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RemoveFromFilters_INTERNAL<TEntity>(Entity entity) where TEntity : struct, IEntity {
+        public void RemoveFromFilters_INTERNAL(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState, TEntity>.dic;
+            ref var dic = ref FiltersDirectCache<TState>.dic;
             HashSet<int> filters;
             if (dic.TryGetValue(this.id, out filters) == true) {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnRemoveEntity(entity);
+                    ((IFilterInternal<TState>)this.GetFilter(filterId)).OnRemoveEntity(entity);
 
                 }
 
@@ -962,7 +962,7 @@ namespace ME.ECS {
             
             this.DestroyEntityPlugins<TEntity>(entity);
             this.RemoveComponentsByEntityType<TEntity>(entity);
-            this.RemoveFromFilters<TEntity>(entity);
+            this.RemoveFromFilters(entity);
             
             return false;
 
@@ -1547,6 +1547,20 @@ namespace ME.ECS {
 
         }
 
+        private struct ForeachFilterJob : Unity.Jobs.IJobParallelFor {
+
+            public float deltaTime;
+
+            void Unity.Jobs.IJobParallelFor.Execute(int index) {
+
+                var systemContext = Worlds.currentWorld.currentSystemContext as ISystemFilter<TState>;
+                systemContext.AdvanceTick(systemContext.filter[index], Worlds<TState>.currentWorld.GetState(), this.deltaTime);
+                
+            }
+
+        }
+
+        public ISystemBase currentSystemContext { get; internal set; }
         public void Simulate(Tick from, Tick to) {
             
             if (from > to) {
@@ -1625,16 +1639,32 @@ namespace ME.ECS {
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);
                             #endif
 
-                            switch (this.systems[i]) {
+                            var system = this.systems[i];
+                            this.currentSystemContext = system;
+                            switch (system) {
                                 
                                 case ISystemFilter<TState> sysFilter: {
 
                                     sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
                                     if (sysFilter.filter != null) {
 
-                                        foreach (var entity in sysFilter.filter) {
+                                        if (sysFilter.jobs == true) {
 
-                                            sysFilter.AdvanceTick(entity, state, fixedDeltaTime);
+                                            sysFilter.filter.SetForEachMode(true);
+                                            var job = new ForeachFilterJob() {
+                                                deltaTime = fixedDeltaTime,
+                                            };
+                                            var jobHandle = job.Schedule(sysFilter.filter.Count, sysFilter.jobsBatchCount);
+                                            jobHandle.Complete();
+                                            sysFilter.filter.SetForEachMode(false);
+                                            
+                                        } else {
+
+                                            foreach (var entity in sysFilter.filter) {
+
+                                                sysFilter.AdvanceTick(entity, state, fixedDeltaTime);
+
+                                            }
 
                                         }
 
@@ -1650,6 +1680,7 @@ namespace ME.ECS {
                                     break;
                                 
                             }
+                            this.currentSystemContext = null;
 
                             #if CHECKPOINT_COLLECTOR
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);

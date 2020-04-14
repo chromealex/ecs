@@ -20,7 +20,7 @@ namespace ME.ECS {
                                                                                     where TEntity : struct, IEntity;
         TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
         List<IComponent<TState, TEntity>> ForEachComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
-        bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity;
+        bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponentBase where TEntity : struct, IEntity;
         bool HasComponentOnce<TEntity, TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> where TEntity : struct, IEntity;
         void RemoveComponents<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentBase;
         void RemoveComponentsByEntityType<TEntity>(Entity entity) where TEntity : struct, IEntity;
@@ -174,7 +174,7 @@ namespace ME.ECS {
                 
             }
 
-            this.AddComponentToFilter<TEntity>(entity);
+            this.AddComponentToFilter(entity);
             return (TComponent)data;
 
         }
@@ -212,7 +212,7 @@ namespace ME.ECS {
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
         /// <returns></returns>
-        public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponent<TState, TEntity> where TEntity : struct, IEntity {
+        public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponentBase where TEntity : struct, IEntity {
 
             var code = WorldUtilities.GetEntityTypeId<TEntity>();
             if (code >= 0 && code < this.componentsCache.Length) {
@@ -275,7 +275,7 @@ namespace ME.ECS {
                 
                 if (((Components<TEntity, TState>)this.componentsCache[code]).RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
                     
-                    this.RemoveComponentFromFilter<TEntity>(entity);
+                    this.RemoveComponentFromFilter(entity);
 
                 }
 
@@ -294,7 +294,7 @@ namespace ME.ECS {
                 
                 if (this.componentsCache[code].RemoveAll<TComponent>(entity.id) > 0) {
                     
-                    this.RemoveComponentFromFilter<TEntity>(entity);
+                    this.RemoveComponentFromFilter(entity);
 
                 }
 
@@ -313,7 +313,7 @@ namespace ME.ECS {
                 
                 if (this.componentsCache[code].RemoveAll(entity.id) > 0) {
                     
-                    this.RemoveComponentFromFilter<TEntity>(entity);
+                    this.RemoveComponentFromFilter(entity);
 
                 }
 
@@ -332,7 +332,7 @@ namespace ME.ECS {
                 
                 if (this.componentsCache[code].RemoveAllOnce<TComponent>(entity.id) > 0) {
                     
-                    this.RemoveComponentFromFilter<TEntity>(entity);
+                    this.RemoveComponentFromFilter(entity);
 
                 }
 

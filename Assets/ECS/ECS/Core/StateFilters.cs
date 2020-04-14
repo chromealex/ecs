@@ -7,6 +7,8 @@ namespace ME.ECS {
 
     internal interface IFilterInternal<TState> where TState : class, IState<TState>, new() {
 
+        void SetForEachMode(bool state);
+
         bool OnUpdate(Entity entity);
         bool CheckAdd(Entity entity);
         bool CheckRemove(Entity entity);
@@ -33,6 +35,8 @@ namespace ME.ECS {
         void CopyFrom(IFilterBase other);
         void Update();
 
+        void SetForEachMode(bool state);
+        
         HashSetCopyable<Entity> GetData();
         
     }
@@ -45,8 +49,8 @@ namespace ME.ECS {
 
     public interface IFilter<TState> : IFilterBase, IEnumerable<Entity> where TState : class, IState<TState>, new() {
 
+        ref Entity this[int index] { get; }
         bool Contains(Entity entity);
-        
         new FilterEnumerator<TState> GetEnumerator();
 
     }
@@ -59,6 +63,8 @@ namespace ME.ECS {
         IFilter<TState, TEntity> Custom<TFilter>() where TFilter : class, IFilterNode, new();
         IFilter<TState, TEntity> WithComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
         IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity>;
+        IFilter<TState, TEntity> WithStructComponent<TComponent>() where TComponent : struct, IStructComponent;
+        IFilter<TState, TEntity> WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent;
 
         IFilter<TState, TEntity> Push();
         new FilterEnumerator<TState> GetEnumerator();
@@ -201,36 +207,14 @@ namespace ME.ECS {
                 
             this.set = set;
             this.setEnumerator = this.set.GetData().GetEnumerator();
-            this.set.forEachMode = true;
-                
+            this.set.SetForEachMode(true);
+
         }
  
         public void Dispose() {
 
-            this.set.forEachMode = false;
+            this.set.SetForEachMode(false);
 
-            {
-                var requests = this.set.GetRequests();
-                foreach (var entity in requests) {
-
-                    this.set.OnUpdate(entity);
-
-                }
-
-                requests.Clear();
-            }
-
-            {
-                var requests = this.set.GetRequestsRemoveEntity();
-                foreach (var entity in requests) {
-
-                    this.set.Remove_INTERNAL(entity);
-
-                }
-
-                requests.Clear();
-            }
-            
         }
  
         public bool MoveNext() {
@@ -322,6 +306,26 @@ namespace ME.ECS {
 
         }
 
+        private class ComponentStructExistsFilterNode<TComponent> : IFilterNode where TComponent : struct, IStructComponent {
+
+            public bool Execute(Entity entity) {
+                
+                return Worlds<TState>.currentWorld.HasData<TComponent>(entity) == true;
+                
+            }
+
+        }
+
+        private class ComponentStructNotExistsFilterNode<TComponent> : IFilterNode where TComponent : struct, IStructComponent {
+
+            public bool Execute(Entity entity) {
+                
+                return Worlds<TState>.currentWorld.HasData<TComponent>(entity) == false;
+                
+            }
+
+        }
+
         private const int REQUESTS_CAPACITY = 4;
         private const int NODES_CAPACITY = 4;
 
@@ -356,6 +360,38 @@ namespace ME.ECS {
             PoolHashSet<Entity>.Recycle(ref this.requestsRemoveEntity);
             PoolHashSet<Entity>.Recycle(ref this.requests);
             
+        }
+
+        public void SetForEachMode(bool state) {
+
+            var internalFilter = ((IFilterInternal<TState>)this);
+            internalFilter.forEachMode = state;
+            if (state == false) {
+                
+                {
+                    var requests = internalFilter.GetRequests();
+                    foreach (var entity in requests) {
+
+                        internalFilter.OnUpdate(entity);
+
+                    }
+
+                    requests.Clear();
+                }
+
+                {
+                    var requests = internalFilter.GetRequestsRemoveEntity();
+                    foreach (var entity in requests) {
+
+                        internalFilter.Remove_INTERNAL(entity);
+
+                    }
+
+                    requests.Clear();
+                }
+
+            }
+
         }
 
         public void CopyFrom(IFilterBase other) {
@@ -411,6 +447,13 @@ namespace ME.ECS {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return this.data.Count;
+            }
+        }
+
+        public ref Entity this[int index] {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get {
+                return ref this.data.Get(index);
             }
         }
 
@@ -570,7 +613,7 @@ namespace ME.ECS {
                 this.nodesCount = this.nodes.Length;
                 this.tempNodes.Clear();
                 this.tempNodesCustom.Clear();
-                Worlds<TState>.currentWorld.Register(this);
+                Worlds<TState>.currentWorld.Register<TEntity>(this);
 
             }
 
@@ -604,6 +647,22 @@ namespace ME.ECS {
         public IFilter<TState, TEntity> WithoutComponent<TComponent>() where TComponent : class, IComponent<TState, TEntity> {
 
             var node = new ComponentNotExistsFilterNode<TComponent>();
+            this.tempNodes.Add(node);
+            return this;
+
+        }
+
+        public IFilter<TState, TEntity> WithStructComponent<TComponent>() where TComponent : struct, IStructComponent {
+
+            var node = new ComponentStructExistsFilterNode<TComponent>();
+            this.tempNodes.Add(node);
+            return this;
+
+        }
+        
+        public IFilter<TState, TEntity> WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent {
+
+            var node = new ComponentStructNotExistsFilterNode<TComponent>();
             this.tempNodes.Add(node);
             return this;
 

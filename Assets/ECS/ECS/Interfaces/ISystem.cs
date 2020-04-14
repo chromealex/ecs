@@ -26,7 +26,9 @@ namespace ME.ECS {
     }
 
     public interface ISystemFilter<TState> : ISystem<TState> where TState : class, IState<TState>, new() {
-
+        
+        bool jobs { get; }
+        int jobsBatchCount { get; }
         IFilter<TState> filter { get; set; }
         IFilter<TState> CreateFilter();
 

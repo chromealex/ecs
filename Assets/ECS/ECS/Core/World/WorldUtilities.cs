@@ -54,6 +54,13 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void Release(ref StructComponentsContainer storage) {
+            
+            PoolClass<StructComponentsContainer>.Recycle(ref storage);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Release<TEntity, TState>(ref Components<TEntity, TState> components) where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
             
             PoolClass<Components<TEntity, TState>>.Recycle(ref components);
@@ -99,6 +106,14 @@ namespace ME.ECS {
 
             if (EntityTypes<TEntity>.typeId < 0) EntityTypes<TEntity>.typeId = ++EntityTypesCounter.counter;
             return EntityTypes<TEntity>.typeId;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int GetComponentTypeId<TComponent>() where TComponent : struct, IStructComponent {
+
+            if (ComponentTypes<TComponent>.typeId < 0) ComponentTypes<TComponent>.typeId = ++ComponentTypesCounter.counter;
+            return ComponentTypes<TComponent>.typeId;
 
         }
 

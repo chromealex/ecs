@@ -8,6 +8,7 @@ namespace ME.ECS {
 
         int id { get; }
 
+        ISystemBase currentSystemContext { get; }
         void SetCheckpointCollector(ICheckpointCollector checkpointCollector);
         void Checkpoint(object interestObj);
 
@@ -49,14 +50,14 @@ namespace ME.ECS {
         float GetRandomValue();
         int GetSeedValue();
         
-        void UpdateFilters<TEntity>(TEntity data) where TEntity : struct, IEntity;
+        void UpdateFilters(Entity data);
         void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
 
         void SetCapacity<TEntity>(int capacity) where TEntity : struct, IEntity;
         int GetCapacity<TEntity>() where TEntity : struct, IEntity;
 
-        bool HasFilter<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity;
-        void Register<TEntity>(IFilter<TState, TEntity> filterRef) where TEntity : struct, IEntity;
+        bool HasFilter(IFilter<TState> filterRef);
+        void Register<TEntity>(IFilter<TState> filterRef) where TEntity : struct, IEntity;
         void Register(ref FiltersStorage filtersRef, bool freeze, bool restore);
         void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity;
         void Register<TEntity>(ref Storage<TEntity> storageRef, bool freeze, bool restore) where TEntity : struct, IEntity;

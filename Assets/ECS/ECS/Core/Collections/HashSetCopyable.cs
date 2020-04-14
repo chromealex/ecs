@@ -666,9 +666,10 @@ namespace ME.ECS.Collections {
         /// instead of this method.
         /// </summary>
         private void SetCapacity(int newSize, bool forceNewHashCodes) {
-            Slot[] newSlots = new Slot[newSize];
+            Slot[] newSlots = PoolArray<Slot>.Spawn(newSize);
             if (m_slots != null) {
                 Array.Copy(m_slots, 0, newSlots, 0, m_lastIndex);
+                PoolArray<Slot>.Recycle(this.m_slots);
             }
  
             if(forceNewHashCodes) {
@@ -679,7 +680,8 @@ namespace ME.ECS.Collections {
                 }
             }
  
-            int[] newBuckets = new int[newSize];
+            int[] newBuckets = PoolArray<int>.Spawn(newSize);
+            if (this.m_buckets != null) PoolArray<int>.Recycle(ref this.m_buckets);
             for (int i = 0; i < m_lastIndex; i++) {
                 int bucket = newSlots[i].hashCode % newSize;
                 newSlots[i].next = newBuckets[bucket] - 1;
@@ -976,7 +978,22 @@ namespace ME.ECS.Collections {
             internal int next;          // Index of next entry, -1 if last
             internal T value;
         }
- 
+
+        public ref T Get(int index) {
+            
+            while (index < this.m_lastIndex) {
+                if (this.m_slots[index].hashCode >= 0) {
+                    return ref this.m_slots[index].value;
+                }
+                ++index;
+            }
+
+            return ref this.emptySlotData;
+
+        }
+
+        private T emptySlotData;
+
         public struct Enumerator : IEnumerator<T>, System.Collections.IEnumerator {
             private HashSetCopyable<T> set;
             private int index;

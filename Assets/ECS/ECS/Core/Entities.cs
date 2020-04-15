@@ -28,6 +28,12 @@
 
     public static class EntityExtensions {
 
+        public static void RemoveData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
+            
+            Worlds.currentWorld.RemoveData<TComponent>(entity);
+            
+        }
+
         public static TComponent GetData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
             
             return Worlds.currentWorld.GetData<TComponent>(entity);

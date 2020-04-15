@@ -20,6 +20,7 @@ namespace ME.ECSEditor {
         private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 16;
         
         private const int CREATE_COMPONENT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 40;
+        private const int CREATE_COMPONENT_STRUCT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 40;
         private const int CREATE_COMPONENT_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 41;
         private const int CREATE_COMPONENT_SHARED_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 42;
         private const int CREATE_COMPONENT_SHARED_ONCE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 43;
@@ -120,8 +121,9 @@ namespace ME.ECSEditor {
         internal static void Create(string path, string fileName, string templateName, System.Collections.Generic.Dictionary<string, string> customDefines = null, bool allowRename = true) {
 
             var stateTypeStr = "StateClassType";
+            var projectName = path.Split('/');
             var type = typeof(ME.ECS.IStateBase);
-            var types = System.AppDomain.CurrentDomain.GetAssemblies().SelectMany(s => s.GetTypes()).Where(p => type.IsAssignableFrom(p)).ToArray();
+            var types = System.AppDomain.CurrentDomain.GetAssemblies().SelectMany(s => s.GetTypes()).Where(p => p.IsClass == true && type.IsAssignableFrom(p) && projectName.Contains(p.Name.Replace("State", string.Empty))).ToArray();
             if (types.Length > 0) {
 
                 var stateType = types[0];
@@ -329,6 +331,13 @@ MonoBehaviour:
         public static void CreateComponent() {
 
             ScriptTemplates.Create("New Component.cs", "31-ComponentTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Component (struct)", priority = ScriptTemplates.CREATE_COMPONENT_STRUCT_PRIORITY)]
+        public static void CreateStructComponent() {
+
+            ScriptTemplates.Create("New Struct Component.cs", "37-ComponentStructTemplate");
 
         }
 

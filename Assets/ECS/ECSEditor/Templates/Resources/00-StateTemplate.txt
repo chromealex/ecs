@@ -15,6 +15,7 @@ namespace #NAMESPACE# {
         public RandomState randomState { get; set; }
 
         public FiltersStorage filters;
+        public StructComponentsContainer structComponents;
         
         // TODO: Place your custom data here
         
@@ -34,6 +35,7 @@ namespace #NAMESPACE# {
         void IState<#STATENAME#>.Initialize(IWorld<#STATENAME#> world, bool freeze, bool restore) {
 
             world.Register(ref this.filters, freeze, restore);
+            world.Register(ref this.structComponents, freeze, restore);
             
             world.Register(ref this.shared, freeze, restore);
             // TODO: Register your storages here
@@ -52,6 +54,7 @@ namespace #NAMESPACE# {
             // TODO: Copy your custom data here
 
             this.filters.CopyFrom(other.filters);
+            this.structComponents.CopyFrom(other.structComponents);
             
             this.shared.CopyFrom(other.shared);
             // TODO: Call CopyFrom on your storages
@@ -64,6 +67,7 @@ namespace #NAMESPACE# {
         void IPoolableRecycle.OnRecycle() {
             
             WorldUtilities.Release(ref this.filters);
+            WorldUtilities.Release(ref this.structComponents);
             
             // TODO: Release your custom data here
             

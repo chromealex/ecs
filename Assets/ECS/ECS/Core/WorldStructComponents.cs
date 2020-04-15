@@ -137,11 +137,18 @@ namespace ME.ECS {
     public class StructComponentsContainer : IPoolableRecycle {
 
         private IStructRegistry[] list;
+        private int count;
 
         public void Initialize(bool freeze, bool restore) {
             
             ArrayUtils.Resize(100, ref this.list);
             
+        }
+
+        public int Count {
+            get {
+                return this.count;
+            }
         }
 
         private void Validate<TComponent>(int code) where TComponent : struct, IStructComponent {
@@ -181,6 +188,7 @@ namespace ME.ECS {
             this.Validate<TComponent>(code);
             var reg = (IStructRegistry<TComponent>)this.list[code];
             reg.Set(entity, data);
+            ++this.count;
 
         }
 
@@ -190,6 +198,7 @@ namespace ME.ECS {
             this.Validate<TComponent>(code);
             var reg = (IStructRegistry<TComponent>)this.list[code];
             reg.Remove(entity);
+            --this.count;
 
         }
 
@@ -225,6 +234,8 @@ namespace ME.ECS {
 
         public void CopyFrom(StructComponentsContainer other) {
 
+            this.count = other.count;
+            
             if (this.list != null) {
                 
                 for (int i = 0; i < this.list.Length; ++i) {

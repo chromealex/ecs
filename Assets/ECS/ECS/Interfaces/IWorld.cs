@@ -29,6 +29,8 @@ namespace ME.ECS {
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
 
+        TModule GetModule<TModule>() where TModule : IModuleBase;
+
         void UpdateAllFilters();
         
         bool HasResetState();
@@ -77,7 +79,6 @@ namespace ME.ECS {
         bool ForEachEntity<TEntity>(out RefList<TEntity> output) where TEntity : struct, IEntity;
 
         System.Collections.Generic.List<TModule> GetModules<TModule>(System.Collections.Generic.List<TModule> output) where TModule : IModuleBase;
-        TModule GetModule<TModule>() where TModule : IModuleBase;
         bool HasModule<TModule>() where TModule : class, IModule<TState>;
         bool AddModule<TModule>() where TModule : class, IModule<TState>, new();
         void RemoveModules<TModule>() where TModule : class, IModule<TState>, new();

@@ -67,6 +67,13 @@ namespace ME.ECS {
 namespace ME.ECS.StatesHistory {
 
     [System.Serializable]
+    public struct HistoryStorage {
+
+        public HistoryEvent[] events;
+
+    }
+
+    [System.Serializable]
     public struct HistoryEvent {
 
         // Header
@@ -119,11 +126,13 @@ namespace ME.ECS.StatesHistory {
 
     }
 
-    public interface IStatesHistoryModuleBase {
+    public interface IStatesHistoryModuleBase : IModuleBase {
 
         void BeginAddEvents();
         void EndAddEvents();
 
+        HistoryStorage GetHistoryStorage();
+        
         System.Collections.IDictionary GetData();
         ME.ECS.Network.IStatesHistory GetDataStates();
 
@@ -234,6 +243,31 @@ namespace ME.ECS.StatesHistory {
 
         }
 
+        HistoryStorage IStatesHistoryModuleBase.GetHistoryStorage() {
+
+            var list = PoolList<HistoryEvent>.Spawn(100);
+            foreach (var data in this.events) {
+
+                foreach (var item in data.Value) {
+
+                    var evt = item.Value;
+                    if (evt.storeInHistory == true) {
+                        
+                        list.Add(evt);
+                        
+                    }
+
+                }
+
+            }
+
+            var storage = new HistoryStorage();
+            storage.events = list.ToArray();
+            PoolList<HistoryEvent>.Recycle(ref list);
+            return storage;
+
+        }
+
         protected virtual uint GetQueueCapacity() {
 
             return StatesHistoryModule<TState>.DEFAULT_QUEUE_CAPACITY;
@@ -297,7 +331,7 @@ namespace ME.ECS.StatesHistory {
         }
 
         public void AddEvent(HistoryEvent historyEvent) {
-
+            
             ++this.statEventsAdded;
             
             this.ValidatePrewarm();

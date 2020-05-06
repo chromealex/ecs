@@ -19,7 +19,7 @@ namespace ME.Example.Game.Systems {
 
                 if (Worlds<State>.currentWorld.GetEntityData(data, out Unit entityData) == true) {
 
-                    if (Worlds<State>.currentWorld.GetEntityData(entityData.pointTo, out Point toData) == true) {
+                    if (Worlds<State>.currentWorld.GetEntityData(entityData.entity.GetData<UnitFollowFromTo>().to, out Point toData) == true) {
 
                         return ((toData.position - entityData.position).sqrMagnitude <= 0.01f);
 
@@ -43,23 +43,21 @@ namespace ME.Example.Game.Systems {
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<TState, Unit>.Create("Filter-UnitsSystemFilter").WithComponent<UnitGravity>().WithComponent<UnitFollowFromTo>().Custom<CustomFilter>().Push();
+            return Filter<TState, Unit>.Create("Filter-UnitsSystemFilter").WithStructComponent<UnitGravity>().WithStructComponent<UnitFollowFromTo>().Custom<CustomFilter>().Push();
             
         }
 
         void ISystemFilter<TState>.AdvanceTick(Entity entity, TState state, float deltaTime) {
-            
-            ref var data = ref this.world.GetEntityDataRef<Unit>(entity);
-            var from = data.pointFrom;
-            var to = data.pointTo;
-            data.pointTo = from;
-            data.pointFrom = to;
-            this.world.RemoveComponents<Unit, UnitFollowFromTo>(data.entity);
-            var comp = this.world.AddComponent<Unit, UnitFollowFromTo>(data.entity);
-            comp.@from = data.pointFrom;
-            comp.to = data.pointTo;
-                
-            --data.lifes;
+
+            var data = entity.GetData<UnitFollowFromTo>();
+            var from = data.from;
+            var to = data.to;
+            data.from = to;
+            data.to = from;
+            entity.SetData(data);
+
+            ref var unit = ref this.world.GetEntityDataRef<Unit>(entity);
+            --unit.lifes;
 
         }
 

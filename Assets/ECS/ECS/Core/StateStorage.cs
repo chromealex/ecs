@@ -83,6 +83,8 @@ namespace ME.ECS {
         private bool freeze;
 
         void IPoolableRecycle.OnRecycle() {
+
+            Worlds.currentWorld.OnRecycleStorage(this);
             
             PoolRefList<TEntity>.Recycle(ref this.list);
             this.freeze = false;

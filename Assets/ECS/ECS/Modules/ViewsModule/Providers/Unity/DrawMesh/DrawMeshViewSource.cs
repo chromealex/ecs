@@ -1,6 +1,6 @@
 namespace ME.ECS.Views.Providers {
 
-    public abstract class DrawMeshViewSourceBase : UnityEngine.MonoBehaviour, IDoValidate {
+    public abstract class DrawMeshViewSourceBase : ViewBase, IDoValidate {
 
         public abstract IView<TEntity> GetSource<TEntity>() where TEntity : struct, IEntity;
 

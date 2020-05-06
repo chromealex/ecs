@@ -28,9 +28,16 @@
 
     public static class EntityExtensions {
 
-        public static void RemoveData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
+        public static Entity RemoveData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
             
             Worlds.currentWorld.RemoveData<TComponent>(entity);
+            return entity;
+
+        }
+
+        public static bool HasData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
+            
+            return Worlds.currentWorld.HasData<TComponent>(entity);
             
         }
 
@@ -40,10 +47,11 @@
             
         }
 
-        public static void SetData<TComponent>(this Entity entity, TComponent data) where TComponent : struct, IStructComponent {
+        public static Entity SetData<TComponent>(this Entity entity, TComponent data) where TComponent : struct, IStructComponent {
             
-            Worlds.currentWorld.SetData<TComponent>(entity, data);
-            
+            Worlds.currentWorld.SetData(entity, data);
+            return entity;
+
         }
 
         public static TComponent GetComponent<TState, TEntity, TComponent>(this Entity entity)
@@ -69,10 +77,10 @@
     }
 
     [System.Serializable]
-    public struct Entity : System.IEquatable<Entity> {
+    public readonly struct Entity : System.IEquatable<Entity> {
 
         public readonly int id;
-        public int storageIdx;
+        public readonly int storageIdx;
 
         public static Entity Empty {
             get {

@@ -186,9 +186,9 @@ namespace ME.ECS.StatesHistory {
         private ME.ECS.Network.StatesHistory<TState> statesHistory;
         private Dictionary<Tick, SortedList<long, HistoryEvent>> events;
         private Dictionary<Tick, int> syncHash;
-        private Tick maxTick;
+        //private Tick maxTick;
         private bool prewarmed;
-        private Tick beginAddEventsTick;
+        //private Tick beginAddEventsTick;
         private int beginAddEventsCount;
         private bool beginAddEvents;
         private IEventRunner eventRunner;
@@ -197,6 +197,7 @@ namespace ME.ECS.StatesHistory {
         private int statPlayedEvents;
 
         private Tick oldestTick;
+        private Tick lastSavedStateTick;
         
         public IWorld<TState> world { get; set; }
 
@@ -213,6 +214,16 @@ namespace ME.ECS.StatesHistory {
         }
 
         void IModuleBase.OnDeconstruct() {
+
+            //this.maxTick = Tick.Zero;
+            this.prewarmed = false;
+            //this.beginAddEventsTick = Tick.Zero;
+            this.beginAddEventsCount = 0;
+            this.beginAddEvents = false;
+            this.statEventsAdded = 0;
+            this.statPlayedEvents = 0;
+            this.oldestTick = Tick.Zero;
+            this.lastSavedStateTick = Tick.Zero;
             
             this.statesHistory.DiscardAll();
             
@@ -484,8 +495,6 @@ namespace ME.ECS.StatesHistory {
             
             state.tick = this.currentTick;*/
             
-            
-
         }
 
         public Tick GetAndResetOldestTick(Tick tick) {
@@ -498,7 +507,6 @@ namespace ME.ECS.StatesHistory {
 
         }
         
-        private Tick lastSavedStateTick;
         public void PlayEventsForTick(Tick tick) {
 
             if (tick > this.lastSavedStateTick && tick > Tick.Zero && tick % this.GetTicksPerState() == 0) {

@@ -3,7 +3,7 @@
 namespace #NAMESPACE# {
 
     using TState = #STATENAME#;
-    using TEntity = ENTITY_TYPE_HERE;
+    using TEntity = Entities.ENTITY_TYPE_HERE;
     
     public class #SCRIPTNAME# : IComponentCopyable<TState, TEntity> {
         

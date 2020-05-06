@@ -4,7 +4,7 @@
     
         public static void IL2CPP() {
     
-    #CONTENT#
+#CONTENT#
     
         }
     

@@ -13,11 +13,13 @@ namespace ME.ECSEditor {
         private const int CREATE_PROJECT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 100;
         
         private const int CREATE_FEATURE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 11;
-        private const int CREATE_SYSTEM_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 12;
-        private const int CREATE_SYSTEM_FILTER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 13;
-        private const int CREATE_MODULE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 14;
-        private const int CREATE_ENTITY_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 15;
-        private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 16;
+        private const int CREATE_FEATURE_COMPLEX_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 12;
+        
+        private const int CREATE_SYSTEM_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 13;
+        private const int CREATE_SYSTEM_FILTER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 14;
+        private const int CREATE_MODULE_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 15;
+        private const int CREATE_ENTITY_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 16;
+        private const int CREATE_MARKER_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 17;
         
         private const int CREATE_COMPONENT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 40;
         private const int CREATE_COMPONENT_STRUCT_PRIORITY = ScriptTemplates.CREATE_MENU_PRIORITY + 40;
@@ -35,6 +37,8 @@ namespace ME.ECSEditor {
         
         internal class DoCreateScriptAsset : EndNameEditAction {
 
+            private System.Action<Object> onCreated;
+            
             private static UnityEngine.Object CreateScriptAssetFromTemplate(string pathName, string resourceFile) {
 
                 var str1 = resourceFile.Replace("#NOTRIM#", "");
@@ -52,6 +56,13 @@ namespace ME.ECSEditor {
                 }
 
                 return DoCreateScriptAsset.CreateScriptAssetWithContent(pathName, templateContent);
+
+            }
+
+            public EndNameEditAction SetCallback(System.Action<Object> onCreated) {
+
+                this.onCreated = onCreated;
+                return this;
 
             }
 
@@ -94,7 +105,9 @@ namespace ME.ECSEditor {
 
             public override void Action(int instanceId, string pathName, string resourceFile) {
 
-                ProjectWindowUtil.ShowCreatedAsset(DoCreateScriptAsset.CreateScriptAssetFromTemplate(pathName, resourceFile));
+                var instance = DoCreateScriptAsset.CreateScriptAssetFromTemplate(pathName, resourceFile);
+                ProjectWindowUtil.ShowCreatedAsset(instance);
+                if (this.onCreated != null) this.onCreated.Invoke(instance);
 
             }
 
@@ -102,7 +115,7 @@ namespace ME.ECSEditor {
 
         private static Texture2D scriptIcon = EditorGUIUtility.IconContent("cs Script Icon").image as Texture2D;
 
-        internal static void Create(string fileName, string templateName, System.Collections.Generic.Dictionary<string, string> customDefines = null, bool allowRename = true) {
+        internal static void Create(string fileName, string templateName, System.Collections.Generic.Dictionary<string, string> customDefines = null, bool allowRename = true, System.Action<Object> onCreated = null) {
 
             var obj = Selection.activeObject;
             var path = AssetDatabase.GetAssetPath(obj);
@@ -114,11 +127,11 @@ namespace ME.ECSEditor {
                 path = "Assets/";
             }
             
-            ScriptTemplates.Create(path, fileName, templateName, customDefines, allowRename);
+            ScriptTemplates.Create(path, fileName, templateName, customDefines, allowRename, onCreated);
             
         }
         
-        internal static void Create(string path, string fileName, string templateName, System.Collections.Generic.Dictionary<string, string> customDefines = null, bool allowRename = true) {
+        internal static void Create(string path, string fileName, string templateName, System.Collections.Generic.Dictionary<string, string> customDefines = null, bool allowRename = true, System.Action<Object> onCreated = null) {
 
             var stateTypeStr = "StateClassType";
             var projectName = path.Split('/');
@@ -152,13 +165,22 @@ namespace ME.ECSEditor {
             
             content = content.Replace(@"#NAMESPACE#", path.Replace("Assets/", "").Replace("/", "."));
             content = content.Replace(@"#STATENAME#", stateTypeStr);
+            content = content.Replace(@"#REFERENCES#", string.Empty);
 
             if (allowRename == true) {
 
                 var defaultNewFileName = fileName;
                 var image = ScriptTemplates.scriptIcon;
-                ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, ScriptableObject.CreateInstance<DoCreateScriptAsset>(), defaultNewFileName, image,
-                                                                        content);
+                ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
+            0,
+            ScriptableObject.CreateInstance<DoCreateScriptAsset>().SetCallback((instance) => {
+             
+                        if (onCreated != null) onCreated.Invoke(instance);
+
+                    }),
+                    defaultNewFileName,
+                    image,
+                    content);
 
             } else {
 
@@ -172,6 +194,8 @@ namespace ME.ECSEditor {
 
                 System.IO.File.WriteAllText(fullDir, content);
                 AssetDatabase.ImportAsset(fullDir);
+                
+                if (onCreated != null) onCreated.Invoke(AssetDatabase.LoadAssetAtPath<Object>(fullDir));
                 
             }
 
@@ -242,10 +266,8 @@ MonoBehaviour:
             
         }
 
-        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Initialize Project", priority = ScriptTemplates.CREATE_PROJECT_PRIORITY)]
-        public static void CreateProject() {
-
-            var obj = Selection.activeObject;
+        private static string GetDirectoryFromAsset(Object obj) {
+            
             var path = AssetDatabase.GetAssetPath(obj);
             if (System.IO.File.Exists(path) == true) {
                 path = System.IO.Path.GetDirectoryName(path);
@@ -255,13 +277,23 @@ MonoBehaviour:
                 path = "Assets";
             }
 
+            return path;
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Initialize Project", priority = ScriptTemplates.CREATE_PROJECT_PRIORITY)]
+        public static void CreateProject() {
+
+            var obj = Selection.activeObject;
+            var path = ScriptTemplates.GetDirectoryFromAsset(obj);
+
             var projectName = System.IO.Path.GetFileName(path);
             projectName = projectName.Replace(".", "");
             projectName = projectName.Replace(" ", "");
             projectName = projectName.Replace("_", "");
             var stateName = projectName + "State";
             var defines = new Dictionary<string, string>() { { "STATENAME", stateName }, { "PROJECTNAME", projectName } };
-
+            
             ScriptTemplates.CreateEmptyDirectory(path, "Modules");
             ScriptTemplates.CreateEmptyDirectory(path, "Systems");
             ScriptTemplates.CreateEmptyDirectory(path, "Components");
@@ -324,6 +356,54 @@ MonoBehaviour:
         public static void CreateFeature() {
 
             ScriptTemplates.Create("New Feature.cs", "61-FeatureTemplate");
+
+        }
+
+        [UnityEditor.MenuItem("Assets/Create/ME.ECS/Feature (Complex)", priority = ScriptTemplates.CREATE_FEATURE_COMPLEX_PRIORITY)]
+        public static void CreateFeatureComplex() {
+
+            ScriptTemplates.Create("New Feature.cs", "61-FeatureTemplate", onCreated: (asset) => {
+
+                var path = ScriptTemplates.GetDirectoryFromAsset(asset);
+                var assetName = asset.name;
+                ScriptTemplates.CreateEmptyDirectory(path, assetName);
+                var dir = path + "/" + assetName;
+                var newAssetPath = dir + "/" + assetName + ".cs";
+                AssetDatabase.MoveAsset(AssetDatabase.GetAssetPath(asset), newAssetPath);
+                AssetDatabase.ImportAsset(newAssetPath);
+                
+                ScriptTemplates.CreateEmptyDirectory(dir, "Modules");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Systems");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Components");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Markers");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Views");
+
+                /*var featureName = assetName;
+                var projectGuid = string.Empty;
+                var projectPath = path.Replace("Assets/", "");
+                var projectName = projectPath.Split('/')[0];
+                var asmDefs = AssetDatabase.FindAssets("t:AssemblyDefinitionAsset");
+                foreach (var asmGuid in asmDefs) {
+
+                    var asmPath = AssetDatabase.GUIDToAssetPath(asmGuid);
+                    var asm = AssetDatabase.LoadAssetAtPath<UnityEditorInternal.AssemblyDefinitionAsset>(asmPath);
+                    if (asm.name == projectName) {
+
+                        projectGuid = asmGuid;
+                        break;
+
+                    }
+
+                }
+
+                var defs = new Dictionary<string, string>() {
+                    { "PROJECTNAME", featureName },
+                    { "REFERENCES", @",""GUID:" + projectGuid + @"""" }
+                };
+                ScriptTemplates.Create(dir, featureName + ".asmdef", "00-asmdef", customDefines: defs, allowRename: false);
+                */
+                
+            });
 
         }
 

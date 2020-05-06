@@ -34,7 +34,7 @@ namespace ME.ECS {
 
         void IModuleBase.OnConstruct() {
 
-            UnityEngine.Application.targetFrameRate = 120;
+            //UnityEngine.Application.targetFrameRate = 120;
             this.minFps = int.MaxValue;
             this.maxFps = int.MinValue;
             this.fps = 0;

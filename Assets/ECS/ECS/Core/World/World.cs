@@ -81,7 +81,7 @@ namespace ME.ECS {
         private const int MODULES_CAPACITY = 100;
         internal const int ENTITIES_CACHE_CAPACITY = 100;
         private const int STORAGES_CAPACITY = 100;
-        private const int CAPACITIES_CAPACITY = 100;
+        private const int WORLDS_CAPACITY = 4;
         
         private static class EntitiesDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
 
@@ -92,7 +92,7 @@ namespace ME.ECS {
 
         private static class FiltersDirectCache<TStateInner> where TStateInner : class, IState<TState> {
 
-            internal static Dictionary<int, HashSet<int>> dic = new Dictionary<int, HashSet<int>>(4);
+            internal static HashSet<int>[] dic = new HashSet<int>[World<TState>.WORLDS_CAPACITY];
 
         }
 
@@ -120,21 +120,22 @@ namespace ME.ECS {
         
         // State cache:
         private IList[] storagesCache;
-        private FiltersStorage filtersStorage;
+        internal FiltersStorage filtersStorage;
 
         private float tickTime;
         private double timeSinceStart;
-
-        public World() {
-
-            this.currentState = null;
-            this.resetState = null;
-            this.currentStep = WorldStep.None;
-
-        }
+        public bool isActive;
 
         void IPoolableSpawn.OnSpawn() {
 
+            this.currentState = default;
+            this.resetState = default;
+            this.currentStep = default;
+            this.checkpointCollector = default;
+            this.filtersStorage = default;
+            this.tickTime = default;
+            this.timeSinceStart = default;
+            
             this.features = PoolList<IFeatureBase>.Spawn(World<TState>.FEATURES_CAPACITY);
             this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
@@ -143,16 +144,25 @@ namespace ME.ECS {
             this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
             this.storagesCache = PoolArray<IList>.Spawn(World<TState>.STORAGES_CAPACITY);
 
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache<TState>.dic);
+
+            this.OnSpawnStructComponents();
             this.OnSpawnComponents();
             this.OnSpawnMarkers();
+
+            this.isActive = true;
 
         }
 
         void IPoolableRecycle.OnRecycle() {
 
+            this.isActive = false;
+            
             this.OnRecycleMarkers();
             this.OnRecycleComponents();
+            this.OnRecycleStructComponents();
             
+            PoolHashSet<int>.Recycle(ref FiltersDirectCache<TState>.dic[this.id]);
             PoolClass<FiltersStorage>.Recycle(ref this.filtersStorage);
             
             WorldUtilities.ReleaseState(ref this.resetState);
@@ -169,6 +179,11 @@ namespace ME.ECS {
             for (int i = 0; i < this.systems.Count; ++i) {
                 
                 this.systems[i].OnDeconstruct();
+                if (this.systems[i] is ISystemFilter<TState> systemFilter) {
+
+                    systemFilter.filter = null;
+
+                }
                 PoolSystems.Recycle(this.systems[i]);
 
             }
@@ -308,7 +323,7 @@ namespace ME.ECS {
             this.currentState.randomState = rnd.state;
             #else
             UnityEngine.Random.state = this.currentState.randomState;
-            var spherePoint = UnityEngine.Random.insideUnitSphere * radius;
+            var spherePoint = UnityEngine.Random.insideUnitSphere * maxRadius;
             this.currentState.randomState = UnityEngine.Random.state;
             #endif
             return spherePoint + center;
@@ -411,6 +426,9 @@ namespace ME.ECS {
         partial void OnSpawnComponents();
         partial void OnRecycleComponents();
 
+        partial void OnSpawnStructComponents();
+        partial void OnRecycleStructComponents();
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity {
 
@@ -493,10 +511,10 @@ namespace ME.ECS {
 
         public bool HasFilter(IFilter<TState> filterRef) {
             
-            ref var dic = ref FiltersDirectCache<TState>.dic;
-            if (dic.TryGetValue(this.id, out HashSet<int> filters) == true) {
-
-                return filters.Contains(filterRef.id);
+            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            if (dic != null) {
+            
+                return dic.Contains(filterRef.id);
 
             }
 
@@ -508,16 +526,16 @@ namespace ME.ECS {
 
             this.filtersStorage.Register(filterRef);
 
-            ref var dic = ref FiltersDirectCache<TState>.dic;
-            if (dic.TryGetValue(this.id, out HashSet<int> filters) == true) {
+            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            if (dic != null) {
 
-                filters.Add(filterRef.id);
+                dic.Add(filterRef.id);
 
             } else {
                 
-                filters = new HashSet<int>();
-                filters.Add(filterRef.id);
-                dic.Add(this.id, filters);
+                dic = new HashSet<int>();
+                dic.Add(filterRef.id);
+                FiltersDirectCache<TState>.dic[this.id] = dic;
                 
             }
 
@@ -644,7 +662,7 @@ namespace ME.ECS {
             if (freeze == false && this.sharedEntity.id == 0 && typeof(TEntity) == typeof(SharedEntity)) {
                 
                 // Create shared entity which should store shared components
-                this.sharedEntity = this.AddEntity(new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);
+                this.sharedEntity = this.AddEntity_INTERNAL(new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);//this.AddEntity(new SharedEntity());//new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);
 
             }
 
@@ -790,11 +808,10 @@ namespace ME.ECS {
 
         public void UpdateFilters(Entity entity) {
 
-            ref var dic = ref FiltersDirectCache<TState>.dic;
-            HashSet<int> filters;
-            if (dic.TryGetValue(this.id, out filters) == true) {
+            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            if (dic != null) {
 
-                foreach (var filterId in filters) {
+                foreach (var filterId in dic) {
 
                     ((IFilterInternal<TState>)this.GetFilter(filterId)).OnUpdate(entity);
 
@@ -806,11 +823,10 @@ namespace ME.ECS {
 
         public void AddComponentToFilter(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState>.dic;
-            HashSet<int> filters;
-            if (dic.TryGetValue(this.id, out filters) == true) {
+            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            if (dic != null) {
 
-                foreach (var filterId in filters) {
+                foreach (var filterId in dic) {
 
                     ((IFilterInternal<TState>)this.GetFilter(filterId)).OnAddComponent(entity);
 
@@ -822,11 +838,10 @@ namespace ME.ECS {
 
         public void RemoveComponentFromFilter(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState>.dic;
-            HashSet<int> filters;
-            if (dic.TryGetValue(this.id, out filters) == true) {
+            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            if (dic != null) {
 
-                foreach (var filterId in filters) {
+                foreach (var filterId in dic) {
 
                     ((IFilterInternal<TState>)this.GetFilter(filterId)).OnRemoveComponent(entity);
 
@@ -867,11 +882,10 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RemoveFromFilters_INTERNAL(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState>.dic;
-            HashSet<int> filters;
-            if (dic.TryGetValue(this.id, out filters) == true) {
+            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            if (dic != null) {
 
-                foreach (var filterId in filters) {
+                foreach (var filterId in dic) {
 
                     ((IFilterInternal<TState>)this.GetFilter(filterId)).OnRemoveEntity(entity);
 
@@ -881,9 +895,32 @@ namespace ME.ECS {
             
         }
 
+        void IWorldBase.OnRecycleStorage<TEntity>(Storage<TEntity> storage) {
+
+            if (Worlds.isInDeInitialization == true) {
+
+                ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
+                if (list != null && this.id < list.Length) {
+
+                    list[this.id] = null;
+                    list = null;
+
+                }
+
+            }
+
+        }
+
         public Entity AddEntity<TEntity>(TEntity data, bool updateStorages = true) where TEntity : struct, IEntity {
 
             if (data.entity.id == 0) data.entity = this.CreateNewEntity<TEntity>();
+
+            return this.AddEntity_INTERNAL(data, updateStorages);
+
+        }
+        
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private Entity AddEntity_INTERNAL<TEntity>(TEntity data, bool updateStorages = true) where TEntity : struct, IEntity {
 
             RefList<TEntity> entitiesList;
             ArrayUtils.Resize(this.id, ref EntitiesDirectCache<TState, TEntity>.entitiesList);
@@ -896,7 +933,7 @@ namespace ME.ECS {
 
             var nextIndex = entitiesList.GetNextIndex();
             var entity = data.entity;
-            entity.storageIdx = nextIndex;
+            entity = new Entity(entity.id, nextIndex);
             data.entity = entity;
             entitiesList.Add(data);
 
@@ -1279,6 +1316,12 @@ namespace ME.ECS {
 
             var idx = this.systems.IndexOf(instance);
             if (idx >= 0) {
+                
+                if (instance is ISystemFilter<TState> systemFilter) {
+
+                    systemFilter.filter = null;
+                    
+                }
                 
                 instance.world = null;
                 this.systems.RemoveAt(idx);

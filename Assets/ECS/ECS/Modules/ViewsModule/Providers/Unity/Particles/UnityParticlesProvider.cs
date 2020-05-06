@@ -602,7 +602,9 @@ namespace ME.ECS.Views.Providers {
                     var count = itemsList.Count;
                     for (int i = 0; i < count; ++i) {
                         
-                        var view = (ParticleViewBase)itemsList[i];
+                        var view = itemsList[i] as ParticleViewBase;
+                        if (view == null) continue;
+                        
                         for (int j = 0; j < view.items.Length; ++j) {
                         
                             ref var element = ref view.items[j];

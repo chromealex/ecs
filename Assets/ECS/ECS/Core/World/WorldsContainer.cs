@@ -7,6 +7,19 @@ namespace ME.ECS {
         public static IWorldBase currentWorld;
         public static readonly List<IWorldBase> registeredWorlds = new List<IWorldBase>();
 
+        internal static bool isInDeInitialization;
+        public static void DeInitializeBegin() {
+
+            Worlds.isInDeInitialization = true;
+
+        }
+
+        public static void DeInitializeEnd() {
+            
+            Worlds.isInDeInitialization = false;
+            
+        }
+
     }
 
     public static class Worlds<TState> where TState : class, IState<TState>, new() {

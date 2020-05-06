@@ -31,6 +31,8 @@ namespace ME.ECS {
 
         TModule GetModule<TModule>() where TModule : IModuleBase;
 
+        void OnRecycleStorage<TEntity>(Storage<TEntity> storage) where TEntity : struct, IEntity;
+        
         void UpdateAllFilters();
         
         bool HasResetState();

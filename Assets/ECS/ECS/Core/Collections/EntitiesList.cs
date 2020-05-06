@@ -105,7 +105,7 @@ namespace ME.ECS.Collections {
 
         }
 
-        public int Add(T data) {
+        /*public int Add(T data) {
             
             var nextIndex = this.GetNextIndex();
             this.Resize_INTERNAL(nextIndex + 1);
@@ -117,7 +117,7 @@ namespace ME.ECS.Collections {
             
             return nextIndex;
             
-        }
+        }*/
 
         public Entity Remove(Entity entity) {
             
@@ -134,7 +134,7 @@ namespace ME.ECS.Collections {
 
                 var entityData = this.arr[lastIdx];
                 var ent = entityData.entity;
-                ent.storageIdx = index;
+                ent = new Entity(ent.id, index);
                 entityData.entity = ent;
                 this.arr[index] = entityData;
                 this.arr[lastIdx] = default;

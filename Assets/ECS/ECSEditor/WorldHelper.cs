@@ -32,6 +32,14 @@ namespace ME.ECSEditor {
 
         }*/
 
+        public static StructComponentsContainer GetStructComponentsStorage(IWorldBase world) {
+
+            var field = world.GetType().GetField("componentsStructCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var dic = (StructComponentsContainer)field.GetValue(world);
+            return dic;
+
+        }
+        
         public static IList[] GetEntitiesStorage(IWorldBase world) {
 
             var field = world.GetType().GetField("storagesCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -55,6 +63,7 @@ namespace ME.ECSEditor {
 
         public static bool HasMethod(object instance, string methodName) {
 
+            var hasAny = false;
             var targetType = instance.GetType();
             foreach (var @interface in targetType.GetInterfaces()) {
 
@@ -71,9 +80,11 @@ namespace ME.ECSEditor {
 
                 }
 
+                hasAny = true;
+
             }
 
-            return true;
+            return hasAny;
 
         }
 

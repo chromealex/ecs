@@ -37,6 +37,7 @@ namespace ME.ECS.Network {
 
         bool IsConnected();
         void Send(byte[] bytes);
+        void SendSystem(byte[] bytes);
         byte[] Receive();
         
         int GetEventsSentCount();
@@ -49,15 +50,22 @@ namespace ME.ECS.Network {
 
     public interface ISerializer {
 
+        byte[] SerializeStorage(StatesHistory.HistoryStorage historyStorage);
+        StatesHistory.HistoryStorage DeserializeStorage(byte[] bytes);
+        
         byte[] Serialize(StatesHistory.HistoryEvent historyEvent);
         StatesHistory.HistoryEvent Deserialize(byte[] bytes);
 
     }
 
     public interface INetworkModuleBase : IModuleBase {
+
+        void LoadHistoryStorage(ME.ECS.StatesHistory.HistoryStorage storage);
         
         void SetTransporter(ITransporter transporter);
         void SetSerializer(ISerializer serializer);
+
+        int GetRPCOrder();
         
         bool UnRegisterRPC(RPCId rpcId);
 
@@ -76,6 +84,9 @@ namespace ME.ECS.Network {
         int GetEventsBytesSentCount();
         int GetEventsReceivedCount();
         int GetEventsBytesReceivedCount();
+
+        Tick GetSyncTick();
+        Tick GetSyncSentTick();
 
     }
 
@@ -107,13 +118,13 @@ namespace ME.ECS.Network {
         private static readonly RPCId SYNC_RPC_ID = -2;
         
         private RPCId rpcId;
-        private System.Collections.Generic.Dictionary<int, System.Reflection.MethodInfo> registry;
+        internal System.Collections.Generic.Dictionary<int, System.Reflection.MethodInfo> registry;
         private System.Collections.Generic.Dictionary<long, object> keyToObjects;
         private System.Collections.Generic.Dictionary<object, Key> objectToKey;
         
         private StatesHistory.IStatesHistoryModule<TState> statesHistoryModule;
-        private ITransporter transporter;
-        private ISerializer serializer;
+        protected ITransporter transporter { get; private set; }
+        protected ISerializer serializer { get; private set; }
         private int localOrderIndex;
 
         private double ping;
@@ -319,6 +330,12 @@ namespace ME.ECS.Network {
 
         }
 
+        int INetworkModuleBase.GetRPCOrder() {
+
+            return this.GetRPCOrder();
+
+        }
+
         protected virtual int GetRPCOrder() {
 
             return 0;
@@ -347,7 +364,7 @@ namespace ME.ECS.Network {
                 evt.objId = key.objId;
                 evt.groupId = key.groupId;
                 evt.storeInHistory = storeInHistory;
-                
+
                 var storedInHistory = false;
                 if (storeInHistory == true && (this.GetNetworkType() & NetworkType.RunLocal) != 0) {
 
@@ -360,7 +377,15 @@ namespace ME.ECS.Network {
 
                     if (this.transporter != null && this.serializer != null) {
 
-                        this.transporter.Send(this.serializer.Serialize(evt));
+                        if (storeInHistory == false) {
+                         
+                            this.transporter.SendSystem(this.serializer.Serialize(evt));
+   
+                        } else {
+
+                            this.transporter.Send(this.serializer.Serialize(evt));
+
+                        }
 
                     }
 
@@ -419,6 +444,60 @@ namespace ME.ECS.Network {
 
         }
 
+        void INetworkModuleBase.LoadHistoryStorage(ME.ECS.StatesHistory.HistoryStorage storage) {
+
+            this.statesHistoryModule.BeginAddEvents();
+            foreach (var item in storage.events) {
+
+                this.ApplyEvent(item);
+
+            }
+            this.statesHistoryModule.EndAddEvents();
+            
+        }
+
+        private bool ApplyEvent(ME.ECS.StatesHistory.HistoryEvent historyEvent) {
+            
+            /*if (historyEvent.storeInHistory == true) {
+                        
+                System.Reflection.MethodInfo methodInfo;
+                if (this.registry.TryGetValue(historyEvent.rpcId, out methodInfo) == true) {
+
+                    UnityEngine.Debug.LogWarning("Received. evt.objId: " + historyEvent.objId + ", evt.rpcId: " + historyEvent.rpcId + ", evt.order: " + historyEvent.order + ", method: " + methodInfo.Name);
+
+                }
+
+            }*/
+            
+            if ((this.GetNetworkType() & NetworkType.RunLocal) != 0 && historyEvent.order == this.GetRPCOrder()) {
+
+                // Skip events from local owner is it was run already
+                //UnityEngine.Debug.LogWarning("Skipped event: " + historyEvent.objId + ", " + historyEvent.rpcId);
+                return false;
+
+            }
+
+            if (historyEvent.storeInHistory == true) {
+
+                // Run event normally on certain tick
+                this.statesHistoryModule.AddEvent(historyEvent);
+
+            } else {
+
+                // Run event immediately
+                this.statesHistoryModule.RunEvent(historyEvent);
+
+            }
+
+            var st = this.statesHistoryModule.GetStateBeforeTick(historyEvent.tick, out var syncTick);
+            if (st == null || syncTick == Tick.Invalid) st = this.world.GetResetState();
+            this.syncedTick = st.tick;
+            this.syncHash = this.statesHistoryModule.GetStateHash(st);
+
+            return true;
+
+        }
+
         void IModule<TState>.AdvanceTick(TState state, float deltaTime) {
             
         }
@@ -459,29 +538,7 @@ namespace ME.ECS.Network {
                     if (bytes.Length == 0) continue;
 
                     var evt = this.serializer.Deserialize(bytes);
-                    if ((this.GetNetworkType() & NetworkType.RunLocal) != 0 && evt.order == this.GetRPCOrder()) {
-
-                        // Skip events from local owner is it was run already
-                        continue;
-
-                    }
-
-                    if (evt.storeInHistory == true) {
-
-                        // Run event normally on certain tick
-                        this.statesHistoryModule.AddEvent(evt);
-
-                    } else {
-
-                        // Run event immediately
-                        this.statesHistoryModule.RunEvent(evt);
-
-                    }
-
-                    var st = this.statesHistoryModule.GetStateBeforeTick(evt.tick, out var syncTick);
-                    if (st == null || syncTick == Tick.Invalid) st = this.world.GetResetState();
-                    this.syncedTick = st.tick;
-                    this.syncHash = this.statesHistoryModule.GetStateHash(st);
+                    this.ApplyEvent(evt);
 
                 } while (true);
                 this.statesHistoryModule.EndAddEvents();
@@ -495,6 +552,7 @@ namespace ME.ECS.Network {
                 var timeSinceGameStart = (long)(this.world.GetTimeSinceStart() * 1000L);
                 var targetTick = (Tick)System.Math.Floor(timeSinceGameStart / (this.world.GetTickTime() * 1000d));
                 var oldestEventTick = this.statesHistoryModule.GetAndResetOldestTick(tick);
+                //UnityEngine.Debug.LogError("Tick: " + tick + ", timeSinceGameStart: " + timeSinceGameStart + ", targetTick: " + targetTick + ", oldestEventTick: " + oldestEventTick);
                 if (oldestEventTick == Tick.Invalid || oldestEventTick >= tick) {
 
                     // No events found
@@ -559,7 +617,7 @@ namespace ME.ECS.Network {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RPC<T1>(object instance, RPCId rpcId, T1 p1) where T1 : struct {
+        public void RPC<T1>(object instance, RPCId rpcId, T1 p1) /*where T1 : struct*/ {
 
             var arr = PoolArray<object>.Spawn(1);
             arr[0] = p1;
@@ -568,7 +626,7 @@ namespace ME.ECS.Network {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RPC<T1, T2>(object instance, RPCId rpcId, T1 p1, T2 p2) where T1 : struct where T2 : struct {
+        public void RPC<T1, T2>(object instance, RPCId rpcId, T1 p1, T2 p2) /*where T1 : struct where T2 : struct*/ {
 
             var arr = PoolArray<object>.Spawn(2);
             arr[0] = p1;
@@ -578,7 +636,7 @@ namespace ME.ECS.Network {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RPC<T1, T2, T3>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3) where T1 : struct where T2 : struct where T3 : struct {
+        public void RPC<T1, T2, T3>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3) /*where T1 : struct where T2 : struct where T3 : struct*/ {
 
             var arr = PoolArray<object>.Spawn(3);
             arr[0] = p1;
@@ -589,7 +647,7 @@ namespace ME.ECS.Network {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RPC<T1, T2, T3, T4>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4) where T1 : struct where T2 : struct where T3 : struct where T4 : struct {
+        public void RPC<T1, T2, T3, T4>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4) /*where T1 : struct where T2 : struct where T3 : struct where T4 : struct*/ {
 
             var arr = PoolArray<object>.Spawn(4);
             arr[0] = p1;
@@ -601,7 +659,7 @@ namespace ME.ECS.Network {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RPC<T1, T2, T3, T4, T5>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4, T5 p5) where T1 : struct where T2 : struct where T3 : struct where T4 : struct where T5 : struct {
+        public void RPC<T1, T2, T3, T4, T5>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4, T5 p5) /*where T1 : struct where T2 : struct where T3 : struct where T4 : struct where T5 : struct*/ {
 
             var arr = PoolArray<object>.Spawn(5);
             arr[0] = p1;

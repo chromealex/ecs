@@ -5,102 +5,169 @@ namespace ME.ECSEditor {
 
     public static class GUILayoutExt {
 
-        public static void DrawFields(object instance, float fieldWidth) {
+        public static bool DrawFields(object instance, float fieldWidth) {
 
             var padding = 2f;
             var margin = 1f;
             var cellHeight = 24f;
             var tableStyle = new GUIStyle("Box");
 
-            GUILayout.BeginHorizontal();
-            {
-                GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Field", EditorStyles.miniBoldLabel); },
-                                 tableStyle, GUILayout.Width(fieldWidth),
-                                 GUILayout.Height(cellHeight));
-                GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Value", EditorStyles.miniBoldLabel); },
-                                 tableStyle, GUILayout.ExpandWidth(true),
-                                 GUILayout.Height(cellHeight));
-            }
-            GUILayout.EndHorizontal();
-
+            var changed = false;
             var fields = instance.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-            foreach (var field in fields) {
+            if (fields.Length > 0) {
 
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.DataLabel(field.Name); }, tableStyle,
-                                     GUILayout.Width(fieldWidth), GUILayout.Height(cellHeight));
-                    GUILayoutExt.Box(padding, margin, () => {
-
-                        var value = field.GetValue(instance);
-                        if (GUILayoutExt.PropertyField(field, ref value) == true) {
-
-                            field.SetValue(instance, value);
-
-                        }
-
-                    }, tableStyle, GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
+                    GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Field", EditorStyles.miniBoldLabel); },
+                                     tableStyle, GUILayout.Width(fieldWidth),
+                                     GUILayout.Height(cellHeight));
+                    GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Value", EditorStyles.miniBoldLabel); },
+                                     tableStyle, GUILayout.ExpandWidth(true),
+                                     GUILayout.Height(cellHeight));
                 }
                 GUILayout.EndHorizontal();
 
+                foreach (var field in fields) {
+
+                    GUILayout.BeginHorizontal();
+                    {
+                        GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.DataLabel(field.Name); }, tableStyle,
+                                         GUILayout.Width(fieldWidth), GUILayout.Height(cellHeight));
+                        GUILayoutExt.Box(padding, margin, () => {
+
+                            var value = field.GetValue(instance);
+                            var oldValue = value;
+                            var isEditable = GUILayoutExt.PropertyField(field, ref value, typeCheckOnly: true);
+                            EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
+                            if (GUILayoutExt.PropertyField(field, ref value, typeCheckOnly: false) == true) {
+
+                                if (oldValue.ToString() != value.ToString()) {
+
+                                    field.SetValue(instance, value);
+                                    changed = true;
+
+                                }
+
+                            }
+                            EditorGUI.EndDisabledGroup();
+
+                        }, tableStyle, GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
+                    }
+                    GUILayout.EndHorizontal();
+
+                }
+
             }
+
+            return changed;
 
         }
 
-        public static bool PropertyField(System.Reflection.FieldInfo fieldInfo, ref object value) {
+        public static bool PropertyField(System.Reflection.FieldInfo fieldInfo, ref object value, bool typeCheckOnly) {
+
+            if (value == null) {
+
+                if (typeCheckOnly == false) EditorGUILayout.LabelField("Null");
+                return false;
+
+            }
 
             if (fieldInfo.FieldType == typeof(Color)) {
 
-                value = EditorGUILayout.ColorField((Color)value);
-                GUILayout.Label(value.ToString());
+                if (typeCheckOnly == false) {
 
+                    value = EditorGUILayout.ColorField((Color)value);
+                    GUILayout.Label(value.ToString());
+
+                }
+                
             } else if (fieldInfo.FieldType == typeof(Color32)) {
 
-                value = EditorGUILayout.ColorField((Color32)value);
-                GUILayout.Label(value.ToString());
+                if (typeCheckOnly == false) {
 
+                    value = EditorGUILayout.ColorField((Color32)value);
+                    GUILayout.Label(value.ToString());
+
+                }
+                
             } else if (fieldInfo.FieldType == typeof(Vector2)) {
 
-                value = EditorGUILayout.Vector2Field(string.Empty, (Vector2)value);
+                if (typeCheckOnly == false) {
+
+                    value = EditorGUILayout.Vector2Field(string.Empty, (Vector2)value);
+
+                }
 
             } else if (fieldInfo.FieldType == typeof(Vector3)) {
 
-                value = EditorGUILayout.Vector3Field(string.Empty, (Vector3)value);
+                if (typeCheckOnly == false) {
+
+                    value = EditorGUILayout.Vector3Field(string.Empty, (Vector3)value);
+
+                }
 
             } else if (fieldInfo.FieldType == typeof(Vector4)) {
 
-                value = EditorGUILayout.Vector4Field(string.Empty, (Vector4)value);
+                if (typeCheckOnly == false) {
+
+                    value = EditorGUILayout.Vector4Field(string.Empty, (Vector4)value);
+
+                }
 
             } else if (fieldInfo.FieldType == typeof(Quaternion)) {
 
-                value = Quaternion.Euler((Vector3)EditorGUILayout.Vector3Field(string.Empty, ((Quaternion)value).eulerAngles));
+                if (typeCheckOnly == false) {
+
+                    value = Quaternion.Euler(EditorGUILayout.Vector3Field(string.Empty, ((Quaternion)value).eulerAngles));
+
+                }
 
             } else if (fieldInfo.FieldType == typeof(int)) {
 
-                value = EditorGUILayout.IntField((int)value);
+                if (typeCheckOnly == false) {
+
+                    value = EditorGUILayout.IntField((int)value);
+
+                }
 
             } else if (fieldInfo.FieldType == typeof(float)) {
 
-                value = EditorGUILayout.FloatField((float)value);
+                if (typeCheckOnly == false) {
+
+                    value = EditorGUILayout.FloatField((float)value);
+
+                }
 
             } else if (fieldInfo.FieldType == typeof(double)) {
 
-                value = EditorGUILayout.DoubleField((double)value);
+                if (typeCheckOnly == false) {
+
+                    value = EditorGUILayout.DoubleField((double)value);
+
+                }
 
             } else if (fieldInfo.FieldType == typeof(long)) {
 
-                value = EditorGUILayout.LongField((long)value);
+                if (typeCheckOnly == false) {
+
+                    value = EditorGUILayout.LongField((long)value);
+
+                }
 
             } else {
 
-                var str = value.ToString();
-                if (str.Contains("\n") == true) {
+                if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.TextArea(str);
+                    var str = value.ToString();
+                    if (str.Contains("\n") == true) {
 
-                } else {
+                        value = EditorGUILayout.TextArea(str);
 
-                    value = EditorGUILayout.TextField(str);
+                    } else {
+
+                        value = EditorGUILayout.TextField(str);
+
+                    }
 
                 }
 

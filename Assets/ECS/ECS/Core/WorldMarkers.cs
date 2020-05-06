@@ -19,12 +19,10 @@ namespace ME.ECS {
     #endif
     public partial class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
 
-        private const int MARKERS_CAPACITY = 4;
-
         private static class MarkersDirectCache<TStateInner, TMarker> where TMarker : struct, IMarker where TStateInner : class, IState<TState> {
 
-            internal static TMarker[] data = new TMarker[World<TState>.MARKERS_CAPACITY];
-            internal static bool[] exists = new bool[World<TState>.MARKERS_CAPACITY];
+            internal static TMarker[] data = new TMarker[World<TState>.WORLDS_CAPACITY];
+            internal static bool[] exists = new bool[World<TState>.WORLDS_CAPACITY];
 
         }
 
@@ -32,7 +30,7 @@ namespace ME.ECS {
 
         partial void OnSpawnMarkers() {
             
-            this.allExistMarkers = PoolHashSet<bool[]>.Spawn(World<TState>.MARKERS_CAPACITY);
+            this.allExistMarkers = PoolHashSet<bool[]>.Spawn(World<TState>.WORLDS_CAPACITY);
 
         }
 

@@ -10,10 +10,11 @@ namespace ME.ECS {
 
     }
 
-    public interface IStructRegistry {
-
+    public interface IStructRegistry : IPoolableRecycle {
+        
         void CopyFrom(IStructRegistry other);
-        void OnRecycle();
+        IStructComponent GetObject(Entity entity);
+        void SetObject(Entity entity, IStructComponent data);
 
     }
 
@@ -33,50 +34,88 @@ namespace ME.ECS {
     #endif
     public class StructComponents<TComponent> : IStructRegistry<TComponent> where TComponent : struct, IStructComponent {
 
-        private const int COMPONENTS_CAPACITY = 10;
+        private const int COMPONENTS_CAPACITY = 20;
         
-        private ME.ECS.Collections.StackArray10<TComponent>[] components;
+        private TComponent[][] components;
         private bool[][] componentsStates;
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private int GetBucketId(EntityId entityId, out int index) {
+        private int GetBucketId(in int entityId, out int index) {
 
             var bucketId = entityId / StructComponents<TComponent>.COMPONENTS_CAPACITY;
             index = entityId % StructComponents<TComponent>.COMPONENTS_CAPACITY;
-            ArrayUtils.Resize(bucketId, ref this.components);
-            ArrayUtils.Resize(bucketId, ref this.componentsStates);
-            var bucket = this.components[bucketId];
-            if (bucket.Length == 0) {
-                
-                this.components[bucketId] = new StackArray10<TComponent>(StructComponents<TComponent>.COMPONENTS_CAPACITY);
-                this.componentsStates[bucketId] = PoolArray<bool>.Spawn(StructComponents<TComponent>.COMPONENTS_CAPACITY);
+            
+            if (ArrayUtils.WillResize(bucketId, ref this.components) == true) {
+
+                lock (this) {
+
+                    ArrayUtils.Resize(bucketId, ref this.components);
+                    ArrayUtils.Resize(bucketId, ref this.componentsStates);
+                    
+                }
 
             }
             
+            var bucket = this.components[bucketId];
+            if (bucket == null || bucket.Length == 0) {
+
+                lock (this) {
+
+                    this.components[bucketId] = PoolArray<TComponent>.Spawn(StructComponents<TComponent>.COMPONENTS_CAPACITY);
+                    this.componentsStates[bucketId] = PoolArray<bool>.Spawn(StructComponents<TComponent>.COMPONENTS_CAPACITY);
+
+                }
+
+            }
+
             return bucketId;
 
         }
 
-        public bool Has(Entity entity) {
+        public IStructComponent GetObject(Entity entity) {
 
-            var bucketId = this.GetBucketId(entity.id, out var index);
-            var bucket = this.componentsStates[bucketId];
-            return bucket[index] == true;
+            var bucketId = this.GetBucketId(in entity.id, out var index);
+            var bucket = this.components[bucketId];
+            var bucketState = this.componentsStates[bucketId];
+            if (bucketState[index] == true) return bucket[index];
+
+            return null;
 
         }
 
+        public void SetObject(Entity entity, IStructComponent data) {
+
+            var bucketId = this.GetBucketId(in entity.id, out var index);
+            var bucket = this.components[bucketId];
+            var bucketState = this.componentsStates[bucketId];
+            bucket[index] = (TComponent)data;
+            bucketState[index] = true;
+            this.components[bucketId] = bucket;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool Has(Entity entity) {
+
+            var bucketId = this.GetBucketId(in entity.id, out var index);
+            var bucketState = this.componentsStates[bucketId];
+            return bucketState[index] == true;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public TComponent Get(Entity entity) {
 
-            var bucketId = this.GetBucketId(entity.id, out var index);
+            var bucketId = this.GetBucketId(in entity.id, out var index);
             var bucket = this.components[bucketId];
-            if (bucket.Length == 0) bucket = this.components[bucketId] = new StackArray10<TComponent>(StructComponents<TComponent>.COMPONENTS_CAPACITY);
             return bucket[index];
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Set(Entity entity, TComponent data) {
 
-            var bucketId = this.GetBucketId(entity.id, out var index);
+            var bucketId = this.GetBucketId(in entity.id, out var index);
             var bucket = this.components[bucketId];
             var bucketState = this.componentsStates[bucketId];
             bucket[index] = data;
@@ -85,14 +124,16 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Remove(Entity entity) {
 
-            var bucketId = this.GetBucketId(entity.id, out var index);
+            var bucketId = this.GetBucketId(in entity.id, out var index);
             var bucket = this.components[bucketId];
             var bucketState = this.componentsStates[bucketId];
             bucket[index] = default;
             bucketState[index] = false;
             this.components[bucketId] = bucket;
+            this.componentsStates[bucketId] = bucketState;
 
         }
 
@@ -101,12 +142,12 @@ namespace ME.ECS {
             this.OnRecycle();
 
             var _other = (StructComponents<TComponent>)other;
-            this.components = PoolArray<StackArray10<TComponent>>.Spawn(_other.components.Length);
+            this.components = PoolArray<TComponent[]>.Spawn(_other.components.Length);
             this.componentsStates = PoolArray<bool[]>.Spawn(_other.componentsStates.Length);
 
             for (var i = 0; i < _other.components.Length; ++i) {
                 
-                this.components[i] = _other.components[i];
+                ArrayUtils.Copy(_other.components[i], ref this.components[i]);
                 ArrayUtils.Copy(_other.componentsStates[i], ref this.componentsStates[i]);
 
             }
@@ -115,7 +156,7 @@ namespace ME.ECS {
 
         public void OnRecycle() {
             
-            if (this.components != null) PoolArray<StackArray10<TComponent>>.Recycle(ref this.components);
+            if (this.components != null) PoolArray<TComponent[]>.Recycle(ref this.components);
             if (this.componentsStates != null) {
 
                 foreach (var bucket in this.componentsStates) {
@@ -137,6 +178,7 @@ namespace ME.ECS {
     public class StructComponentsContainer : IPoolableRecycle {
 
         private IStructRegistry[] list;
+        private int count;
 
         public void Initialize(bool freeze, bool restore) {
             
@@ -144,19 +186,42 @@ namespace ME.ECS {
             
         }
 
+        public IStructRegistry[] GetAllRegistries() {
+
+            return this.list;
+
+        }
+
+        public int Count {
+            get {
+                return this.count;
+            }
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void Validate<TComponent>(int code) where TComponent : struct, IStructComponent {
 
-            ArrayUtils.Resize(code, ref this.list);
+            if (ArrayUtils.WillResize(code, ref this.list) == true) {
+
+                lock (this.list) ArrayUtils.Resize(code, ref this.list);
+                
+            }
+            
             if (this.list[code] == null) {
 
-                var instance = (IStructRegistry)PoolComponents.Spawn(typeof(IStructRegistry));
-                if (instance == null) instance = new StructComponents<TComponent>();
-                this.Register<TComponent>(instance);
+                lock (this.list) {
+
+                    var instance = (IStructRegistry)PoolComponents.Spawn(typeof(IStructRegistry));
+                    if (instance == null) instance = new StructComponents<TComponent>();
+                    this.list[code] = instance;
+
+                }
 
             }
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Has<TComponent>(Entity entity) where TComponent : struct, IStructComponent {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
@@ -166,6 +231,7 @@ namespace ME.ECS {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public TComponent Get<TComponent>(Entity entity) where TComponent : struct, IStructComponent {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
@@ -175,30 +241,26 @@ namespace ME.ECS {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Set<TComponent>(Entity entity, TComponent data) where TComponent : struct, IStructComponent {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             this.Validate<TComponent>(code);
             var reg = (IStructRegistry<TComponent>)this.list[code];
             reg.Set(entity, data);
+            ++this.count;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Remove<TComponent>(Entity entity) where TComponent : struct, IStructComponent {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             this.Validate<TComponent>(code);
             var reg = (IStructRegistry<TComponent>)this.list[code];
             reg.Remove(entity);
+            --this.count;
 
-        }
-
-        private void Register<TComponent>(IStructRegistry reg) where TComponent : struct, IStructComponent {
-
-            var code = WorldUtilities.GetComponentTypeId<TComponent>();
-            ArrayUtils.Resize(code, ref this.list);
-            this.list[code] = reg;
-            
         }
 
         void IPoolableRecycle.OnRecycle() {
@@ -221,10 +283,14 @@ namespace ME.ECS {
                 
             }
 
+            this.count = 0;
+
         }
 
         public void CopyFrom(StructComponentsContainer other) {
 
+            this.count = other.count;
+            
             if (this.list != null) {
                 
                 for (int i = 0; i < this.list.Length; ++i) {
@@ -276,11 +342,28 @@ namespace ME.ECS {
         void SetData<TComponent>(Entity entity, TComponent data) where TComponent : struct, IStructComponent;
         void RemoveData<TComponent>(Entity entity) where TComponent : struct, IStructComponent;
 
+        bool HasSharedData<TComponent>() where TComponent : struct, IStructComponent;
+        TComponent GetSharedData<TComponent>() where TComponent : struct, IStructComponent;
+        void SetSharedData<TComponent>(TComponent data) where TComponent : struct, IStructComponent;
+        void RemoveSharedData<TComponent>() where TComponent : struct, IStructComponent;
+
     }
 
     public partial class World<TState> {
 
-        private StructComponentsContainer componentsStructCache = new StructComponentsContainer();
+        private StructComponentsContainer componentsStructCache;
+
+        partial void OnSpawnStructComponents() {
+
+            this.componentsStructCache = PoolClass<StructComponentsContainer>.Spawn();
+
+        }
+
+        partial void OnRecycleStructComponents() {
+
+            PoolClass<StructComponentsContainer>.Recycle(ref this.componentsStructCache);
+            
+        }
 
         void IWorldBase.Register(ref StructComponentsContainer componentsContainer, bool freeze, bool restore) {
 
@@ -299,6 +382,30 @@ namespace ME.ECS {
 
         }
 
+        public bool HasSharedData<TComponent>() where TComponent : struct, IStructComponent {
+
+            return this.HasData<TComponent>(this.sharedEntity);
+
+        }
+
+        public TComponent GetSharedData<TComponent>() where TComponent : struct, IStructComponent {
+            
+            return this.GetData<TComponent>(this.sharedEntity);
+
+        }
+
+        public void SetSharedData<TComponent>(TComponent data) where TComponent : struct, IStructComponent {
+            
+            this.SetData(this.sharedEntity, data);
+
+        }
+
+        public void RemoveSharedData<TComponent>() where TComponent : struct, IStructComponent {
+            
+            this.RemoveData<TComponent>(this.sharedEntity);
+
+        }
+
         public bool HasData<TComponent>(Entity entity) where TComponent : struct, IStructComponent {
 
             return this.componentsStructCache.Has<TComponent>(entity);
@@ -314,14 +421,14 @@ namespace ME.ECS {
         public void SetData<TComponent>(Entity entity, TComponent data) where TComponent : struct, IStructComponent {
             
             this.componentsStructCache.Set(entity, data);
-            this.AddComponentToFilter(entity);
+            lock (this.componentsStructCache) this.AddComponentToFilter(entity);
             
         }
 
         public void RemoveData<TComponent>(Entity entity) where TComponent : struct, IStructComponent {
             
             this.componentsStructCache.Remove<TComponent>(entity);
-            this.RemoveComponentFromFilter(entity);
+            lock (this.componentsStructCache) this.RemoveComponentFromFilter(entity);
             
         }
 

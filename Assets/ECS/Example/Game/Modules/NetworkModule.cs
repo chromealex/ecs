@@ -1,85 +1,14 @@
 namespace ME.Example.Game.Modules {
 
-    public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
-
-        [Photon.Pun.PunRPC]
-        public void RPC_CALL(byte[] bytes) {
-
-            var world = ME.ECS.Worlds<State>.currentWorld;
-            var networkModule = world.GetModule<NetworkModule>();
-            networkModule.AddToQueue(bytes);
-
-        }
-        
-        public override void OnConnectedToMaster() {
-        
-            base.OnConnectedToMaster();
-
-            Photon.Pun.PhotonNetwork.JoinLobby(Photon.Realtime.TypedLobby.Default);
-
-        }
-
-        public override void OnJoinedRoom() {
-            
-            base.OnJoinedRoom();
-
-            if (Photon.Pun.PhotonNetwork.InRoom == true) {
-                
-                var world = ME.ECS.Worlds<State>.currentWorld;
-                var networkModule = world.GetModule<NetworkModule>();
-                networkModule.SetRoom(Photon.Pun.PhotonNetwork.CurrentRoom);
-
-                if (Photon.Pun.PhotonNetwork.IsMasterClient == true) {
-                    
-                    // Put server time into the room properties
-                    var serverTime = Photon.Pun.PhotonNetwork.Time;
-                    Photon.Pun.PhotonNetwork.CurrentRoom.SetCustomProperties(new ExitGames.Client.Photon.Hashtable() {
-                        { "t", serverTime }
-                    });
-
-                }
-                
-            }
-
-        }
-
-        public override void OnRoomListUpdate(System.Collections.Generic.List<Photon.Realtime.RoomInfo> roomList) {
-
-            Photon.Pun.PhotonNetwork.JoinOrCreateRoom("TestRoom", new Photon.Realtime.RoomOptions() { MaxPlayers = 4 }, Photon.Realtime.TypedLobby.Default);
-            
-        }
-
-        public void LateUpdate() {
-
-            if (Photon.Pun.PhotonNetwork.InRoom == false) return;
-            
-            // Set up time update
-            //if (Photon.Pun.PhotonNetwork.IsMasterClient == false) {
-                
-                // Set current time since start from master client
-                var world = ME.ECS.Worlds<State>.currentWorld;
-                var serverTime = Photon.Pun.PhotonNetwork.Time;
-                var gameStartTime = serverTime - (double)Photon.Pun.PhotonNetwork.CurrentRoom.CustomProperties["t"];
-                
-                (world as ME.ECS.IWorldBase).SetTimeSinceStart(gameStartTime);
-
-            //}
-
-        }
-
-    }
-
     /// <summary>
     /// We need to implement our own NetworkModule class without any logic just to catch your State type into ECS.Network
     /// You can use some overrides to setup history config for your project
     /// </summary>
     public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
 
-        private PhotonTransporter photonTransporter;
-
         protected override int GetRPCOrder() {
 
-            return Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber;
+            return this.world.id;
 
         }
 
@@ -89,92 +18,153 @@ namespace ME.Example.Game.Modules {
 
         }
 
-        public void AddToQueue(byte[] bytes) {
-            
-            this.photonTransporter.AddToQueue(bytes);
-            
-        }
-
-        public void SetRoom(Photon.Realtime.Room room) {
-
-            this.photonTransporter.SetRoom(room);
-
-        }
+        public FakeTransporter fakeTransporter;
 
         protected override void OnInitialize() {
 
-            var tr = new PhotonTransporter(this.world.id);
+            var tr = new FakeTransporter(this.GetNetworkType());
+            var seed = this.world.id;
+            UnityEngine.Random.InitState(seed);
+            tr.randomState = UnityEngine.Random.Range(0, 1000);
+
             var instance = (ME.ECS.Network.INetworkModuleBase)this;
             instance.SetTransporter(tr);
-            instance.SetSerializer(new FSSerializer());
+            instance.SetSerializer(new FakeSerializer());
 
-            this.photonTransporter = tr;
+            this.fakeTransporter = tr;
+
+        }
+
+        public void SetWorldConnection(int connectToWorldId) {
+
+            this.fakeTransporter.connectToWorldId = connectToWorldId;
+
+        }
+
+        public void SetDropPercent(int dropPercent) {
+
+            this.fakeTransporter.dropPercent = dropPercent;
 
         }
 
     }
 
-    public class PhotonTransporter : ME.ECS.Network.ITransporter {
+    public class FakeTransporter : ME.ECS.Network.ITransporter {
 
-        private System.Collections.Generic.Queue<byte[]> queue = new System.Collections.Generic.Queue<byte[]>();
-        private Photon.Pun.PhotonView photonView;
-        private Photon.Realtime.Room room;
-        
+        private struct Buffer {
+
+            public float delay;
+            public byte[] data;
+
+        }
+
+        public int connectToWorldId;
+        public int dropPercent;
+
+        private readonly System.Collections.Generic.Queue<Buffer> buffers = new System.Collections.Generic.Queue<Buffer>();
+        private readonly ME.ECS.Network.NetworkType networkType;
         private int sentCount;
         private int sentBytesCount;
         private int receivedCount;
         private int receivedBytesCount;
+        public int randomState;
+        private double ping;
 
-        public PhotonTransporter(int id) {
+        public FakeTransporter(ME.ECS.Network.NetworkType networkType) {
 
-            var photon = new UnityEngine.GameObject("PhotonTransporter", typeof(Photon.Pun.PhotonView), typeof(PhotonReceiver));
-            var view = photon.GetComponent<Photon.Pun.PhotonView>();
-            view.ViewID = id;
-            Photon.Pun.PhotonNetwork.RegisterPhotonView(view);
-
-            this.photonView = view;
-
-            Photon.Pun.PhotonNetwork.ConnectUsingSettings();
-            
-        }
-
-        public void SetRoom(Photon.Realtime.Room room) {
-
-            this.room = room;
+            this.networkType = networkType;
 
         }
-        
+
         public bool IsConnected() {
 
-            return Photon.Pun.PhotonNetwork.IsConnected == true && this.room != null;
+            return true;
+
+        }
+
+        public void SendSystem(byte[] bytes) {
+
+            this.Send(bytes);
 
         }
 
         public void Send(byte[] bytes) {
 
-            this.photonView.RPC("RPC_CALL", Photon.Pun.RpcTarget.OthersBuffered, bytes);
-            
+            UnityEngine.Random.InitState(this.randomState);
+            this.randomState = UnityEngine.Random.Range(0, 10000);
+            var delay = UnityEngine.Random.Range(0.01f, 0.05f);
+            var rnd = UnityEngine.Random.Range(0, 100);
+            var isDrop = (rnd < this.dropPercent);
+
+            if ((this.networkType & ME.ECS.Network.NetworkType.RunLocal) == 0) { // Add to local buffer if RunLocal flag is not set
+
+                this.AddToBuffer(delay, bytes);
+
+            }
+
+            if (isDrop == true) {
+
+                delay += UnityEngine.Random.Range(1f, 2f);
+
+            }
+
+            // Send event to connected world
+            if (this.connectToWorldId > 0) {
+
+                var connectedWorld = ME.ECS.Worlds<State>.GetWorld(this.connectToWorldId);
+                if (connectedWorld != null) {
+
+                    var networkModule = connectedWorld.GetModule<NetworkModule>();
+                    networkModule.fakeTransporter.AddToBuffer(delay, bytes);
+
+                }
+
+            }
+
             this.sentBytesCount += bytes.Length;
             ++this.sentCount;
 
         }
 
-        public void AddToQueue(byte[] bytes) {
-            
-            this.queue.Enqueue(bytes);
-            
+        private void AddToBuffer(float delay, byte[] bytes) {
+
+            this.buffers.Enqueue(new Buffer() {
+                delay = delay,
+                data = bytes,
+            });
+
         }
+
+        private Buffer currentBuffer;
+        private float waitTime = -1f;
 
         public byte[] Receive() {
 
-            if (this.queue.Count == 0) return null;
-            
-            var bytes = this.queue.Dequeue();
-            
-            ++this.receivedCount;
-            this.receivedBytesCount += bytes.Length;
-            
-            return bytes;
+            if (this.waitTime >= 0f) {
+
+                this.waitTime -= UnityEngine.Time.deltaTime;
+                if (this.waitTime <= 0f) {
+
+                    this.receivedBytesCount += this.currentBuffer.data.Length;
+                    ++this.receivedCount;
+                    this.waitTime = -1f;
+                    return this.currentBuffer.data;
+
+                }
+
+                return null;
+
+            }
+
+            if (this.buffers.Count > 0) {
+
+                var buffer = this.buffers.Dequeue();
+                this.currentBuffer = buffer;
+                this.waitTime = this.currentBuffer.delay;
+
+            }
+
+            return null;
 
         }
 
@@ -204,7 +194,7 @@ namespace ME.Example.Game.Modules {
 
     }
 
-    public class FSSerializer : ME.ECS.Network.ISerializer {
+    public class FakeSerializer : ME.ECS.Network.ISerializer {
 
         private readonly FullSerializer.fsSerializer fsSerializer = new FullSerializer.fsSerializer();
 
@@ -225,6 +215,26 @@ namespace ME.Example.Game.Modules {
             this.fsSerializer.TryDeserialize(data, typeof(ME.ECS.StatesHistory.HistoryEvent), ref deserialized).AssertSuccessWithoutWarnings();
 
             return (ME.ECS.StatesHistory.HistoryEvent)deserialized;
+
+        }
+
+        public byte[] SerializeStorage(ME.ECS.StatesHistory.HistoryStorage historyStorage) {
+
+            FullSerializer.fsData data;
+            this.fsSerializer.TrySerialize(typeof(ME.ECS.StatesHistory.HistoryStorage), historyStorage, out data).AssertSuccessWithoutWarnings();
+            var str = FullSerializer.fsJsonPrinter.CompressedJson(data);
+            return System.Text.Encoding.UTF8.GetBytes(str);
+
+        }
+
+        public ME.ECS.StatesHistory.HistoryStorage DeserializeStorage(byte[] bytes) {
+
+            var fsData = System.Text.Encoding.UTF8.GetString(bytes);
+            FullSerializer.fsData data = FullSerializer.fsJsonParser.Parse(fsData);
+            object deserialized = null;
+            this.fsSerializer.TryDeserialize(data, typeof(ME.ECS.StatesHistory.HistoryStorage), ref deserialized).AssertSuccessWithoutWarnings();
+
+            return (ME.ECS.StatesHistory.HistoryStorage)deserialized;
 
         }
 

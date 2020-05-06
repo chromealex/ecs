@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<< HEAD:Assets/ECS/Example/Photon/PhotonLibs.meta
 guid: ee1734b1a7bac244bb5f15ecd778b5f2
+=======
+guid: a724ff00b77e85d44a2af6baf46fc6a2
+>>>>>>> master:Assets/Plugins/Photon/PhotonUnityNetworking/Code/Views.meta
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}

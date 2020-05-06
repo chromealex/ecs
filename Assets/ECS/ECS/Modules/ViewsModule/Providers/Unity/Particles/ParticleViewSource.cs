@@ -1,7 +1,7 @@
 ﻿#if PARTICLES_VIEWS_MODULE_SUPPORT
 namespace ME.ECS.Views.Providers {
 
-    public abstract class ParticleViewSourceBase : UnityEngine.MonoBehaviour, IDoValidate {
+    public abstract class ParticleViewSourceBase : ViewBase, IDoValidate {
 
         public abstract IView<TEntity> GetSource<TEntity>() where TEntity : struct, IEntity;
 

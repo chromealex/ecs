@@ -34,6 +34,7 @@ namespace ME.ECSEditor {
             private List<ME.ECS.IStorage> foldoutStorages = new List<ME.ECS.IStorage>();
             private Dictionary<ME.ECS.IStorage, List<EntityId>> foldoutStorageData = new Dictionary<ME.ECS.IStorage, List<EntityId>>();
             private Dictionary<ME.ECS.IStorage, List<EntityId>> foldoutStorageComponents = new Dictionary<ME.ECS.IStorage, List<EntityId>>();
+            private Dictionary<ME.ECS.IStorage, List<EntityId>> foldoutStorageStructComponents = new Dictionary<ME.ECS.IStorage, List<EntityId>>();
             private Dictionary<ME.ECS.IStorage, List<EntityId>> foldoutStorageViews = new Dictionary<ME.ECS.IStorage, List<EntityId>>();
 
             public bool IsFoldOutComponents(ME.ECS.IStorage storage, EntityId entityId) {
@@ -71,6 +72,48 @@ namespace ME.ECSEditor {
                         list = new List<EntityId>();
                         list.Add(entityId);
                         this.foldoutStorageComponents.Add(storage, list);
+
+                    }
+
+                }
+
+            }
+
+            public bool IsFoldOutStructComponents(ME.ECS.IStorage storage, EntityId entityId) {
+
+                List<EntityId> list;
+                if (this.foldoutStorageStructComponents.TryGetValue(storage, out list) == true) {
+
+                    return list.Contains(entityId);
+
+                }
+
+                return false;
+
+            }
+
+            public void SetFoldOutStructComponents(ME.ECS.IStorage storage, EntityId entityId, bool state) {
+
+                List<EntityId> list;
+                if (this.foldoutStorageStructComponents.TryGetValue(storage, out list) == true) {
+
+                    if (state == true) {
+
+                        if (list.Contains(entityId) == false) list.Add(entityId);
+
+                    } else {
+
+                        list.Remove(entityId);
+
+                    }
+
+                } else {
+
+                    if (state == true) {
+
+                        list = new List<EntityId>();
+                        list.Add(entityId);
+                        this.foldoutStorageStructComponents.Add(storage, list);
 
                     }
 
@@ -194,6 +237,12 @@ namespace ME.ECSEditor {
 
             }*/
 
+            public StructComponentsContainer GetStructComponentsStorage() {
+
+                return WorldHelper.GetStructComponentsStorage(this.world);
+
+            }
+            
             public IList[] GetEntitiesStorage() {
 
                 return WorldHelper.GetEntitiesStorage(this.world);
@@ -407,6 +456,7 @@ namespace ME.ECSEditor {
                     var modules = world.GetModules();
 
                     //var componentsStorage = world.GetComponentsStorage();
+                    var componentsStructStorage = world.GetStructComponentsStorage();
                     var entitiesStorage = world.GetEntitiesStorage();
                     foreach (var entityStorage in entitiesStorage) {
 
@@ -458,6 +508,49 @@ namespace ME.ECSEditor {
                                                         #endregion
 
                                                         #region Components
+                                                        var foldoutStructComponents = world.IsFoldOutStructComponents(storage, entityData.entity.id);
+                                                        GUILayoutExt.FoldOut(ref foldoutStructComponents, "Struct Components", () => {
+
+                                                            var registries = componentsStructStorage.GetAllRegistries();
+                                                            foreach (var registry in registries) {
+
+                                                                if (registry == null) continue;
+                                                                
+                                                                var component = registry.GetObject(entityData.entity);
+                                                                if (component == null) continue;
+                                                                
+                                                                GUILayoutExt.Box(
+                                                                    padding,
+                                                                    margin,
+                                                                    () => {
+
+                                                                        GUILayout.Space(2f);
+                                                                        GUILayout.BeginHorizontal();
+                                                                        GUILayout.Label(component.GetType().Name, GUILayout.Width(90f));
+                                                                        GUILayout.EndHorizontal();
+
+                                                                        GUILayoutExt.Box(
+                                                                            padding,
+                                                                            margin,
+                                                                            () => {
+
+                                                                                GUILayout.Label("Component Data", EditorStyles.miniBoldLabel);
+                                                                                var changed = GUILayoutExt.DrawFields(component, 120f);
+                                                                                if (changed == true) {
+
+                                                                                    registry.SetObject(entityData.entity, component);
+
+                                                                                }
+
+                                                                            }, GUIStyle.none);
+
+                                                                    }, "dragtabdropwindow");
+                                                                
+                                                            }
+
+                                                        });
+                                                        world.SetFoldOutStructComponents(storage, entityData.entity.id, foldoutStructComponents);
+                                                        
                                                         var foldoutComponents = world.IsFoldOutComponents(storage, entityData.entity.id);
                                                         GUILayoutExt.FoldOut(ref foldoutComponents, "Components", () => {
 
@@ -496,7 +589,7 @@ namespace ME.ECSEditor {
                                                             }*/
 
                                                         });
-                                                        world.SetFoldOutComponents(storage, entityData.entity.id, foldoutComponents);
+                                                        world.SetFoldOutComponents(storage, entityData.entity.id, foldoutStructComponents);
                                                         #endregion
 
                                                         #if VIEWS_MODULE_SUPPORT
@@ -900,7 +993,8 @@ namespace ME.ECSEditor {
                                                     margin,
                                                     () => {
                                                         GUILayoutExt.TypeLabel(filter.GetType());
-                                                        GUILayout.Label(filter.ToString(), dataStyle);
+                                                        GUILayout.Label(filter.name, dataStyle);
+                                                        GUILayout.Label("Objects count: " + filter.Count.ToString(), dataStyle);
                                                     },
                                                     tableStyle,
                                                     GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
@@ -949,14 +1043,9 @@ namespace ME.ECSEditor {
             var disabled = !worldEditor.HasMethod(instance, methodName);
             if (disabled == true) {
 
-                var style = new GUIStyle("Icon.Locked");
-                style.fixedWidth = 14f;
-                style.fixedHeight = 14f;
-                style.stretchWidth = false;
-                style.stretchHeight = false;
                 var boxStyle = GUIStyle.none;
                 //EditorGUI.BeginDisabledGroup(false);
-                if (GUILayout.Button(new GUIContent(style.normal.background), boxStyle) == true) {
+                if (GUILayout.Button(new GUIContent(EditorGUIUtility.IconContent("InspectorLock")), boxStyle) == true) {
 
                     this.ShowNotification(new GUIContent("Method " + methodName + " implementation is empty."));
 

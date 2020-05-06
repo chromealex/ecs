@@ -79,6 +79,8 @@ namespace ME.ECSEditor {
         public static void CompileDirectory(string dir) {
 
             var itemStr = @"
+new ME.ECS.Views.ViewsModule<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>();
+ME.ECS.PoolModules.Spawn<ME.ECS.Views.ViewsModule<SupernovaState, #PROJECTNAME#.Entities.#ENTITYNAME#>>();
 ME.ECS.Worlds<#STATENAME#>.currentWorld.AddComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.ViewComponent<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());
 ME.ECS.Worlds<#STATENAME#>.currentWorld.AddComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.CreateViewComponentRequest<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());
 ME.ECS.Worlds<#STATENAME#>.currentWorld.AddComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.DestroyViewComponentRequest<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());

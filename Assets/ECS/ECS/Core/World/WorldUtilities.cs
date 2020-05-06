@@ -26,6 +26,7 @@ namespace ME.ECS {
             var state = PoolClass<TState>.Spawn();
             state.entityId = default;
             state.tick = default;
+            state.randomState = default;
             return state;
 
         }
@@ -35,6 +36,7 @@ namespace ME.ECS {
 
             state.entityId = default;
             state.tick = default;
+            state.randomState = default;
             PoolClass<TState>.Recycle(ref state);
             
         }
@@ -81,8 +83,17 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void ReleaseWorld<TState>(ref World<TState> world) where TState : class, IState<TState>, new() {
 
+            if (world.isActive == false) {
+
+                world = null;
+                return;
+                
+            }
+            
+            Worlds.DeInitializeBegin();
             Worlds<TState>.UnRegister(world);
             PoolClass<World<TState>>.Recycle(ref world);
+            Worlds.DeInitializeEnd();
 
         }
 

@@ -28,6 +28,7 @@ namespace ME.ECS {
     public interface IFilterBase : IPoolableSpawn, IPoolableRecycle {
 
         int id { get; set; }
+        string name { get; }
         int Count { get; }
 
         void Recycle();
@@ -80,6 +81,7 @@ namespace ME.ECS {
 
         private List<IFilterBase> filters;
         private bool freeze;
+        private int nextId;
 
         public int Count {
             get {
@@ -89,6 +91,7 @@ namespace ME.ECS {
 
         void IPoolableRecycle.OnRecycle() {
 
+            this.nextId = default;
             this.freeze = default;
             
             if (this.filters != null) {
@@ -132,12 +135,19 @@ namespace ME.ECS {
 
         public void Register(IFilterBase filter) {
 
-            filter.id = this.filters.Count + 1;
             this.filters.Add(filter);
             
         }
 
+        public int GetNextId() {
+
+            return ++this.nextId;
+
+        }
+
         public void CopyFrom(FiltersStorage other) {
+
+            this.nextId = other.nextId;
             
             /*if (this.filters != null) {
 
@@ -330,7 +340,7 @@ namespace ME.ECS {
         private const int NODES_CAPACITY = 4;
 
         public int id { get; set; }
-        private string name;
+        public string name { get; private set; }
         private IFilterNode[] nodes;
         private int nodesCount;
         private HashSetCopyable<EntityId> dataContains;
@@ -615,6 +625,10 @@ namespace ME.ECS {
                 this.tempNodesCustom.Clear();
                 Worlds<TState>.currentWorld.Register<TEntity>(this);
 
+            } else {
+                
+                UnityEngine.Debug.LogWarning(string.Format("World #{0} already has filter {1}!", Worlds<TState>.currentWorld.id, this));
+                
             }
 
             return this;
@@ -669,8 +683,11 @@ namespace ME.ECS {
         }
 
         public static IFilter<TState, TEntity> Create(ref IFilter<TState, TEntity> filter, string customName = null) {
+
+            var id = Worlds<TState>.currentWorld.filtersStorage.GetNextId();
             
             var f = PoolFilters.Spawn<Filter<TState, TEntity>>();
+            f.id = id;
             f.name = customName != null ? customName : nameof(filter);
             f.tempNodes = new List<IFilterNode>();
             f.tempNodesCustom = new List<IFilterNode>();
@@ -688,7 +705,7 @@ namespace ME.ECS {
 
         public override string ToString() {
 
-            return "Name: " + this.name + ", Objects Count: " + this.Count.ToString();
+            return "Name: " + this.name + " (" + this.id.ToString() + ")";
 
         }
 

@@ -195,6 +195,14 @@ namespace ME.ECS.Views {
 
     }
 
+    #if UNITY_ENABLED
+    public abstract class ViewBase : UnityEngine.MonoBehaviour {
+
+        
+
+    }
+    #endif
+
     public struct ViewInfo : System.IEquatable<ViewInfo> {
 
         public Entity entity;
@@ -552,11 +560,11 @@ namespace ME.ECS.Views {
 
         public ViewId RegisterViewSource<TProvider>(TProvider providerInitializer, IView<TEntity> prefab) where TProvider : struct, IViewsProviderInitializer<TEntity> {
 
-            if (this.world.HasStep(WorldStep.LogicTick) == true) {
+            /*if (this.world.HasStep(WorldStep.LogicTick) == true) {
 
                 throw new InStateException();
 
-            }
+            }*/
 
             if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
 

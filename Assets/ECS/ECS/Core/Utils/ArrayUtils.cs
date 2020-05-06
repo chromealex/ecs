@@ -37,7 +37,7 @@ namespace ME.ECS {
 
         public static bool WillResize<T>(int index, ref T[] arr) {
 
-            if (arr == null) arr = PoolArray<T>.Spawn(index + 1);
+            if (arr == null) return true;//arr = PoolArray<T>.Spawn(index + 1);
             if (index < arr.Length) return false;
             return true;
 

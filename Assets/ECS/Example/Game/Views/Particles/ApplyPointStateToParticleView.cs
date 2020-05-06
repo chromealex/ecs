@@ -11,14 +11,13 @@ namespace ME.Example.Game.Views {
     public class ApplyPointStateParticle : ParticleView<ApplyPointStateParticle, Point> {
 
         public float lerpSpeed = 3f;
-        public bool forceNoInterpolation;
 
         public override void ApplyState(in Point data, float deltaTime, bool immediately) {
 
             ref var rootData = ref this.GetRootData();
             rootData.startColor = data.color;
 
-            if (immediately == true || this.forceNoInterpolation == true) {
+            if (immediately == true) {
 
                 rootData.position = data.position;
                 rootData.startSize3D = data.scale;
@@ -35,9 +34,10 @@ namespace ME.Example.Game.Views {
         }
 
         public override void CopyFrom(ApplyPointStateParticle source) {
+            
+            base.CopyFrom(source);
 
             this.lerpSpeed = source.lerpSpeed;
-            this.forceNoInterpolation = source.forceNoInterpolation;
 
         }
 

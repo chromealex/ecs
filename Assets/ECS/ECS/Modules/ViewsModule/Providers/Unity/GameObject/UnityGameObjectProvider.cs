@@ -111,7 +111,7 @@ namespace ME.ECS.Views.Providers {
     using ME.ECS;
     using ME.ECS.Views;
 
-    public abstract class MonoBehaviourViewBase : UnityEngine.MonoBehaviour, IDoValidate {
+    public abstract class MonoBehaviourViewBase : ViewBase, IDoValidate {
 
         public ParticleSystemSimulation particleSystemSimulation;
 

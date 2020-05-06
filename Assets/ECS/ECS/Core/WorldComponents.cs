@@ -65,6 +65,7 @@ namespace ME.ECS {
         partial void OnSpawnComponents() {
 
             this.componentsCache = PoolArray<IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY); //PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
+            this.sharedEntity = default;
 
         }
 

@@ -32,6 +32,14 @@ namespace ME.Example.Game.Views {
 
         }
 
+        public override void CopyFrom(ApplyPointStateDrawMesh source) {
+            
+            base.CopyFrom(source);
+
+            this.lerpSpeed = source.lerpSpeed;
+
+        }
+
     }
 
 }

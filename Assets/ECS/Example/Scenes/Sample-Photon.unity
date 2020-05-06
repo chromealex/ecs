@@ -536,16 +536,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a0ed24dc45f5457f8977be5048f07c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  worldId: 1
-  worldConnectionId: 2
-  dropPercent: 10
   deltaTimeMultiplier: 1
-  playerColor: {r: 1, g: 0, b: 0, a: 1}
-  moveSide: 5
+  playersColor: []
+  moveSides: []
   spawnUnitsCount: 2
+  inputKeysMoveSpeed: 10
   pointsFeatureInitParameters:
+    zone1Position: {x: 0, y: 0, z: 0}
+    zone2Position: {x: 0, y: 0, z: 0}
+    zone3Position: {x: 0, y: 0, z: 0}
+    zone4Position: {x: 0, y: 0, z: 0}
+    zone1Scale: {x: 0, y: 0, z: 0}
+    zone2Scale: {x: 0, y: 0, z: 0}
+    zone3Scale: {x: 0, y: 0, z: 0}
+    zone4Scale: {x: 0, y: 0, z: 0}
     p1Position: {x: 0, y: 0, z: 3}
     p2Position: {x: 0, y: 0, z: -3}
+    playersColor: []
+  playerZoneSource: {fileID: 910116388370101518, guid: b3f1e2176c6e14196a3e41a8ece75e56,
+    type: 3}
   pointSourceGameObject: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
     type: 3}
   unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
@@ -828,8 +837,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: --Stats--
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 0}
-  m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1112,7 +1121,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 24
+  m_fontSize: 26.85
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1164,7 +1173,7 @@ MonoBehaviour:
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_spriteAnimator: {fileID: 0}
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_subTextObjects:
   - {fileID: 0}
   - {fileID: 0}
@@ -1257,8 +1266,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: --Stats--
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 0}
-  m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1438,7 +1447,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 24
+  m_fontSize: 26.85
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1490,7 +1499,7 @@ MonoBehaviour:
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_spriteAnimator: {fileID: 0}
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_subTextObjects:
   - {fileID: 0}
   - {fileID: 0}
@@ -1593,7 +1602,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 24
+  m_fontSize: 26.85
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1645,7 +1654,7 @@ MonoBehaviour:
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_spriteAnimator: {fileID: 0}
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_subTextObjects:
   - {fileID: 0}
   - {fileID: 0}
@@ -1694,16 +1703,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a0ed24dc45f5457f8977be5048f07c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  worldId: 2
-  worldConnectionId: 1
-  dropPercent: 5
   deltaTimeMultiplier: 1
-  playerColor: {r: 0, g: 0.43311167, b: 1, a: 1}
-  moveSide: -5
+  playersColor: []
+  moveSides: []
   spawnUnitsCount: 2
+  inputKeysMoveSpeed: 10
   pointsFeatureInitParameters:
+    zone1Position: {x: 0, y: 0, z: 0}
+    zone2Position: {x: 0, y: 0, z: 0}
+    zone3Position: {x: 0, y: 0, z: 0}
+    zone4Position: {x: 0, y: 0, z: 0}
+    zone1Scale: {x: 0, y: 0, z: 0}
+    zone2Scale: {x: 0, y: 0, z: 0}
+    zone3Scale: {x: 0, y: 0, z: 0}
+    zone4Scale: {x: 0, y: 0, z: 0}
     p1Position: {x: 0, y: 0, z: 3}
     p2Position: {x: 0, y: 0, z: -3}
+    playersColor: []
+  playerZoneSource: {fileID: 910116388370101518, guid: b3f1e2176c6e14196a3e41a8ece75e56,
+    type: 3}
   pointSourceGameObject: {fileID: 7066282854364010725, guid: 94e2a117f6a4e44b783439984f997a79,
     type: 3}
   unitSource: {fileID: 1753636565535264483, guid: 75d827d155804453ca071959f59fd4ec,
@@ -2327,7 +2345,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
+    rgba: 4281611316
   m_fontColor: {r: 0.20754719, g: 0.20754719, b: 0.20754719, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -2346,7 +2364,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 24
+  m_fontSize: 26.85
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2398,7 +2416,7 @@ MonoBehaviour:
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_spriteAnimator: {fileID: 0}
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_subTextObjects:
   - {fileID: 0}
   - {fileID: 0}
@@ -3144,7 +3162,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 24
+  m_fontSize: 26.85
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3196,7 +3214,7 @@ MonoBehaviour:
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_spriteAnimator: {fileID: 0}
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_subTextObjects:
   - {fileID: 0}
   - {fileID: 0}

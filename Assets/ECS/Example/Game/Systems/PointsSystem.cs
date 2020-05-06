@@ -14,6 +14,9 @@ namespace ME.Example.Game.Systems {
         
         void ISystemBase.OnDeconstruct() {}
         
+        bool ISystemFilter<TState>.jobs => false;
+        int ISystemFilter<TState>.jobsBatchCount => 64;
+        
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             

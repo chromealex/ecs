@@ -37,10 +37,13 @@ namespace ME.Example.Game.Systems {
         
         void ISystemBase.OnDeconstruct() { }
 
+        bool ISystemFilter<TState>.jobs => false;
+        int ISystemFilter<TState>.jobsBatchCount => 64;
+
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
-        IFilter<State> ISystemFilter<State>.CreateFilter() {
+        IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<State, Unit>.Create("Filter-UnitsSystemFilter").WithComponent<UnitGravity>().WithComponent<UnitFollowFromTo>().Custom<CustomFilter>().Push();
+            return Filter<TState, Unit>.Create("Filter-UnitsSystemFilter").WithComponent<UnitGravity>().WithComponent<UnitFollowFromTo>().Custom<CustomFilter>().Push();
             
         }
 

@@ -18,7 +18,7 @@ namespace ME.Example.Game.Modules {
 
         }
 
-        public FakeTransporter transporter;
+        public FakeTransporter fakeTransporter;
 
         protected override void OnInitialize() {
 
@@ -31,19 +31,19 @@ namespace ME.Example.Game.Modules {
             instance.SetTransporter(tr);
             instance.SetSerializer(new FakeSerializer());
 
-            this.transporter = tr;
+            this.fakeTransporter = tr;
 
         }
 
         public void SetWorldConnection(int connectToWorldId) {
 
-            this.transporter.connectToWorldId = connectToWorldId;
+            this.fakeTransporter.connectToWorldId = connectToWorldId;
 
         }
 
         public void SetDropPercent(int dropPercent) {
 
-            this.transporter.dropPercent = dropPercent;
+            this.fakeTransporter.dropPercent = dropPercent;
 
         }
 
@@ -82,6 +82,12 @@ namespace ME.Example.Game.Modules {
 
         }
 
+        public void SendSystem(byte[] bytes) {
+
+            this.Send(bytes);
+
+        }
+
         public void Send(byte[] bytes) {
 
             UnityEngine.Random.InitState(this.randomState);
@@ -109,7 +115,7 @@ namespace ME.Example.Game.Modules {
                 if (connectedWorld != null) {
 
                     var networkModule = connectedWorld.GetModule<NetworkModule>();
-                    networkModule.transporter.AddToBuffer(delay, bytes);
+                    networkModule.fakeTransporter.AddToBuffer(delay, bytes);
 
                 }
 
@@ -209,6 +215,26 @@ namespace ME.Example.Game.Modules {
             this.fsSerializer.TryDeserialize(data, typeof(ME.ECS.StatesHistory.HistoryEvent), ref deserialized).AssertSuccessWithoutWarnings();
 
             return (ME.ECS.StatesHistory.HistoryEvent)deserialized;
+
+        }
+
+        public byte[] SerializeStorage(ME.ECS.StatesHistory.HistoryStorage historyStorage) {
+
+            FullSerializer.fsData data;
+            this.fsSerializer.TrySerialize(typeof(ME.ECS.StatesHistory.HistoryStorage), historyStorage, out data).AssertSuccessWithoutWarnings();
+            var str = FullSerializer.fsJsonPrinter.CompressedJson(data);
+            return System.Text.Encoding.UTF8.GetBytes(str);
+
+        }
+
+        public ME.ECS.StatesHistory.HistoryStorage DeserializeStorage(byte[] bytes) {
+
+            var fsData = System.Text.Encoding.UTF8.GetString(bytes);
+            FullSerializer.fsData data = FullSerializer.fsJsonParser.Parse(fsData);
+            object deserialized = null;
+            this.fsSerializer.TryDeserialize(data, typeof(ME.ECS.StatesHistory.HistoryStorage), ref deserialized).AssertSuccessWithoutWarnings();
+
+            return (ME.ECS.StatesHistory.HistoryStorage)deserialized;
 
         }
 

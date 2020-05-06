@@ -13,7 +13,7 @@ namespace ME.Example.Game.Features {
             this.AddSystem<UnitsDeathSystem>();
             this.AddSystem<UnitsFollowSystem>();
             this.AddSystem<UnitsGravitySystem>();
-
+            
         }
 
         protected override void OnDeconstruct() {

@@ -9,7 +9,7 @@ namespace ME.ECSEditor {
 
             foreach (var importedAsset in deletedAssets) {
 
-                if (importedAsset.EndsWith(".cs") == true && importedAsset.EndsWith("aot.compiler.gen.cs") == false && importedAsset.Contains("/Entities/") == true) {
+                if (importedAsset.EndsWith(".cs") == true && importedAsset.EndsWith("aot.compiler.gen.cs") == false) {
 
                     AOTGenerator.OnAfterAssemblyReload(delete: true);
                     return;
@@ -41,7 +41,6 @@ namespace ME.ECSEditor {
                     if (System.IO.File.Exists(fullDir) == true) {
                         
                         AssetDatabase.DeleteAsset(fullDir);
-                        AssetDatabase.Refresh();
 
                     }
                     
@@ -81,7 +80,7 @@ namespace ME.ECSEditor {
 
             var itemStr = @"
 new ME.ECS.Views.ViewsModule<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>();
-ME.ECS.PoolModules.Spawn<ME.ECS.Views.ViewsModule<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>();
+ME.ECS.PoolModules.Spawn<ME.ECS.Views.ViewsModule<SupernovaState, #PROJECTNAME#.Entities.#ENTITYNAME#>>();
 ME.ECS.Worlds<#STATENAME#>.currentWorld.AddComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.ViewComponent<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());
 ME.ECS.Worlds<#STATENAME#>.currentWorld.AddComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.CreateViewComponentRequest<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());
 ME.ECS.Worlds<#STATENAME#>.currentWorld.AddComponent<#PROJECTNAME#.Entities.#ENTITYNAME#, ME.ECS.Views.DestroyViewComponentRequest<#STATENAME#, #PROJECTNAME#.Entities.#ENTITYNAME#>>(new ME.ECS.Entity());

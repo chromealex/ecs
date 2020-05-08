@@ -162,7 +162,7 @@ namespace ME.ECS {
             this.OnRecycleComponents();
             this.OnRecycleStructComponents();
             
-            if (FiltersDirectCache<TState>.dic[this.id] != null) PoolHashSet<int>.Recycle(ref FiltersDirectCache<TState>.dic[this.id]);
+            PoolHashSet<int>.Recycle(ref FiltersDirectCache<TState>.dic[this.id]);
             PoolClass<FiltersStorage>.Recycle(ref this.filtersStorage);
             
             WorldUtilities.ReleaseState(ref this.resetState);

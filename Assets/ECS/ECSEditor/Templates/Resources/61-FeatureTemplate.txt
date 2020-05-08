@@ -5,7 +5,7 @@ namespace #NAMESPACE# {
     using TState = #STATENAME#;
     using Entities; using Components; using Modules; using Systems; using Features; using Markers;
     
-    public class #SCRIPTNAME#Feature : Feature<TState> {
+    public class #SCRIPTNAME# : Feature<TState> {
 
         protected override void OnConstruct(ref ConstructParameters parameters) {
             

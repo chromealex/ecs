@@ -1,0 +1,19 @@
+{
+    "name": "ECSExample",
+    "references": [
+        "GUID:8979e5b9ed38b420d8191f6eb2c94074",
+        "GUID:2665a8d13d1b3f18800f46e256720795",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:3648d671f77344c408875e9571142865",
+        "GUID:57c32fc907df0f54e8e6e8f0d2488336",
+        "GUID:831409e8f9d13b5479a3baef9822ad34"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

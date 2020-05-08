@@ -1,0 +1,19 @@
+﻿using ME.ECS;
+using UnityEngine;
+
+namespace ME.Example.Game.Entities {
+
+    public struct Unit : IEntity {
+
+        public Entity entity { get; set; }
+
+        public Vector3 position;
+        public Color color;
+        public Quaternion rotation;
+        public Vector3 scale;
+        public float speed;
+        public float lifes;
+
+    }
+
+}

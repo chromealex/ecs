@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16e211888db0c4c4b90e5b8bf6e6c968, type: 3}
+  m_Name: Archer
+  m_EditorClassIdentifier: 
+  index: 0
+  viewSource: {fileID: 205000427814289224, guid: a770fd8f5deb349f09996c24e88b5cfe,
+    type: 3}
+  bulletData: {fileID: 11400000, guid: 42eb1948d3cf44c4fa575e8571f12326, type: 2}
+  health: 3
+  rotationSpeed: 15
+  movementSpeed: 4
+  accelerationSpeed: 1
+  slowdownSpeed: 30
+  attackRange: 8
+  attackSpeed: 1.5

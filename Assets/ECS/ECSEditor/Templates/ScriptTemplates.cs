@@ -192,6 +192,10 @@ namespace ME.ECSEditor {
 
                 }
 
+                var withoutExtension = System.IO.Path.GetFileNameWithoutExtension(fullDir);
+                withoutExtension = withoutExtension.Replace(" ", "");
+                content = content.Replace("#SCRIPTNAME#", withoutExtension);
+
                 System.IO.File.WriteAllText(fullDir, content);
                 AssetDatabase.ImportAsset(fullDir);
                 
@@ -366,9 +370,10 @@ MonoBehaviour:
 
                 var path = ScriptTemplates.GetDirectoryFromAsset(asset);
                 var assetName = asset.name;
+                if (assetName.EndsWith("Feature") == true) assetName = assetName.Replace("Feature", string.Empty);
                 ScriptTemplates.CreateEmptyDirectory(path, assetName);
                 var dir = path + "/" + assetName;
-                var newAssetPath = dir + "/" + assetName + ".cs";
+                var newAssetPath = dir + "/" + assetName + "Feature.cs";
                 AssetDatabase.MoveAsset(AssetDatabase.GetAssetPath(asset), newAssetPath);
                 AssetDatabase.ImportAsset(newAssetPath);
                 
@@ -377,6 +382,8 @@ MonoBehaviour:
                 ScriptTemplates.CreateEmptyDirectory(dir, "Components");
                 ScriptTemplates.CreateEmptyDirectory(dir, "Markers");
                 ScriptTemplates.CreateEmptyDirectory(dir, "Views");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Data");
+                ScriptTemplates.Create(dir + "/Data", "Feature" + assetName + "Data.cs", "62-FeatureData", allowRename: false);
 
                 /*var featureName = assetName;
                 var projectGuid = string.Empty;

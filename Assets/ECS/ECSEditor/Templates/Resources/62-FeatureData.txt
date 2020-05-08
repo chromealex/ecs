@@ -1,0 +1,14 @@
+﻿using ME.ECS;
+
+namespace #NAMESPACE# {
+    
+    using TState = #STATENAME#;
+    
+    [UnityEngine.CreateAssetMenu()]
+    public class #SCRIPTNAME# : UnityEngine.ScriptableObject {
+        
+        
+        
+    }
+
+}

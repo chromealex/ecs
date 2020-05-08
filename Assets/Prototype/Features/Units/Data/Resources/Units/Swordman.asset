@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16e211888db0c4c4b90e5b8bf6e6c968, type: 3}
+  m_Name: Swordman
+  m_EditorClassIdentifier: 
+  index: 0
+  viewSource: {fileID: 6776982435806955179, guid: c71f08a2598d34f3288d142732e06457,
+    type: 3}
+  bulletData: {fileID: 11400000, guid: 064992a9fb7f24f5490faac816bfd02e, type: 2}
+  health: 10
+  rotationSpeed: 15
+  movementSpeed: 5
+  accelerationSpeed: 1
+  slowdownSpeed: 30
+  attackRange: 1.5
+  attackSpeed: 1

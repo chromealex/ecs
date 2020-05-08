@@ -138,7 +138,7 @@ namespace ME.ECS.Collections {
         public T this[int index] {
             [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
             get {
-                return H.R<T, A10<T>>(ref this.arr, index);
+                return H.R<T, A20<T>>(ref this.arr, index);
             }
             [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
             set {
@@ -370,7 +370,7 @@ namespace ME.ECS.Collections {
         public T this[int index] {
             [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
             get {
-                return H.R<T, A10<T>>(ref this.arr, index);
+                return H.R<T, A50<T>>(ref this.arr, index);
             }
             [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
             set {

@@ -2,6 +2,6 @@
 
 namespace #NAMESPACE# {
 
-    public class #SCRIPTNAME# : IComponent<#STATENAME#, ENTITY_TYPE_HERE> {}
+    public class #SCRIPTNAME# : IComponent<#STATENAME#> {}
     
 }

@@ -6,13 +6,15 @@ namespace ME.ECS {
     using System.Runtime.Serialization;
     using System.Security.Permissions;
 
-    using TType = System.UInt64;
+    using TType = System.UInt32;
     using TName = ViewId;
     
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct ViewId : IComparable, IConvertible, IFormattable, IComparable<TName>, IEquatable<TName>, ISerializable {
 
+        public const TType Zero = (TType)0;
+        
         public readonly TType v; // Do not rename (binary serialization)
 
         private ViewId(TType value) {
@@ -23,7 +25,7 @@ namespace ME.ECS {
 
         private ViewId(SerializationInfo info, StreamingContext context) {
             
-            this.v = info.GetUInt64("v");
+            this.v = info.GetUInt32("v");
             
         }
 

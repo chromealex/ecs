@@ -8,7 +8,7 @@ namespace ME.ECS {
 
     public interface IStateBase {
 
-        EntityId entityId { get; set; }
+        int entityId { get; set; }
         Tick tick { get; set; }
         RandomState randomState { get; set; }
 

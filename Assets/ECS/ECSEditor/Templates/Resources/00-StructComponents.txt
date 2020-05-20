@@ -1,0 +1,14 @@
+﻿namespace ME.ECS {
+
+    public static partial class ComponentsInitializer<TState> where TState : class, IState<TState>, new() {
+    
+        static partial void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer) {
+    
+            CoreComponentsInitializer<TState>.Init(ref structComponentsContainer);
+#CONTENT#
+    
+        }
+    
+    }
+    
+}

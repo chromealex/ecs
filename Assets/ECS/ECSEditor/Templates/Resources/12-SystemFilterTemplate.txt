@@ -3,9 +3,16 @@
 namespace #NAMESPACE# {
 
     using TState = #STATENAME#;
-    using TEntity = Entities.YOUR_ENTITY_TYPE;
-    using Entities; using Components; using Modules; using Systems; using Features; using Markers;
+    #pragma warning disable
+    using #PROJECTNAME#.Components; using #PROJECTNAME#.Modules; using #PROJECTNAME#.Systems; using #PROJECTNAME#.Markers;
+    using Components; using Modules; using Systems; using Markers;
+    #pragma warning restore
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class #SCRIPTNAME# : ISystemFilter<TState> {
         
         public IWorld<TState> world { get; set; }
@@ -19,11 +26,11 @@ namespace #NAMESPACE# {
         IFilter<TState> ISystemFilter<TState>.filter { get; set; }
         IFilter<TState> ISystemFilter<TState>.CreateFilter() {
             
-            return Filter<TState, TEntity>.Create("Filter-#SCRIPTNAME#").Push();
+            return Filter<TState>.Create("Filter-#SCRIPTNAME#").Push();
             
         }
 
-        void ISystemFilter<TState>.AdvanceTick(Entity entity, TState state, float deltaTime) {}
+        void ISystemFilter<TState>.AdvanceTick(in Entity entity, in TState state, in float deltaTime) {}
 
     }
     

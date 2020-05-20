@@ -94,11 +94,15 @@ namespace ME.ECS {
 
 	    [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	    public virtual object Spawn() {
-		    
-		    object item = null;
-		    if (this.cache.Count > 0) {
 
-			    item = this.cache.Pop();
+		    object item = null;
+		    lock (this.cache) {
+
+			    if (this.cache.Count > 0) {
+
+				    item = this.cache.Pop();
+
+			    }
 
 		    }
 
@@ -133,8 +137,12 @@ namespace ME.ECS {
 			    
 		    }
 
-		    this.cache.Push(instance);
-		    
+		    lock (this.cache) {
+
+			    this.cache.Push(instance);
+
+		    }
+
 	    }
 
     }

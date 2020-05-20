@@ -14,4 +14,11 @@ namespace ME.ECS {
 
     }
 
+    public class WrongThreadException : System.Exception {
+
+        public WrongThreadException() : base("ME.ECS Exception") { }
+        public WrongThreadException(string message) : base(message) { }
+
+    }
+
 }

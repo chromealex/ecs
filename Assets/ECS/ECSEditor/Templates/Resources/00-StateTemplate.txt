@@ -10,25 +10,22 @@ namespace #NAMESPACE# {
     
     public class #STATENAME# : IState<#STATENAME#> {
 
-        public EntityId entityId { get; set; }
+        public int entityId { get; set; }
         public Tick tick { get; set; }
         public RandomState randomState { get; set; }
 
         public FiltersStorage filters;
-        public StructComponentsContainer structComponents;
+        public StructComponentsContainer<#STATENAME#> structComponents;
         
         // TODO: Place your custom data here
         
-        public Storage<SharedEntity> shared;
-        // TODO: Place your storages here
-
-        public Components<SharedEntity, #STATENAME#> sharedComponents;
-        // TODO: Place your components here
+        public Storage storage;
+        public Components<#STATENAME#> components;
         
         int IStateBase.GetHash() {
 
             // TODO: Return most unique hash here
-            return this.sharedComponents.Count;
+            return this.components.Count;
 
         }
 
@@ -37,11 +34,8 @@ namespace #NAMESPACE# {
             world.Register(ref this.filters, freeze, restore);
             world.Register(ref this.structComponents, freeze, restore);
             
-            world.Register(ref this.shared, freeze, restore);
-            // TODO: Register your storages here
-            
-            world.Register(ref this.sharedComponents, freeze, restore);
-            // TODO: Register your components here
+            world.Register(ref this.storage, freeze, restore);
+            world.Register(ref this.components, freeze, restore);
             
         }
 
@@ -56,11 +50,8 @@ namespace #NAMESPACE# {
             this.filters.CopyFrom(other.filters);
             this.structComponents.CopyFrom(other.structComponents);
             
-            this.shared.CopyFrom(other.shared);
-            // TODO: Call CopyFrom on your storages
-
-            this.sharedComponents.CopyFrom(other.sharedComponents);
-            // TODO: Call CopyFrom on your components
+            this.storage.CopyFrom(other.storage);
+            this.components.CopyFrom(other.components);
 
         }
 
@@ -71,11 +62,8 @@ namespace #NAMESPACE# {
             
             // TODO: Release your custom data here
             
-            WorldUtilities.Release(ref this.shared);
-            // TODO: Call WorldUtilities.Release on your storages
-
-            WorldUtilities.Release(ref this.sharedComponents);
-            // TODO: Call WorldUtilities.Release on your components
+            WorldUtilities.Release(ref this.storage);
+            WorldUtilities.Release(ref this.components);
 
         }
 

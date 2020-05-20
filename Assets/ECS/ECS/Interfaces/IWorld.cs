@@ -12,7 +12,7 @@ namespace ME.ECS {
         void SetCheckpointCollector(ICheckpointCollector checkpointCollector);
         void Checkpoint(object interestObj);
 
-        EntityId GetLastEntityId();
+        int GetLastEntityId();
         
         void SetFeatureState(IFeatureBase feature, ModuleState state);
         ModuleState GetFeatureState(IFeatureBase feature);
@@ -31,8 +31,6 @@ namespace ME.ECS {
 
         TModule GetModule<TModule>() where TModule : IModuleBase;
 
-        void OnRecycleStorage<TEntity>(Storage<TEntity> storage) where TEntity : struct, IEntity;
-        
         void UpdateAllFilters();
         
         bool HasResetState();
@@ -55,30 +53,28 @@ namespace ME.ECS {
         int GetSeedValue();
         
         void UpdateFilters(Entity data);
-        void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
+        //void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity;
 
-        void SetCapacity<TEntity>(int capacity) where TEntity : struct, IEntity;
-        int GetCapacity<TEntity>() where TEntity : struct, IEntity;
+        //void SetCapacity<TEntity>(int capacity) where TEntity : struct, IEntity;
+        //int GetCapacity<TEntity>() where TEntity : struct, IEntity;
 
         bool HasFilter(IFilter<TState> filterRef);
-        void Register<TEntity>(IFilter<TState> filterRef) where TEntity : struct, IEntity;
+        void Register(IFilter<TState> filterRef);
         void Register(ref FiltersStorage filtersRef, bool freeze, bool restore);
-        void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity;
-        void Register<TEntity>(ref Storage<TEntity> storageRef, bool freeze, bool restore) where TEntity : struct, IEntity;
-
-        void UpdateStorages<TEntity>() where TEntity : struct, IEntity;
-        void UpdateStorages<TEntity>(int code) where TEntity : struct, IEntity;
+        void Register(ref Components<TState> componentsRef, bool freeze, bool restore);
+        void Register(ref Storage storageRef, bool freeze, bool restore);
 
         void SetState(TState state);
+        void SetStateDirect(TState state);
         TState GetState();
         
         TState GetResetState();
 
-        Entity AddEntity<T>(T data, bool updateStorages = true) where T : struct, IEntity;
+        Entity AddEntity(string name = null);
         //void RemoveEntities<T>(T data) where T : struct, IEntity;
-        bool RemoveEntity<T>(Entity entity) where T : struct, IEntity;
-        //bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
-        bool ForEachEntity<TEntity>(out RefList<TEntity> output) where TEntity : struct, IEntity;
+        bool RemoveEntity(Entity entity);
+        //bool HasEntity<TEntity>(int entityId) where TEntity : struct, IEntity;
+        bool ForEachEntity(out RefList<Entity> output);
 
         System.Collections.Generic.List<TModule> GetModules<TModule>(System.Collections.Generic.List<TModule> output) where TModule : IModuleBase;
         bool HasModule<TModule>() where TModule : class, IModule<TState>;
@@ -99,9 +95,9 @@ namespace ME.ECS {
         void RemoveSystem(ISystem<TState> instance);
         void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
 
-        //Entity GetEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity;
-        bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity;
-        ref TEntity GetEntityDataRef<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        //Entity GetEntity<TEntity>(int entityId) where TEntity : struct, IEntity;
+        //bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity;
+        //ref TEntity GetEntityDataRef<TEntity>(Entity entity) where TEntity : struct, IEntity;
 
         void Update(float deltaTime);
 

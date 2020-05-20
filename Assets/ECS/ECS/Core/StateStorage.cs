@@ -7,10 +7,23 @@ namespace ME.ECS {
     
     public interface IStorage : IPoolableRecycle, IEnumerable {
 
-        int Count { get; }
-        int FromIndex { get; }
-        int ToIndex { get; }
-        IRefList GetData();
+        int Count {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get;
+        }
+
+        int FromIndex {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get;
+        }
+
+        int ToIndex {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get;
+        }
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        ref RefList<Entity> GetData();
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         bool IsFree(int index);
 
     }
@@ -20,14 +33,14 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Storage<TEntity> : IStorage where TEntity : struct, IEntity {
+    public class Storage : IStorage {
 
         public struct StorageEnumerator : IEnumerator<int> {
 
-            private Storage<TEntity> storage;
+            private Storage storage;
             private int index;
 
-            public StorageEnumerator(Storage<TEntity> storage) {
+            public StorageEnumerator(Storage storage) {
                 
                 this.storage = storage;
                 this.index = this.storage.ToIndex;
@@ -79,14 +92,15 @@ namespace ME.ECS {
 
         }
 
-        private RefList<TEntity> list;
+        private RefList<Entity> list;
         private bool freeze;
+        internal ArchetypeEntities archetypes;
 
         void IPoolableRecycle.OnRecycle() {
 
-            Worlds.currentWorld.OnRecycleStorage(this);
+            PoolClass<ArchetypeEntities>.Recycle(ref this.archetypes);
             
-            PoolRefList<TEntity>.Recycle(ref this.list);
+            if (this.list != null) PoolRefList<Entity>.Recycle(ref this.list);
             this.freeze = false;
 
         }
@@ -124,7 +138,7 @@ namespace ME.ECS {
 
         }
 
-        public ref TEntity this[int index] {
+        public ref Entity this[int index] {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return ref this.list[index];
@@ -152,7 +166,8 @@ namespace ME.ECS {
 
         public void Initialize(int capacity) {
             
-            this.list = PoolRefList<TEntity>.Spawn(capacity);
+            this.list = PoolRefList<Entity>.Spawn(capacity);
+            this.archetypes = PoolClass<ArchetypeEntities>.Spawn();
 
         }
 
@@ -162,26 +177,28 @@ namespace ME.ECS {
 
         }
 
-        public void CopyFrom(Storage<TEntity> other) {
+        public void CopyFrom(Storage other) {
             
-            if (this.list != null) PoolRefList<TEntity>.Recycle(ref this.list);
-            this.list = PoolRefList<TEntity>.Spawn(other.list.Capacity);
+            this.archetypes.CopyFrom(other.archetypes);
+            if (this.list != null) PoolRefList<Entity>.Recycle(ref this.list);
+            this.list = PoolRefList<Entity>.Spawn(other.list.Capacity);
             this.list.CopyFrom(other.list);
 
         }
 
-        IRefList IStorage.GetData() {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ref RefList<Entity> GetData() {
 
-            return this.list;
+            return ref this.list;
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void SetData(RefList<TEntity> data) {
+        public void SetData(RefList<Entity> data) {
 
             if (this.freeze == false && data != null && this.list != data) {
 
-                if (this.list != null) PoolRefList<TEntity>.Recycle(ref this.list);
+                if (this.list != null) PoolRefList<Entity>.Recycle(ref this.list);
                 this.list = data;
 
             }

@@ -157,6 +157,7 @@ namespace ME.ECS.StatesHistory {
 
         int GetStateHash(IState<TState> state);
 
+        new ME.ECS.Network.IStatesHistory<TState> GetDataStates();
         Tick GetAndResetOldestTick(Tick tick);
         void InvalidateEntriesAfterTick(Tick tick);
         
@@ -184,7 +185,7 @@ namespace ME.ECS.StatesHistory {
         
         //private StatesCircularQueue<TState> states;
         private ME.ECS.Network.StatesHistory<TState> statesHistory;
-        private Dictionary<Tick, SortedList<long, HistoryEvent>> events;
+        private Dictionary<Tick, ME.ECS.Collections.SortedList<long, HistoryEvent>> events;
         private Dictionary<Tick, int> syncHash;
         //private Tick maxTick;
         private bool prewarmed;
@@ -205,7 +206,7 @@ namespace ME.ECS.StatesHistory {
             
             this.statesHistory = new ME.ECS.Network.StatesHistory<TState>(this.world, this.GetQueueCapacity());
             //this.states = new StatesCircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
-            this.events = PoolDictionary<Tick, SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
+            this.events = PoolDictionary<Tick, ME.ECS.Collections.SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
             this.syncHash = PoolDictionary<Tick, int>.Spawn(StatesHistoryModule<TState>.POOL_SYNCHASH_CAPACITY);
             PoolSortedList<int, HistoryEvent>.Prewarm(StatesHistoryModule<TState>.POOL_HISTORY_SIZE, StatesHistoryModule<TState>.POOL_HISTORY_CAPACITY);
             
@@ -231,16 +232,17 @@ namespace ME.ECS.StatesHistory {
             
             foreach (var item in this.events) {
 
-                foreach (var hItem in item.Value) {
-
-                    var val = hItem.Value;
-                    PoolArray<object>.Recycle(ref val.parameters);
+                var values = item.Value.Values;
+                for (int i = 0, cnt = values.Count; i < cnt; ++i) {
+                    
+                    var val = values[i];
+                    if (val.parameters != null) PoolArray<object>.Recycle(ref val.parameters);
 
                 }
                 item.Value.Clear();
 
             }
-            PoolDictionary<Tick, SortedList<long, HistoryEvent>>.Recycle(ref this.events);
+            PoolDictionary<Tick, ME.ECS.Collections.SortedList<long, HistoryEvent>>.Recycle(ref this.events);
             PoolDictionary<Tick, int>.Recycle(ref this.syncHash);
 
             //this.states.Recycle();
@@ -259,9 +261,10 @@ namespace ME.ECS.StatesHistory {
             var list = PoolList<HistoryEvent>.Spawn(100);
             foreach (var data in this.events) {
 
-                foreach (var item in data.Value) {
+                var values = data.Value.Values;
+                for (int i = 0, cnt = values.Count; i < cnt; ++i) {
 
-                    var evt = item.Value;
+                    var evt = values[i];
                     if (evt.storeInHistory == true) {
                         
                         list.Add(evt);
@@ -354,7 +357,7 @@ namespace ME.ECS.StatesHistory {
 
             }
 
-            SortedList<long, HistoryEvent> list;
+            ME.ECS.Collections.SortedList<long, HistoryEvent> list;
             if (this.events.TryGetValue(historyEvent.tick, out list) == true) {
                 
                 list.Add(MathUtils.GetKey(historyEvent.order, historyEvent.localOrder), historyEvent);
@@ -478,11 +481,11 @@ namespace ME.ECS.StatesHistory {
 
         }
 
-        void IModule<TState>.AdvanceTick(TState state, float deltaTime) {
+        void IModule<TState>.AdvanceTick(in TState state, in float deltaTime) {
             
         }
 
-        void IModule<TState>.Update(TState state, float deltaTime) {
+        void IModule<TState>.Update(in TState state, in float deltaTime) {
 
             this.ValidatePrewarm();
             
@@ -516,7 +519,7 @@ namespace ME.ECS.StatesHistory {
 
             }
             
-            SortedList<long, HistoryEvent> list;
+            ME.ECS.Collections.SortedList<long, HistoryEvent> list;
             if (this.events.TryGetValue(tick, out list) == true) {
 
                 var values = list.Values;
@@ -529,6 +532,12 @@ namespace ME.ECS.StatesHistory {
             }
 
             this.CheckHash(tick);
+
+        }
+
+        ME.ECS.Network.IStatesHistory<TState> IStatesHistoryModule<TState>.GetDataStates() {
+
+            return this.statesHistory;
 
         }
 

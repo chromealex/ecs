@@ -1,7 +1,13 @@
 namespace ME.ECS {
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public static class ArrayUtils {
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Copy<T>(Unity.Collections.NativeArray<T> fromArr, ref Unity.Collections.NativeArray<T> arr) where T : struct {
             
             if (arr == null || arr.IsCreated == false) {
@@ -14,6 +20,7 @@ namespace ME.ECS {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Copy<T>(T[] fromArr, ref T[] arr) {
 
             if (fromArr == null) {
@@ -35,7 +42,8 @@ namespace ME.ECS {
 
         }
 
-        public static bool WillResize<T>(int index, ref T[] arr) {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool WillResize<T>(in int index, ref T[] arr) {
 
             if (arr == null) return true;//arr = PoolArray<T>.Spawn(index + 1);
             if (index < arr.Length) return false;
@@ -43,13 +51,14 @@ namespace ME.ECS {
 
         }
 
-        public static bool Resize<T>(int index, ref T[] arr) {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool Resize<T>(in int index, ref T[] arr) {
 
-            if (arr == null) arr = PoolArray<T>.Spawn(index + 1);
+            if (arr == null) arr = PoolArray<T>.Spawn(index * 2 + 1);
             if (index < arr.Length) return false;
             
             var newLength = arr.Length * 2;
-            if (newLength == 0 || newLength <= index) newLength = index + 1;
+            if (newLength == 0 || newLength <= index) newLength = index * 2 + 1;
         
             var newArr = PoolArray<T>.Spawn(newLength);
             System.Array.Copy(arr, newArr, arr.Length);

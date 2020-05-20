@@ -159,7 +159,14 @@ namespace ME.ECS {
             return (((long)a2 << 32) | (uint)a1);
             
         }
-        
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static ulong GetKey(uint a1, uint a2) {
+            
+            return (((ulong)a2 << 32) | (uint)a1);
+            
+        }
+
         public static void GetOrientation(out int orientation, Vector2 from, Vector2 to) {
 
             const float step = 360f / 8f;

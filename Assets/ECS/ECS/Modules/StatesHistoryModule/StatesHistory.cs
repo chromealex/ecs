@@ -15,11 +15,17 @@
 
     }
 
-    public class StatesHistory<TState> : IStatesHistory where TState : class, IState<TState>, new() {
+    public interface IStatesHistory<TState> : IStatesHistory where TState : class, IState<TState>, new() {
+
+        new LinkedList<StatesHistory<TState>.Entry> GetEntries();
+
+    }
+
+    public class StatesHistory<TState> : IStatesHistory<TState> where TState : class, IState<TState>, new() {
 
         public class Entry : IStatesHistoryEntry {
 
-            private bool isEmpty;
+            public bool isEmpty { get; set; }
             public Tick tick {
                 get {
                     if (this.isEmpty == true) return Tick.Invalid;
@@ -88,7 +94,13 @@
 
         }
 
-        public ICollection GetEntries() {
+        LinkedList<Entry> IStatesHistory<TState>.GetEntries() {
+
+            return this.entries;
+
+        }
+
+        ICollection IStatesHistory.GetEntries() {
 
             return this.entries;
 

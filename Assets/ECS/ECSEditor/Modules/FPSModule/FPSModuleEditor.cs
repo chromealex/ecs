@@ -8,6 +8,12 @@ namespace ME.ECSEditor {
 
         public IFPSModuleBase target { get; set; }
 
+        public T GetTarget<T>() {
+
+            return (T)(object)this.target;
+
+        }
+
         void IGUIEditorBase.OnDrawGUI() {
 
             var style = new UnityEngine.GUIStyle(UnityEngine.GUI.skin.label);

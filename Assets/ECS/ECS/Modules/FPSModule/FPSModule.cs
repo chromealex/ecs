@@ -46,9 +46,9 @@ namespace ME.ECS {
 
         }
 
-        void IModule<TState>.AdvanceTick(TState state, float deltaTime) {}
+        void IModule<TState>.AdvanceTick(in TState state, in float deltaTime) {}
 
-        void IModule<TState>.Update(TState state, float deltaTime) {
+        void IModule<TState>.Update(in TState state, in float deltaTime) {
 
             const float checkTime = 1f;
             

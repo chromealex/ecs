@@ -35,6 +35,8 @@ namespace ME.ECS.Collections {
 
     }
 
+    #STRUCTS#
+
     [System.Serializable]
     public struct StackArray<T> where T : struct {
 

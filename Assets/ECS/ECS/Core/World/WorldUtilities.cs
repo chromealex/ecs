@@ -42,9 +42,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release<T>(ref Storage<T> storage) where T : struct, IEntity {
+        public static void Release(ref Storage storage) {
             
-            PoolClass<Storage<T>>.Recycle(ref storage);
+            PoolClass<Storage>.Recycle(ref storage);
             
         }
 
@@ -56,16 +56,17 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release(ref StructComponentsContainer storage) {
+        public static void Release<TState>(ref StructComponentsContainer<TState> storage) where TState : class, IState<TState>, new() {
             
-            PoolClass<StructComponentsContainer>.Recycle(ref storage);
+            //PoolClass<StructComponentsContainer>.Recycle(ref storage);
+            storage.OnRecycle();
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release<TEntity, TState>(ref Components<TEntity, TState> components) where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+        public static void Release<TState>(ref Components<TState> components) where TState : class, IState<TState>, new() {
             
-            PoolClass<Components<TEntity, TState>>.Recycle(ref components);
+            PoolClass<Components<TState>>.Recycle(ref components);
             
         }
 
@@ -83,7 +84,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void ReleaseWorld<TState>(ref World<TState> world) where TState : class, IState<TState>, new() {
 
-            if (world.isActive == false) {
+            if (world == null || world.isActive == false) {
 
                 world = null;
                 return;
@@ -109,14 +110,6 @@ namespace ME.ECS {
         public static int GetKey(in System.Type type) {
 
             return type.GetHashCode();
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetEntityTypeId<TEntity>() where TEntity : struct, IEntity {
-
-            if (EntityTypes<TEntity>.typeId < 0) EntityTypes<TEntity>.typeId = ++EntityTypesCounter.counter;
-            return EntityTypes<TEntity>.typeId;
 
         }
 

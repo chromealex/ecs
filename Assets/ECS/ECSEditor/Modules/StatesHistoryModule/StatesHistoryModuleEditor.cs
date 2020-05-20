@@ -9,6 +9,12 @@ namespace ME.ECSEditor {
 
         public IStatesHistoryModuleBase target { get; set; }
 
+        public T GetTarget<T>() {
+
+            return (T)(object)this.target;
+
+        }
+
         void IGUIEditorBase.OnDrawGUI() {
                 
             var style = new UnityEngine.GUIStyle(UnityEngine.GUI.skin.label);
@@ -17,7 +23,7 @@ namespace ME.ECSEditor {
             var dataCount = 0;
             foreach (System.Collections.DictionaryEntry ren in this.target.GetData()) {
 
-                dataCount += ((System.Collections.Generic.SortedList<long, HistoryEvent>)ren.Value).Count;
+                dataCount += ((ME.ECS.Collections.SortedList<long, HistoryEvent>)ren.Value).Count;
 
             }
             

@@ -5,18 +5,119 @@ namespace ME.ECSEditor {
 
     public static class GUILayoutExt {
 
-        public static bool DrawFields(object instance, float fieldWidth) {
+        public static void DrawHeader(string caption) {
 
-            var padding = 2f;
-            var margin = 1f;
-            var cellHeight = 24f;
-            var tableStyle = new GUIStyle("Box");
+            var style = GUIStyle.none;//new GUIStyle("In BigTitle");
+            //new Editor().DrawHeader();
+            
+            GUILayout.Space(4f);
+            GUILayoutExt.Separator();
+            GUILayoutExt.Padding(
+                16f, 4f,
+                () => {
+                    
+                    GUILayout.Label(caption, EditorStyles.boldLabel);
+                    
+                }, style);
+            GUILayoutExt.Separator(new Color(0.2f, 0.2f, 0.2f, 1f));
+            
+        }
+
+        public static int Pages(int count, int page, int elementsOnPage, System.Action<int, int> onDraw, System.Action<int> onPageElementsChanged, System.Action onDrawHeader = null) {
+
+            var from = page * elementsOnPage;
+            var to = from + elementsOnPage;
+            if (from < 0) from = 0;
+            if (to > count) to = count;
+            var pages = Mathf.CeilToInt(count / (float)elementsOnPage) - 1;
+            
+            GUILayout.BeginHorizontal(EditorStyles.toolbar);
+            {
+                if (onDrawHeader != null) onDrawHeader.Invoke();
+                
+                GUILayout.FlexibleSpace();
+                
+                GUILayout.BeginHorizontal();
+                {
+
+                    GUILayout.Label("On page:", EditorStyles.toolbarButton);
+                    if (GUILayout.Button(elementsOnPage.ToString(), EditorStyles.toolbarDropDown, GUILayout.MinWidth(30f)) == true) {
+
+                        var items = new[] { 10, 20, 30, 40, 50, 100 };
+                        var menu = new GenericMenu();
+                        for (int i = 0; i < items.Length; ++i) {
+
+                            var idx = i;
+                            menu.AddItem(new GUIContent(items[i].ToString()), items[i] == elementsOnPage, () => { onPageElementsChanged.Invoke(items[idx]); });
+
+                        }
+
+                        //menu.DropDown(GUILayoutUtility.GetLastRect());
+                        menu.ShowAsContext();
+
+                    }
+
+                    EditorGUI.BeginDisabledGroup(page <= 0);
+                    if (GUILayout.Button("<", EditorStyles.toolbarButton) == true) {
+
+                        --page;
+
+                    }
+
+                    EditorGUI.EndDisabledGroup();
+
+                    var pageStr = GUILayout.TextField((page + 1).ToString(), EditorStyles.toolbarTextField, GUILayout.MinWidth(20f));
+                    if (int.TryParse(pageStr, out var res) == true) {
+
+                        page = res - 1;
+
+                    }
+                    GUILayout.Label("/", EditorStyles.toolbarButton);
+                    GUILayout.Label(string.Format("{0}", pages + 1), EditorStyles.toolbarButton, GUILayout.MinWidth(20f));
+
+                    EditorGUI.BeginDisabledGroup(page >= pages);
+                    if (GUILayout.Button(">", EditorStyles.toolbarButton) == true) {
+
+                        ++page;
+
+                    }
+
+                    EditorGUI.EndDisabledGroup();
+
+                }
+                GUILayout.EndHorizontal();
+                
+                if (page < 0) page = 0;
+                if (page > pages) page = pages;
+
+            }
+            GUILayout.EndHorizontal();
+            
+            onDraw.Invoke(from, to);
+
+            return page;
+
+        }
+
+        public static int GetFieldsCount(object instance) {
+            
+            var fields = instance.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+            return fields.Length;
+
+        }
+
+        public static bool DrawFields(object instance, string customName = null) {
+
+            //var padding = 2f;
+            //var margin = 1f;
+            //var cellHeight = 24f;
+            //var tableStyle = new GUIStyle("Box");
 
             var changed = false;
             var fields = instance.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
             if (fields.Length > 0) {
 
-                GUILayout.BeginHorizontal();
+                /*GUILayout.BeginHorizontal();
                 {
                     GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Field", EditorStyles.miniBoldLabel); },
                                      tableStyle, GUILayout.Width(fieldWidth),
@@ -25,35 +126,38 @@ namespace ME.ECSEditor {
                                      tableStyle, GUILayout.ExpandWidth(true),
                                      GUILayout.Height(cellHeight));
                 }
-                GUILayout.EndHorizontal();
+                GUILayout.EndHorizontal();*/
 
                 foreach (var field in fields) {
 
-                    GUILayout.BeginHorizontal();
+                    //GUILayout.BeginHorizontal();
                     {
-                        GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.DataLabel(field.Name); }, tableStyle,
-                                         GUILayout.Width(fieldWidth), GUILayout.Height(cellHeight));
-                        GUILayoutExt.Box(padding, margin, () => {
+                        //GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.DataLabel(field.Name); }, tableStyle,
+                        //                 GUILayout.Width(fieldWidth), GUILayout.Height(cellHeight));
+                        //GUILayoutExt.Box(padding, margin, () => {
 
-                            var value = field.GetValue(instance);
-                            var oldValue = value;
-                            var isEditable = GUILayoutExt.PropertyField(field, ref value, typeCheckOnly: true);
-                            EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
-                            if (GUILayoutExt.PropertyField(field, ref value, typeCheckOnly: false) == true) {
+                        //GUILayoutExt.DataLabel(field.Name);
+                        //var lastRect = GUILayoutUtility.GetLastRect();
+                        var value = field.GetValue(instance);
+                        var oldValue = value;
+                        var isEditable = GUILayoutExt.PropertyField(field.Name, field, ref value, typeCheckOnly: true);
+                        EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
+                        if (GUILayoutExt.PropertyField(customName != null ? customName : field.Name, field, ref value, typeCheckOnly: false) == true) {
 
-                                if (oldValue.ToString() != value.ToString()) {
+                            if (oldValue.ToString() != value.ToString()) {
 
-                                    field.SetValue(instance, value);
-                                    changed = true;
-
-                                }
+                                field.SetValue(instance, value);
+                                changed = true;
 
                             }
-                            EditorGUI.EndDisabledGroup();
 
-                        }, tableStyle, GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
+                        }
+                        EditorGUI.EndDisabledGroup();
+                        //GUILayout.EndHorizontal();
+
+                        //}, tableStyle, GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
                     }
-                    GUILayout.EndHorizontal();
+                    //GUILayout.EndHorizontal();
 
                 }
 
@@ -64,6 +168,12 @@ namespace ME.ECSEditor {
         }
 
         public static bool PropertyField(System.Reflection.FieldInfo fieldInfo, ref object value, bool typeCheckOnly) {
+
+            return GUILayoutExt.PropertyField(null, fieldInfo, ref value, typeCheckOnly);
+
+        }
+
+        public static bool PropertyField(string caption, System.Reflection.FieldInfo fieldInfo, ref object value, bool typeCheckOnly) {
 
             if (value == null) {
 
@@ -76,7 +186,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.ColorField((Color)value);
+                    value = EditorGUILayout.ColorField(caption, (Color)value);
                     GUILayout.Label(value.ToString());
 
                 }
@@ -85,7 +195,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.ColorField((Color32)value);
+                    value = EditorGUILayout.ColorField(caption, (Color32)value);
                     GUILayout.Label(value.ToString());
 
                 }
@@ -94,7 +204,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.Vector2Field(string.Empty, (Vector2)value);
+                    value = EditorGUILayout.Vector2Field(caption, (Vector2)value);
 
                 }
 
@@ -102,7 +212,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.Vector3Field(string.Empty, (Vector3)value);
+                    value = EditorGUILayout.Vector3Field(caption, (Vector3)value);
 
                 }
 
@@ -110,7 +220,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.Vector4Field(string.Empty, (Vector4)value);
+                    value = EditorGUILayout.Vector4Field(caption, (Vector4)value);
 
                 }
 
@@ -118,7 +228,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = Quaternion.Euler(EditorGUILayout.Vector3Field(string.Empty, ((Quaternion)value).eulerAngles));
+                    value = Quaternion.Euler(EditorGUILayout.Vector3Field(caption, ((Quaternion)value).eulerAngles));
 
                 }
 
@@ -126,7 +236,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.IntField((int)value);
+                    value = EditorGUILayout.IntField(caption, (int)value);
 
                 }
 
@@ -134,7 +244,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.FloatField((float)value);
+                    value = EditorGUILayout.FloatField(caption, (float)value);
 
                 }
 
@@ -142,7 +252,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.DoubleField((double)value);
+                    value = EditorGUILayout.DoubleField(caption, (double)value);
 
                 }
 
@@ -150,7 +260,7 @@ namespace ME.ECSEditor {
 
                 if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.LongField((long)value);
+                    value = EditorGUILayout.LongField(caption, (long)value);
 
                 }
 
@@ -165,7 +275,7 @@ namespace ME.ECSEditor {
 
                     } else {
 
-                        value = EditorGUILayout.TextField(str);
+                        value = EditorGUILayout.TextField(caption, str);
 
                     }
 
@@ -224,11 +334,20 @@ namespace ME.ECSEditor {
         }
 
         public static void Separator() {
+            
+            GUILayoutExt.Separator(new Color(0.1f, 0.1f, 0.1f, 1f));
+            
+        }
+
+        public static void Separator(Color color) {
 
             var lineHeight = 1f;
             Rect rect = EditorGUILayout.GetControlRect(false, lineHeight);
             rect.height = lineHeight;
-            EditorGUI.DrawRect(rect, new Color(0.3f, 0.3f, 0.3f, 1f));
+            rect.width += 4f;
+            rect.x -= 2f;
+            EditorGUI.DrawRect(rect, color);
+            GUILayout.Space(-lineHeight);
 
         }
 
@@ -353,21 +472,33 @@ namespace ME.ECSEditor {
 
         public static void Padding(float padding, System.Action onContent, params GUILayoutOption[] options) {
 
-            GUILayout.BeginVertical(options);
+            GUILayoutExt.Padding(padding, padding, onContent, options);
+
+        }
+
+        public static void Padding(float paddingX, float paddingY, System.Action onContent, params GUILayoutOption[] options) {
+
+            GUILayoutExt.Padding(paddingX, paddingY, onContent, GUIStyle.none, options);
+
+        }
+
+        public static void Padding(float paddingX, float paddingY, System.Action onContent, GUIStyle style, params GUILayoutOption[] options) {
+
+            GUILayout.BeginVertical(style, options);
             {
-                GUILayout.Space(padding);
+                GUILayout.Space(paddingY);
                 GUILayout.BeginHorizontal(options);
                 {
-                    GUILayout.Space(padding);
+                    GUILayout.Space(paddingX);
                     {
                         GUILayout.BeginVertical(options);
                         onContent.Invoke();
                         GUILayout.EndVertical();
                     }
-                    GUILayout.Space(padding);
+                    GUILayout.Space(paddingX);
                 }
                 GUILayout.EndHorizontal();
-                GUILayout.Space(padding);
+                GUILayout.Space(paddingY);
             }
             GUILayout.EndVertical();
 

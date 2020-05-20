@@ -7,7 +7,7 @@
     #endif
     public static class PoolArray<T> {
 
-        private const int BLOCK_SIZE = 512;
+        private const int BLOCK_SIZE = 5000;
         private static readonly T[] emptyArray = new T[0];
         private static System.Collections.Generic.Dictionary<int, PoolInternalBase> pools = new System.Collections.Generic.Dictionary<int, PoolInternalBase>();
 

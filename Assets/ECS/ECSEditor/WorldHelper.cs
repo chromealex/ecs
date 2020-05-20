@@ -32,18 +32,18 @@ namespace ME.ECSEditor {
 
         }*/
 
-        public static StructComponentsContainer GetStructComponentsStorage(IWorldBase world) {
+        public static IStructComponentsContainer GetStructComponentsStorage(IWorldBase world) {
 
             var field = world.GetType().GetField("componentsStructCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            var dic = (StructComponentsContainer)field.GetValue(world);
+            var dic = (IStructComponentsContainer)field.GetValue(world);
             return dic;
 
         }
         
-        public static IList[] GetEntitiesStorage(IWorldBase world) {
+        public static Storage GetEntitiesStorage(IWorldBase world) {
 
             var field = world.GetType().GetField("storagesCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            return (IList[])field.GetValue(world);
+            return (Storage)field.GetValue(world);
 
         }
 

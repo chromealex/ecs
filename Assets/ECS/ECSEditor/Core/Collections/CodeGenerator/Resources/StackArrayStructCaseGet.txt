@@ -1,0 +1,1 @@
+case #INDEX#: return this.arr.p#INDEX#;

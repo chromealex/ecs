@@ -11,8 +11,8 @@ namespace ME.ECS {
 
         IWorld<TState> world { get; set; }
 
-        void Update(TState state, float deltaTime);
-        void AdvanceTick(TState state, float deltaTime);
+        void Update(in TState state, in float deltaTime);
+        void AdvanceTick(in TState state, in float deltaTime);
 
     }
 

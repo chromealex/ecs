@@ -3,11 +3,10 @@
 namespace #NAMESPACE# {
 
     using TState = #STATENAME#;
-    using TEntity = Entities.ENTITY_TYPE_HERE;
     
-    public class #SCRIPTNAME# : IComponentCopyable<TState, TEntity> {
+    public class #SCRIPTNAME# : IComponentCopyable<TState> {
         
-        void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState, TEntity> other) {}
+        void IComponentCopyable<TState, TEntity>.CopyFrom(IComponent<TState> other) {}
         
         void IPoolableRecycle.OnRecycle() {}
 

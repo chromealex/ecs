@@ -3,6 +3,7 @@ namespace ME.ECSEditor {
     public interface IGUIEditorBase {
         
         void OnDrawGUI();
+        T GetTarget<T>();
 
     }
 

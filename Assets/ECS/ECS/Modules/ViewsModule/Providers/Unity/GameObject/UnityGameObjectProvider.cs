@@ -6,47 +6,47 @@ namespace ME.ECS {
     
     public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
-        ViewId RegisterViewSource<TEntity>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity;
-        ViewId RegisterViewSource<TEntity>(MonoBehaviourViewBase prefab) where TEntity : struct, IEntity;
-        void InstantiateView<TEntity>(UnityEngine.GameObject prefab, Entity entity) where TEntity : struct, IEntity;
-        void InstantiateView<TEntity>(MonoBehaviourViewBase prefab, Entity entity) where TEntity : struct, IEntity;
+        ViewId RegisterViewSource(UnityEngine.GameObject prefab);
+        ViewId RegisterViewSource(MonoBehaviourViewBase prefab);
+        void InstantiateView(UnityEngine.GameObject prefab, Entity entity);
+        void InstantiateView(MonoBehaviourViewBase prefab, Entity entity);
 
     }
 
     public partial class World<TState> where TState : class, IState<TState>, new() {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TEntity>(UnityEngine.GameObject prefab) where TEntity : struct, IEntity {
+        public ViewId RegisterViewSource(UnityEngine.GameObject prefab) {
 
-            return this.RegisterViewSource(new UnityGameObjectProviderInitializer<TEntity>(), prefab);
+            return this.RegisterViewSource(new UnityGameObjectProviderInitializer(), prefab);
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TEntity>(UnityGameObjectProviderInitializer<TEntity> providerInitializer, UnityEngine.GameObject prefab) where TEntity : struct, IEntity {
+        public ViewId RegisterViewSource(UnityGameObjectProviderInitializer providerInitializer, UnityEngine.GameObject prefab) {
 
-            IView<TEntity> component;
+            IView component;
             if (prefab.TryGetComponent(out component) == true) {
 
                 return this.RegisterViewSource(providerInitializer, component);
 
             }
 
-            return 0UL;
+            return ViewId.Zero;
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TEntity>(MonoBehaviourViewBase prefab) where TEntity : struct, IEntity {
+        public ViewId RegisterViewSource(MonoBehaviourViewBase prefab) {
 
-            return this.RegisterViewSource(new UnityGameObjectProviderInitializer<TEntity>(), (IView<TEntity>)prefab);
+            return this.RegisterViewSource(new UnityGameObjectProviderInitializer(), (IView)prefab);
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void InstantiateView<TEntity>(UnityEngine.GameObject prefab, Entity entity) where TEntity : struct, IEntity {
+        public void InstantiateView(UnityEngine.GameObject prefab, Entity entity) {
 
-            IView<TEntity> component;
+            IView component;
             if (prefab.TryGetComponent(out component) == true) {
 
                 this.InstantiateView(component, entity);
@@ -56,9 +56,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void InstantiateView<TEntity>(MonoBehaviourViewBase prefab, Entity entity) where TEntity : struct, IEntity {
+        public void InstantiateView(MonoBehaviourViewBase prefab, Entity entity) {
 
-            this.InstantiateView((IView<TEntity>)prefab, entity);
+            this.InstantiateView((IView)prefab, entity);
 
         }
 
@@ -70,7 +70,7 @@ namespace ME.ECS.Views {
 
     using ME.ECS.Views.Providers;
 
-    public partial interface IViewModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+    public partial interface IViewModule<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource(UnityEngine.GameObject prefab);
         void UnRegisterViewSource(UnityEngine.GameObject prefab);
@@ -78,26 +78,26 @@ namespace ME.ECS.Views {
 
     }
 
-    public partial class ViewsModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+    public partial class ViewsModule<TState> where TState : class, IState<TState>, new() {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(UnityEngine.GameObject prefab) {
 
-            return this.RegisterViewSource(new UnityGameObjectProviderInitializer<TEntity>(), prefab.GetComponent<MonoBehaviourView<TEntity>>());
+            return this.RegisterViewSource(new UnityGameObjectProviderInitializer(), prefab.GetComponent<MonoBehaviourView>());
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void UnRegisterViewSource(UnityEngine.GameObject prefab) {
 
-            this.UnRegisterViewSource(prefab.GetComponent<MonoBehaviourView<TEntity>>());
+            this.UnRegisterViewSource(prefab.GetComponent<MonoBehaviourView>());
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void InstantiateView(UnityEngine.GameObject prefab, Entity entity) {
             
-            var viewSource = prefab.GetComponent<MonoBehaviourView<TEntity>>();
+            var viewSource = prefab.GetComponent<MonoBehaviourView>();
             this.InstantiateView(this.GetViewSourceId(viewSource), entity);
             
         }
@@ -110,10 +110,27 @@ namespace ME.ECS.Views.Providers {
 
     using ME.ECS;
     using ME.ECS.Views;
+    using Unity.Jobs;
+    using UnityEngine.Jobs;
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public abstract class MonoBehaviourViewBase : ViewBase, IDoValidate {
 
         public ParticleSystemSimulation particleSystemSimulation;
+        new protected UnityEngine.Transform transform;
+
+        public virtual bool applyStateJob => true;
+        public virtual void ApplyStateJob(TransformAccess transform, float deltaTime, bool immediately) { }
+
+        internal void InitializeTransform() {
+
+            this.transform = base.transform;
+
+        }
 
         public void SimulateParticles(float time, uint seed) {
             
@@ -134,7 +151,7 @@ namespace ME.ECS.Views.Providers {
             
         }
 
-        public void OnValidate() {
+        public virtual void OnValidate() {
             
             this.DoValidate();
             
@@ -148,61 +165,175 @@ namespace ME.ECS.Views.Providers {
 
     }
 
-    public abstract class MonoBehaviourView<TEntity> : MonoBehaviourViewBase, IView<TEntity> where TEntity : struct, IEntity {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public abstract class MonoBehaviourView : MonoBehaviourViewBase, IView {
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
         public Tick creationTick { get; set; }
 
-        public virtual void OnInitialize(in TEntity data) { }
-        public virtual void OnDeInitialize(in TEntity data) { }
-        public abstract void ApplyState(in TEntity data, float deltaTime, bool immediately);
+        void IView.DoInitialize() {
+            
+            this.InitializeTransform();
+            this.OnInitialize();
+            
+        }
+
+        void IView.DoDeInitialize() {
+            
+            this.OnDeInitialize();
+            
+        }
         
+        public virtual void OnInitialize() { }
+        public virtual void OnDeInitialize() { }
+        public virtual void ApplyState(float deltaTime, bool immediately) { }
+
     }
     
-    public class UnityGameObjectProvider<TEntity> : ViewsProvider<TEntity> where TEntity : struct, IEntity {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public class UnityGameObjectProvider : ViewsProvider {
 
-        private PoolGameObject<MonoBehaviourView<TEntity>> pool;
+        private PoolGameObject<MonoBehaviourView> pool;
         
         public override void OnConstruct() {
 
-            this.pool = new PoolGameObject<MonoBehaviourView<TEntity>>();
+            this.pool = new PoolGameObject<MonoBehaviourView>();
             
         }
 
         public override void OnDeconstruct() {
 
             this.pool = null;
+            this.currentTransformArray.Dispose();
 
         }
         
-        public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {
+        public override IView Spawn(IView prefab, ViewId prefabSourceId) {
 
-            return this.pool.Spawn((MonoBehaviourView<TEntity>)prefab, prefabSourceId);
+            return this.pool.Spawn((MonoBehaviourView)prefab, prefabSourceId);
 
         }
 
-        public override void Destroy(ref IView<TEntity> instance) {
+        public override void Destroy(ref IView instance) {
 
-            var instanceTyped = (MonoBehaviourView<TEntity>)instance;
+            var instanceTyped = (MonoBehaviourView)instance;
             this.pool.Recycle(ref instanceTyped);
             instance = null;
 
         }
+        
+        private struct Job : IJobParallelForTransform {
 
-    }
-
-    public struct UnityGameObjectProviderInitializer<TEntity> : IViewsProviderInitializer<TEntity> where TEntity : struct, IEntity {
-
-        public IViewsProvider<TEntity> Create() {
+            public float deltaTime;
             
-            return PoolClass<UnityGameObjectProvider<TEntity>>.Spawn();
+            public void Execute(int index, TransformAccess transform) {
+
+                var list = UnityGameObjectProvider.currentList;
+                var k = 0;
+                for (int i = 0, length = list.Length; i < length; ++i) {
+
+                    var item = list[i];
+                    if (item == null) continue;
+                    
+                    for (int j = 0, count = item.Count; j < count; ++j) {
+
+                        var instance = item[j] as MonoBehaviourViewBase;
+                        if (instance == null) continue;
+                        
+                        if (instance.applyStateJob == true && k++ == index) {
+                            
+                            instance.ApplyStateJob(transform, this.deltaTime, immediately: false);
+                            return;
+
+                        }
+
+                    }
+
+                }
+
+            }
 
         }
 
-        public void Destroy(IViewsProvider<TEntity> instance) {
+        private static System.Collections.Generic.List<IView>[] currentList;
+        private UnityEngine.Transform[] currentTransforms;
+        private TransformAccessArray currentTransformArray;
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
 
-            PoolClass<UnityGameObjectProvider<TEntity>>.Recycle((UnityGameObjectProvider<TEntity>)instance);
+            UnityGameObjectProvider.currentList = list;
+            if (list != null) {
+
+                if (this.currentTransformArray.isCreated == false) this.currentTransformArray = new TransformAccessArray(list.Length);
+                var changed = ArrayUtils.Resize(list.Length - 1, ref this.currentTransforms);
+
+                var k = 0;
+                for (int i = 0, length = list.Length; i < length; ++i) {
+
+                    var item = list[i];
+                    if (item == null) continue;
+                    
+                    for (int j = 0, count = item.Count; j < count; ++j) {
+
+                        var view = item[j] as MonoBehaviourViewBase;
+                        if (view == null) continue;
+                        if (view.applyStateJob == true) {
+
+                            changed |= ArrayUtils.Resize(k, ref this.currentTransforms);
+                            ref var tr = ref this.currentTransforms[k++];
+                            if (tr != view.transform) {
+
+                                changed = true;
+                                tr = view.transform;
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                if (changed == true) this.currentTransformArray.SetTransforms(this.currentTransforms);
+                var job = new Job() {
+                    deltaTime = deltaTime
+                };
+                var handle = job.Schedule(this.currentTransformArray);
+                handle.Complete();
+                UnityGameObjectProvider.currentList = null;
+                
+            }
+
+        }
+
+        public override void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+            
+            this.UpdateViews(list, deltaTime);
+            
+        }
+
+    }
+
+    public struct UnityGameObjectProviderInitializer : IViewsProviderInitializer {
+
+        public IViewsProvider Create() {
+            
+            return PoolClass<UnityGameObjectProvider>.Spawn();
+
+        }
+
+        public void Destroy(IViewsProvider instance) {
+
+            PoolClass<UnityGameObjectProvider>.Recycle((UnityGameObjectProvider)instance);
             
         }
 

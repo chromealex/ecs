@@ -8,6 +8,36 @@
 	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
 	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
 	#endif
+	public static class PoolSortedSet<TValue> {
+
+		private static PoolInternalBase pool = new PoolInternalBase(() => new SortedSet<TValue>(), (x) => ((SortedSet<TValue>)x).Clear());
+
+		public static SortedSet<TValue> Spawn(int capacity = 0) {
+
+			return (SortedSet<TValue>)PoolSortedSet<TValue>.pool.Spawn();
+		    
+		}
+
+		public static void Recycle(ref SortedSet<TValue> dic) {
+
+			PoolSortedSet<TValue>.pool.Recycle(dic);
+			dic = null;
+
+		}
+
+		public static void Recycle(SortedSet<TValue> dic) {
+
+			PoolSortedSet<TValue>.pool.Recycle(dic);
+
+		}
+
+	}
+
+	#if ECS_COMPILE_IL2CPP_OPTIONS
+	[Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+	#endif
 	public static class PoolHashSet<TValue> {
 
 		private static PoolInternalBase pool = new PoolInternalBase(() => new HashSet<TValue>(), (x) => ((HashSet<TValue>)x).Clear());
@@ -187,12 +217,12 @@
 		
 		private static int capacity;
 		private static DuplicateKeyComparer duplicateComparer = new DuplicateKeyComparer();
-		private static PoolInternalBase pool = new PoolInternalBase(() => new SortedList<TKey, TValue>(PoolSortedList<TKey, TValue>.capacity, PoolSortedList<TKey, TValue>.duplicateComparer), (x) => ((SortedList<TKey, TValue>)x).Clear());
+		private static PoolInternalBase pool = new PoolInternalBase(() => new ME.ECS.Collections.SortedList<TKey, TValue>(PoolSortedList<TKey, TValue>.capacity, PoolSortedList<TKey, TValue>.duplicateComparer), (x) => ((ME.ECS.Collections.SortedList<TKey, TValue>)x).Clear());
 
-		public static SortedList<TKey, TValue> Spawn(int capacity) {
+		public static ME.ECS.Collections.SortedList<TKey, TValue> Spawn(int capacity) {
 
 			PoolSortedList<TKey, TValue>.capacity = capacity;
-			return (SortedList<TKey, TValue>)PoolSortedList<TKey, TValue>.pool.Spawn();
+			return (ME.ECS.Collections.SortedList<TKey, TValue>)PoolSortedList<TKey, TValue>.pool.Spawn();
 		    
 		}
 
@@ -203,14 +233,14 @@
 
 		}
 
-		public static void Recycle(ref SortedList<TKey,TValue> dic) {
+		public static void Recycle(ref ME.ECS.Collections.SortedList<TKey,TValue> dic) {
 
 			PoolSortedList<TKey, TValue>.pool.Recycle(dic);
 			dic = null;
 
 		}
 
-		public static void Recycle(SortedList<TKey,TValue> dic) {
+		public static void Recycle(ME.ECS.Collections.SortedList<TKey,TValue> dic) {
 
 			PoolSortedList<TKey, TValue>.pool.Recycle(dic);
 

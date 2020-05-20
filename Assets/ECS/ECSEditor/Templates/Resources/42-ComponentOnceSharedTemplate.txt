@@ -1,9 +1,0 @@
-﻿using ME.ECS;
-
-namespace #NAMESPACE# {
-    
-    using TState = #STATENAME#;
-    
-    public class #SCRIPTNAME# : IComponentSharedOnce<TState> {}
-    
-}

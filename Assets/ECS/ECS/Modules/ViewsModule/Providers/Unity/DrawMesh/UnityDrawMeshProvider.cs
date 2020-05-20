@@ -6,24 +6,24 @@ namespace ME.ECS {
 
     public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
-        ViewId RegisterViewSource<TEntity>(DrawMeshViewSourceBase prefab) where TEntity : struct, IEntity;
-        void InstantiateView<TEntity>(DrawMeshViewSourceBase prefab, Entity entity) where TEntity : struct, IEntity;
+        ViewId RegisterViewSource(DrawMeshViewSourceBase prefab);
+        void InstantiateView(DrawMeshViewSourceBase prefab, Entity entity);
 
     }
 
     public partial class World<TState> where TState : class, IState<TState>, new() {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TEntity>(DrawMeshViewSourceBase prefab) where TEntity : struct, IEntity {
+        public ViewId RegisterViewSource(DrawMeshViewSourceBase prefab) {
 
-            return this.RegisterViewSource(new UnityDrawMeshProviderInitializer<TEntity>(), prefab.GetSource<TEntity>());
+            return this.RegisterViewSource(new UnityDrawMeshProviderInitializer(), prefab.GetSource());
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void InstantiateView<TEntity>(DrawMeshViewSourceBase prefab, Entity entity) where TEntity : struct, IEntity {
+        public void InstantiateView(DrawMeshViewSourceBase prefab, Entity entity) {
 
-            this.InstantiateView(prefab.GetSource<TEntity>(), entity);
+            this.InstantiateView(prefab.GetSource(), entity);
             
         }
 
@@ -35,7 +35,7 @@ namespace ME.ECS.Views {
     
     using ME.ECS.Views.Providers;
     
-    public partial interface IViewModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+    public partial interface IViewModule<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource(DrawMeshViewSourceBase prefab);
         void UnRegisterViewSource(DrawMeshViewSourceBase prefab);
@@ -43,26 +43,26 @@ namespace ME.ECS.Views {
 
     }
 
-    public partial class ViewsModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+    public partial class ViewsModule<TState> where TState : class, IState<TState>, new() {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(DrawMeshViewSourceBase prefab) {
 
-            return this.RegisterViewSource(new UnityDrawMeshProviderInitializer<TEntity>(), prefab.GetSource<TEntity>());
+            return this.RegisterViewSource(new UnityDrawMeshProviderInitializer(), prefab.GetSource());
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void UnRegisterViewSource(DrawMeshViewSourceBase prefab) {
 
-            this.UnRegisterViewSource(prefab.GetSource<TEntity>());
+            this.UnRegisterViewSource(prefab.GetSource());
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void InstantiateView(DrawMeshViewSourceBase prefab, Entity entity) {
             
-            var viewSource = prefab.GetSource<TEntity>();
+            var viewSource = prefab.GetSource();
             this.InstantiateView(this.GetViewSourceId(viewSource), entity);
             
         }
@@ -72,6 +72,8 @@ namespace ME.ECS.Views {
 }
 
 namespace ME.ECS.Views.Providers {
+    
+    using Unity.Jobs;
 
     public struct DrawMeshData {
 
@@ -88,6 +90,11 @@ namespace ME.ECS.Views.Providers {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public abstract class DrawMeshViewBase : IPoolableRecycle {
 
         [System.Serializable]
@@ -106,6 +113,8 @@ namespace ME.ECS.Views.Providers {
             
         }
 
+        public virtual void ApplyStateJob(float deltaTime, bool immediately) { }
+        
         public override string ToString() {
             
             return "Renderers Count: " + this.items.Length.ToString();
@@ -168,17 +177,34 @@ namespace ME.ECS.Views.Providers {
 
     }
 
-    public abstract class DrawMeshView<T, TEntity> : DrawMeshViewBase, IView<TEntity> where TEntity : struct, IEntity where T : DrawMeshView<T, TEntity> {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public abstract class DrawMeshView<T> : DrawMeshViewBase, IView where T : DrawMeshView<T> {
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
         public Tick creationTick { get; set; }
 
-        public virtual void OnInitialize(in TEntity data) { }
-        public virtual void OnDeInitialize(in TEntity data) { }
-        public abstract void ApplyState(in TEntity data, float deltaTime, bool immediately);
+        void IView.DoInitialize() {
 
-        public override void DoCopyFrom(DrawMeshViewBase source) {
+            this.OnInitialize();
+            
+        }
+
+        void IView.DoDeInitialize() {
+            
+            this.OnDeInitialize();
+            
+        }
+
+        public virtual void OnInitialize() { }
+        public virtual void OnDeInitialize() { }
+        public virtual void ApplyState(float deltaTime, bool immediately) { }
+
+        public sealed override void DoCopyFrom(DrawMeshViewBase source) {
 
             var sourceView = (T)source;
             this.entity = sourceView.entity;
@@ -189,7 +215,7 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public virtual void CopyFrom(T source) {}
+        protected virtual void CopyFrom(T source) {}
 
     }
     
@@ -219,7 +245,12 @@ namespace ME.ECS.Views.Providers {
 
     }
 
-    public class UnityDrawMeshProvider<TEntity> : ViewsProvider<TEntity> where TEntity : struct, IEntity {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public class UnityDrawMeshProvider : ViewsProvider {
 
         private System.Collections.Generic.Dictionary<long, DrawMeshSystemItem> psItems;
         private PoolInternalBase pool;
@@ -240,7 +271,7 @@ namespace ME.ECS.Views.Providers {
             
         }
 
-        public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {
+        public override IView Spawn(IView prefab, ViewId prefabSourceId) {
 
             var obj = this.pool.Spawn();
             if (obj == null) {
@@ -276,11 +307,11 @@ namespace ME.ECS.Views.Providers {
 
             }
             
-            return (IView<TEntity>)obj;
+            return (IView)obj;
 
         }
 
-        public override void Destroy(ref IView<TEntity> instance) {
+        public override void Destroy(ref IView instance) {
 
             var view = (DrawMeshViewBase)instance;
             for (int i = 0; i < view.items.Length; ++i) {
@@ -299,14 +330,56 @@ namespace ME.ECS.Views.Providers {
 
             if (this.matrices == null || this.matrices.Length < this.maxMatrices) {
                 
-                this.matrices = new UnityEngine.Matrix4x4[this.maxMatrices];
+                if (this.matrices != null) PoolArray<UnityEngine.Matrix4x4>.Recycle(ref this.matrices);
+                this.matrices = PoolArray<UnityEngine.Matrix4x4>.Spawn(this.maxMatrices);
                 
             }
 
         }
 
-        public override void Update(System.Collections.Generic.Dictionary<EntityId, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {
+        private struct Job : Unity.Jobs.IJobParallelFor {
+
+            public float deltaTime;
             
+            public void Execute(int index) {
+
+                var list = UnityDrawMeshProvider.currentList[index];
+                if (list == null) return;
+                
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    var instance = list[i] as DrawMeshViewBase;
+                    if (instance == null) continue;
+
+                    instance.ApplyStateJob(this.deltaTime, immediately: false);
+                    
+                }
+                
+            }
+
+        }
+
+        private static System.Collections.Generic.List<IView>[] currentList;
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+
+            UnityDrawMeshProvider.currentList = list;
+            if (list != null) {
+                
+                var job = new Job() {
+                    deltaTime = deltaTime
+                };
+                var handle = job.Schedule(list.Length, 16);
+                handle.Complete();
+                UnityDrawMeshProvider.currentList = null;
+                
+            }
+
+        }
+
+        public override void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+            
+            this.UpdateViews(list, deltaTime);
             this.ValidateMatrices();
             
             foreach (var item in this.psItems) {
@@ -315,9 +388,9 @@ namespace ME.ECS.Views.Providers {
                 var psItem = item.Value;
                 var mesh = psItem.GetMesh();
                 var material = psItem.material;
-                foreach (var itemView in list) {
-
-                    var itemsList = itemView.Value;
+                for (var id = 0; id < list.Length; ++id) {
+                    
+                    var itemsList = list[id];
                     var count = itemsList.Count;
                     for (int i = 0; i < count; ++i) {
 
@@ -341,7 +414,6 @@ namespace ME.ECS.Views.Providers {
                         }
 
                     }
-
                 }
 
                 if (mesh != null && material != null) UnityEngine.Graphics.DrawMeshInstanced(mesh, 0, psItem.material, this.matrices, k);
@@ -352,17 +424,17 @@ namespace ME.ECS.Views.Providers {
 
     }
 
-    public struct UnityDrawMeshProviderInitializer<TEntity> : IViewsProviderInitializer<TEntity> where TEntity : struct, IEntity {
+    public struct UnityDrawMeshProviderInitializer : IViewsProviderInitializer {
 
-        public IViewsProvider<TEntity> Create() {
+        public IViewsProvider Create() {
 
-            return PoolClass<UnityDrawMeshProvider<TEntity>>.Spawn();
+            return PoolClass<UnityDrawMeshProvider>.Spawn();
 
         }
 
-        public void Destroy(IViewsProvider<TEntity> instance) {
+        public void Destroy(IViewsProvider instance) {
 
-            PoolClass<UnityDrawMeshProvider<TEntity>>.Recycle((UnityDrawMeshProvider<TEntity>)instance);
+            PoolClass<UnityDrawMeshProvider>.Recycle((UnityDrawMeshProvider)instance);
 
         }
 

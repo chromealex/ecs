@@ -3,34 +3,29 @@
 namespace #NAMESPACE# {
     
     using ME.ECS.Views.Providers;
-    using TEntity = ENTITY_TYPE_HERE;
     
     public class #SCRIPTNAME# : ParticleViewSource<Apply#SCRIPTNAME#StateParticle> { }
     
     [System.Serializable]
-    public class Apply#SCRIPTNAME#StateParticle : ParticleView<Apply#SCRIPTNAME#StateParticle, TEntity> {
+    public class Apply#SCRIPTNAME#StateParticle : ParticleView<Apply#SCRIPTNAME#StateParticle> {
         
-        public override void OnInitialize(in TEntity data) {
+        public override void OnInitialize() {
             
         }
         
-        public override void OnDeInitialize(in TEntity data) {
+        public override void OnDeInitialize() {
             
         }
         
-        public override void ApplyState(in TEntity data, float deltaTime, bool immediately) {
+        public override void ApplyStateJob(float deltaTime, bool immediately) {
+        
+        }
+        
+        public override void ApplyState(float deltaTime, bool immediately) {
             
             ref var rootData = ref this.GetRootData();
             
-            if (immediately == true) {
-                            
-                // TODO: Apply view data here immediately
-                
-            } else {
-                
-                // TODO: Apply view data here for example by lerp function
-                
-            }
+            
             
             this.SetRootData(ref rootData);
             

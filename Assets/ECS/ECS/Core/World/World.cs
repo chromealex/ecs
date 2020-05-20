@@ -79,20 +79,13 @@ namespace ME.ECS {
         private const int FEATURES_CAPACITY = 100;
         private const int SYSTEMS_CAPACITY = 100;
         private const int MODULES_CAPACITY = 100;
-        internal const int ENTITIES_CACHE_CAPACITY = 100;
-        private const int STORAGES_CAPACITY = 100;
+        private const int ENTITIES_CACHE_CAPACITY = 100;
         private const int WORLDS_CAPACITY = 4;
+        private const int FILTERS_CACHE_CAPACITY = 10;
         
-        private static class EntitiesDirectCache<TStateInner, TEntity> where TEntity : struct, IEntity where TStateInner : class, IState<TState> {
-
-            internal static RefList<TEntity>[] entitiesList;
-            internal static TEntity defaultRef;
-
-        }
-
         private static class FiltersDirectCache<TStateInner> where TStateInner : class, IState<TState> {
 
-            internal static HashSet<int>[] dic = new HashSet<int>[World<TState>.WORLDS_CAPACITY];
+            internal static bool[][] dic = new bool[World<TState>.WORLDS_CAPACITY][];
 
         }
 
@@ -119,15 +112,31 @@ namespace ME.ECS {
         private ICheckpointCollector checkpointCollector;
         
         // State cache:
-        private IList[] storagesCache;
+        internal Storage storagesCache;
         internal FiltersStorage filtersStorage;
 
         private float tickTime;
         private double timeSinceStart;
         public bool isActive;
 
+        public ISystemBase currentSystemContext { get; internal set; }
+        internal SortedList<int, IFilter<TState>> currentSystemContextFiltersUsed;
+        
+        private Tick simulationFromTick;
+        private Tick simulationToTick;
+
+        #if WORLD_THREAD_CHECK
+        private System.Threading.Thread worldThread;
+        #endif
+        
         void IPoolableSpawn.OnSpawn() {
 
+            #if WORLD_THREAD_CHECK
+            this.worldThread = System.Threading.Thread.CurrentThread;
+            #endif
+
+            this.currentSystemContextFiltersUsed = PoolSortedList<int, IFilter<TState>>.Spawn(World<TState>.FILTERS_CACHE_CAPACITY);
+            
             this.currentState = default;
             this.resetState = default;
             this.currentStep = default;
@@ -142,7 +151,7 @@ namespace ME.ECS {
             this.statesFeatures = PoolList<ModuleState>.Spawn(World<TState>.FEATURES_CAPACITY);
             this.statesSystems = PoolList<ModuleState>.Spawn(World<TState>.SYSTEMS_CAPACITY);
             this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
-            this.storagesCache = PoolArray<IList>.Spawn(World<TState>.STORAGES_CAPACITY);
+            this.storagesCache = PoolClass<Storage>.Spawn();
 
             ArrayUtils.Resize(this.id, ref FiltersDirectCache<TState>.dic);
 
@@ -155,14 +164,19 @@ namespace ME.ECS {
         }
 
         void IPoolableRecycle.OnRecycle() {
-
+            
+            PoolSortedList<int, IFilter<TState>>.Recycle(ref this.currentSystemContextFiltersUsed);
+            
+            #if WORLD_THREAD_CHECK
+            this.worldThread = null;
+            #endif
             this.isActive = false;
             
             this.OnRecycleMarkers();
             this.OnRecycleComponents();
             this.OnRecycleStructComponents();
             
-            PoolHashSet<int>.Recycle(ref FiltersDirectCache<TState>.dic[this.id]);
+            if (FiltersDirectCache<TState>.dic[this.id] != null) PoolArray<bool>.Recycle(ref FiltersDirectCache<TState>.dic[this.id]);
             PoolClass<FiltersStorage>.Recycle(ref this.filtersStorage);
             
             WorldUtilities.ReleaseState(ref this.resetState);
@@ -201,7 +215,7 @@ namespace ME.ECS {
             PoolList<ModuleState>.Recycle(ref this.statesSystems);
             PoolList<ModuleState>.Recycle(ref this.statesFeatures);
             
-            PoolArray<IList>.Recycle(ref this.storagesCache);
+            PoolClass<Storage>.Recycle(ref this.storagesCache);
 
         }
 
@@ -220,7 +234,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public EntityId GetLastEntityId() {
+        public int GetLastEntityId() {
 
             return this.GetState().entityId;
 
@@ -316,6 +330,14 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float maxRadius) {
 
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disable WORLD_THREAD_CHECK.");
+
+            }
+            #endif
+
             #if UNITY_MATHEMATICS
             var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
             var dir = ((UnityEngine.Vector3)rnd.NextFloat3(-1f, 1f)).normalized;
@@ -333,6 +355,14 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int GetRandomRange(int from, int to) {
 
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disable WORLD_THREAD_CHECK.");
+
+            }
+            #endif
+
             #if UNITY_MATHEMATICS
             var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
             var result = rnd.NextInt(from, to);
@@ -349,6 +379,14 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public float GetRandomRange(float from, float to) {
 
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disable WORLD_THREAD_CHECK.");
+
+            }
+            #endif
+
             #if UNITY_MATHEMATICS
             var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
             var result = rnd.NextFloat(from, to);
@@ -364,6 +402,14 @@ namespace ME.ECS {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public float GetRandomValue() {
+
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disable WORLD_THREAD_CHECK.");
+
+            }
+            #endif
 
             #if UNITY_MATHEMATICS
             var rnd = new Unity.Mathematics.Random(this.currentState.randomState);
@@ -430,45 +476,6 @@ namespace ME.ECS {
         partial void OnRecycleStructComponents();
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity {
-
-            data = default;
-            
-            if (entity.id == 0) {
-
-                return false;
-                
-            }
-
-            ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
-            if (list == null || this.id < 0 || this.id >= list.Length || list[this.id].IsFree(entity.storageIdx) == true) return false;
-            
-            data = list[this.id][entity.storageIdx];
-            return true;
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ref TEntity GetEntityDataRef<TEntity>(Entity entity) where TEntity : struct, IEntity {
-            
-            if (entity.id == 0) {
-
-                return ref EntitiesDirectCache<TState, TEntity>.defaultRef;
-                
-            }
-            
-            ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
-            if (list == null || this.id < 0 || this.id >= list.Length || list[this.id].IsFree(entity.storageIdx) == true) {
-                
-                return ref EntitiesDirectCache<TState, TEntity>.defaultRef;
-                
-            }
-            
-            return ref list[this.id][entity.storageIdx];
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         int IWorldBase.GetStateHash() {
 
             if (this.statesHistoryModule != null) {
@@ -482,31 +489,22 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void SetCapacity<TEntity>(int capacity) where TEntity : struct, IEntity {
+        public Filter<TState> GetFilter(int id) {
 
-            EntityTypes<TEntity>.capacity = capacity;
+            return (Filter<TState>)this.filtersStorage.filters[id - 1]; //.Get(id);
+
+        }
+
+        internal IFilter<TState> GetFilterByHashCode(int hashCode) {
+
+            return (IFilter<TState>)this.filtersStorage.GetByHashCode(hashCode);
+
+        }
+
+        internal IFilter<TState> GetFilterEquals(IFilter<TState> other) {
             
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public int GetCapacity<TEntity>() where TEntity : struct, IEntity {
-
-            return EntityTypes<TEntity>.capacity;
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        internal Filter<TState, TEntity> GetFilter<TEntity>(int id) where TEntity : struct, IEntity {
-
-            return (Filter<TState, TEntity>)this.filtersStorage.Get(id);
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        internal IFilter<TState> GetFilter(int id) {
-
-            return (IFilter<TState>)this.filtersStorage.Get(id);
-
+            return (IFilter<TState>)this.filtersStorage.GetFilterEquals(other);
+            
         }
 
         public bool HasFilter(IFilter<TState> filterRef) {
@@ -514,7 +512,7 @@ namespace ME.ECS {
             ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
             if (dic != null) {
             
-                return dic.Contains(filterRef.id);
+                return dic[filterRef.id - 1] == true;
 
             }
 
@@ -522,32 +520,37 @@ namespace ME.ECS {
 
         }
 
-        public void Register<TEntity>(IFilter<TState> filterRef) where TEntity : struct, IEntity {
+        public bool HasFilter(int id) {
+
+            var idx = id - 1;
+            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            if (dic != null && idx >= 0 && idx < dic.Length) {
+            
+                return dic[idx] == true;
+
+            }
+
+            return false;
+
+        }
+
+        public void Register(IFilter<TState> filterRef) {
 
             this.filtersStorage.Register(filterRef);
 
             ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
-            if (dic != null) {
+            ArrayUtils.Resize(filterRef.id - 1, ref dic);
+            dic[filterRef.id - 1] = true;
 
-                dic.Add(filterRef.id);
-
-            } else {
-                
-                dic = new HashSet<int>();
-                dic.Add(filterRef.id);
-                FiltersDirectCache<TState>.dic[this.id] = dic;
-                
-            }
-
-            if (this.ForEachEntity<TEntity>(out var allEntities) == true) {
+            if (this.ForEachEntity(out var allEntities) == true) {
 
                 for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
                     
                     ref var item = ref allEntities[j];
                     if (allEntities.IsFree(j) == true) continue;
                     
-                    this.UpdateFilters(item.entity);
-                    
+                    this.UpdateFilters(item);
+
                 }
                 
             }
@@ -577,14 +580,12 @@ namespace ME.ECS {
             
         }
 
-        public void Register<TEntity>(ref Components<TEntity, TState> componentsRef, bool freeze, bool restore) where TEntity : struct, IEntity {
-            
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
+        public void Register(ref Components<TState> componentsRef, bool freeze, bool restore) {
             
             const int capacity = 4;
             if (componentsRef == null) {
 
-                componentsRef = PoolClass<Components<TEntity, TState>>.Spawn();
+                componentsRef = PoolClass<Components<TState>>.Spawn();
                 componentsRef.Initialize(capacity);
                 componentsRef.SetFreeze(freeze);
 
@@ -596,12 +597,7 @@ namespace ME.ECS {
 
             if (freeze == false) {
 
-                if (code < 0 || code >= this.componentsCache.Length) {
-                
-                    ArrayUtils.Resize(code, ref this.componentsCache);
-                    
-                }
-                this.componentsCache[code] = componentsRef;
+                this.componentsCache = componentsRef;
                 
             }
 
@@ -623,88 +619,48 @@ namespace ME.ECS {
 
         }
 
-        public void Register<TEntity>(ref Storage<TEntity> storageRef, bool freeze, bool restore) where TEntity : struct, IEntity {
+        public void Register(ref Storage storageRef, bool freeze, bool restore) {
 
-            this.RegisterPluginsModuleForEntity<TEntity>();
+            this.RegisterPluginsModuleForEntity();
 
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            var capacity = this.GetCapacity<TEntity>();
             if (storageRef == null) {
-
-                storageRef = PoolClass<Storage<TEntity>>.Spawn();
-                storageRef.Initialize(capacity);
+                
+                storageRef = PoolClass<Storage>.Spawn();
+                storageRef.Initialize(World<TState>.ENTITIES_CACHE_CAPACITY);
                 storageRef.SetFreeze(freeze);
-
-            } else {
-
-                storageRef.SetFreeze(freeze);
-
+                
             }
 
             if (freeze == false) {
 
-                ArrayUtils.Resize(code, ref this.storagesCache);
-                var list = this.storagesCache[code];
-                if (list != null) {
-                    
-                    ((List<Storage<TEntity>>)list).Add(storageRef);
-                    
-                } else {
-                    
-                    list = PoolList<Storage<TEntity>>.Spawn(capacity);
-                    ((List<Storage<TEntity>>)list).Add(storageRef);
-                    this.storagesCache[code] = list;
-                    
-                }
+                this.storagesCache = storageRef;
 
             }
 
-            if (freeze == false && this.sharedEntity.id == 0 && typeof(TEntity) == typeof(SharedEntity)) {
+            if (freeze == false && this.sharedEntity.id == 0 && this.sharedEntityInitialized == false) {
                 
                 // Create shared entity which should store shared components
-                this.sharedEntity = this.AddEntity_INTERNAL(new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);//this.AddEntity(new SharedEntity());//new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);
+                this.sharedEntityInitialized = true;
+                this.sharedEntity = this.AddEntity_INTERNAL(Entity.Create(0, noCheck: true));//this.AddEntity(new SharedEntity());//new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);
 
             }
 
             if (restore == true) {
 
                 // Update entities cache
-                for (int i = 0; i < storageRef.Count; ++i) {
+                this.storagesCache.SetData(storageRef.GetData());
+                /*for (int i = 0; i < storageRef.Count; ++i) {
 
                     var item = storageRef[i];
+                    if (storageRef.IsFree(i) == true) continue;
                     //var list = PoolList<TEntity>.Spawn(capacity);
                     //list.Add(item);
-                    this.AddEntity(item, updateStorages: false);
+                    this.AddEntity_INTERNAL(item, updateStorages: false);
 
-                }
-
-                this.UpdateStorages<TEntity>(code);
+                }*/
 
             }
 
-        }
-
-        public void UpdateStorages<TEntity>() where TEntity : struct, IEntity {
-        
-            this.UpdateStorages<TEntity>(WorldUtilities.GetEntityTypeId<TEntity>());
-            
-        }
-        
-        public void UpdateStorages<TEntity>(int code) where TEntity : struct, IEntity {
-
-            if (code < 0 || code >= this.storagesCache.Length) return;
-            
-            ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
-            if (list == null || this.id < 0 || this.id >= list.Length) return;
-
-            ref var listStorages = ref this.storagesCache[code];
-            for (int i = 0, count = listStorages.Count; i < count; ++i) {
-
-                var storage = (Storage<TEntity>)listStorages[i];
-                storage.SetData(list[this.id]);
-
-            }
-            
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -732,9 +688,9 @@ namespace ME.ECS {
 
         public void SetState(TState state) {
 
-            System.Array.Clear(this.storagesCache, 0, this.storagesCache.Length);
-            System.Array.Clear(this.componentsCache, 0, this.componentsCache.Length);
-
+            //System.Array.Clear(this.storagesCache, 0, this.storagesCache.Length);
+            //System.Array.Clear(this.componentsCache, 0, this.componentsCache.Length);
+            
             if (this.currentState != null && this.currentState != state) WorldUtilities.ReleaseState(ref this.currentState);
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: true);
@@ -746,6 +702,13 @@ namespace ME.ECS {
             UnityEngine.Random.InitState(1);
             state.randomState = UnityEngine.Random.state;
             #endif
+
+        }
+
+        public void SetStateDirect(TState state) {
+
+            this.currentState = state;
+            state.Initialize(this, freeze: false, restore: false);
 
         }
 
@@ -771,27 +734,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private Entity CreateNewEntity<T>() where T : IEntity {
+        private Entity CreateNewEntity() {
 
-            return Entity.Create<T>(++this.GetState().entityId);
-
-        }
-
-        public void UpdateEntityCache<TEntity>(TEntity data) where TEntity : struct, IEntity {
-
-            /*ref var dic = ref EntitiesDirectCache<TState, TEntity>.dataByEntityId;
-            var key = MathUtils.GetKey(this.id, data.entity.id);
-            if (dic.ContainsKey(key) == true) {
-
-                dic[key] = data;
-                
-            } else {
-
-                dic.Add(key, data);
-
-            }*/
-
-            this.UpdateFilters(data.entity);
+            return Entity.Create(++this.GetState().entityId);
 
         }
 
@@ -811,9 +756,13 @@ namespace ME.ECS {
             ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
             if (dic != null) {
 
-                foreach (var filterId in dic) {
+                for (int i = 0; i < dic.Length; ++i) {
 
-                    ((IFilterInternal<TState>)this.GetFilter(filterId)).OnUpdate(entity);
+                    if (dic[i] == false) continue;
+                    var filterId = i + 1;
+                    var filter = (IFilterInternal<TState>)this.GetFilter(filterId);
+                    if (filter.IsForEntity(entity) == false) continue;
+                    filter.OnUpdate(entity);
 
                 }
 
@@ -826,9 +775,13 @@ namespace ME.ECS {
             ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
             if (dic != null) {
 
-                foreach (var filterId in dic) {
+                for (int i = 0; i < dic.Length; ++i) {
 
-                    ((IFilterInternal<TState>)this.GetFilter(filterId)).OnAddComponent(entity);
+                    if (dic[i] == false) continue;
+                    var filterId = i + 1;
+                    var filter = (IFilterInternal<TState>)this.GetFilter(filterId);
+                    if (filter.IsForEntity(entity) == false) continue;
+                    filter.OnAddComponent(entity);
 
                 }
 
@@ -841,9 +794,33 @@ namespace ME.ECS {
             ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
             if (dic != null) {
 
-                foreach (var filterId in dic) {
+                for (int i = 0; i < dic.Length; ++i) {
 
-                    ((IFilterInternal<TState>)this.GetFilter(filterId)).OnRemoveComponent(entity);
+                    if (dic[i] == false) continue;
+                    var filterId = i + 1;
+                    var filter = (IFilterInternal<TState>)this.GetFilter(filterId);
+                    if (filter.IsForEntity(entity) == false) continue;
+                    filter.OnRemoveComponent(entity);
+
+                }
+
+            }
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void RemoveFromFilters_INTERNAL(Entity entity) {
+            
+            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            if (dic != null) {
+
+                for (int i = 0; i < dic.Length; ++i) {
+
+                    if (dic[i] == false) continue;
+                    var filterId = i + 1;
+                    var filter = (IFilterInternal<TState>)this.GetFilter(filterId);
+                    if (filter.IsForEntity(entity) == false) continue;
+                    filter.OnRemoveEntity(entity);
 
                 }
 
@@ -867,113 +844,61 @@ namespace ME.ECS {
             
         }*/
 
-        public void RemoveFromFilters<TEntity>(TEntity data) where TEntity : struct, IEntity {
-            
-            this.RemoveFromFilters_INTERNAL(data.entity);
-            
-        }
-
         public void RemoveFromFilters(Entity data) {
 
             this.RemoveFromFilters_INTERNAL(data);
 
         }
 
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RemoveFromFilters_INTERNAL(Entity entity) {
-            
-            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
-            if (dic != null) {
+        public Entity AddEntity(string name = null) {
 
-                foreach (var filterId in dic) {
-
-                    ((IFilterInternal<TState>)this.GetFilter(filterId)).OnRemoveEntity(entity);
-
-                }
-
-            }
-            
-        }
-
-        void IWorldBase.OnRecycleStorage<TEntity>(Storage<TEntity> storage) {
-
-            if (Worlds.isInDeInitialization == true) {
-
-                ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
-                if (list != null && this.id < list.Length) {
-
-                    list[this.id] = null;
-                    list = null;
-
-                }
-
-            }
-
-        }
-
-        public Entity AddEntity<TEntity>(TEntity data, bool updateStorages = true) where TEntity : struct, IEntity {
-
-            if (data.entity.id == 0) data.entity = this.CreateNewEntity<TEntity>();
-
-            return this.AddEntity_INTERNAL(data, updateStorages);
+            var entity = this.CreateNewEntity();
+            return this.AddEntity_INTERNAL(entity, name);
 
         }
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private Entity AddEntity_INTERNAL<TEntity>(TEntity data, bool updateStorages = true) where TEntity : struct, IEntity {
+        private Entity AddEntity_INTERNAL(Entity entity, string name = null) {
 
-            RefList<TEntity> entitiesList;
-            ArrayUtils.Resize(this.id, ref EntitiesDirectCache<TState, TEntity>.entitiesList);
-            entitiesList = EntitiesDirectCache<TState, TEntity>.entitiesList[this.id];
-            if (entitiesList == null) {
-                
-                EntitiesDirectCache<TState, TEntity>.entitiesList[this.id] = entitiesList = PoolRefList<TEntity>.Spawn(World<TState>.ENTITIES_CACHE_CAPACITY);
-                
-            }
-
+            ref var entitiesList = ref this.storagesCache.GetData();
             var nextIndex = entitiesList.GetNextIndex();
-            var entity = data.entity;
             entity = new Entity(entity.id, nextIndex);
-            data.entity = entity;
-            entitiesList.Add(data);
-
-            if (updateStorages == true) {
-
-                var code = WorldUtilities.GetEntityTypeId<TEntity>();
-                this.UpdateStorages<TEntity>(code);
-
-            }
+            entitiesList.Add(entity);
 
             //this.AddToFilters<TEntity>(data.entity); // Why we need to add empty entity into filters?
-            this.UpdateEntityCache(data);
+            this.UpdateFilters(entity);
+            this.CreateEntityPlugins(entity);
 
-            return data.entity;
+            if (name != null) {
+
+                entity.SetData(new ME.ECS.Name.Name() {
+                    value = name
+                });
+
+            }
+            
+            return entity;
 
         }
 
-        public bool ForEachEntity<TEntity>(out RefList<TEntity> output) where TEntity : struct, IEntity {
+        public bool ForEachEntity(out RefList<Entity> output) {
 
-            output = null;
-
-            ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
-            if (list == null || this.id < 0 || this.id >= list.Length) return false;
-
-            output = list[this.id];
+            output = this.storagesCache.GetData();
             return output != null;
             
         }
 
-        /*public bool HasEntity<TEntity>(EntityId entityId) where TEntity : struct, IEntity {
+        /*public bool HasEntity<TEntity>(int entityId) where TEntity : struct, IEntity {
             
             var key = MathUtils.GetKey(this.id, entityId);
-            return EntitiesDirectCache<TState, TEntity>.dataByEntityId.ContainsKey(key);
+            return EntitiesDirectCache<TState, TEntity>.dataByint.ContainsKey(key);
 
         }*/
 
         /*public void RemoveEntities<TEntity>(TEntity data) where TEntity : struct, IEntity {
 
             var key = MathUtils.GetKey(this.id, data.entity.id);
-            if (EntitiesDirectCache<TState, TEntity>.dataByEntityId.Remove(key) == true) {
+            if (EntitiesDirectCache<TState, TEntity>.dataByint.Remove(key) == true) {
 
                 this.RemoveFromFilters(data);
                 
@@ -990,15 +915,12 @@ namespace ME.ECS {
 
         }*/
 
-        public bool RemoveEntity<TEntity>(Entity entity) where TEntity : struct, IEntity {
+        public bool RemoveEntity(Entity entity) {
 
-            ref var list = ref EntitiesDirectCache<TState, TEntity>.entitiesList;
-            if (list == null || this.id < 0 || this.id >= list.Length) return false;
-
-            list[this.id].RemoveAt(entity.storageIdx);
+            this.storagesCache.GetData().RemoveAt(entity.storageIdx);
             
-            this.DestroyEntityPlugins<TEntity>(entity);
-            this.RemoveComponentsByEntityType<TEntity>(entity);
+            this.DestroyEntityPlugins(entity);
+            this.RemoveComponents(entity);
             this.RemoveFromFilters(entity);
             
             return false;
@@ -1442,7 +1364,7 @@ namespace ME.ECS {
             var state = this.GetState();
 
             ////////////////
-            this.currentStep = WorldStep.ModulesVisualTick;
+            this.currentStep |= WorldStep.ModulesVisualTick;
             ////////////////
             {
 
@@ -1473,6 +1395,9 @@ namespace ME.ECS {
                 #endif
 
             }
+            ////////////////
+            this.currentStep &= ~WorldStep.ModulesVisualTick;
+            ////////////////
 
         }
 
@@ -1484,7 +1409,7 @@ namespace ME.ECS {
             var state = this.GetState();
 
             ////////////////
-            this.currentStep = WorldStep.SystemsVisualTick;
+            this.currentStep |= WorldStep.SystemsVisualTick;
             ////////////////
             {
 
@@ -1515,6 +1440,9 @@ namespace ME.ECS {
                 #endif
 
             }
+            ////////////////
+            this.currentStep &= ~WorldStep.SystemsVisualTick;
+            ////////////////
             
             #if CHECKPOINT_COLLECTOR
             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveMarkers", WorldStep.None);
@@ -1542,8 +1470,14 @@ namespace ME.ECS {
         }
         #endif
         
-        private Tick simulationFromTick;
-        private Tick simulationToTick;
+        public void PreUpdate(float deltaTime) {
+            
+            if (deltaTime < 0f) return;
+
+            this.UpdateVisualPre(deltaTime);
+
+        }
+
         public void Update(float deltaTime) {
 
             if (deltaTime < 0f) return;
@@ -1552,18 +1486,14 @@ namespace ME.ECS {
             if (this.checkpointCollector != null) this.checkpointCollector.Reset();
             #endif
 
-            var state = this.GetState();
-            
             // Setup current static variables
             WorldUtilities.SetWorld(this);
-            Worlds<TState>.currentState = state;
+            Worlds<TState>.currentState = this.GetState();
 
             // Update time
             this.timeSinceStart += deltaTime;
             if (this.timeSinceStart < 0d) this.timeSinceStart = 0d;
 
-            this.UpdateVisualPre(deltaTime);
-            
             #if TICK_THREADED
             var job = new UpdateJob() {
                 deltaTime = deltaTime,
@@ -1574,11 +1504,11 @@ namespace ME.ECS {
             this.UpdateLogic(deltaTime);
             #endif
 
-            this.UpdateVisualPost(deltaTime);
+        }
+
+        public void LateUpdate(float deltaTime) {
             
-            ////////////////
-            this.currentStep = WorldStep.None;
-            ////////////////
+            this.UpdateVisualPost(deltaTime);
             
         }
 
@@ -1592,18 +1522,18 @@ namespace ME.ECS {
 
         private struct ForeachFilterJob : Unity.Jobs.IJobParallelFor {
 
+            public Unity.Collections.NativeArray<Entity> entities;
             public float deltaTime;
 
             void Unity.Jobs.IJobParallelFor.Execute(int index) {
 
                 var systemContext = Worlds.currentWorld.currentSystemContext as ISystemFilter<TState>;
-                systemContext.AdvanceTick(systemContext.filter[index], Worlds<TState>.currentWorld.GetState(), this.deltaTime);
+                systemContext.AdvanceTick(this.entities[index], Worlds<TState>.currentWorld.GetState(), in this.deltaTime);
                 
             }
 
         }
 
-        public ISystemBase currentSystemContext { get; internal set; }
         public void Simulate(Tick from, Tick to) {
             
             if (from > to) {
@@ -1620,7 +1550,7 @@ namespace ME.ECS {
             for (state.tick = from; state.tick < to; ++state.tick) {
 
                 ////////////////
-                this.currentStep = WorldStep.ModulesLogicTick;
+                this.currentStep |= WorldStep.ModulesLogicTick;
                 ////////////////
                 {
                     
@@ -1635,7 +1565,7 @@ namespace ME.ECS {
                             #if CHECKPOINT_COLLECTOR
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.LogicTick);
                             #endif
-                            this.modules[i].AdvanceTick(state, fixedDeltaTime);
+                            this.modules[i].AdvanceTick(in state, in fixedDeltaTime);
                             #if CHECKPOINT_COLLECTOR
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.LogicTick);
                             #endif
@@ -1650,7 +1580,11 @@ namespace ME.ECS {
 
                 }
                 ////////////////
-                this.currentStep = WorldStep.PluginsLogicTick;
+                this.currentStep &= ~WorldStep.ModulesLogicTick;
+                ////////////////
+                
+                ////////////////
+                this.currentStep |= WorldStep.PluginsLogicTick;
                 ////////////////
                 {
                     
@@ -1666,7 +1600,11 @@ namespace ME.ECS {
 
                 }
                 ////////////////
-                this.currentStep = WorldStep.SystemsLogicTick;
+                this.currentStep &= ~WorldStep.PluginsLogicTick;
+                ////////////////
+                
+                ////////////////
+                this.currentStep |= WorldStep.SystemsLogicTick;
                 ////////////////
                 {
                     
@@ -1684,46 +1622,62 @@ namespace ME.ECS {
 
                             var system = this.systems[i];
                             this.currentSystemContext = system;
-                            switch (system) {
-                                
-                                case ISystemFilter<TState> sysFilter: {
+                            this.currentSystemContextFiltersUsed.Clear();
+                            if (system is ISystemFilter<TState> sysFilter) {
 
-                                    sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
-                                    if (sysFilter.filter != null) {
+                                sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
+                                if (sysFilter.filter != null) {
 
-                                        if (sysFilter.jobs == true) {
+                                    var forceNoJobs = true;
+                                    #if ENABLE_JOBS_FOR_SYSTEMS
+                                    forceNoJobs = false;
+                                    #endif
+                                    if (forceNoJobs == false && sysFilter.jobs == true) {
 
-                                            sysFilter.filter.SetForEachMode(true);
+                                        //sysFilter.filter.SetForEachMode(true);
+                                        var arrEntities = sysFilter.filter.GetArray();
+                                        using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities, Unity.Collections.Allocator.TempJob)) {
+
+                                            PoolArray<Entity>.Recycle(ref arrEntities);
                                             var job = new ForeachFilterJob() {
                                                 deltaTime = fixedDeltaTime,
+                                                entities = arr
                                             };
                                             var jobHandle = job.Schedule(sysFilter.filter.Count, sysFilter.jobsBatchCount);
                                             jobHandle.Complete();
-                                            sysFilter.filter.SetForEachMode(false);
-                                            
-                                        } else {
 
-                                            foreach (var entity in sysFilter.filter) {
+                                        }
+                                        //sysFilter.filter.SetForEachMode(false);
+                                        
+                                    } else {
+                                        
+                                        foreach (var entity in sysFilter.filter) {
 
-                                                sysFilter.AdvanceTick(entity, state, fixedDeltaTime);
-
-                                            }
+                                            sysFilter.AdvanceTick(in entity, in state, in fixedDeltaTime);
 
                                         }
 
                                     }
 
-                                    break;
                                 }
 
-                                case ISystemAdvanceTick<TState> sys:
-                                    
-                                    sys.AdvanceTick(state, fixedDeltaTime);
-                                    
-                                    break;
+                            }
+
+                            if (system is ISystemAdvanceTick<TState> sys) {
+                                
+                                sys.AdvanceTick(in state, in fixedDeltaTime);
                                 
                             }
+
                             this.currentSystemContext = null;
+
+                            var usedFilters = this.currentSystemContextFiltersUsed.Values;
+                            for (int f = 0, fCount = usedFilters.Count; f < fCount; ++f) {
+
+                                var filter = usedFilters[f];
+                                filter.ApplyAllRequests();
+
+                            }
 
                             #if CHECKPOINT_COLLECTOR
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);
@@ -1738,21 +1692,24 @@ namespace ME.ECS {
                     #endif
 
                 }
+                ////////////////
+                this.currentStep &= ~WorldStep.SystemsLogicTick;
+                ////////////////
 
-                #if CHECKPOINT_COLLECTOR
+                /*#if CHECKPOINT_COLLECTOR
                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);
                 #endif
 
-                this.RemoveComponentsOnce<IComponentOnceBase>();
+                this.RemoveComponentsOnce<IComponentOnce<TState>>();
 
                 #if CHECKPOINT_COLLECTOR
                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);
-                #endif
+                #endif*/
 
             }
             
             ////////////////
-            this.currentStep = WorldStep.PluginsLogicSimulate;
+            this.currentStep |= WorldStep.PluginsLogicSimulate;
             ////////////////
             {
                 
@@ -1767,6 +1724,9 @@ namespace ME.ECS {
                 #endif
 
             }
+            ////////////////
+            this.currentStep &= ~WorldStep.PluginsLogicSimulate;
+            ////////////////
 
         }
 
@@ -1801,54 +1761,79 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void RegisterPluginsModuleForEntity<TEntity>() where TEntity : struct, IEntity {
+        private void RegisterPluginsModuleForEntity() {
             
-            this.RegisterPlugin1ModuleForEntity<TEntity>();
-            this.RegisterPlugin2ModuleForEntity<TEntity>();
-            this.RegisterPlugin3ModuleForEntity<TEntity>();
-            this.RegisterPlugin4ModuleForEntity<TEntity>();
-            this.RegisterPlugin5ModuleForEntity<TEntity>();
-            this.RegisterPlugin6ModuleForEntity<TEntity>();
-            this.RegisterPlugin7ModuleForEntity<TEntity>();
-            this.RegisterPlugin8ModuleForEntity<TEntity>();
-            this.RegisterPlugin9ModuleForEntity<TEntity>();
+            this.RegisterPlugin1ModuleForEntity();
+            this.RegisterPlugin2ModuleForEntity();
+            this.RegisterPlugin3ModuleForEntity();
+            this.RegisterPlugin4ModuleForEntity();
+            this.RegisterPlugin5ModuleForEntity();
+            this.RegisterPlugin6ModuleForEntity();
+            this.RegisterPlugin7ModuleForEntity();
+            this.RegisterPlugin8ModuleForEntity();
+            this.RegisterPlugin9ModuleForEntity();
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void DestroyEntityPlugins<TEntity>(Entity entity) where TEntity : struct, IEntity {
+        private void DestroyEntityPlugins(in Entity entity) {
             
-            this.DestroyEntityPlugin1<TEntity>(entity);
-            this.DestroyEntityPlugin2<TEntity>(entity);
-            this.DestroyEntityPlugin3<TEntity>(entity);
-            this.DestroyEntityPlugin4<TEntity>(entity);
-            this.DestroyEntityPlugin5<TEntity>(entity);
-            this.DestroyEntityPlugin6<TEntity>(entity);
-            this.DestroyEntityPlugin7<TEntity>(entity);
-            this.DestroyEntityPlugin8<TEntity>(entity);
-            this.DestroyEntityPlugin9<TEntity>(entity);
+            this.DestroyEntityPlugin1(entity);
+            this.DestroyEntityPlugin2(entity);
+            this.DestroyEntityPlugin3(entity);
+            this.DestroyEntityPlugin4(entity);
+            this.DestroyEntityPlugin5(entity);
+            this.DestroyEntityPlugin6(entity);
+            this.DestroyEntityPlugin7(entity);
+            this.DestroyEntityPlugin8(entity);
+            this.DestroyEntityPlugin9(entity);
 
         }
 
-        partial void DestroyEntityPlugin1<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        partial void DestroyEntityPlugin2<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        partial void DestroyEntityPlugin3<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        partial void DestroyEntityPlugin4<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        partial void DestroyEntityPlugin5<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        partial void DestroyEntityPlugin6<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        partial void DestroyEntityPlugin7<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        partial void DestroyEntityPlugin8<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        partial void DestroyEntityPlugin9<TEntity>(Entity entity) where TEntity : struct, IEntity;
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void CreateEntityPlugins(in Entity entity) {
+            
+            this.CreateEntityPlugin1(entity);
+            this.CreateEntityPlugin2(entity);
+            this.CreateEntityPlugin3(entity);
+            this.CreateEntityPlugin4(entity);
+            this.CreateEntityPlugin5(entity);
+            this.CreateEntityPlugin6(entity);
+            this.CreateEntityPlugin7(entity);
+            this.CreateEntityPlugin8(entity);
+            this.CreateEntityPlugin9(entity);
 
-        partial void RegisterPlugin1ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
-        partial void RegisterPlugin2ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
-        partial void RegisterPlugin3ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
-        partial void RegisterPlugin4ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
-        partial void RegisterPlugin5ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
-        partial void RegisterPlugin6ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
-        partial void RegisterPlugin7ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
-        partial void RegisterPlugin8ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
-        partial void RegisterPlugin9ModuleForEntity<TEntity>() where TEntity : struct, IEntity;
+        }
+
+        partial void CreateEntityPlugin1(Entity entity);
+        partial void CreateEntityPlugin2(Entity entity);
+        partial void CreateEntityPlugin3(Entity entity);
+        partial void CreateEntityPlugin4(Entity entity);
+        partial void CreateEntityPlugin5(Entity entity);
+        partial void CreateEntityPlugin6(Entity entity);
+        partial void CreateEntityPlugin7(Entity entity);
+        partial void CreateEntityPlugin8(Entity entity);
+        partial void CreateEntityPlugin9(Entity entity);
+
+        partial void DestroyEntityPlugin1(Entity entity);
+        partial void DestroyEntityPlugin2(Entity entity);
+        partial void DestroyEntityPlugin3(Entity entity);
+        partial void DestroyEntityPlugin4(Entity entity);
+        partial void DestroyEntityPlugin5(Entity entity);
+        partial void DestroyEntityPlugin6(Entity entity);
+        partial void DestroyEntityPlugin7(Entity entity);
+        partial void DestroyEntityPlugin8(Entity entity);
+        partial void DestroyEntityPlugin9(Entity entity);
+
+        partial void RegisterPlugin1ModuleForEntity();
+        partial void RegisterPlugin2ModuleForEntity();
+        partial void RegisterPlugin3ModuleForEntity();
+        partial void RegisterPlugin4ModuleForEntity();
+        partial void RegisterPlugin5ModuleForEntity();
+        partial void RegisterPlugin6ModuleForEntity();
+        partial void RegisterPlugin7ModuleForEntity();
+        partial void RegisterPlugin8ModuleForEntity();
+        partial void RegisterPlugin9ModuleForEntity();
         
         partial void PlayPlugin1ForTick(Tick tick);
         partial void PlayPlugin2ForTick(Tick tick);

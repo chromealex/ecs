@@ -7,15 +7,15 @@ namespace ME.ECS {
 
     }
 
-    public interface ISystemAdvanceTick<in TState> where TState : class, IState<TState>, new() {
+    public interface ISystemAdvanceTick<TState> where TState : class, IState<TState>, new() {
 
-        void AdvanceTick(TState state, float deltaTime);
+        void AdvanceTick(in TState state, in float deltaTime);
 
     }
 
-    public interface ISystemUpdate<in TState> where TState : class, IState<TState>, new() {
+    public interface ISystemUpdate<TState> where TState : class, IState<TState>, new() {
 
-        void Update(TState state, float deltaTime);
+        void Update(in TState state, in float deltaTime);
 
     }
 
@@ -32,7 +32,7 @@ namespace ME.ECS {
         IFilter<TState> filter { get; set; }
         IFilter<TState> CreateFilter();
 
-        void AdvanceTick(Entity entity, TState state, float deltaTime);
+        void AdvanceTick(in Entity entity, in TState state, in float deltaTime);
 
     }
 

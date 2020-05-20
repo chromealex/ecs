@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 
 #region Namespaces
-namespace #NAMESPACE#.Entities {}
 namespace #NAMESPACE#.Systems {}
 namespace #NAMESPACE#.Components {}
 namespace #NAMESPACE#.Modules {}
@@ -17,6 +16,11 @@ namespace #NAMESPACE# {
     using ME.ECS.Views.Providers;
     using #NAMESPACE#.Modules;
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class #PROJECTNAME#Initializer : MonoBehaviour {
 
         private World<TState> world;
@@ -36,14 +40,16 @@ namespace #NAMESPACE# {
                     
                     // Create new state
                     this.world.SetState(WorldUtilities.CreateState<TState>());
+                    ComponentsInitializer<TState>.Init();
+                    
                     // TODO: Initialize your custom state data here
                     // Ex: this.world.GetState().yourCustomParameter = yourValue;
                     
                     // TODO: Register view sources here or in each features/systems directly
                     // Based on render engine (Now we have support for GameObject Render, Particles Render, DrawMesh Render)
                     // You need to provide MonoBehaviourViewBase/GameObject, ParticleViewSourceBase or DrawMeshViewSourceBase as a prefab type
-                    // Ex: var viewSourceId = this.world.RegisterViewSource<TEntity>(prefab);
-    
+                    // Ex: var viewSourceId = this.world.RegisterViewSource(prefab);
+   
                     // TODO: Add your features or systems here
                     // Ex: this.world.AddFeature<TFeature>(); or this.world.AddSystem<TSystem>();
                     // btw you can pass custom parameters into features like AddFeature<TFeature, TCustomParameters>(new TCustomParameters(...));
@@ -70,4 +76,20 @@ namespace #NAMESPACE# {
 
     }
     
+}
+
+namespace ME.ECS {
+    
+    public static partial class ComponentsInitializer<TState> where TState : class, IState<TState>, new() {
+
+        public static void DoInit() {
+            
+            ComponentsInitializer<TState>.Init(ref Worlds<TState>.currentWorld.GetStructComponents());
+            
+        }
+
+        static partial void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer);
+
+    }
+
 }

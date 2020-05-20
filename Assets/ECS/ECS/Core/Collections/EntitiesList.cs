@@ -9,14 +9,14 @@ namespace ME.ECS.Collections {
         Entity RemoveAt(int index);
         int GetNextIndex();
 
-        TData Get<TData>(int index);
-        void Set<TData>(int index, TData data);
+        Entity Get(int index);
+        void Set(int index, Entity data);
 
     }
 
-    public class EntitiesList<T> : IEntitiesList, IPoolableRecycle, IPoolableSpawn where T : struct, IEntity {
+    public class EntitiesList : IEntitiesList, IPoolableRecycle, IPoolableSpawn {
 
-        private T[] arr;
+        private Entity[] arr;
         private int count;
         private int capacity;
         private int initCapacity;
@@ -49,7 +49,7 @@ namespace ME.ECS.Collections {
 
         void IPoolableRecycle.OnRecycle() {
             
-            PoolArray<T>.Recycle(ref this.arr);
+            PoolArray<Entity>.Recycle(ref this.arr);
             
         }
 
@@ -67,26 +67,20 @@ namespace ME.ECS.Collections {
             }
         }
 
-        public ref T this[int index] {
+        public ref Entity this[int index] {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return ref this.arr[index];
             }
         }
 
-        public TData Get<TData>(int index) {
+        public Entity Get(int index) {
 
-            return (TData)(object)this.arr[index];
-
-        }
-
-        public void Set<TData>(int index, TData data) {
-
-            this.arr[index] = (T)(object)data;
+            return this.arr[index];
 
         }
 
-        public void SetData(int index, T data) {
+        public void Set(int index, Entity data) {
 
             this.arr[index] = data;
 
@@ -133,9 +127,9 @@ namespace ME.ECS.Collections {
             if (index != lastIdx) {
 
                 var entityData = this.arr[lastIdx];
-                var ent = entityData.entity;
+                var ent = entityData;
                 ent = new Entity(ent.id, index);
-                entityData.entity = ent;
+                entityData = ent;
                 this.arr[index] = entityData;
                 this.arr[lastIdx] = default;
                 changedEntity = ent;
@@ -152,10 +146,10 @@ namespace ME.ECS.Collections {
 
         }
 
-        public void CopyFrom(EntitiesList<T> other) {
+        public void CopyFrom(EntitiesList other) {
 
-            if (this.arr != null) PoolArray<T>.Recycle(ref this.arr);
-            this.arr = PoolArray<T>.Spawn(other.arr.Length);
+            if (this.arr != null) PoolArray<Entity>.Recycle(ref this.arr);
+            this.arr = PoolArray<Entity>.Spawn(other.arr.Length);
             System.Array.Copy(other.arr, this.arr, other.arr.Length);
             
             this.capacity = other.capacity;
@@ -179,11 +173,11 @@ namespace ME.ECS.Collections {
 
                 }
 
-                var arr = PoolArray<T>.Spawn(this.capacity);
+                var arr = PoolArray<Entity>.Spawn(this.capacity);
                 if (this.arr != null) {
                     
                     System.Array.Copy(this.arr, arr, this.arr.Length);
-                    PoolArray<T>.Recycle(ref this.arr);
+                    PoolArray<Entity>.Recycle(ref this.arr);
                     
                 }
                 this.arr = arr;

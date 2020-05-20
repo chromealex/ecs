@@ -3,7 +3,7 @@ namespace ME.ECS.Views.Providers {
 
     public abstract class ParticleViewSourceBase : ViewBase, IDoValidate {
 
-        public abstract IView<TEntity> GetSource<TEntity>() where TEntity : struct, IEntity;
+        public abstract IView GetSource();
 
         [UnityEngine.ContextMenu("Validate")]
         public void DoValidate() {
@@ -28,9 +28,9 @@ namespace ME.ECS.Views.Providers {
 
         public T data;
         
-        public override IView<TEntityInner> GetSource<TEntityInner>() {
+        public override IView GetSource() {
 
-            return (IView<TEntityInner>)this.data;
+            return (IView)this.data;
 
         }
 

@@ -6,24 +6,24 @@ namespace ME.ECS {
 
     public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
-        ViewId RegisterViewSource<TEntity>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity;
-        void InstantiateView<TEntity>(ParticleViewSourceBase prefab, Entity entity) where TEntity : struct, IEntity;
+        ViewId RegisterViewSource(ParticleViewSourceBase prefab);
+        void InstantiateView(ParticleViewSourceBase prefab, Entity entity);
 
     }
 
     public partial class World<TState> where TState : class, IState<TState>, new() {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ViewId RegisterViewSource<TEntity>(ParticleViewSourceBase prefab) where TEntity : struct, IEntity {
+        public ViewId RegisterViewSource(ParticleViewSourceBase prefab) {
 
-            return this.RegisterViewSource(new UnityParticlesProviderInitializer<TEntity>(), prefab.GetSource<TEntity>());
+            return this.RegisterViewSource(new UnityParticlesProviderInitializer(), prefab.GetSource());
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void InstantiateView<TEntity>(ParticleViewSourceBase prefab, Entity entity) where TEntity : struct, IEntity {
+        public void InstantiateView(ParticleViewSourceBase prefab, Entity entity) {
 
-            this.InstantiateView(prefab.GetSource<TEntity>(), entity);
+            this.InstantiateView(prefab.GetSource(), entity);
             
         }
 
@@ -35,7 +35,7 @@ namespace ME.ECS.Views {
     
     using ME.ECS.Views.Providers;
     
-    public partial interface IViewModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+    public partial interface IViewModule<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource(ParticleViewSourceBase prefab);
         void UnRegisterViewSource(ParticleViewSourceBase prefab);
@@ -43,26 +43,26 @@ namespace ME.ECS.Views {
 
     }
 
-    public partial class ViewsModule<TState, TEntity> where TState : class, IState<TState>, new() where TEntity : struct, IEntity {
+    public partial class ViewsModule<TState> where TState : class, IState<TState>, new() {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(ParticleViewSourceBase prefab) {
 
-            return this.RegisterViewSource(new UnityParticlesProviderInitializer<TEntity>(), prefab.GetSource<TEntity>());
+            return this.RegisterViewSource(new UnityParticlesProviderInitializer(), prefab.GetSource());
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void UnRegisterViewSource(ParticleViewSourceBase prefab) {
             
-            this.UnRegisterViewSource(prefab.GetSource<TEntity>());
+            this.UnRegisterViewSource(prefab.GetSource());
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void InstantiateView(ParticleViewSourceBase prefab, Entity entity) {
             
-            var viewSource = prefab.GetSource<TEntity>();
+            var viewSource = prefab.GetSource();
             this.InstantiateView(this.GetViewSourceId(viewSource), entity);
             
         }
@@ -73,6 +73,13 @@ namespace ME.ECS.Views {
 
 namespace ME.ECS.Views.Providers {
 
+    using Unity.Jobs;
+    
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public abstract class ParticleViewBase : IPoolableRecycle {
 
         [System.Serializable]
@@ -91,6 +98,8 @@ namespace ME.ECS.Views.Providers {
             
         }
 
+        public virtual void ApplyStateJob(float deltaTime, bool immediately) { }
+        
         public override string ToString() {
             
             return "Renderers Count: " + this.items.Length.ToString();
@@ -210,17 +219,34 @@ namespace ME.ECS.Views.Providers {
 
     }
 
-    public abstract class ParticleView<T, TEntity> : ParticleViewBase, IView<TEntity> where TEntity : struct, IEntity where T : ParticleView<T, TEntity> {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public abstract class ParticleView<T> : ParticleViewBase, IView where T : ParticleView<T> {
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
         public Tick creationTick { get; set; }
 
-        public virtual void OnInitialize(in TEntity data) { }
-        public virtual void OnDeInitialize(in TEntity data) { }
-        public abstract void ApplyState(in TEntity data, float deltaTime, bool immediately);
+        void IView.DoInitialize() {
+            
+            this.OnInitialize();
+            
+        }
 
-        public override void DoCopyFrom(ParticleViewBase source) {
+        void IView.DoDeInitialize() {
+            
+            this.OnDeInitialize();
+            
+        }
+
+        public virtual void OnInitialize() { }
+        public virtual void OnDeInitialize() { }
+        public virtual void ApplyState(float deltaTime, bool immediately) { }
+
+        public sealed override void DoCopyFrom(ParticleViewBase source) {
 
             var sourceView = (T)source;
             this.entity = sourceView.entity;
@@ -231,7 +257,7 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public virtual void CopyFrom(T source) {}
+        protected virtual void CopyFrom(T source) {}
 
     }
     
@@ -333,7 +359,12 @@ namespace ME.ECS.Views.Providers {
 
     }
 
-    public class UnityParticlesProvider<TEntity> : ViewsProvider<TEntity> where TEntity : struct, IEntity {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public class UnityParticlesProvider : ViewsProvider {
 
         private System.Collections.Generic.Dictionary<long, ParticleSystemItem> psItems;
         private PoolInternalBase pool;
@@ -422,7 +453,7 @@ namespace ME.ECS.Views.Providers {
 
         }
         
-        public override IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId) {
+        public override IView Spawn(IView prefab, ViewId prefabSourceId) {
 
             var prefabSource = (ParticleViewBase)prefab;
             
@@ -547,11 +578,11 @@ namespace ME.ECS.Views.Providers {
             
             if (maxParticleCount > this.maxParticles) this.maxParticles = maxParticleCount;
 
-            return (IView<TEntity>)obj;
+            return (IView)obj;
 
         }
 
-        public override void Destroy(ref IView<TEntity> instance) {
+        public override void Destroy(ref IView instance) {
 
             var view = (ParticleViewBase)instance;
             for (int i = 0; i < view.items.Length; ++i) {
@@ -570,20 +601,63 @@ namespace ME.ECS.Views.Providers {
 
             if (this.particles == null || this.particles.Length < this.maxParticles) {
                 
-                this.particles = new UnityEngine.ParticleSystem.Particle[this.maxParticles];
+                if (this.particles != null) PoolArray<UnityEngine.ParticleSystem.Particle>.Recycle(ref this.particles);
+                this.particles = PoolArray<UnityEngine.ParticleSystem.Particle>.Spawn(this.maxParticles);
                 
             }
 
             if (this.particlesStatic == null || this.particlesStatic.Length < this.maxParticles) {
                 
-                this.particlesStatic = new UnityEngine.ParticleSystem.Particle[this.maxParticles];
+                if (this.particlesStatic != null) PoolArray<UnityEngine.ParticleSystem.Particle>.Recycle(ref this.particlesStatic);
+                this.particlesStatic = PoolArray<UnityEngine.ParticleSystem.Particle>.Spawn(this.maxParticles);
+
+            }
+
+        }
+
+        private struct Job : Unity.Jobs.IJobParallelFor {
+
+            public float deltaTime;
+            
+            public void Execute(int index) {
+
+                var list = UnityParticlesProvider.currentList[index];
+                if (list == null) return;
+                
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    var instance = list[i] as ParticleViewBase;
+                    if (instance == null) continue;
+                    
+                    instance.ApplyStateJob(this.deltaTime, immediately: false);
+                    
+                }
                 
             }
 
         }
 
-        public override void Update(System.Collections.Generic.Dictionary<EntityId, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {
-            
+        private static System.Collections.Generic.List<IView>[] currentList;
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+
+            UnityParticlesProvider.currentList = list;
+            if (list != null) {
+                
+                var job = new Job() {
+                    deltaTime = deltaTime
+                };
+                var handle = job.Schedule(list.Length, 16);
+                handle.Complete();
+                UnityParticlesProvider.currentList = null;
+                
+            }
+
+        }
+
+        public override void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+
+            this.UpdateViews(list, deltaTime);
             this.ValidateParticles();
             
             var k = 0;
@@ -596,24 +670,26 @@ namespace ME.ECS.Views.Providers {
                 var ps = psItem.ps;
                 //psItem.psRenderer.mesh = psItem.GetMesh();
                 //ps.GetParticles(this.particles, this.maxParticles);
-                foreach (var itemView in list) {
-
-                    var itemsList = itemView.Value;
+                for (var id = 0; id < list.Length; ++id) {
+                    
+                    var itemsList = list[id];
+                    if (itemsList == null) continue;
+                    
                     var count = itemsList.Count;
                     for (int i = 0; i < count; ++i) {
-                        
+
                         var view = itemsList[i] as ParticleViewBase;
                         if (view == null) continue;
-                        
+
                         for (int j = 0; j < view.items.Length; ++j) {
-                        
+
                             ref var element = ref view.items[j];
                             if (element.itemData.ps == ps) {
 
                                 if (element.itemData.lifetime > 0f) {
 
                                     // Sub particle system effect
-                                    
+
                                     element.itemData.lifetime -= deltaTime;
                                     if (element.itemData.lifetime <= 0f) {
 
@@ -627,15 +703,15 @@ namespace ME.ECS.Views.Providers {
                                     element.particleData.startLifetime = element.itemData.startLifetime;
                                     element.particleData.startSize = 1f;
                                     this.particles[k] = element.particleData;
-                                    
+
                                     // Just trigger sub system
                                     if (element.itemData.r == 1) {
 
                                         if (element.itemData.simulation == true) {
-                                            
+
                                             this.particles[k].remainingLifetime = element.itemData.lifetime / element.itemData.startLifetime;
                                             this.mainParticleSystem.TriggerSubEmitter(element.itemData.subEmitterIdxInheritedLifetime, ref this.particles[k]);
-                                            
+
                                         } else {
 
                                             this.mainParticleSystem.TriggerSubEmitter(element.itemData.subEmitterIdx, ref this.particles[k]);
@@ -643,13 +719,14 @@ namespace ME.ECS.Views.Providers {
                                         }
 
                                     }
+
                                     ++element.itemData.r;
 
                                     ++k;
                                     ++dynamicK;
 
                                 } else {
-                                    
+
                                     // Static mesh with material
                                     #if UNITY_WEBGL
                                     element.particleData.remainingLifetime = 10000;
@@ -669,9 +746,8 @@ namespace ME.ECS.Views.Providers {
                         }
 
                     }
-                    
                 }
-                
+
                 if (staticK > 0 || dynamicK == 0) ps.SetParticles(this.particlesStatic, staticK, 0);
 
             }
@@ -682,17 +758,17 @@ namespace ME.ECS.Views.Providers {
 
     }
 
-    public struct UnityParticlesProviderInitializer<TEntity> : IViewsProviderInitializer<TEntity> where TEntity : struct, IEntity {
+    public struct UnityParticlesProviderInitializer : IViewsProviderInitializer {
 
-        public IViewsProvider<TEntity> Create() {
+        public IViewsProvider Create() {
 
-            return PoolClass<UnityParticlesProvider<TEntity>>.Spawn();
+            return PoolClass<UnityParticlesProvider>.Spawn();
 
         }
 
-        public void Destroy(IViewsProvider<TEntity> instance) {
+        public void Destroy(IViewsProvider instance) {
 
-            PoolClass<UnityParticlesProvider<TEntity>>.Recycle((UnityParticlesProvider<TEntity>)instance);
+            PoolClass<UnityParticlesProvider>.Recycle((UnityParticlesProvider)instance);
 
         }
 

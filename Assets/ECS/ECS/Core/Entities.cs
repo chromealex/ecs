@@ -1,33 +1,20 @@
 ﻿namespace ME.ECS {
 
-    public static class EntityTypesCounter {
+    public struct ComponentTypesCounter {
 
         public static int counter = -1;
 
     }
 
-    public static class EntityTypes<TEntity> where TEntity : IEntity {
+    public struct ComponentTypes<TComponent> where TComponent : IStructComponent {
 
         public static int typeId = -1;
-        public static int capacity = 100;
-
-    }
-
-    public static class ComponentTypesCounter {
-
-        public static int counter = -1;
-
-    }
-
-    public static class ComponentTypes<TComponent> where TComponent : IStructComponent {
-
-        public static int typeId = -1;
-        public static int capacity = 100;
 
     }
 
     public static class EntityExtensions {
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Entity RemoveData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
             
             Worlds.currentWorld.RemoveData<TComponent>(entity);
@@ -35,49 +22,58 @@
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool HasData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
             
             return Worlds.currentWorld.HasData<TComponent>(entity);
             
         }
 
-        public static TComponent GetData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static ref TComponent GetData<TComponent>(this in Entity entity) where TComponent : struct, IStructComponent {
             
-            return Worlds.currentWorld.GetData<TComponent>(entity);
+            return ref Worlds.currentWorld.GetData<TComponent>(in entity);
             
         }
 
-        public static Entity SetData<TComponent>(this Entity entity, TComponent data) where TComponent : struct, IStructComponent {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Entity SetData<TComponent>(this in Entity entity, in TComponent data) where TComponent : struct, IStructComponent {
             
-            Worlds.currentWorld.SetData(entity, data);
+            Worlds.currentWorld.SetData(in entity, in data);
             return entity;
 
         }
 
-        public static TComponent GetComponent<TState, TEntity, TComponent>(this Entity entity)
-            where TState : class, IState<TState>, new()
-            where TEntity : struct, IEntity
-            where TComponent : class, IComponent<TState, TEntity>
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Entity ValidateData<TComponent>(this in Entity entity) where TComponent : struct, IStructComponent {
+            
+            Worlds.currentWorld.ValidateData<TComponent>(in entity);
+            return entity;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool HasComponent<TComponent>(this Entity entity)
+            where TComponent : class, IComponent
         {
         
-            return Worlds<TState>.currentWorld.GetComponent<TEntity, TComponent>(entity);
+            return Worlds.currentWorld.HasComponent<TComponent>(entity);
             
         }
 
-        public static TComponent GetComponent<TState, TEntity, TComponent>(this TEntity entity)
-            where TState : class, IState<TState>, new()
-            where TEntity : struct, IEntity
-            where TComponent : class, IComponent<TState, TEntity>
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static TComponent GetComponent<TComponent>(this Entity entity)
+            where TComponent : class, IComponent
         {
         
-            return Worlds<TState>.currentWorld.GetComponent<TEntity, TComponent>(entity.entity);
+            return Worlds.currentWorld.GetComponent<TComponent>(entity);
             
         }
 
     }
 
     [System.Serializable]
-    public readonly struct Entity : System.IEquatable<Entity> {
+    public readonly struct Entity : System.IEquatable<Entity>, System.IComparable<Entity> {
 
         public readonly int id;
         public readonly int storageIdx;
@@ -88,7 +84,7 @@
             }
         }
 
-        internal Entity(EntityId id, int storageIdx) {
+        public Entity(int id, int storageIdx) {
 
             this.id = id;
             this.storageIdx = storageIdx;
@@ -100,9 +96,9 @@
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        internal static Entity Create<TEntity>(in EntityId id) where TEntity : IEntity {
+        internal static Entity Create(in int id) {
 
-            return Entity.Create<TEntity>(id, noCheck: false);
+            return Entity.Create(id, noCheck: false);
 
         }
 
@@ -111,7 +107,7 @@
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        internal static Entity Create<TEntity>(in EntityId id, bool noCheck) where TEntity : IEntity {
+        internal static Entity Create(in int id, bool noCheck) {
 
             if (noCheck == false && id <= 0) {
                 
@@ -125,18 +121,21 @@
 
         }
         
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Entity e1, Entity e2) {
 
             return e1.id == e2.id && e1.storageIdx == e2.storageIdx;
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Entity e1, Entity e2) {
 
             return !(e1 == e2);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Equals(Entity other) {
 
             return this == other;
@@ -149,6 +148,14 @@
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public int CompareTo(Entity other) {
+
+            return this.id.CompareTo(other.id);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() {
             
             return this.id ^ this.storageIdx;

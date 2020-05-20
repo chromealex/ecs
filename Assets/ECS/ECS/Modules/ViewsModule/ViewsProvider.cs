@@ -286,10 +286,10 @@
 
     public interface IViewsProviderInitializerBase {}
 
-    public interface IViewsProviderInitializer<TEntity> : IViewsProviderInitializerBase where TEntity : struct, IEntity {
+    public interface IViewsProviderInitializer : IViewsProviderInitializerBase {
 
-        IViewsProvider<TEntity> Create();
-        void Destroy(IViewsProvider<TEntity> instance);
+        IViewsProvider Create();
+        void Destroy(IViewsProvider instance);
 
     }
 
@@ -300,24 +300,24 @@
 
     }
 
-    public interface IViewsProvider<TEntity> : IViewsProviderBase where TEntity : struct, IEntity {
+    public interface IViewsProvider : IViewsProviderBase {
 
-        IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId);
-        void Destroy(ref IView<TEntity> instance);
+        IView Spawn(IView prefab, ViewId prefabSourceId);
+        void Destroy(ref IView instance);
 
-        void Update(System.Collections.Generic.Dictionary<EntityId, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime);
+        void Update(System.Collections.Generic.List<IView>[] list, float deltaTime);
 
     }
 
-    public abstract class ViewsProvider<TEntity> : IViewsProvider<TEntity> where TEntity : struct, IEntity {
+    public abstract class ViewsProvider : IViewsProvider {
 
         public abstract void OnConstruct();
         public abstract void OnDeconstruct();
 
-        public abstract IView<TEntity> Spawn(IView<TEntity> prefab, ViewId prefabSourceId);
-        public abstract void Destroy(ref IView<TEntity> instance);
+        public abstract IView Spawn(IView prefab, ViewId prefabSourceId);
+        public abstract void Destroy(ref IView instance);
 
-        public virtual void Update(System.Collections.Generic.Dictionary<EntityId, System.Collections.Generic.List<IView<TEntity>>> list, float deltaTime) {}
+        public virtual void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {}
 
     }
 

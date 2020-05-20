@@ -5,7 +5,7 @@ namespace ME.ECS {
 
     public interface IComponentsBase {
 
-        IList<IComponentBase> GetData(EntityId entityId);
+        IList<IComponentBase> GetData(int entityId);
         IDictionary GetDataOnce();
 
     }
@@ -14,44 +14,29 @@ namespace ME.ECS {
 
         int Count { get; }
 
-        int RemoveAll(EntityId entityId);
-        int RemoveAll<TComponent>(EntityId entityId) where TComponent : class, IComponentBase;
-        int RemoveAllOnce<TComponent>(EntityId entityId) where TComponent : class, IComponentOnceBase;
-        int RemoveAll<TComponent>() where TComponent : class, IComponentBase;
-        int RemoveAllOnce<TComponent>() where TComponent : class, IComponentOnceBase;
+        int RemoveAll(int entityId);
+        int RemoveAll<TComponent>(int entityId) where TComponent : class, IComponent;
+        int RemoveAll<TComponent>() where TComponent : class, IComponent;
 
-        int RemoveAllPredicate<TComponent, TComponentPredicate>(EntityId entityId, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent>;
+        int RemoveAllPredicate<TComponent, TComponentPredicate>(int entityId, TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent>;
 
-    }
+        void Add<TComponent>(int entityId, TComponent data) where TComponent : class, IComponent;
+        bool Contains<TComponent>(int entityId) where TComponent : class, IComponent;
+        List<IComponent> ForEach<TComponent>(int entityId) where TComponent : class, IComponent;
+        TComponent GetFirst<TComponent>(int entityId) where TComponent : class, IComponent;
 
-    public interface IComponents<TEntity, TState> : IComponents<TState> where TEntity : struct, IEntity where TState : class, IState<TState>, new() {
-
-        TComponent GetFirst<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity>;
-        TComponent GetFirstOnce<TComponent>(EntityId entityId) where TComponent : class, IComponentOnce<TState, TEntity>;
-
-        void CopyFrom(Components<TEntity, TState> other);
+        void CopyFrom(Components<TState> other);
 
     }
 
-    public static class ComponentExtensions {
-
-        public static bool GetEntityData<TState, TEntity, TEntitySource>(this IComponent<TState, TEntitySource> _, Entity entity, out TEntity data) where TEntity : struct, IEntity where TEntitySource : struct, IEntity where TState : class, IState<TState>, new() {
-
-            ref var world = ref Worlds<TState>.currentWorld;
-            return world.GetEntityData(entity, out data);
-
-        }
-
-    }
-    
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Components<TEntity, TState> : IComponents<TState> where TEntity : struct, IEntity where TState : class, IState<TState>, new() {
+    public class Components<TState> : IComponents<TState> where TState : class, IState<TState>, new() {
 
-        private static class ComponentType<TComponent, TEntityInner, TStateInner> {
+        private static class ComponentType<TComponent, TStateInner> {
 
             public static int id = -1;
 
@@ -59,7 +44,7 @@ namespace ME.ECS {
 
         public struct Bucket {
 
-            public List<IComponent<TState, TEntity>>[] components;
+            public List<IComponent>[] components;
 
         }
 
@@ -91,6 +76,8 @@ namespace ME.ECS {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void CleanUp_INTERNAL() {
+
+            if (this.arr == null) return;
             
             for (int i = 0; i < this.arr.Length; ++i) {
 
@@ -103,14 +90,14 @@ namespace ME.ECS {
                         if (list != null) {
 
                             PoolComponents.Recycle(list);
-                            PoolList<IComponent<TState, TEntity>>.Recycle(ref list);
+                            PoolList<IComponent>.Recycle(ref list);
                             bucket.components[j] = null;
 
                         }
 
                     }
 
-                    PoolArray<List<IComponent<TState, TEntity>>>.Recycle(ref bucket.components);
+                    PoolArray<List<IComponent>>.Recycle(ref bucket.components);
 
                 }
 
@@ -136,10 +123,10 @@ namespace ME.ECS {
 
         }
 
-        public int RemoveAllPredicate<TComponent, TComponentPredicate>(EntityId entityId, TComponentPredicate predicate) where TComponent : class, IComponentBase where TComponentPredicate : IComponentPredicate<TComponent> {
+        public int RemoveAllPredicate<TComponent, TComponentPredicate>(int entityId, TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent> {
 
             var count = 0;
-            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
+            var typeId = Components<TState>.GetTypeId<TComponent>();
             if (typeId < 0 || typeId >= this.arr.Length) return count;
 
             ref var bucket = ref this.arr[typeId];
@@ -163,30 +150,18 @@ namespace ME.ECS {
 
         }
 
-        public int RemoveAll<TComponent>(EntityId entityId) where TComponent : class, IComponentBase {
+        public int RemoveAll<TComponent>(int entityId) where TComponent : class, IComponent {
             
             return this.RemoveAll_INTERNAL<TComponent>(entityId);
 
         }
 
-        public int RemoveAllOnce<TComponent>(EntityId entityId) where TComponent : class, IComponentOnceBase {
-            
-            return this.RemoveAll_INTERNAL<TComponent>(entityId);
-
-        }
-
-        public int RemoveAll<TComponent>() where TComponent : class, IComponentBase {
+        public int RemoveAll<TComponent>() where TComponent : class, IComponent {
 
             return this.RemoveAll_INTERNAL<TComponent>();
 
         }
         
-        public int RemoveAllOnce<TComponent>() where TComponent : class, IComponentOnceBase {
-
-            return this.RemoveAll_INTERNAL<TComponent>();
-
-        }
-
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private int RemoveAll_INTERNAL<TComponent>() where TComponent : class, IComponentBase {
 
@@ -222,10 +197,10 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private int RemoveAll_INTERNAL<TComponent>(EntityId entityId) where TComponent : class, IComponentBase {
+        private int RemoveAll_INTERNAL<TComponent>(int entityId) where TComponent : class, IComponentBase {
 
             var count = 0;
-            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
+            var typeId = Components<TState>.GetTypeId<TComponent>();
             if (typeId < 0 || typeId >= this.arr.Length) return count;
 
             ref var bucket = ref this.arr[typeId];
@@ -247,7 +222,7 @@ namespace ME.ECS {
 
         }
 
-        public int RemoveAll(EntityId entityId) {
+        public int RemoveAll(int entityId) {
 
             var count = 0;
             for (int i = 0; i < this.arr.Length; ++i) {
@@ -273,40 +248,40 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int GetTypeId<TComponent>() {
 
-            if (ComponentType<TComponent, TEntity, TState>.id < 0) {
+            if (ComponentType<TComponent, TState>.id < 0) {
 
-                ComponentType<TComponent, TEntity, TState>.id = Components<TEntity, TState>.typeId++;
+                ComponentType<TComponent, TState>.id = Components<TState>.typeId++;
 
             }
 
-            return ComponentType<TComponent, TEntity, TState>.id;
+            return ComponentType<TComponent, TState>.id;
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void Add_INTERNAL(int typeId, EntityId entityId, IComponent<TState, TEntity> data) {
+        private void Add_INTERNAL(int typeId, int entityId, IComponent data) {
 
             ArrayUtils.Resize(typeId, ref this.arr);
             
             ref var bucket = ref this.arr[typeId];
             ArrayUtils.Resize(entityId, ref bucket.components);
 
-            if (bucket.components[entityId] == null) bucket.components[entityId] = PoolList<IComponent<TState, TEntity>>.Spawn(1);
+            if (bucket.components[entityId] == null) bucket.components[entityId] = PoolList<IComponent>.Spawn(1);
             bucket.components[entityId].Add(data);
             
         }
 
-        public void Add<TComponent>(EntityId entityId, IComponent<TState, TEntity> data) where TComponent : class, IComponent<TState, TEntity> {
+        public void Add<TComponent>(int entityId, TComponent data) where TComponent : class, IComponent {
 
-            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
+            var typeId = Components<TState>.GetTypeId<TComponent>();
             this.Add_INTERNAL(typeId, entityId, data);
             
         }
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private TComponent Get_INTERNAL<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity> {
+        private TComponent Get_INTERNAL<TComponent>(int entityId) where TComponent : class, IComponent {
             
-            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
+            var typeId = Components<TState>.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -321,13 +296,7 @@ namespace ME.ECS {
 
         }
 
-        public TComponent GetFirst<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity> {
-            
-            return this.Get_INTERNAL<TComponent>(entityId);
-
-        }
-
-        public TComponent GetFirstOnce<TComponent>(EntityId entityId) where TComponent : class, IComponentOnce<TState, TEntity> {
+        public TComponent GetFirst<TComponent>(int entityId) where TComponent : class, IComponent {
             
             return this.Get_INTERNAL<TComponent>(entityId);
 
@@ -339,9 +308,9 @@ namespace ME.ECS {
 
         }
 
-        public List<IComponent<TState, TEntity>> ForEach<TComponent>(EntityId entityId) where TComponent : class, IComponent<TState, TEntity> {
+        public List<IComponent> ForEach<TComponent>(int entityId) where TComponent : class, IComponent {
             
-            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
+            var typeId = Components<TState>.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -355,25 +324,9 @@ namespace ME.ECS {
 
         }
 
-        public bool ContainsOnce<TComponent>(EntityId entityId) where TComponent : IComponentOnce<TState, TEntity> {
+        public bool Contains<TComponent>(int entityId) where TComponent : class, IComponent {
 
-            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
-            if (typeId >= 0 && typeId < this.arr.Length) {
-
-                ref var bucket = ref this.arr[typeId];
-                if (bucket.components == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) return false;
-                
-                return bucket.components[entityId].Count > 0;
-
-            }
-            
-            return false;
-
-        }
-
-        public bool Contains<TComponent>(EntityId entityId) where TComponent : IComponentBase {
-
-            var typeId = Components<TEntity, TState>.GetTypeId<TComponent>();
+            var typeId = Components<TState>.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -387,7 +340,7 @@ namespace ME.ECS {
 
         }
 
-        IList<IComponentBase> IComponentsBase.GetData(EntityId entityId) {
+        IList<IComponentBase> IComponentsBase.GetData(int entityId) {
 
             var list = new List<IComponentBase>();
             foreach (var bucket in this.arr) {
@@ -408,7 +361,7 @@ namespace ME.ECS {
 
         }
 
-        public void CopyFrom(Components<TEntity, TState> other) {
+        public void CopyFrom(Components<TState> other) {
 
             // Clean up current array
             this.CleanUp_INTERNAL();
@@ -420,26 +373,26 @@ namespace ME.ECS {
                 ref var otherBucket = ref other.arr[i];
                 if (otherBucket.components != null) {
 
-                    this.arr[i].components = PoolArray<List<IComponent<TState, TEntity>>>.Spawn(otherBucket.components.Length);
+                    this.arr[i].components = PoolArray<List<IComponent>>.Spawn(otherBucket.components.Length);
                     for (int j = 0; j < otherBucket.components.Length; ++j) {
 
                         ref var otherList = ref otherBucket.components[j];
                         if (otherList != null) {
 
-                            this.arr[i].components[j] = PoolList<IComponent<TState, TEntity>>.Spawn(otherList.Capacity);
+                            this.arr[i].components[j] = PoolList<IComponent>.Spawn(otherList.Capacity);
                             for (int k = 0, count = otherList.Count; k < count; ++k) {
 
                                 var element = otherList[k];
                                 var type = element.GetType();
-                                var comp = (IComponent<TState, TEntity>)PoolComponents.Spawn(type);
+                                var comp = (IComponent)PoolComponents.Spawn(type);
                                 if (comp == null) {
 
-                                    comp = (IComponent<TState, TEntity>)System.Activator.CreateInstance(type);
+                                    comp = (IComponent)System.Activator.CreateInstance(type);
                                     PoolInternalBase.CallOnSpawn(comp);
 
                                 }
 
-                                if (comp is IComponentCopyable<TState, TEntity> compCopyable) compCopyable.CopyFrom(element);
+                                if (comp is IComponentCopyable<TState> compCopyable) compCopyable.CopyFrom((IComponentCopyable<TState>)element);
 
                                 this.arr[i].components[j].Add(comp);
 

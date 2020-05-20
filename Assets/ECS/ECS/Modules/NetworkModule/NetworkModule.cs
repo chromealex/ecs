@@ -69,8 +69,8 @@ namespace ME.ECS.Network {
         
         bool UnRegisterRPC(RPCId rpcId);
 
-        RPCId RegisterRPC(System.Reflection.MethodInfo methodInfo);
-        bool RegisterRPC(RPCId rpcId, System.Reflection.MethodInfo methodInfo);
+        RPCId RegisterRPC(System.Reflection.MethodInfo methodInfo, bool runLocalOnly = false);
+        bool RegisterRPC(RPCId rpcId, System.Reflection.MethodInfo methodInfo, bool runLocalOnly = false);
         
         bool RegisterObject(object obj, int objId, int groupId = 0);
         bool UnRegisterObject(object obj, int objId);
@@ -119,6 +119,7 @@ namespace ME.ECS.Network {
         
         private RPCId rpcId;
         internal System.Collections.Generic.Dictionary<int, System.Reflection.MethodInfo> registry;
+        private System.Collections.Generic.HashSet<int> runLocalOnly;
         private System.Collections.Generic.Dictionary<long, object> keyToObjects;
         private System.Collections.Generic.Dictionary<object, Key> objectToKey;
         
@@ -133,9 +134,10 @@ namespace ME.ECS.Network {
 
         void IModuleBase.OnConstruct() {
 
-            this.keyToObjects = PoolDictionary<long, object>.Spawn(100);
-            this.objectToKey = PoolDictionary<object, Key>.Spawn(100);
             this.registry = PoolDictionary<int, System.Reflection.MethodInfo>.Spawn(100);
+            this.objectToKey = PoolDictionary<object, Key>.Spawn(100);
+            this.keyToObjects = PoolDictionary<long, object>.Spawn(100);
+            this.runLocalOnly = PoolHashSet<int>.Spawn(100);
 
             this.statesHistoryModule = this.world.GetModule<StatesHistory.IStatesHistoryModule<TState>>();
             this.statesHistoryModule.SetEventRunner(this);
@@ -154,6 +156,7 @@ namespace ME.ECS.Network {
             
             this.UnRegisterObject(this, -1);
 
+            PoolHashSet<int>.Recycle(ref this.runLocalOnly);
             PoolDictionary<long, object>.Recycle(ref this.keyToObjects);
             PoolDictionary<object, Key>.Recycle(ref this.objectToKey);
             PoolDictionary<int, System.Reflection.MethodInfo>.Recycle(ref this.registry);
@@ -353,18 +356,55 @@ namespace ME.ECS.Network {
             Key key;
             if (this.objectToKey.TryGetValue(instance, out key) == true) {
 
-                if (this.transporter.IsConnected() == false) return;
-                
                 var evt = new ME.ECS.StatesHistory.HistoryEvent();
                 evt.tick = this.world.GetStateTick() + Tick.One; // Call RPC on next tick
-                evt.order = this.GetRPCOrder();
-                evt.localOrder = ++this.localOrderIndex;
                 evt.parameters = parameters;
                 evt.rpcId = rpcId;
                 evt.objId = key.objId;
                 evt.groupId = key.groupId;
-                evt.storeInHistory = storeInHistory;
 
+                // If event run only on local machine
+                // we need to write data through all states and run this event immediately on each
+                // then return current state back
+                // so we don't need to store this event in history, we just need to rewrite reset data
+                var runLocalOnly = this.runLocalOnly.Contains(rpcId);
+                if (runLocalOnly == true) {
+
+                    { // Apply data to current state
+                        this.statesHistoryModule.RunEvent(evt);
+                    }
+                    
+                    var currentState = this.world.GetState();
+                    var resetState = this.world.GetResetState();
+                    this.world.SetStateDirect(resetState);
+                    {
+                        this.statesHistoryModule.RunEvent(evt);
+                    }
+                    
+                    foreach (var entry in this.statesHistoryModule.GetDataStates().GetEntries()) {
+
+                        if (entry.isEmpty == false) {
+
+                            this.world.SetStateDirect(entry.state);
+                            {
+                                this.statesHistoryModule.RunEvent(evt);
+                            }
+
+                        }
+
+                    }
+                    this.world.SetStateDirect(currentState);
+                    return;
+
+                }
+
+                if (this.transporter == null || this.transporter.IsConnected() == false) return;
+
+                // Set up other event data
+                evt.order = this.GetRPCOrder();
+                evt.localOrder = ++this.localOrderIndex;
+                evt.storeInHistory = storeInHistory;
+                
                 var storedInHistory = false;
                 if (storeInHistory == true && (this.GetNetworkType() & NetworkType.RunLocal) != 0) {
 
@@ -373,7 +413,7 @@ namespace ME.ECS.Network {
 
                 }
 
-                if ((this.GetNetworkType() & NetworkType.SendToNet) != 0) {
+                if (runLocalOnly == false && (this.GetNetworkType() & NetworkType.SendToNet) != 0) {
 
                     if (this.transporter != null && this.serializer != null) {
 
@@ -498,11 +538,11 @@ namespace ME.ECS.Network {
 
         }
 
-        void IModule<TState>.AdvanceTick(TState state, float deltaTime) {
+        void IModule<TState>.AdvanceTick(in TState state, in float deltaTime) {
             
         }
 
-        void IModule<TState>.Update(TState state, float deltaTime) {
+        void IModule<TState>.Update(in TState state, in float deltaTime) {
 
             //this.localOrderIndex = 0;
 
@@ -582,18 +622,19 @@ namespace ME.ECS.Network {
 
         }
 
-        public RPCId RegisterRPC(System.Reflection.MethodInfo methodInfo) {
+        public RPCId RegisterRPC(System.Reflection.MethodInfo methodInfo, bool runLocalOnly = false) {
 
-            this.RegisterRPC(++this.rpcId, methodInfo);
+            this.RegisterRPC(++this.rpcId, methodInfo, runLocalOnly);
             return this.rpcId;
 
         }
 
-        public bool RegisterRPC(RPCId rpcId, System.Reflection.MethodInfo methodInfo) {
+        public bool RegisterRPC(RPCId rpcId, System.Reflection.MethodInfo methodInfo, bool runLocalOnly = false) {
 
             if (this.registry.ContainsKey(rpcId) == false) {
 
                 this.registry.Add(rpcId, methodInfo);
+                if (runLocalOnly == true) this.runLocalOnly.Add(rpcId);
                 return true;
 
             }

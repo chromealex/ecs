@@ -8,6 +8,12 @@ namespace ME.ECSEditor {
 
         public IViewComponent target { get; set; }
 
+        public T GetTarget<T>() {
+
+            return (T)(object)this.target;
+
+        }
+
         void IGUIEditorBase.OnDrawGUI() {
                 
             UnityEngine.GUILayout.Label("Prefab Source Id: " + this.target.GetViewInfo().prefabSourceId.ToString());
@@ -21,18 +27,30 @@ namespace ME.ECSEditor {
 
         public IViewModuleBase target { get; set; }
 
+        public T GetTarget<T>() {
+
+            return (T)(object)this.target;
+
+        }
+
         void IGUIEditorBase.OnDrawGUI() {
                 
             var style = new UnityEngine.GUIStyle(UnityEngine.GUI.skin.label);
             style.richText = true;
 
             var renderersCount = 0;
-            foreach (System.Collections.DictionaryEntry ren in this.target.GetData()) {
+            var data = this.target.GetData();
+            if (data != null) {
 
-                renderersCount += ((System.Collections.IList)ren.Value).Count;
+                foreach (var views in data) {
+
+                    if (views == null) continue;
+                    renderersCount += ((System.Collections.IList)views).Count;
+
+                }
 
             }
-            
+
             UnityEngine.GUILayout.Label("<b>Alive Views:</b> " + renderersCount.ToString(), style);
             
         }

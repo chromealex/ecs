@@ -3,50 +3,34 @@
 namespace ME.ECS {
 
     public partial interface IWorldBase {
-        
-        TEntity RunComponents<TEntity>(ref TEntity data, float deltaTime, int index) where TEntity : struct, IEntity;
-
-    }
-
-    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState>, new() {
 
         #region Regular Components
-        TComponent AddOrGetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity;
-        TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity;
-        TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
+        TComponent AddOrGetComponent<TComponent>(Entity entity) where TComponent : class, IComponent, new();
+        TComponent AddComponent<TComponent>(Entity entity) where TComponent : class, IComponent, new();
+        TComponent AddComponent<TComponent>(Entity entity, TComponent data) where TComponent : class, IComponent;
 
-        TComponent AddComponent<TEntity, TComponent, TComponentType>(Entity entity) where TComponentType : class, IComponent<TState, TEntity>
-                                                                                    where TComponent : class, TComponentType, IComponent<TState, TEntity>, new()
-                                                                                    where TEntity : struct, IEntity;
-        TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
-        List<IComponent<TState, TEntity>> ForEachComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity;
-        bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponentBase where TEntity : struct, IEntity;
-        bool HasComponentOnce<TEntity, TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> where TEntity : struct, IEntity;
-        void RemoveComponents<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentBase;
-        void RemoveComponentsByEntityType<TEntity>(Entity entity) where TEntity : struct, IEntity;
-        void RemoveComponentsOnce<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentOnceBase;
-        void RemoveComponents<TComponent>() where TComponent : class, IComponentBase;
-        void RemoveComponentsOnce<TComponent>() where TComponent : class, IComponentOnceBase;
-        void RemoveComponentsPredicate<TComponent, TComponentPredicate, TEntity>(Entity entity, TComponentPredicate predicate) where TEntity : struct, IEntity where TComponent : class, IComponent<TState, TEntity> where TComponentPredicate : IComponentPredicate<TComponent>;
+        TComponent AddComponent<TComponent, TComponentType>(Entity entity) where TComponentType : class, IComponent
+                                                                                    where TComponent : class, TComponentType, IComponent, new();
+        TComponent GetComponent<TComponent>(Entity entity) where TComponent : class, IComponent;
+        List<IComponent> ForEachComponent<TComponent>(Entity entity) where TComponent : class, IComponent;
+        bool HasComponent<TComponent>(Entity entity) where TComponent : class, IComponent;
+        void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponent;
+        void RemoveComponents(Entity entity);
+        void RemoveComponents<TComponent>() where TComponent : class, IComponent;
+        void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent>;
         #endregion
         
         #region Shared Components
-        TComponent AddOrGetComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent<TState, SharedEntity>, new();
-        TComponent AddComponentShared<TComponent>() where TComponent : class, IComponent<TState, SharedEntity>, new();
-        TComponent AddComponentShared<TComponent>(IComponent<TState, SharedEntity> data) where TComponent : class, IComponent<TState, SharedEntity>;
-        TComponent GetComponentShared<TComponent>() where TComponent : class, IComponent<TState, SharedEntity>;
-        List<IComponent<TState, SharedEntity>> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent<TState, SharedEntity>;
-        bool HasComponentShared<TComponent>() where TComponent : IComponent<TState, SharedEntity>;
-        void RemoveComponentsShared<TComponent>() where TComponent : class, IComponentBase;
-        void RemoveComponentsSharedPredicate<TComponent, TComponentPredicate>(TComponentPredicate predicate) where TComponent : class, IComponent<TState, SharedEntity> where TComponentPredicate : IComponentPredicate<TComponent>;
+        TComponent AddOrGetComponentShared<TComponent>() where TComponent : class, IComponent, new();
+        TComponent AddComponentShared<TComponent>() where TComponent : class, IComponent, new();
+        TComponent AddComponentShared<TComponent>(TComponent data) where TComponent : class, IComponent;
+        TComponent GetComponentShared<TComponent>() where TComponent : class, IComponent;
+        List<IComponent> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent;
+        bool HasComponentShared<TComponent>() where TComponent : class, IComponent;
+        void RemoveComponentsShared<TComponent>() where TComponent : class, IComponent;
+        void RemoveComponentsSharedPredicate<TComponent, TComponentPredicate>(TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent>;
         #endregion
         
-    }
-
-    public struct SharedEntity : IEntity {
-
-        public Entity entity { get; set; }
-
     }
 
     #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -59,64 +43,32 @@ namespace ME.ECS {
         private const int COMPONENTS_CAPACITY = 100;
         
         //private Dictionary<int, IComponents<TState>> componentsCache; // key = typeof(T:IData), value = list of T:Components
-        private IComponents<TState>[] componentsCache;
+        private Components<TState> componentsCache;
         private Entity sharedEntity;
+        private bool sharedEntityInitialized;
         
         partial void OnSpawnComponents() {
 
-            this.componentsCache = PoolArray<IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY); //PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
+            this.componentsCache = PoolClass<Components<TState>>.Spawn(); //PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
             this.sharedEntity = default;
+            this.sharedEntityInitialized = false;
 
         }
 
         partial void OnRecycleComponents() {
             
-            PoolArray<IComponents<TState>>.Recycle(ref this.componentsCache);
+            PoolClass<Components<TState>>.Recycle(ref this.componentsCache);
             //PoolDictionary<int, IComponents<TState>>.Recycle(ref this.componentsCache);
             
         }
         
         #region Regular Components
-        public TEntity RunComponents<TEntity>(ref TEntity data, float deltaTime, int index) where TEntity : struct, IEntity {
+        public TComponent AddOrGetComponent<TComponent>(Entity entity) where TComponent : class, IComponent, new() {
 
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
-
-                var entityId = data.entity.id;
-                var buckets = ((Components<TEntity, TState>)this.componentsCache[code]).GetAllBuckets();
-                foreach (var bucket in buckets) {
-
-                    if (bucket.components == null || entityId < 0 || entityId >= bucket.components.Length) continue;
-
-                    var bucketComponents = bucket.components[entityId];
-                    if (bucketComponents == null) continue;
-                    
-                    foreach (var component in bucketComponents) {
-
-                        if (component is IRunnableComponent<TState, TEntity> runnable) runnable.AdvanceTick(this.currentState, ref data, deltaTime, index);
-
-                    }
-
-                }
-
-            }
-
-            return data;
-
-        }
-
-        public TComponent AddOrGetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity {
-
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
-
-                ref var components = ref this.componentsCache[code];
-                var element = ((Components<TEntity, TState>)components).GetFirst<TComponent>(entity.id);
-                if (element != null) return element;
-
-            }
-
-            return this.AddComponent<TEntity, TComponent>(entity);
+            var element = this.componentsCache.GetFirst<TComponent>(entity.id);
+            if (element != null) return element;
+            
+            return this.AddComponent<TComponent>(entity);
 
         }
 
@@ -126,12 +78,12 @@ namespace ME.ECS {
         /// <param name="entity"></param>
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
-        public TComponent AddComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity {
+        public TComponent AddComponent<TComponent>(Entity entity) where TComponent : class, IComponent, new() {
 
             TComponent data;
             data = PoolComponents.Spawn<TComponent>();
 
-            return this.AddComponent<TEntity, TComponent>(entity, data);
+            return this.AddComponent<TComponent>(entity, data);
 
         }
 
@@ -142,12 +94,12 @@ namespace ME.ECS {
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
         /// <typeparam name="TComponentType"></typeparam>
-        public TComponent AddComponent<TEntity, TComponent, TComponentType>(Entity entity) where TComponentType : class, IComponent<TState, TEntity> where TComponent : class, TComponentType, IComponent<TState, TEntity>, new() where TEntity : struct, IEntity {
+        public TComponent AddComponent<TComponent, TComponentType>(Entity entity) where TComponentType : class, IComponent where TComponent : class, TComponentType, IComponent, new() {
 
             TComponent data;
             data = PoolComponents.Spawn<TComponent>();
 
-            return (TComponent)this.AddComponent<TEntity, TComponentType>(entity, data);
+            return (TComponent)this.AddComponent<TComponentType>(entity, data);
 
         }
 
@@ -158,146 +110,50 @@ namespace ME.ECS {
         /// <param name="data"></param>
         /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TComponent"></typeparam>
-        public TComponent AddComponent<TEntity, TComponent>(Entity entity, IComponent<TState, TEntity> data) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
+        public TComponent AddComponent<TComponent>(Entity entity, TComponent data) where TComponent : class, IComponent {
 
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
-
-                ((Components<TEntity, TState>)this.componentsCache[code]).Add<TComponent>(entity.id, data);
-
-            } else {
-                
-                var components = PoolClass<Components<TEntity, TState>>.Spawn();
-                components.Add<TComponent>(entity.id, data);
-
-                ArrayUtils.Resize(code, ref this.componentsCache);
-                this.componentsCache[code] = components;
-                
-            }
-
+            this.componentsCache.Add<TComponent>(entity.id, data);
+            this.storagesCache.archetypes.Set<TComponent>(in entity);
             this.AddComponentToFilter(entity);
+            
             return (TComponent)data;
 
         }
 
-        public TComponent GetComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
+        public TComponent GetComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
 
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
+            return this.componentsCache.GetFirst<TComponent>(entity.id);
 
-                return ((Components<TEntity, TState>)this.componentsCache[code]).GetFirst<TComponent>(entity.id);
+        }
 
-            }
+        public List<IComponent> ForEachComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
 
-            return null;
+            return this.componentsCache.ForEach<TComponent>(entity.id);
+
+        }
+
+        /// <summary>
+        /// Check is component exists on entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
+        public bool HasComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
+
+            return this.componentsCache.Contains<TComponent>(entity.id);
             
         }
-
-        public List<IComponent<TState, TEntity>> ForEachComponent<TEntity, TComponent>(Entity entity) where TComponent : class, IComponent<TState, TEntity> where TEntity : struct, IEntity {
-
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
-                
-                return ((Components<TEntity, TState>)this.componentsCache[code]).ForEach<TComponent>(entity.id);
-                
-            }
-
-            return null;
-
-        }
-
-        /// <summary>
-        /// Check is component exists on entity
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <typeparam name="TComponent"></typeparam>
-        /// <returns></returns>
-        public bool HasComponent<TEntity, TComponent>(Entity entity) where TComponent : IComponentBase where TEntity : struct, IEntity {
-
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
-                
-                return ((Components<TEntity, TState>)this.componentsCache[code]).Contains<TComponent>(entity.id);
-                
-            }
-
-            return false;
-
-        }
-
-        /// <summary>
-        /// Check is component exists on entity
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <typeparam name="TComponent"></typeparam>
-        /// <returns></returns>
-        public bool HasComponentOnce<TEntity, TComponent>(Entity entity) where TComponent : IComponentOnce<TState, TEntity> where TEntity : struct, IEntity {
-
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
-                
-                return ((Components<TEntity, TState>)this.componentsCache[code]).ContainsOnce<TComponent>(entity.id);
-                
-            }
-
-            return false;
-
-        }
-
-        /// <summary>
-        /// Remove all components from certain entity
-        /// </summary>
-        /// <param name="entity"></param>
-        /*public void RemoveComponents(Entity entity) {
-
-            var code = WorldUtilities.GetKey(entity);
-            IComponents<TState> componentsContainer;
-
-            bool result;
-            result = this.componentsCache.TryGetValue(code, out componentsContainer);
-            if (result == true) {
-
-                componentsContainer.RemoveAll(entity.id);
-                
-            }
-
-        }*/
 
         /// <summary>
         /// Remove all components with type from certain entity by predicate
         /// </summary>
         /// <param name="entity"></param>
-        public void RemoveComponentsPredicate<TComponent, TComponentPredicate, TEntity>(Entity entity, TComponentPredicate predicate) where TEntity : struct, IEntity where TComponent : class, IComponent<TState, TEntity> where TComponentPredicate : IComponentPredicate<TComponent> {
+        public void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent> {
 
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
+            if (this.componentsCache.RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
                 
-                if (((Components<TEntity, TState>)this.componentsCache[code]).RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
-                    
-                    this.RemoveComponentFromFilter(entity);
-
-                }
-
-            }
-
-        }
-
-        /// <summary>
-        /// Remove all components with type from certain entity
-        /// </summary>
-        /// <param name="entity"></param>
-        public void RemoveComponents<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentBase {
-
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
-                
-                if (this.componentsCache[code].RemoveAll<TComponent>(entity.id) > 0) {
-                    
-                    this.RemoveComponentFromFilter(entity);
-
-                }
+                this.RemoveComponentFromFilter(entity);
 
             }
 
@@ -307,35 +163,27 @@ namespace ME.ECS {
         /// Remove all components from certain entity
         /// </summary>
         /// <param name="entity"></param>
-        public void RemoveComponentsByEntityType<TEntity>(Entity entity) where TEntity : struct, IEntity {
+        public void RemoveComponents(Entity entity) {
 
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
+            if (this.componentsCache.RemoveAll(entity.id) > 0) {
                 
-                if (this.componentsCache[code].RemoveAll(entity.id) > 0) {
-                    
-                    this.RemoveComponentFromFilter(entity);
-
-                }
+                this.storagesCache.archetypes.RemoveAll(in entity);
+                this.RemoveComponentFromFilter(entity);
 
             }
 
         }
 
         /// <summary>
-        /// Remove all components with type from certain entity
+        /// Remove all components from certain entity by type
         /// </summary>
         /// <param name="entity"></param>
-        public void RemoveComponentsOnce<TEntity, TComponent>(Entity entity) where TEntity : struct, IEntity where TComponent : class, IComponentOnceBase {
+        public void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponent {
 
-            var code = WorldUtilities.GetEntityTypeId<TEntity>();
-            if (code >= 0 && code < this.componentsCache.Length) {
+            if (this.componentsCache.RemoveAll<TComponent>(entity.id) > 0) {
                 
-                if (this.componentsCache[code].RemoveAllOnce<TComponent>(entity.id) > 0) {
-                    
-                    this.RemoveComponentFromFilter(entity);
-
-                }
+                this.storagesCache.archetypes.Remove<TComponent>(in entity);
+                this.RemoveComponentFromFilter(entity);
 
             }
 
@@ -346,87 +194,70 @@ namespace ME.ECS {
         /// This method doesn't update any filter, you should call UpdateFilter manually
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
-        public void RemoveComponents<TComponent>() where TComponent : class, IComponentBase {
+        public void RemoveComponents<TComponent>() where TComponent : class, IComponent {
 
-            for (var i = 0; i < this.componentsCache.Length; ++i) {
+            if (this.componentsCache.RemoveAll<TComponent>() > 0) {
                 
-                var components = this.componentsCache[i];
-                if (components != null) components.RemoveAll<TComponent>();
+                this.storagesCache.archetypes.RemoveAll<TComponent>();
 
-            }
-
-        }
-
-        /// <summary>
-        /// Remove all components with type TComponent from all entities
-        /// This method doesn't update any filter, you should call UpdateFilter manually
-        /// </summary>
-        /// <typeparam name="TComponent"></typeparam>
-        public void RemoveComponentsOnce<TComponent>() where TComponent : class, IComponentOnceBase {
-
-            for (var i = 0; i < this.componentsCache.Length; ++i) {
-                
-                var components = this.componentsCache[i];
-                if (components != null) components.RemoveAllOnce<TComponent>();
-                
             }
 
         }
         #endregion
 
         #region Shared Components
-        public TComponent AddOrGetComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent<TState, SharedEntity>, new() {
+        public TComponent AddOrGetComponentShared<TComponent>() where TComponent : class, IComponent, new() {
 
-            return this.AddOrGetComponent<SharedEntity, TComponent>(entity);
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public TComponent AddComponentShared<TComponent>() where TComponent : class, IComponent<TState, SharedEntity>, new() {
-
-            return this.AddComponent<SharedEntity, TComponent>(this.sharedEntity);
+            return this.AddOrGetComponent<TComponent>(this.sharedEntity);
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public TComponent AddComponentShared<TComponent>(IComponent<TState, SharedEntity> data) where TComponent : class, IComponent<TState, SharedEntity> {
-            
-            return this.AddComponent<SharedEntity, TComponent>(this.sharedEntity, data);
-            
-        }
+        public TComponent AddComponentShared<TComponent>() where TComponent : class, IComponent, new() {
 
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public TComponent GetComponentShared<TComponent>() where TComponent : class, IComponent<TState, SharedEntity> {
-
-            return this.GetComponent<SharedEntity, TComponent>(this.sharedEntity);
+            return this.AddComponent<TComponent>(this.sharedEntity);
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public List<IComponent<TState, SharedEntity>> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent<TState, SharedEntity> {
+        public TComponent AddComponentShared<TComponent>(TComponent data) where TComponent : class, IComponent {
             
-            return this.ForEachComponent<SharedEntity, TComponent>(this.sharedEntity);
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool HasComponentShared<TComponent>() where TComponent : IComponent<TState, SharedEntity> {
-
-            return this.HasComponent<SharedEntity, TComponent>(this.sharedEntity);
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RemoveComponentsShared<TComponent>() where TComponent : class, IComponentBase {
-            
-            this.RemoveComponents<SharedEntity, TComponent>(this.sharedEntity);
+            return this.AddComponent<TComponent>(this.sharedEntity, data);
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void RemoveComponentsSharedPredicate<TComponent, TComponentPredicate>(TComponentPredicate predicate) where TComponent : class, IComponent<TState, SharedEntity> where TComponentPredicate : IComponentPredicate<TComponent> {
+        public TComponent GetComponentShared<TComponent>() where TComponent : class, IComponent {
+
+            return this.GetComponent<TComponent>(this.sharedEntity);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public List<IComponent> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent {
             
-            this.RemoveComponentsPredicate<TComponent, TComponentPredicate, SharedEntity>(this.sharedEntity, predicate);
+            return this.ForEachComponent<TComponent>(this.sharedEntity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool HasComponentShared<TComponent>() where TComponent : class, IComponent {
+
+            return this.HasComponent<TComponent>(this.sharedEntity);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void RemoveComponentsShared<TComponent>() where TComponent : class, IComponent {
+            
+            this.RemoveComponents<TComponent>(this.sharedEntity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void RemoveComponentsSharedPredicate<TComponent, TComponentPredicate>(TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent> {
+            
+            this.RemoveComponentsPredicate<TComponent, TComponentPredicate>(this.sharedEntity, predicate);
             
         }
         #endregion

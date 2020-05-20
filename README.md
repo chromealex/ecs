@@ -54,12 +54,13 @@ Modules do visual update on the beginning of the frame and on the beginning of e
 #### Systems (```ISystem<TState>```)
 Systems do visual update at the end of the frame and on the ending of every tick.
 
-#### Entities (```IEntity```)
+#### Entities
 Entities are storing base data of your objects like position, rotation, user data, etc.
 
 #### Components (```IComponent<TEntity>```)
-Components are working with a certain Entity type and implements AdvanceTick (in which you can add logic of your tick) and CopyFrom. Or you can use components like a markers. Btw, you can use IComponentOnce interface to be sure all components removed at the end of current tick.
-Also you can add ```IComponentShared``` and ```IComponentSharedOnce``` to store any shared data.
+Components are storing data. In ME.ECS there are 2 component types: IComponent and IStructComponent.
+IComponent could store multiple times and could be iterated by type. It is reference type and must implement CopyFrom and OnRecycle methods.
+IStructComponent could store just simple types or StackArray. It is value type.
 
 #### Markers (```IMarker```)
 Markers needed to implement UI events or something that doesn't exist in game state.
@@ -75,8 +76,8 @@ Markers needed to implement UI events or something that doesn't exist in game st
 // Initialize new world with custom tick time and custom world id
 // If customWorldId ignored - it will setup automatically
 WorldUtilities.CreateWorld(ref this.world, 0.133f, [customWorldId]);
-this.world.AddModule<StatesHistoryModule>(); // Add custom states history module
-this.world.AddModule<NetworkModule>();       // Add custom network module
+this.world.AddModule<StatesHistoryModule>(); // Add default states history module
+this.world.AddModule<NetworkModule>();       // Add default network module
 ```
 
 #### 2. State Initialization
@@ -89,29 +90,21 @@ this.world.SetState(WorldUtilities.CreateState<State>());
 ```csharp
 // Register point source prefab with custom views provider
 // GameObject (Will call Instantiate/Destroy)
-this.pointViewSourceId = this.world.RegisterViewSource<Point, UnityGameObjectProvider>(this.pointSource);
+this.pointViewSourceId = this.world.RegisterViewSource<UnityGameObjectProvider>(this.pointSource);
 // Register unit source prefab with custom views provider
 // Particles (Will draw particles instead of regular GameObjects)
-this.unitViewSourceId = this.world.RegisterViewSource<Unit, UnityParticlesProvider>(this.unitSource);
+this.unitViewSourceId = this.world.RegisterViewSource<UnityParticlesProvider>(this.unitSource);
 // Register unit source prefab with auto views provider
 // Here provider should be choosen by unitSource2 type
-this.unitViewSourceId2 = this.world.RegisterViewSource<Unit>(this.unitSource2);
+this.unitViewSourceId2 = this.world.RegisterViewSource(this.unitSource2);
 ...
 ```
 
-#### 4. Create Default Entities with Data
+#### 4. Create Default Entities
 ```csharp
 // Create default data for all players at this level
-var p1 = this.world.AddEntity(new Point() {
-  position = new Vector3(0f, 0f, 3f),
-  unitsCount = 99f,
-  increaseRate = 1f
-});
-var p2 = this.world.AddEntity(new Point() {
-  position = new Vector3(0f, 0f, -3f),
-  unitsCount = 1f,
-  increaseRate = 1f
-});
+var p1 = this.world.AddEntity();
+var p2 = this.world.AddEntity();
 ...
 ```
 
@@ -120,14 +113,19 @@ var p2 = this.world.AddEntity(new Point() {
 // Attach views onto entities
 // You can attach any count of views on each entity
 // But here are some limitations: for now you couldn't attach one source twice, only different sources for one entity allowed.
-this.world.InstantiateView<Point>(this.pointViewSourceId, p1);  // Add view with id pointViewSourceId onto p1 Entity
-this.world.InstantiateView<Point>(this.pointViewSourceId, p2);  // Add view with id pointViewSourceId onto p2 Entity
+this.world.InstantiateView(this.pointViewSourceId, p1);  // Add view with id pointViewSourceId onto p1 Entity
+this.world.InstantiateView(this.pointViewSourceId, p2);  // Add view with id pointViewSourceId onto p2 Entity
 ...
 ```
 
-#### 6. Add Systems
+#### 6. Add Features abd Systems
 ```csharp
-// Add custom systems
+// Add features (inside features you can register systems and modules)
+this.world.AddFeature<InputFeature>();
+this.world.AddFeature<Feature2>();
+this.world.AddFeature<Feature3>();
+
+// Add custom global systems out of any features
 this.world.AddSystem<InputSystem>();
 this.world.AddSystem<PointsSystem>();
 this.world.AddSystem<UnitsSystem>();
@@ -155,5 +153,5 @@ this.world.SaveResetState();
 - Implement UnityDrawMeshProvider <b>(90% done)</b> - only MeshFilter/MeshRenderer support added
 - Add particle system simulation support on state change <b>(100% done)</b>
 - Add shared components support <b>(100% done)</b>
-- Add multithreading support <b>(15% done)</b>
-- Preformance refactoring <b>(70% done)</b>
+- Add multithreading support <b>(80% done)</b>
+- Preformance refactoring <b>(90% done)</b>

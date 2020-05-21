@@ -58,7 +58,7 @@ namespace ME.ECSEditor {
                     }
 
                     EditorGUI.BeginDisabledGroup(page <= 0);
-                    if (GUILayout.Button("<", EditorStyles.toolbarButton) == true) {
+                    if (GUILayout.Button("◄", EditorStyles.toolbarButton) == true) {
 
                         --page;
 
@@ -76,7 +76,7 @@ namespace ME.ECSEditor {
                     GUILayout.Label(string.Format("{0}", pages + 1), EditorStyles.toolbarButton, GUILayout.MinWidth(20f));
 
                     EditorGUI.BeginDisabledGroup(page >= pages);
-                    if (GUILayout.Button(">", EditorStyles.toolbarButton) == true) {
+                    if (GUILayout.Button("►", EditorStyles.toolbarButton) == true) {
 
                         ++page;
 

@@ -648,16 +648,23 @@ namespace ME.ECS {
             if (restore == true) {
 
                 // Update entities cache
-                this.storagesCache.SetData(storageRef.GetData());
-                /*for (int i = 0; i < storageRef.Count; ++i) {
+                //this.storagesCache.SetData(storageRef.GetData());
+                
+                for (int i = 0; i < storageRef.Count; ++i) {
 
-                    var item = storageRef[i];
+                    ref var entity = ref storageRef[i];
                     if (storageRef.IsFree(i) == true) continue;
-                    //var list = PoolList<TEntity>.Spawn(capacity);
-                    //list.Add(item);
-                    this.AddEntity_INTERNAL(item, updateStorages: false);
+                    //this.AddEntity_INTERNAL(entity);
+                    
+                    //ref var entitiesList = ref storageRef.GetData();
+                    //var nextIndex = entitiesList.GetNextIndex();
+                    //entity = new Entity(entity.id, nextIndex);
+                    //entitiesList.Add(entity);
+                    this.UpdateFilters(entity);
+                    this.CreateEntityPlugins(entity);
 
-                }*/
+
+                }
 
             }
 
@@ -934,6 +941,8 @@ namespace ME.ECS {
         /// <returns></returns>
         public TModule GetModule<TModule>() where TModule : IModuleBase {
 
+            if (this.modules == null) return default;
+            
             for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
                 var module = this.modules[i];

@@ -232,7 +232,7 @@ namespace ME.ECS.Views {
             
         public override bool Equals(object obj) {
                 
-            return this.Equals((ViewInfo)obj);
+            throw new AllocationException();
                 
         }
 
@@ -365,7 +365,7 @@ namespace ME.ECS.Views {
         private const int INTERNAL_COMPONENTS_CACHE_CAPACITY = 10;
         
         private List<IView>[] list;
-        private HashSet<ulong> rendering;
+        private HashSet<ViewInfo> rendering;
         private Dictionary<ViewId, IViewsProviderInitializerBase> registryPrefabToProviderInitializer;
         private Dictionary<ViewId, IViewsProvider> registryPrefabToProvider;
         private Dictionary<IView, ViewId> registryPrefabToId;
@@ -380,7 +380,7 @@ namespace ME.ECS.Views {
 
             this.isRequestsDirty = false;
             this.list = PoolArray<List<IView>>.Spawn(ViewsModule<TState>.VIEWS_CAPACITY);
-            this.rendering = PoolHashSet<ulong>.Spawn(ViewsModule<TState>.VIEWS_CAPACITY);
+            this.rendering = PoolHashSet<ViewInfo>.Spawn(ViewsModule<TState>.VIEWS_CAPACITY);
             this.registryPrefabToId = PoolDictionary<IView, ViewId>.Spawn(ViewsModule<TState>.REGISTRY_CAPACITY);
             this.registryIdToPrefab = PoolDictionary<ViewId, IView>.Spawn(ViewsModule<TState>.REGISTRY_CAPACITY);
 
@@ -411,7 +411,7 @@ namespace ME.ECS.Views {
             PoolDictionary<ViewId, IView>.Recycle(ref this.registryIdToPrefab);
             PoolDictionary<IView, ViewId>.Recycle(ref this.registryPrefabToId);
             
-            PoolHashSet<ulong>.Recycle(ref this.rendering);
+            PoolHashSet<ViewInfo>.Recycle(ref this.rendering);
 
             foreach (var item in this.list) {
                 
@@ -691,7 +691,7 @@ namespace ME.ECS.Views {
             }
 
             var viewInfo = new ViewInfo(instance.entity, instance.prefabSourceId, instance.creationTick);
-            this.rendering.Add(viewInfo.GetKey());
+            this.rendering.Add(viewInfo);
 
             instance.DoInitialize();
 
@@ -721,7 +721,7 @@ namespace ME.ECS.Views {
             }
 
             var viewInfo = new ViewInfo(instance.entity, instance.prefabSourceId, instance.creationTick);
-            return this.rendering.Remove(viewInfo.GetKey());
+            return this.rendering.Remove(viewInfo);
 
         }
 
@@ -748,7 +748,7 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool IsRenderingNow(in ViewInfo viewInfo) {
 
-            return this.rendering.Contains(viewInfo.GetKey());
+            return this.rendering.Contains(viewInfo);
 
         }
 

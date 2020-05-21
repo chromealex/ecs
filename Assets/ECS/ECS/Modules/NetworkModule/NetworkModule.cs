@@ -615,6 +615,7 @@ namespace ME.ECS.Network {
                 // Applying old state.
                 var currentState = this.world.GetState();
                 currentState.CopyFrom(sourceState);
+                currentState.Initialize(this.world, freeze: false, restore: true);
                 
                 this.world.SetFromToTicks(sourceTick, targetTick);
                 

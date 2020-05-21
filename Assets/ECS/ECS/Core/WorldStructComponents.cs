@@ -245,7 +245,7 @@ namespace ME.ECS {
 
         }
 
-        public void Initialize(bool freeze, bool restore) {
+        public void Initialize(bool freeze) {
             
             ArrayUtils.Resize(100, ref this.list);
             this.isCreated = true;
@@ -595,7 +595,7 @@ namespace ME.ECS {
             if (componentsContainer.IsCreated() == false) {
 
                 componentsContainer = new StructComponentsContainer<TState>(); //PoolClass<StructComponentsContainer>.Spawn();
-                componentsContainer.Initialize(freeze, restore);
+                componentsContainer.Initialize(freeze);
 
             }
 
@@ -652,7 +652,16 @@ namespace ME.ECS {
         public ref TComponent GetData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
 
             // Inline all manually
-            return ref ((StructComponents<TState, TComponent>)this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()]).components[entity.id];
+            ref var r = ref this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            var reg = (StructComponents<TState, TComponent>)r;
+            ref var state = ref reg.componentsStates[entity.id];
+            if (state == false) {
+
+                state = true;
+
+            }
+
+            return ref reg.components[entity.id];
             
             //return ref this.componentsStructCache.Get<TComponent>(in entity);
 
@@ -717,6 +726,7 @@ namespace ME.ECS {
             if (state == true) {
 
                 state = false;
+                reg.components[entity.id] = default;
                 this.storagesCache.archetypes.Remove<TComponent>(in entity);
                 --this.componentsStructCache.count;
                 this.RemoveComponentFromFilter(entity);

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 #region Namespaces
 namespace #NAMESPACE#.Systems {}
@@ -40,7 +40,7 @@ namespace #NAMESPACE# {
                     
                     // Create new state
                     this.world.SetState(WorldUtilities.CreateState<TState>());
-                    ComponentsInitializer<TState>.Init();
+                    ComponentsInitializer<TState>.DoInit();
                     
                     // TODO: Initialize your custom state data here
                     // Ex: this.world.GetState().yourCustomParameter = yourValue;

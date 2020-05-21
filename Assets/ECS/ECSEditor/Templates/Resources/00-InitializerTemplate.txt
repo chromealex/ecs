@@ -21,7 +21,7 @@ namespace #NAMESPACE# {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class #PROJECTNAME#Initializer : MonoBehaviour {
+    public class #PROJECTNAME#Initializer : InitializerBase {
 
         private World<TState> world;
 
@@ -32,27 +32,19 @@ namespace #NAMESPACE# {
                 // Initialize world with 0.033 time step
                 WorldUtilities.CreateWorld(ref this.world, 0.033f);
                 {
-                    // TODO: Add your modules here
-                    // Ex: this.world.AddModule<TModule>();
                     this.world.AddModule<FPSModule>();
                     this.world.AddModule<StatesHistoryModule>();
                     this.world.AddModule<NetworkModule>();
                     
+                    // Add your custom modules here
+                    
                     // Create new state
                     this.world.SetState(WorldUtilities.CreateState<TState>());
                     ComponentsInitializer<TState>.DoInit();
+                    this.InitializeFeatures(this.world);
+
+                    // Add your custom systems here
                     
-                    // TODO: Initialize your custom state data here
-                    // Ex: this.world.GetState().yourCustomParameter = yourValue;
-                    
-                    // TODO: Register view sources here or in each features/systems directly
-                    // Based on render engine (Now we have support for GameObject Render, Particles Render, DrawMesh Render)
-                    // You need to provide MonoBehaviourViewBase/GameObject, ParticleViewSourceBase or DrawMeshViewSourceBase as a prefab type
-                    // Ex: var viewSourceId = this.world.RegisterViewSource(prefab);
-   
-                    // TODO: Add your features or systems here
-                    // Ex: this.world.AddFeature<TFeature>(); or this.world.AddSystem<TSystem>();
-                    // btw you can pass custom parameters into features like AddFeature<TFeature, TCustomParameters>(new TCustomParameters(...));
                 }
                 // Save initialization state
                 this.world.SaveResetState();
@@ -61,14 +53,23 @@ namespace #NAMESPACE# {
 
             if (this.world != null) {
 
-                this.world.Update(Time.deltaTime);
+                var dt = Time.deltaTime;
+                this.world.PreUpdate(dt);
+                this.world.Update(dt);
 
             }
 
         }
-        
+
+        public void LateUpdate() {
+            
+            if (this.world != null) this.world.LateUpdate(Time.deltaTime);
+            
+        }
+
         public void OnDestroy() {
 
+            this.DeInitializeFeatures(this.world);
             // Release world
             WorldUtilities.ReleaseWorld(ref this.world);
 

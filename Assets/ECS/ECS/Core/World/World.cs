@@ -182,12 +182,12 @@ namespace ME.ECS {
             WorldUtilities.ReleaseState(ref this.resetState);
             WorldUtilities.ReleaseState(ref this.currentState);
 
-            for (int i = 0; i < this.features.Count; ++i) {
+            /*for (int i = 0; i < this.features.Count; ++i) {
                 
-                this.features[i].OnDeconstruct();
+                this.features[i].DoDeconstruct();
                 PoolFeatures.Recycle(this.features[i]);
 
-            }
+            }*/
             PoolList<IFeatureBase>.Recycle(ref this.features);
 
             for (int i = 0; i < this.systems.Count; ++i) {
@@ -1075,60 +1075,12 @@ namespace ME.ECS {
         }
 
         /// <summary>
-        /// Add feature by type
-        /// Retrieve feature from pool, OnConstruct() call
-        /// </summary>
-        /// <typeparam name="TFeature"></typeparam>
-        public bool AddFeature<TFeature>() where TFeature : class, IFeature<TState, ConstructParameters>, new() {
-
-            var instance = PoolFeatures.Spawn<TFeature>();
-            var r = new ConstructParameters();
-            if (this.AddFeature(instance, ref r) == false) {
-
-                instance.world = null;
-                PoolFeatures.Recycle(ref instance);
-                return false;
-
-            }
-
-            return true;
-
-        }
-
-        public bool AddFeature<TFeature, TConstructParameters>(TConstructParameters parameters) where TFeature : class, IFeature<TState, TConstructParameters>, new() where TConstructParameters : IConstructParameters {
-
-            return this.AddFeature<TFeature, TConstructParameters>(ref parameters);
-
-        }
-
-        /// <summary>
-        /// Add feature by type
-        /// Retrieve feature from pool, OnConstruct() call
-        /// </summary>
-        /// <typeparam name="TFeature"></typeparam>
-        /// <typeparam name="TConstructParameters"></typeparam>
-        public bool AddFeature<TFeature, TConstructParameters>(ref TConstructParameters parameters) where TFeature : class, IFeature<TState, TConstructParameters>, new() where TConstructParameters : IConstructParameters {
-
-            var instance = PoolFeatures.Spawn<TFeature>();
-            if (this.AddFeature(instance, ref parameters) == false) {
-
-                instance.world = null;
-                PoolFeatures.Recycle(ref instance);
-                return false;
-
-            }
-
-            return true;
-
-        }
-
-        /// <summary>
         /// Add feature manually
         /// Pool will not be used, OnConstruct() call
         /// </summary>
         /// <param name="instance"></param>
         /// <param name="parameters"></param>
-        public bool AddFeature<TConstructParameters>(IFeature<TState, TConstructParameters> instance, ref TConstructParameters parameters) where TConstructParameters : IConstructParameters {
+        public bool AddFeature(IFeature<TState> instance) {
 
             WorldUtilities.SetWorld(this);
             
@@ -1146,7 +1098,7 @@ namespace ME.ECS {
             
             this.features.Add(instance);
             this.statesFeatures.Add(ModuleState.AllActive);
-            instance.OnConstruct(ref parameters);
+            ((FeatureBase)instance).DoConstruct();
 
             return true;
 
@@ -1164,12 +1116,11 @@ namespace ME.ECS {
                 
                 this.features.RemoveAt(idx);
                 this.statesFeatures.RemoveAt(idx);
-                instance.OnDeconstruct();
+                ((FeatureBase)instance).DoDeconstruct();
                 
             }
             
         }
-
 
         public bool HasSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
 

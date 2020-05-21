@@ -83,9 +83,7 @@ namespace ME.ECS {
 
         bool HasFeature<TFeature>() where TFeature : class, IFeatureBase, new();
         TFeature GetFeature<TFeature>() where TFeature : IFeatureBase;
-        bool AddFeature<TFeature>() where TFeature : class, IFeature<TState, ConstructParameters>, new();
-        bool AddFeature<TFeature, TConstructParameters>(ref TConstructParameters parameters) where TFeature : class, IFeature<TState, TConstructParameters>, new() where TConstructParameters : IConstructParameters;
-        bool AddFeature<TConstructParameters>(IFeature<TState, TConstructParameters> instance, ref TConstructParameters parameters) where TConstructParameters : IConstructParameters;
+        bool AddFeature(IFeature<TState> instance);
         void RemoveFeature(IFeatureBase instance);
         
         bool HasSystem<TSystem>() where TSystem : class, ISystem<TState>, new();

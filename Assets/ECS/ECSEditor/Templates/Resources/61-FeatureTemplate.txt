@@ -18,7 +18,7 @@ namespace #NAMESPACE# {
     #endif
     public class #SCRIPTNAME#Feature : Feature<TState> {
 
-        protected override void OnConstruct(ref ConstructParameters parameters) {
+        protected override void OnConstruct() {
             
         }
 

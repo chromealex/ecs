@@ -1,91 +1,64 @@
 namespace ME.ECS {
 
-    public interface IConstructParameters { }
+    [System.Serializable]
+    public class FeaturesList {
 
-    public struct ConstructParameters : IConstructParameters {
+        [System.Serializable]
+        public class FeatureData {
 
-    }
-
-    public struct ConstructParameters<T1> : IConstructParameters {
-
-        public T1 p1;
-        
-        public ConstructParameters(T1 p1) {
-
-            this.p1 = p1;
+            public bool enabled;
+            public FeatureBase feature;
 
         }
 
-    }
+        public System.Collections.Generic.List<FeatureData> features = new System.Collections.Generic.List<FeatureData>();
 
-    public struct ConstructParameters<T1, T2> : IConstructParameters {
+        internal void Initialize<TState>(World<TState> world) where TState : class, IState<TState>, new() {
 
-        public T1 p1;
-        public T2 p2;
-        
-        public ConstructParameters(T1 p1, T2 p2) {
+            for (int i = 0; i < this.features.Count; ++i) {
 
-            this.p1 = p1;
-            this.p2 = p2;
-
-        }
-
-    }
-
-    public struct ConstructParameters<T1, T2, T3> : IConstructParameters {
-
-        public T1 p1;
-        public T2 p2;
-        public T3 p3;
-        
-        public ConstructParameters(T1 p1, T2 p2, T3 p3) {
-
-            this.p1 = p1;
-            this.p2 = p2;
-            this.p3 = p3;
+                var item = this.features[i];
+                if (item.enabled == true) world.AddFeature((IFeature<TState>)item.feature);
+                
+            }
 
         }
 
-    }
-
-    public struct ConstructParameters<T1, T2, T3, T4> : IConstructParameters {
-
-        public T1 p1;
-        public T2 p2;
-        public T3 p3;
-        public T4 p4;
-        
-        public ConstructParameters(T1 p1, T2 p2, T3 p3, T4 p4) {
-
-            this.p1 = p1;
-            this.p2 = p2;
-            this.p3 = p3;
-            this.p4 = p4;
-
-        }
-
-    }
-
-    public abstract class Feature<TState> : Feature<TState, ConstructParameters> where TState : class, IState<TState>, new() { }
-
-    public abstract class Feature<TState, TConstructParameters> : IFeature<TState, TConstructParameters> where TState : class, IState<TState>, new() where TConstructParameters : IConstructParameters {
-
-        public IWorld<TState> world { get; set; }
-
-        protected abstract void OnConstruct(ref TConstructParameters parameters);
-        protected abstract void OnDeconstruct();
-        
-        void IFeature<TState, TConstructParameters>.OnConstruct(ref TConstructParameters parameters) {
+        internal void DeInitialize<TState>(World<TState> world) where TState : class, IState<TState>, new() {
             
-            this.OnConstruct(ref parameters);
+            for (int i = 0; i < this.features.Count; ++i) {
+                
+                var item = this.features[i];
+                if (item.enabled == true) world.RemoveFeature((IFeature<TState>)item.feature);
+                
+            }
+
+        }
+
+    }
+
+    public abstract class FeatureBase : UnityEngine.ScriptableObject, IFeatureBase {
+
+        internal void DoConstruct() {
+            
+            this.OnConstruct();
             
         }
 
-        void IFeatureBase.OnDeconstruct() {
+        internal void DoDeconstruct() {
             
             this.OnDeconstruct();
             
         }
+        
+        protected abstract void OnConstruct();
+        protected abstract void OnDeconstruct();
+
+    }
+
+    public abstract class Feature<TState> : FeatureBase, IFeature<TState> where TState : class, IState<TState>, new() {
+
+        public IWorld<TState> world { get; set; }
 
         protected bool AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
 

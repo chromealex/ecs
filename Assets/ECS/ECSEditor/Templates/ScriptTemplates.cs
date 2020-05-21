@@ -365,15 +365,21 @@ MonoBehaviour:
                 var dir = path + "/" + assetName;
                 var newAssetPath = dir + "/" + assetName + "Feature.cs";
                 AssetDatabase.MoveAsset(AssetDatabase.GetAssetPath(asset), newAssetPath);
-                AssetDatabase.ImportAsset(newAssetPath);
+                AssetDatabase.ImportAsset(newAssetPath, ImportAssetOptions.ForceUpdate);
+
+                var guid = AssetDatabase.AssetPathToGUID(newAssetPath);
+                var defs = new Dictionary<string, string>() {
+                    { "GUID", guid },
+                };
+                ScriptTemplates.Create(dir, assetName + "Feature.asset", "63-FeatureAsset", allowRename: false, customDefines: defs);
                 
                 ScriptTemplates.CreateEmptyDirectory(dir, "Modules");
                 ScriptTemplates.CreateEmptyDirectory(dir, "Systems");
                 ScriptTemplates.CreateEmptyDirectory(dir, "Components");
                 ScriptTemplates.CreateEmptyDirectory(dir, "Markers");
                 ScriptTemplates.CreateEmptyDirectory(dir, "Views");
-                ScriptTemplates.CreateEmptyDirectory(dir, "Data");
-                ScriptTemplates.Create(dir + "/Data", "Feature" + assetName + "Data.cs", "62-FeatureData", allowRename: false);
+                //ScriptTemplates.CreateEmptyDirectory(dir, "Data");
+                //ScriptTemplates.Create(dir + "/Data", "Feature" + assetName + "Data.cs", "62-FeatureData", allowRename: false);
 
                 /*var featureName = assetName;
                 var projectGuid = string.Empty;

@@ -189,10 +189,12 @@ namespace ME.ECSEditor {
 
             var labelRich = new GUIStyle(EditorStyles.label);
             labelRich.richText = true;
-            
+
+            var isLocalDirty = false;
             var flag = EditorGUILayout.ToggleLeft(caption, state, labelRich);
             if (flag != state) {
 
+                isLocalDirty = true;
                 isDirty = true;
                 state = flag;
                         
@@ -200,7 +202,7 @@ namespace ME.ECSEditor {
             if (string.IsNullOrEmpty(text) == false) GUILayoutExt.SmallLabel(text);
             EditorGUILayout.Space();
 
-            return isDirty;
+            return isLocalDirty;
 
         }
         

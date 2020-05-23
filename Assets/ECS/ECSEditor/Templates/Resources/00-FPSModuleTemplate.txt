@@ -1,4 +1,5 @@
-﻿namespace #NAMESPACE#.Modules {
+﻿#if FPS_MODULE_SUPPORT
+namespace #NAMESPACE#.Modules {
     
     using TState = #STATENAME#;
     
@@ -16,3 +17,4 @@
     }
     
 }
+#endif

@@ -1,3 +1,4 @@
+#if DRAWMESH_VIEWS_MODULE_SUPPORT
 namespace ME.ECS.Views.Providers {
 
     public abstract class DrawMeshViewSourceBase : ViewBase, IDoValidate {
@@ -48,3 +49,4 @@ namespace ME.ECS.Views.Providers {
     }
 
 }
+#endif

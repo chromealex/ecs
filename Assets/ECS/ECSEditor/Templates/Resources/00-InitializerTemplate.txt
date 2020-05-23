@@ -27,7 +27,9 @@ namespace #NAMESPACE# {
                 // Initialize world with 0.033 time step
                 WorldUtilities.CreateWorld(ref this.world, 0.033f);
                 {
+                    #if FPS_MODULE_SUPPORT
                     this.world.AddModule<FPSModule>();
+                    #endif
                     this.world.AddModule<StatesHistoryModule>();
                     this.world.AddModule<NetworkModule>();
                     

@@ -20,6 +20,84 @@ namespace ME.ECSEditor {
         private UnityEditorInternal.ReorderableList list;
         private System.Collections.Generic.Dictionary<object, bool> systemFoldouts = new System.Collections.Generic.Dictionary<object, bool>();
         private System.Collections.Generic.Dictionary<object, bool> moduleFoldouts = new System.Collections.Generic.Dictionary<object, bool>();
+        private static bool isCompilingManual;
+
+        private struct DefineInfo {
+
+            public string define;
+            public string description;
+            public System.Func<bool> isActive;
+            public bool showInList;
+
+            public DefineInfo(string define, string description, System.Func<bool> isActive, bool showInList) {
+
+                this.define = define;
+                this.description = description;
+                this.isActive = isActive;
+                this.showInList = showInList;
+
+            }
+
+        }
+
+        private static readonly DefineInfo[] defines = new[] {
+            new DefineInfo("GAMEOBJECT_VIEWS_MODULE_SUPPORT", "Turn on/off GameObject View Provider.", () => {
+                #if GAMEOBJECT_VIEWS_MODULE_SUPPORT
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
+            new DefineInfo("PARTICLES_VIEWS_MODULE_SUPPORT", "Turn on/off Particles View Provider.", () => {
+                #if PARTICLES_VIEWS_MODULE_SUPPORT
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
+            new DefineInfo("DRAWMESH_VIEWS_MODULE_SUPPORT", "Turn on/off Graphics View Provider.", () => {
+                #if DRAWMESH_VIEWS_MODULE_SUPPORT
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
+            new DefineInfo("UNITY_MATHEMATICS", "Turn on/off Unity.Mathematics for RGN or use UnityEngine.Random.", () => {
+                #if UNITY_MATHEMATICS
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
+            new DefineInfo("WORLD_THREAD_CHECK", "If turned on, ECS will check random number usage from non-world thread. If you don't want to synchronize the game, you could turn this check off.", () => {
+                #if WORLD_THREAD_CHECK
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
+            new DefineInfo("FPS_MODULE_SUPPORT", "FPS module support.", () => {
+                #if FPS_MODULE_SUPPORT
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
+            new DefineInfo("ECS_COMPILE_IL2CPP_OPTIONS", "If turned on, ECS will use IL2CPP options for the faster runtime, this flag removed unnecessary null-checks and bounds array checks.", () => {
+                #if ECS_COMPILE_IL2CPP_OPTIONS
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
+            new DefineInfo("ECS_COMPILE_IL2CPP_OPTIONS_FILE_INCLUDE", "Turn off this option if you provide your own Il2CppSetOptionAttribute. Works with ECS_COMPILE_IL2CPP_OPTIONS.", () => {
+                #if ECS_COMPILE_IL2CPP_OPTIONS_FILE_INCLUDE
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
+        };
 
         private bool settingsFoldOut {
             get {
@@ -27,6 +105,16 @@ namespace ME.ECSEditor {
             }
             set {
                 EditorPrefs.SetBool("ME.ECS.InitializerEditor.settingsFoldoutState", value);
+            }
+            
+        }
+
+        private bool definesFoldOut {
+            get {
+                return EditorPrefs.GetBool("ME.ECS.InitializerEditor.definesFoldoutState", false);
+            }
+            set {
+                EditorPrefs.SetBool("ME.ECS.InitializerEditor.definesFoldoutState", value);
             }
             
         }
@@ -105,16 +193,49 @@ namespace ME.ECSEditor {
             GUILayoutExt.Box(15f, 0f, () => {
 
                 var isDirty = false;
+                
+                this.definesFoldOut = GUILayoutExt.BeginFoldoutHeaderGroup(this.definesFoldOut, new GUIContent("Defines"), EditorStyles.foldoutHeader);
+                if (this.definesFoldOut == true) {
+
+                    GUILayout.Space(10f);
+                    
+                    EditorGUI.BeginDisabledGroup(EditorApplication.isCompiling == true/* || InitializerEditor.isCompilingManual == true*/);
+
+                    foreach (var defineInfo in InitializerEditor.defines) {
+                        
+                        if (defineInfo.showInList == false) continue;
+                        
+                        var value = defineInfo.isActive.Invoke();
+                        if (GUILayoutExt.ToggleLeft(
+                                ref value,
+                                ref isDirty,
+                                defineInfo.define,
+                                defineInfo.description) == true) {
+
+                            //InitializerEditor.isCompilingManual = true;
+
+                            if (value == true) {
+
+                                this.CompileWithDefine(defineInfo.define);
+
+                            } else {
+                            
+                                this.CompileWithoutDefine(defineInfo.define);
+
+                            }
+
+                        }
+
+                    }
+                    
+                    EditorGUI.EndDisabledGroup();
+                    
+                }
+
                 this.settingsFoldOut = GUILayoutExt.BeginFoldoutHeaderGroup(this.settingsFoldOut, new GUIContent("Settings"), EditorStyles.foldoutHeader);
                 if (this.settingsFoldOut == true) {
 
-                    var isUnityMathEnabled = ME.ECS.MathUtils.IsUnityMathematicsUsed();
-                    if (isUnityMathEnabled == false) {
-
-                        EditorGUILayout.HelpBox("Unity mathematics package is disabled. Use package manager to install latest Unity Mathematics to use it with jobs.",
-                                                MessageType.Warning);
-
-                    }
+                    GUILayout.Space(10f);
 
                     GUILayoutExt.ToggleLeft(
                         ref target.worldSettings.useJobsForSystems,
@@ -156,6 +277,8 @@ namespace ME.ECSEditor {
                 this.settingsDebugFoldOut = GUILayoutExt.BeginFoldoutHeaderGroup(this.settingsDebugFoldOut, new GUIContent("Debug Settings"), EditorStyles.foldoutHeader);
                 if (this.settingsDebugFoldOut == true) {
                     
+                    GUILayout.Space(10f);
+
                     GUILayoutExt.ToggleLeft(
                         ref target.worldDebugSettings.createGameObjectsRepresentation,
                         ref isDirty,
@@ -206,6 +329,56 @@ namespace ME.ECSEditor {
             EditorGUI.BeginDisabledGroup(Application.isPlaying);
             this.list.DoLayoutList();
             EditorGUI.EndDisabledGroup();
+
+        }
+
+        private System.Collections.Generic.List<string> CollectAllActiveDefines() {
+            
+            var list = new System.Collections.Generic.List<string>();
+            foreach (var define in InitializerEditor.defines) {
+
+                if (define.isActive.Invoke() == true) list.Add(define.define);
+
+            }
+            return list;
+
+        }
+        
+        private void CompileDefines(System.Collections.Generic.List<string> list) {
+
+            var path = "Assets";
+            var file = "csc.gen.rsp";
+
+            var output = string.Empty;
+            foreach (var d in list) {
+                
+                output += "-define:" + d + "\n";                
+                
+            }
+
+            var defines = new System.Collections.Generic.Dictionary<string, string>();
+            {
+                defines.Add("DEFINES", output);
+            }
+            ScriptTemplates.Create(path, file, "00-csc-gen.rsp", defines, allowRename: false);
+
+        }
+
+        private void CompileWithDefine(string define) {
+
+            var allDefines = this.CollectAllActiveDefines();
+            allDefines.Add(define);
+
+            this.CompileDefines(allDefines);
+
+        }
+
+        private void CompileWithoutDefine(string define) {
+            
+            var allDefines = this.CollectAllActiveDefines();
+            allDefines.Remove(define);
+            
+            this.CompileDefines(allDefines);
 
         }
 

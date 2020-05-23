@@ -3,6 +3,12 @@
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
     
+    public partial struct WorldViewsSettings {
+
+        public bool unityNoViewProviderDisableJobs;
+
+    }
+    
     public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource(NoViewBase prefab);
@@ -143,9 +149,13 @@ namespace ME.ECS.Views.Providers {
             public void Execute(int index) {
 
                 var list = NoViewProvider.currentList[index];
+                if (list == null) return;
+                
                 for (int i = 0, count = list.Count; i < count; ++i) {
 
-                    var instance = (ParticleViewBase)list[i];
+                    var instance = list[i] as NoView;
+                    if (instance == null) continue;
+                    
                     instance.ApplyStateJob(this.deltaTime, immediately: false);
                     
                 }
@@ -158,8 +168,9 @@ namespace ME.ECS.Views.Providers {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
 
-            NoViewProvider.currentList = list;
-            if (list != null) {
+            if (this.world.settings.useJobsForViews == true && this.world.settings.viewsSettings.unityNoViewProviderDisableJobs == false) {
+
+                NoViewProvider.currentList = list;
                 
                 var job = new Job() {
                     deltaTime = deltaTime
@@ -167,9 +178,25 @@ namespace ME.ECS.Views.Providers {
                 var handle = job.Schedule(list.Length, 16);
                 handle.Complete();
                 NoViewProvider.currentList = null;
+
+            } else {
+
+                for (int j = 0; j < list.Length; ++j) {
+
+                    var item = list[j];
+                    for (int i = 0, count = item.Count; i < count; ++i) {
+
+                        var instance = item[i] as NoView;
+                        if (instance == null) continue;
+
+                        instance.ApplyStateJob(deltaTime, immediately: false);
+                    
+                    }
+                    
+                }
                 
             }
-
+            
         }
 
         public override void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {

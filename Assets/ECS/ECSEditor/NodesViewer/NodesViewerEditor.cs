@@ -191,10 +191,23 @@ namespace ME.ECSEditor {
 
             static Styles() {
                 
-                Styles.connectionTexture = EditorGUIUtility.Load("builtin skins/darkskin/images/animationrowevenselected.png") as Texture2D;
+                Styles.Init();
+                
+            }
+
+            public static void Init() {
+                
+                var tex = EditorGUIUtility.Load("builtin skins/darkskin/images/animationrowevenselected.png") as Texture2D;
+                var t = new Texture2D(tex.width, tex.height, TextureFormat.RGBA32, false);
+                var arr = new Color32[t.width * t.height];
+                for (int i = 0; i < t.width * t.height; ++i) {
+                    arr[i] = new Color(1f, 0.5f, 0.5f, 1f);
+                }
+                t.SetPixels32(arr);
+                Styles.connectionTexture = t;
                 
                 Styles.nodeStyle = new GUIStyle();
-                Styles.nodeStyle.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node1.png") as Texture2D;
+                Styles.nodeStyle.normal.background = EditorStyles.miniButton.normal.scaledBackgrounds[0];//EditorGUIUtility.Load("builtin skins/darkskin/images/node1.png") as Texture2D;
                 Styles.nodeStyle.border = new RectOffset(12, 12, 12, 12);
 
                 Styles.nodeCustomStyle = new GUIStyle();
@@ -205,7 +218,7 @@ namespace ME.ECSEditor {
                 Styles.systemNode.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node2.png") as Texture2D;
                 Styles.systemNode.border = new RectOffset(12, 12, 12, 12);
 
-                Styles.measureLabel = new GUIStyle(EditorStyles.boldLabel);
+                Styles.measureLabel = new GUIStyle(EditorStyles.miniBoldLabel);
                 Styles.measureLabel.richText = true;
                 Styles.measureLabel.padding = new RectOffset(0, 0, 15, 0);
                 Styles.measureLabel.alignment = TextAnchor.UpperCenter;
@@ -224,11 +237,11 @@ namespace ME.ECSEditor {
                 Styles.containerStyle = new GUIStyle(EditorStyles.helpBox);
 
                 Styles.enterStyle = new GUIStyle();
-                Styles.enterStyle.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node5.png") as Texture2D;
+                Styles.enterStyle.normal.background = EditorStyles.miniButton.onNormal.scaledBackgrounds[0];//EditorGUIUtility.Load("builtin skins/darkskin/images/node5.png") as Texture2D;
                 Styles.enterStyle.border = new RectOffset(12, 12, 12, 0);
 
                 Styles.exitStyle = new GUIStyle();
-                Styles.exitStyle.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node5.png") as Texture2D;
+                Styles.exitStyle.normal.background = EditorStyles.miniButton.onNormal.scaledBackgrounds[0];//EditorGUIUtility.Load("builtin skins/darkskin/images/node5.png") as Texture2D;
                 Styles.exitStyle.border = new RectOffset(12, 12, 0, 12);
 
                 Styles.beginTickStyle = new GUIStyle();
@@ -431,7 +444,7 @@ namespace ME.ECSEditor {
             private void DrawConnection(Rect from, Rect to, Node fromNode, Node toNode) {
 
                 const float dotSize = 3f;
-                var dotColor = new Color(0.3f, 0.2f, 0.8f, 1f);
+                var dotColor = new Color(1f, 0.7f, 0.5f, 1f);
                 
                 if (this.vertical == true) {
                     
@@ -706,18 +719,6 @@ namespace ME.ECSEditor {
         public class PluginsLogicContainer : Container { public PluginsLogicContainer(object data) : base(data) { } }
         public class PluginsLogicSimulateContainer : Container { public PluginsLogicSimulateContainer(object data) : base(data) { } }
 
-        public class RemoveOnceComponentsNode : SystemNode {
-
-            public RemoveOnceComponentsNode(object data) : base(data) { }
-
-            public override void OnGUI(Rect rect) {
-                
-                GUI.Label(rect, "Remove Once Components", Styles.nodeCaption);
-                
-            }
-
-        }
-
         public class RemoveMarkersNode : SystemNode {
 
             public RemoveMarkersNode(object data) : base(data) { }
@@ -884,8 +885,7 @@ namespace ME.ECSEditor {
             var modulesLogicContainer = graph.AddNode(beginTick, new ModulesLogicContainer(this.CreateSubGraph<ModuleLogicNode>(modules, "AdvanceTick", WorldStep.LogicTick)), modules);
             var pluginsLogicContainer = graph.AddNode(modulesLogicContainer, new PluginsLogicContainer(null), "PlayPluginsForTick");
             var systemsLogicContainer = graph.AddNode(pluginsLogicContainer, new SystemsLogicContainer(this.CreateSubGraph<SystemLogicNode>(systems, "AdvanceTick", WorldStep.LogicTick)), systems);
-            var removeOnceComponents = graph.AddNode(systemsLogicContainer, new RemoveOnceComponentsNode(null), "RemoveComponentsOnce");
-            var endTick = graph.AddNode(removeOnceComponents, new EndTickNode(null));
+            var endTick = graph.AddNode(systemsLogicContainer, new EndTickNode(null));
             
             var pluginsLogicSimulateContainer = graph.AddNode(endTick, new PluginsLogicSimulateContainer(null), "SimulatePluginsForTicks");
             var systemsVisualContainer = graph.AddNode(pluginsLogicSimulateContainer, new SystemsVisualContainer(this.CreateSubGraph<SystemVisualNode>(systems, "Update", WorldStep.VisualTick)), systems);

@@ -1,2 +1,1 @@
-﻿-define:ECS_COMPILE_IL2CPP_OPTIONS
--define:UNITY_MATHEMATICS
+﻿@Assets/csc.gen.rsp

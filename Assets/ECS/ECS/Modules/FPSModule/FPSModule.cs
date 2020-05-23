@@ -1,5 +1,4 @@
 ﻿#if FPS_MODULE_SUPPORT
-using System.Collections.Generic;
 
 namespace ME.ECS {
 

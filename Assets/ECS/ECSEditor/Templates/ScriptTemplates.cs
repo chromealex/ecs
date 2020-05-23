@@ -304,13 +304,23 @@ MonoBehaviour:
             ScriptTemplates.CreateEmptyDirectory(path, "gen");
 
             ScriptTemplates.Create(path, projectName + "State.cs", "00-StateTemplate", defines, allowRename: false);
-            ScriptTemplates.Create(path, projectName + "Initializer.cs", "00-InitializerTemplate", defines, allowRename: false);
+            ScriptTemplates.Create(path, projectName + "Initializer.cs", "00-InitializerTemplate", defines, allowRename: false, onCreated: (asset) => {
+                
+                var assetPath = AssetDatabase.GetAssetPath(asset);
+                var meta = assetPath + ".meta";
+                var text = System.IO.File.ReadAllText(meta);
+                text = text.Replace("icon: {instanceID: 0}", "icon: {fileID: 2800000, guid: 16b72cc483a6c4dbda2dc209982c422c, type: 3}");
+                System.IO.File.WriteAllText(meta, text);
+                AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+                
+            });
             
             ScriptTemplates.Create(path, "Modules/FPSModule.cs", "00-FPSModuleTemplate", defines, allowRename: false);
             ScriptTemplates.Create(path, "Modules/NetworkModule.cs", "00-NetworkModuleTemplate", defines, allowRename: false);
             ScriptTemplates.Create(path, "Modules/StatesHistoryModule.cs", "00-StatesHistoryModuleTemplate", defines, allowRename: false);
             
             ScriptTemplates.Create(path, "csc.rsp", "00-csc.rsp", defines, allowRename: false);
+            ScriptTemplates.Create("Assets", "csc.gen.rsp", "00-csc-gen-default.rsp", defines, allowRename: false);
             ScriptTemplates.Create(path, projectName + ".asmdef", "00-asmdef", defines, allowRename: false);
 
             var guid = AssetDatabase.AssetPathToGUID(path + "/" + projectName + "Initializer.cs");

@@ -14,6 +14,8 @@ namespace ME.ECS {
 
         IStructComponent GetObject(Entity entity);
         void SetObject(Entity entity, IStructComponent data);
+        void RemoveObject(Entity entity);
+        bool HasType(System.Type type);
 
     }
 
@@ -26,8 +28,10 @@ namespace ME.ECS {
         
         public World<TState> world;
         
+        public abstract bool HasType(System.Type type);
         public abstract IStructComponent GetObject(Entity entity);
         public abstract void SetObject(Entity entity, IStructComponent data);
+        public abstract void RemoveObject(Entity entity);
         
         public abstract void CopyFrom(StructRegistryBase<TState> other);
 
@@ -107,6 +111,12 @@ namespace ME.ECS {
 
         }*/
 
+        public override bool HasType(System.Type type) {
+
+            return this.components.GetType().GetElementType() == type;
+
+        }
+        
         public override IStructComponent GetObject(Entity entity) {
 
             //var bucketId = this.GetBucketId(in entity.id, out var index);
@@ -128,7 +138,31 @@ namespace ME.ECS {
             ref var bucket = ref this.components[index];
             ref var bucketState = ref this.componentsStates[index];
             bucket = (TComponent)data;
-            bucketState = true;
+            if (bucketState == false) {
+
+                bucketState = true;
+
+                this.world.storagesCache.archetypes.Set<TComponent>(in entity);
+                
+            }
+
+        }
+
+        public override void RemoveObject(Entity entity) {
+
+            //var bucketId = this.GetBucketId(in entity.id, out var index);
+            var index = entity.id;
+            //this.CheckResize(in index);
+            ref var bucketState = ref this.componentsStates[index];
+            if (bucketState == true) {
+            
+                ref var bucket = ref this.components[index];
+                bucket = default;
+                bucketState = false;
+            
+                this.world.storagesCache.archetypes.Remove<TComponent>(in entity);
+
+            }
 
         }
 
@@ -199,13 +233,9 @@ namespace ME.ECS {
 
         public override void CopyFrom(StructRegistryBase<TState> other) {
 
-            lock (StructComponents<TState, TComponent>.lockObject) {
-
-                var _other = (StructComponents<TState, TComponent>)other;
-                ArrayUtils.Copy(_other.components, ref this.components);
-                ArrayUtils.Copy(_other.componentsStates, ref this.componentsStates);
-
-            }
+            var _other = (StructComponents<TState, TComponent>)other;
+            ArrayUtils.Copy(_other.components, ref this.components);
+            ArrayUtils.Copy(_other.componentsStates, ref this.componentsStates);
 
         }
 
@@ -448,7 +478,7 @@ namespace ME.ECS {
                     if (this.list[i] != null) {
                         
                         this.list[i].OnRecycle();
-                        PoolComponents.Recycle(this.list[i]);
+                        PoolRegistries.Recycle(this.list[i]);
                         this.list[i] = null;
 
                     }
@@ -460,6 +490,7 @@ namespace ME.ECS {
             }
 
             this.count = default;
+            this.isCreated = default;
 
         }
 
@@ -470,26 +501,10 @@ namespace ME.ECS {
         #endif
         public void CopyFrom(StructComponentsContainer<TState> other) {
 
+            this.OnRecycle();
+            
             this.count = other.count;
             this.isCreated = other.isCreated;
-            
-            if (this.list != null) {
-                
-                for (int i = 0; i < this.list.Length; ++i) {
-
-                    if (this.list[i] != null) {
-                        
-                        this.list[i].OnRecycle();
-                        PoolComponents.Recycle(this.list[i]);
-                        this.list[i] = null;
-
-                    }
-                    
-                }
-                
-                PoolArray<StructRegistryBase<TState>>.Recycle(ref this.list);
-                
-            }
             
             this.list = PoolArray<StructRegistryBase<TState>>.Spawn(other.list.Length);
             for (int i = 0; i < other.list.Length; ++i) {
@@ -497,7 +512,7 @@ namespace ME.ECS {
                 if (other.list[i] != null) {
 
                     var type = other.list[i].GetType();
-                    var comp = (StructRegistryBase<TState>)PoolComponents.Spawn(type);
+                    var comp = (StructRegistryBase<TState>)PoolRegistries.Spawn(type);
                     if (comp == null) {
                         
                         comp = (StructRegistryBase<TState>)System.Activator.CreateInstance(type);
@@ -658,7 +673,10 @@ namespace ME.ECS {
             if (state == false) {
 
                 state = true;
-
+                this.storagesCache.archetypes.Set<TComponent>(in entity);
+                ++this.componentsStructCache.count;
+                this.AddComponentToFilter(entity);
+                
             }
 
             return ref reg.components[entity.id];

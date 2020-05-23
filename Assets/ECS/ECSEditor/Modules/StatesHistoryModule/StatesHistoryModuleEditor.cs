@@ -4,7 +4,7 @@ namespace ME.ECSEditor {
     using ME.ECS;
     using ME.ECS.StatesHistory;
     
-    [CustomEditor(typeof(IStatesHistoryModuleBase))]
+    [ComponentCustomEditor(typeof(IStatesHistoryModuleBase))]
     public class StatesHistoryModuleEditor : ME.ECSEditor.IGUIEditor<IStatesHistoryModuleBase> {
 
         public IStatesHistoryModuleBase target { get; set; }
@@ -15,7 +15,7 @@ namespace ME.ECSEditor {
 
         }
 
-        void IGUIEditorBase.OnDrawGUI() {
+        bool IGUIEditorBase.OnDrawGUI() {
                 
             var style = new UnityEngine.GUIStyle(UnityEngine.GUI.skin.label);
             style.richText = true;
@@ -40,6 +40,8 @@ namespace ME.ECSEditor {
                 UnityEngine.GUILayout.Label("Tick: " + state.tick + ", State: " + state.entityId + ", Hash: " + state.GetHash());
                 
             }
+
+            return false;
 
         }
 

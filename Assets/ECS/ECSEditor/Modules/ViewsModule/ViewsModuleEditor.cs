@@ -3,7 +3,7 @@ using ME.ECS.Views;
 
 namespace ME.ECSEditor {
 
-    [CustomEditor(typeof(IViewComponent))]
+    [ComponentCustomEditor(typeof(IViewComponent))]
     public class ViewComponentEditor : ME.ECSEditor.IGUIEditor<IViewComponent> {
 
         public IViewComponent target { get; set; }
@@ -14,15 +14,17 @@ namespace ME.ECSEditor {
 
         }
 
-        void IGUIEditorBase.OnDrawGUI() {
+        bool IGUIEditorBase.OnDrawGUI() {
                 
             UnityEngine.GUILayout.Label("Prefab Source Id: " + this.target.GetViewInfo().prefabSourceId.ToString());
-                
+
+            return false;
+
         }
 
     }
 
-    [CustomEditor(typeof(IViewModuleBase))]
+    [ComponentCustomEditor(typeof(IViewModuleBase))]
     public class ViewsModuleEditor : ME.ECSEditor.IGUIEditor<IViewModuleBase> {
 
         public IViewModuleBase target { get; set; }
@@ -33,7 +35,7 @@ namespace ME.ECSEditor {
 
         }
 
-        void IGUIEditorBase.OnDrawGUI() {
+        bool IGUIEditorBase.OnDrawGUI() {
                 
             var style = new UnityEngine.GUIStyle(UnityEngine.GUI.skin.label);
             style.richText = true;
@@ -52,7 +54,9 @@ namespace ME.ECSEditor {
             }
 
             UnityEngine.GUILayout.Label("<b>Alive Views:</b> " + renderersCount.ToString(), style);
-            
+
+            return false;
+
         }
 
     }

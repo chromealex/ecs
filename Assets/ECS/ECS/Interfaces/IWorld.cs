@@ -7,7 +7,13 @@ namespace ME.ECS {
     public partial interface IWorldBase {
 
         int id { get; }
+        
+        WorldSettings settings { get; }
+        WorldDebugSettings debugSettings { get; }
 
+        void SetSettings(WorldSettings settings);
+        void SetDebugSettings(WorldDebugSettings settings);
+        
         ISystemBase currentSystemContext { get; }
         void SetCheckpointCollector(ICheckpointCollector checkpointCollector);
         void Checkpoint(object interestObj);
@@ -31,6 +37,8 @@ namespace ME.ECS {
 
         TModule GetModule<TModule>() where TModule : IModuleBase;
 
+        void AddComponentToFilter(Entity entity);
+        void RemoveComponentFromFilter(Entity entity);
         void UpdateAllFilters();
         
         bool HasResetState();

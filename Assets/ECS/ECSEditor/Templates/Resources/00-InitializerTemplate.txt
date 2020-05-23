@@ -1,12 +1,7 @@
 using UnityEngine;
 
 #region Namespaces
-namespace #NAMESPACE#.Systems {}
-namespace #NAMESPACE#.Components {}
-namespace #NAMESPACE#.Modules {}
-namespace #NAMESPACE#.Features {}
-namespace #NAMESPACE#.Markers {}
-namespace #NAMESPACE#.Views {}
+namespace #NAMESPACE#.Systems {} namespace #NAMESPACE#.Components {} namespace #NAMESPACE#.Modules {} namespace #NAMESPACE#.Features {} namespace #NAMESPACE#.Markers {} namespace #NAMESPACE#.Views {}
 #endregion
 
 namespace #NAMESPACE# {
@@ -41,7 +36,7 @@ namespace #NAMESPACE# {
                     // Create new state
                     this.world.SetState(WorldUtilities.CreateState<TState>());
                     ComponentsInitializer<TState>.DoInit();
-                    this.InitializeFeatures(this.world);
+                    this.Initialize(this.world);
 
                     // Add your custom systems here
                     

@@ -6,8 +6,7 @@ namespace ME.ECS {
     public interface IComponentsBase {
 
         IList<IComponentBase> GetData(int entityId);
-        IDictionary GetDataOnce();
-
+        
     }
 
     public interface IComponents<TState> : IComponentsBase, IPoolableRecycle where TState : class, IState<TState>, new() {
@@ -51,7 +50,6 @@ namespace ME.ECS {
         private Bucket[] arr; // arr by component type
         private static int typeId;
         
-        private bool freeze;
         private int capacity;
 
         public void Initialize(int capacity) {
@@ -62,16 +60,14 @@ namespace ME.ECS {
 
         public void SetFreeze(bool freeze) {
 
-            this.freeze = freeze;
-
         }
 
         void IPoolableRecycle.OnRecycle() {
 
             this.CleanUp_INTERNAL();
             
-            this.freeze = default;
-
+            this.capacity = default;
+            
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -355,16 +351,12 @@ namespace ME.ECS {
 
         }
 
-        IDictionary IComponentsBase.GetDataOnce() {
-
-            return null;
-
-        }
-
         public void CopyFrom(Components<TState> other) {
 
             // Clean up current array
             this.CleanUp_INTERNAL();
+
+            this.capacity = other.capacity;
             
             // Clone other array
             this.arr = PoolArray<Bucket>.Spawn(other.arr.Length);

@@ -978,7 +978,8 @@ namespace ME.ECSEditor {
         public static void ShowInstance() {
 
             var instance = EditorWindow.GetWindow(typeof(NodesViewerEditor));
-            instance.titleContent = new GUIContent("Nodes Viewer");
+            var icon = UnityEditor.Experimental.EditorResources.Load<Texture2D>("Assets/ECS/ECSEditor/EditorResources/icon-nodesviewer.png");
+            instance.titleContent = new GUIContent("Nodes Viewer", icon);
             instance.Show();
 
         }

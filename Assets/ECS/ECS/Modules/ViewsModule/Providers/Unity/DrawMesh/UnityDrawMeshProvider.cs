@@ -4,6 +4,16 @@ namespace ME.ECS {
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
 
+    public partial struct WorldViewsSettings {
+
+        public bool unityDrawMeshProviderDisableJobs;
+
+    }
+
+    public partial struct WorldDebugViewsSettings {
+
+    }
+    
     public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource(DrawMeshViewSourceBase prefab);
@@ -363,8 +373,11 @@ namespace ME.ECS.Views.Providers {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
 
-            UnityDrawMeshProvider.currentList = list;
-            if (list != null) {
+            if (list == null) return;
+            
+            if (this.world.settings.useJobsForViews == true && this.world.settings.viewsSettings.unityDrawMeshProviderDisableJobs == false) {
+
+                UnityDrawMeshProvider.currentList = list;
                 
                 var job = new Job() {
                     deltaTime = deltaTime
@@ -372,6 +385,22 @@ namespace ME.ECS.Views.Providers {
                 var handle = job.Schedule(list.Length, 16);
                 handle.Complete();
                 UnityDrawMeshProvider.currentList = null;
+
+            } else {
+
+                for (int j = 0; j < list.Length; ++j) {
+
+                    var item = list[j];
+                    for (int i = 0, count = item.Count; i < count; ++i) {
+
+                        var instance = item[i] as DrawMeshViewBase;
+                        if (instance == null) continue;
+
+                        instance.ApplyStateJob(deltaTime, immediately: false);
+                    
+                    }
+                    
+                }
                 
             }
 

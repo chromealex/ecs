@@ -194,8 +194,8 @@ namespace ME.ECSEditor {
                 if (System.IO.Directory.Exists(dir) == false) return;
                 
                 System.IO.File.WriteAllText(fullDir, content);
-                AssetDatabase.ImportAsset(fullDir);
-                
+                AssetDatabase.ImportAsset(fullDir, ImportAssetOptions.ForceSynchronousImport);
+
                 if (onCreated != null) onCreated.Invoke(AssetDatabase.LoadAssetAtPath<Object>(fullDir));
                 
             }
@@ -353,6 +353,44 @@ MonoBehaviour:
 
         }
 
+        [UnityEditor.Callbacks.DidReloadScripts]
+        private static void OnScriptsReloaded() {
+
+            ScriptTemplates.CreateFeatureComplex_AfterCompilation();
+
+        }
+
+        private static void CreateFeatureComplex_AfterCompilation() {
+            
+            var waitForCompilation = EditorPrefs.GetBool("Temp.EditorWaitCompilation.CreateFeatureComplex");
+            if (waitForCompilation == true) {
+                
+                EditorPrefs.DeleteKey("Temp.EditorWaitCompilation.CreateFeatureComplex");
+                
+                var dir = EditorPrefs.GetString("Temp.EditorWaitCompilation.CreateFeatureComplex.Dir");
+                var assetName = EditorPrefs.GetString("Temp.EditorWaitCompilation.CreateFeatureComplex.Name");
+                var assetPath = EditorPrefs.GetString("Temp.EditorWaitCompilation.CreateFeatureComplex.ScriptPath");
+                var newAssetPath = EditorPrefs.GetString("Temp.EditorWaitCompilation.CreateFeatureComplex.NewScriptPath");
+            
+                AssetDatabase.MoveAsset(assetPath, newAssetPath);
+                AssetDatabase.ImportAsset(newAssetPath, ImportAssetOptions.ForceSynchronousImport);
+
+                var guid = AssetDatabase.AssetPathToGUID(newAssetPath);
+                var defs = new Dictionary<string, string>() {
+                    { "GUID", guid },
+                };
+                ScriptTemplates.Create(dir, assetName + "Feature.asset", "63-FeatureAsset", allowRename: false, customDefines: defs);
+
+                ScriptTemplates.CreateEmptyDirectory(dir, "Modules");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Systems");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Components");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Markers");
+                ScriptTemplates.CreateEmptyDirectory(dir, "Views");
+
+            }
+            
+        }
+
         [UnityEditor.MenuItem("Assets/Create/ME.ECS/Feature (Complex)", priority = ScriptTemplates.CREATE_FEATURE_COMPLEX_PRIORITY)]
         public static void CreateFeatureComplex() {
 
@@ -364,20 +402,13 @@ MonoBehaviour:
                 ScriptTemplates.CreateEmptyDirectory(path, assetName);
                 var dir = path + "/" + assetName;
                 var newAssetPath = dir + "/" + assetName + "Feature.cs";
-                AssetDatabase.MoveAsset(AssetDatabase.GetAssetPath(asset), newAssetPath);
-                AssetDatabase.ImportAsset(newAssetPath, ImportAssetOptions.ForceUpdate);
 
-                var guid = AssetDatabase.AssetPathToGUID(newAssetPath);
-                var defs = new Dictionary<string, string>() {
-                    { "GUID", guid },
-                };
-                ScriptTemplates.Create(dir, assetName + "Feature.asset", "63-FeatureAsset", allowRename: false, customDefines: defs);
+                EditorPrefs.SetBool("Temp.EditorWaitCompilation.CreateFeatureComplex", true);
+                EditorPrefs.SetString("Temp.EditorWaitCompilation.CreateFeatureComplex.Dir", dir);
+                EditorPrefs.SetString("Temp.EditorWaitCompilation.CreateFeatureComplex.Name", assetName);
+                EditorPrefs.SetString("Temp.EditorWaitCompilation.CreateFeatureComplex.ScriptPath", AssetDatabase.GetAssetPath(asset));
+                EditorPrefs.SetString("Temp.EditorWaitCompilation.CreateFeatureComplex.NewScriptPath", newAssetPath);
                 
-                ScriptTemplates.CreateEmptyDirectory(dir, "Modules");
-                ScriptTemplates.CreateEmptyDirectory(dir, "Systems");
-                ScriptTemplates.CreateEmptyDirectory(dir, "Components");
-                ScriptTemplates.CreateEmptyDirectory(dir, "Markers");
-                ScriptTemplates.CreateEmptyDirectory(dir, "Views");
                 //ScriptTemplates.CreateEmptyDirectory(dir, "Data");
                 //ScriptTemplates.Create(dir + "/Data", "Feature" + assetName + "Data.cs", "62-FeatureData", allowRename: false);
 

@@ -44,24 +44,47 @@ namespace ME.ECS {
 
     }
 
-    public class InStateException : System.Exception {
-
-        public InStateException() : base("[World] Could not perform action because current step is in state (" + Worlds.currentWorld.GetCurrentStep().ToString() + ").") {}
-
-    }
-
-    public class OutOfStateException : System.Exception {
-
-        public OutOfStateException() : base("[World] Could not perform action because current step is out of state (" + Worlds.currentWorld.GetCurrentStep().ToString() + ").") {}
+    #pragma warning disable
+    [System.Serializable]
+    public partial struct WorldViewsSettings {
 
     }
 
-    public class AllocationException : System.Exception {
+    [System.Serializable]
+    public struct WorldSettings {
 
-        public AllocationException() : base("Allocation not allowed!") {}
+        public bool useJobsForSystems;
+        public bool useJobsForViews;
+
+        public WorldViewsSettings viewsSettings;
+        
+        public static WorldSettings Default => new WorldSettings() {
+            useJobsForSystems = true,
+            useJobsForViews = true,
+            viewsSettings = new WorldViewsSettings()
+        };
 
     }
 
+    [System.Serializable]
+    public partial struct WorldDebugViewsSettings { }
+
+    [System.Serializable]
+    public struct WorldDebugSettings {
+
+        public bool createGameObjectsRepresentation;
+        public bool showViewsOnScene;
+        public WorldDebugViewsSettings viewsSettings;
+
+        public static WorldDebugSettings Default => new WorldDebugSettings() {
+            createGameObjectsRepresentation = false,
+            showViewsOnScene = false,
+            viewsSettings = new WorldDebugViewsSettings()
+        };
+
+    }
+    #pragma warning restore
+    
     public interface ICheckpointCollector {
 
         void Reset();
@@ -124,6 +147,9 @@ namespace ME.ECS {
         
         private Tick simulationFromTick;
         private Tick simulationToTick;
+
+        public WorldSettings settings { get; private set; }
+        public WorldDebugSettings debugSettings { get; private set; }
 
         #if WORLD_THREAD_CHECK
         private System.Threading.Thread worldThread;
@@ -217,6 +243,18 @@ namespace ME.ECS {
             
             PoolClass<Storage>.Recycle(ref this.storagesCache);
 
+        }
+
+        public void SetSettings(WorldSettings settings) {
+
+            this.settings = settings;
+
+        }
+
+        public void SetDebugSettings(WorldDebugSettings settings) {
+            
+            this.debugSettings = settings;
+            
         }
 
         public void SetCheckpointCollector(ICheckpointCollector checkpointCollector) {
@@ -575,7 +613,25 @@ namespace ME.ECS {
             if (freeze == false) {
 
                 this.filtersStorage = filtersRef;
+                
+                ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+                if (dic != null) {
+                    
+                    System.Array.Clear(dic, 0, dic.Length);
+                    for (int i = 0; i < filtersRef.filters.Length; ++i) {
 
+                        var filterRef = filtersRef.filters[i];
+                        if (filterRef != null) {
+                        
+                            ArrayUtils.Resize(filterRef.id - 1, ref dic);
+                            dic[filterRef.id - 1] = true;
+
+                        }
+
+                    }
+
+                }
+                
             }
             
         }
@@ -635,37 +691,33 @@ namespace ME.ECS {
 
                 this.storagesCache = storageRef;
 
-            }
+                if (this.sharedEntity.id == 0 && this.sharedEntityInitialized == false) {
 
-            if (freeze == false && this.sharedEntity.id == 0 && this.sharedEntityInitialized == false) {
-                
-                // Create shared entity which should store shared components
-                this.sharedEntityInitialized = true;
-                this.sharedEntity = this.AddEntity_INTERNAL(Entity.Create(0, noCheck: true));//this.AddEntity(new SharedEntity());//new SharedEntity() { entity = Entity.Create<SharedEntity>(0, noCheck: true) }, updateStorages: false);
+                    // Create shared entity which should store shared components
+                    this.sharedEntityInitialized = true;
+                    this.sharedEntity = this.AddEntity_INTERNAL( Entity.Create(0, noCheck: true));
+
+                }
 
             }
 
             if (restore == true) {
 
                 // Update entities cache
-                //this.storagesCache.SetData(storageRef.GetData());
-                
-                for (int i = 0; i < storageRef.Count; ++i) {
+                if (this.ForEachEntity(out var allEntities) == true) {
 
-                    ref var entity = ref storageRef[i];
-                    if (storageRef.IsFree(i) == true) continue;
-                    //this.AddEntity_INTERNAL(entity);
+                    for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
                     
-                    //ref var entitiesList = ref storageRef.GetData();
-                    //var nextIndex = entitiesList.GetNextIndex();
-                    //entity = new Entity(entity.id, nextIndex);
-                    //entitiesList.Add(entity);
-                    this.UpdateFilters(entity);
-                    this.CreateEntityPlugins(entity);
+                        ref var item = ref allEntities[j];
+                        if (allEntities.IsFree(j) == true) continue;
+                    
+                        this.UpdateFilters(item);
+                        this.CreateEntityPlugins(item);
 
-
+                    }
+                
                 }
-
+                
             }
 
         }
@@ -883,7 +935,7 @@ namespace ME.ECS {
                 });
 
             }
-            
+
             return entity;
 
         }
@@ -1588,11 +1640,7 @@ namespace ME.ECS {
                                 sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
                                 if (sysFilter.filter != null) {
 
-                                    var forceNoJobs = true;
-                                    #if ENABLE_JOBS_FOR_SYSTEMS
-                                    forceNoJobs = false;
-                                    #endif
-                                    if (forceNoJobs == false && sysFilter.jobs == true) {
+                                    if (this.settings.useJobsForSystems == true && sysFilter.jobs == true) {
 
                                         //sysFilter.filter.SetForEachMode(true);
                                         var arrEntities = sysFilter.filter.GetArray();

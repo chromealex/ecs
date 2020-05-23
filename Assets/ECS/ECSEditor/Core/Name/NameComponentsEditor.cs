@@ -2,7 +2,7 @@ namespace ME.ECSEditor {
 
     using ME.ECS;
     
-    [CustomEditor(typeof(ME.ECS.Name.Name))]
+    [ComponentCustomEditor(typeof(ME.ECS.Name.Name), order: -100)]
     public class NameComponentEditor : ME.ECSEditor.IGUIEditor<ME.ECS.Name.Name> {
 
         public ME.ECS.Name.Name target { get; set; }
@@ -13,11 +13,14 @@ namespace ME.ECSEditor {
 
         }
 
-        void IGUIEditorBase.OnDrawGUI() {
+        bool IGUIEditorBase.OnDrawGUI() {
 
             var target = this.target;
             target.value = UnityEditor.EditorGUILayout.TextField("Name", target.value);
+            var isDirty = (target.value != this.target.value);
             this.target = target;
+
+            return isDirty;
 
         }
 

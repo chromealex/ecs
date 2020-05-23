@@ -418,9 +418,17 @@ namespace ME.ECS.StatesHistory {
         }*/
 
         public void SetSyncHash(Tick tick, int hash) {
-            
-            if (this.syncHash.ContainsKey(tick) == false) this.syncHash.Add(tick, hash);
-            
+
+            if (this.syncHash.ContainsKey(tick) == false) {
+
+                this.syncHash.Add(tick, hash);
+
+            } else {
+
+                this.syncHash[tick] = hash;
+
+            }
+
         }
         
         private void CheckHash(Tick tick) {

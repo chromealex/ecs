@@ -2,7 +2,7 @@ namespace ME.ECSEditor {
 
     public interface IGUIEditorBase {
         
-        void OnDrawGUI();
+        bool OnDrawGUI();
         T GetTarget<T>();
 
     }
@@ -11,6 +11,12 @@ namespace ME.ECSEditor {
 
         T target { get; set; }
 
+    }
+    
+    public interface IDebugViewGUIEditor<T> : IGUIEditor<T> {
+    }
+
+    public interface IJobsViewGUIEditor<T> : IGUIEditor<T> {
     }
 
 }

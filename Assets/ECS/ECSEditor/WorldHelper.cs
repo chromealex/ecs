@@ -8,8 +8,6 @@ namespace ME.ECSEditor {
 
     public static class WorldHelper {
 
-        private static Dictionary<int, ME.ECS.IComponentsBase> componentsCache = new Dictionary<int, ME.ECS.IComponentsBase>();
-
         public static FiltersStorage GetFilters(IWorldBase world) {
 
             var field = world.GetType().GetField("filtersStorage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -17,20 +15,13 @@ namespace ME.ECSEditor {
 
         }
 
-        /*public static Dictionary<int, ME.ECS.IComponentsBase> GetComponentsStorage(IWorldBase world) {
+        public static ME.ECS.IComponentsBase GetComponentsStorage(IWorldBase world) {
 
             var field = world.GetType().GetField("componentsCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            var dic = (IList)field.GetValue(world);
-            WorldHelper.componentsCache.Clear();
-            foreach (var item in dic) {
+            var dic = (ME.ECS.IComponentsBase)field.GetValue(world);
+            return dic;
 
-                WorldHelper.componentsCache.Add(, (ME.ECS.IComponentsBase)item);
-
-            }
-
-            return WorldHelper.componentsCache;
-
-        }*/
+        }
 
         public static IStructComponentsContainer GetStructComponentsStorage(IWorldBase world) {
 

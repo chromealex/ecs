@@ -4,6 +4,18 @@ namespace ME.ECS {
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
     
+    public partial struct WorldViewsSettings {
+
+        public bool unityGameObjectProviderDisableJobs;
+
+    }
+
+    public partial struct WorldDebugViewsSettings {
+
+        public bool unityGameObjectProviderShowOnScene;
+
+    }
+
     public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource(UnityEngine.GameObject prefab);
@@ -193,6 +205,16 @@ namespace ME.ECS.Views.Providers {
         public virtual void OnDeInitialize() { }
         public virtual void ApplyState(float deltaTime, bool immediately) { }
 
+        public override string ToString() {
+
+            var info = string.Empty;
+            info += "Entity: " + this.entity.ToString() + "\n";
+            info += "Prefab Source Id: " + this.prefabSourceId + "\n";
+            info += "Creation Tick: " + this.creationTick + "\n";
+            return info + base.ToString();
+            
+        }
+
     }
     
     #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -219,7 +241,14 @@ namespace ME.ECS.Views.Providers {
         
         public override IView Spawn(IView prefab, ViewId prefabSourceId) {
 
-            return this.pool.Spawn((MonoBehaviourView)prefab, prefabSourceId);
+            var view = this.pool.Spawn((MonoBehaviourView)prefab, prefabSourceId);
+            if (this.world.debugSettings.showViewsOnScene == false || this.world.debugSettings.viewsSettings.unityGameObjectProviderShowOnScene == false) {
+                
+                view.gameObject.hideFlags = UnityEngine.HideFlags.HideInHierarchy;
+                
+            }
+
+            return view;
 
         }
 
@@ -270,6 +299,8 @@ namespace ME.ECS.Views.Providers {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
 
+            if (this.world.settings.useJobsForViews == false || this.world.settings.viewsSettings.unityGameObjectProviderDisableJobs == true) return;
+            
             UnityGameObjectProvider.currentList = list;
             if (list != null) {
 
@@ -281,7 +312,7 @@ namespace ME.ECS.Views.Providers {
 
                     var item = list[i];
                     if (item == null) continue;
-                    
+
                     for (int j = 0, count = item.Count; j < count; ++j) {
 
                         var view = item[j] as MonoBehaviourViewBase;
@@ -304,12 +335,18 @@ namespace ME.ECS.Views.Providers {
                 }
 
                 if (changed == true) this.currentTransformArray.SetTransforms(this.currentTransforms);
-                var job = new Job() {
-                    deltaTime = deltaTime
-                };
-                var handle = job.Schedule(this.currentTransformArray);
-                handle.Complete();
-                UnityGameObjectProvider.currentList = null;
+
+                if (this.currentTransforms.Length > 0) {
+
+                    var job = new Job() {
+                        deltaTime = deltaTime
+                    };
+
+                    var handle = job.Schedule(this.currentTransformArray);
+                    handle.Complete();
+                    UnityGameObjectProvider.currentList = null;
+
+                }
                 
             }
 

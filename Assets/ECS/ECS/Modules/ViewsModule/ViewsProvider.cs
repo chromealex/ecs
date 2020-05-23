@@ -302,6 +302,8 @@
 
     public interface IViewsProvider : IViewsProviderBase {
 
+        IWorldBase world { get; set; }
+
         IView Spawn(IView prefab, ViewId prefabSourceId);
         void Destroy(ref IView instance);
 
@@ -311,6 +313,8 @@
 
     public abstract class ViewsProvider : IViewsProvider {
 
+        public IWorldBase world { get; set; }
+        
         public abstract void OnConstruct();
         public abstract void OnDeconstruct();
 

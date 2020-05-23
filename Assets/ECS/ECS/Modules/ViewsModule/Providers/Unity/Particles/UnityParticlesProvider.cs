@@ -4,6 +4,18 @@ namespace ME.ECS {
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
 
+    public partial struct WorldViewsSettings {
+
+        public bool unityParticlesProviderDisableJobs;
+
+    }
+
+    public partial struct WorldDebugViewsSettings {
+
+        public bool unityParticlesProviderShowOnScene;
+
+    }
+
     public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
 
         ViewId RegisterViewSource(ParticleViewSourceBase prefab);
@@ -411,6 +423,11 @@ namespace ME.ECS.Views.Providers {
             
             particleSystem = new UnityEngine.GameObject("PS-Render-" + key, typeof(UnityEngine.ParticleSystem)).GetComponent<UnityEngine.ParticleSystem>();
             //particleSystem.gameObject.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
+            if (this.world.debugSettings.showViewsOnScene == false || this.world.debugSettings.viewsSettings.unityParticlesProviderShowOnScene == false) {
+                
+                particleSystem.gameObject.hideFlags = UnityEngine.HideFlags.HideInHierarchy;
+                
+            }
             particleSystem.Stop(withChildren: true);
             particleSystem.Pause(withChildren: true);
             particleSystem.useAutoRandomSeed = false;
@@ -641,16 +658,36 @@ namespace ME.ECS.Views.Providers {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
 
-            UnityParticlesProvider.currentList = list;
-            if (list != null) {
-                
-                var job = new Job() {
-                    deltaTime = deltaTime
-                };
-                var handle = job.Schedule(list.Length, 16);
-                handle.Complete();
-                UnityParticlesProvider.currentList = null;
-                
+            if (this.world.settings.useJobsForViews == true && this.world.settings.viewsSettings.unityParticlesProviderDisableJobs == false) {
+
+                UnityParticlesProvider.currentList = list;
+                if (list != null) {
+
+                    var job = new Job() {
+                        deltaTime = deltaTime
+                    };
+                    var handle = job.Schedule(list.Length, 16);
+                    handle.Complete();
+                    UnityParticlesProvider.currentList = null;
+
+                }
+
+            } else {
+
+                for (int j = 0, cnt = list.Length; j < cnt; ++j) {
+
+                    var item = list[j];
+                    for (int i = 0, count = item.Count; i < count; ++i) {
+
+                        var instance = item[i] as ParticleViewBase;
+                        if (instance == null) continue;
+
+                        instance.ApplyStateJob(deltaTime, immediately: false);
+
+                    }
+
+                }
+
             }
 
         }

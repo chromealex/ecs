@@ -3,7 +3,7 @@ namespace ME.ECSEditor {
 
     using ME.ECS;
     
-    [CustomEditor(typeof(IFPSModuleBase))]
+    [ComponentCustomEditor(typeof(IFPSModuleBase))]
     public class FPSModuleEditor : IGUIEditor<IFPSModuleBase> {
 
         public IFPSModuleBase target { get; set; }
@@ -14,7 +14,7 @@ namespace ME.ECSEditor {
 
         }
 
-        void IGUIEditorBase.OnDrawGUI() {
+        bool IGUIEditorBase.OnDrawGUI() {
 
             var style = new UnityEngine.GUIStyle(UnityEngine.GUI.skin.label);
             style.richText = true;
@@ -23,6 +23,8 @@ namespace ME.ECSEditor {
             UnityEngine.GUILayout.Label("<b>Max FPS:</b> " + this.target.maxFps.ToString(), style);
             UnityEngine.GUILayout.Label("<b>Min FPS:</b> " + this.target.minFps.ToString(), style);
             UnityEngine.GUILayout.Label("<b>Target FPS:</b> " + this.target.targetFps.ToString(), style);
+
+            return false;
 
         }
 

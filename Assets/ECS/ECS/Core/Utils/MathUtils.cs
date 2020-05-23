@@ -62,6 +62,16 @@ namespace ME.ECS {
 
     public static class MathUtils {
 
+        public static bool IsUnityMathematicsUsed() {
+            
+            #if UNITY_MATHEMATICS
+            return true;
+            #else
+            return false;
+            #endif
+
+        }
+
         public static Vector2Int GetSpiralPointByIndex(Vector2Int center, int index) {
 
             if (index == 0) return center;

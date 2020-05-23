@@ -4,7 +4,7 @@ namespace ME.ECSEditor {
     using ME.ECS;
     using ME.ECS.Network;
     
-    [CustomEditor(typeof(INetworkModuleBase))]
+    [ComponentCustomEditor(typeof(INetworkModuleBase))]
     public class NetworkModuleEditor : ME.ECSEditor.IGUIEditor<INetworkModuleBase> {
 
         public INetworkModuleBase target { get; set; }
@@ -15,7 +15,7 @@ namespace ME.ECSEditor {
 
         }
 
-        void IGUIEditorBase.OnDrawGUI() {
+        bool IGUIEditorBase.OnDrawGUI() {
                 
             var style = new UnityEngine.GUIStyle(UnityEngine.GUI.skin.label);
             style.richText = true;
@@ -35,6 +35,8 @@ namespace ME.ECSEditor {
             UnityEngine.GUILayout.Label("<b>Events Sent: </b>" + eventsSent, style);
             UnityEngine.GUILayout.Label("<b>Sent: </b>" + eventsBytesSentStr, style);
             UnityEngine.GUILayout.Label("<b>Received: </b>" + eventsBytesReceivedStr, style);
+
+            return false;
 
         }
 

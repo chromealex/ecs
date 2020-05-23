@@ -225,9 +225,9 @@ namespace ME.ECS.Views {
         }
 
         public override int GetHashCode() {
-                
-            return this.entity.id ^ this.prefabSourceId.GetHashCode() ^ this.creationTick.GetHashCode();
-                
+
+            return (int)MathUtils.GetKey(this.entity.id, this.prefabSourceId.GetHashCode()/* ^ this.creationTick.GetHashCode()*/);
+            
         }
             
         public override bool Equals(object obj) {
@@ -238,7 +238,7 @@ namespace ME.ECS.Views {
 
         public bool Equals(ViewInfo p) {
                 
-            return this.creationTick == p.creationTick && this.entity.id == p.entity.id && this.prefabSourceId == p.prefabSourceId;
+            return /*this.creationTick == p.creationTick &&*/ this.entity.id == p.entity.id && this.prefabSourceId == p.prefabSourceId;
                 
         }
 
@@ -634,6 +634,7 @@ namespace ME.ECS.Views {
                 this.registryIdToPrefab.Add(this.viewSourceIdRegistry, prefab);
                 var viewsProvider = (IViewsProviderInitializer)providerInitializer;
                 var provider = viewsProvider.Create();
+                provider.world = this.world;
                 provider.OnConstruct();
                 this.registryPrefabToProvider.Add(this.viewSourceIdRegistry, provider);
                 this.registryPrefabToProviderInitializer.Add(this.viewSourceIdRegistry, viewsProvider);
@@ -657,6 +658,7 @@ namespace ME.ECS.Views {
                 if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
 
                     var provider = this.registryPrefabToProvider[viewId];
+                    provider.world = null;
                     provider.OnDeconstruct();
                     ((IViewsProviderInitializer)this.registryPrefabToProviderInitializer[viewId]).Destroy(provider);
                     this.registryPrefabToProviderInitializer.Remove(viewId);
@@ -748,7 +750,17 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool IsRenderingNow(in ViewInfo viewInfo) {
 
-            return this.rendering.Contains(viewInfo);
+            foreach (var item in this.rendering) {
+
+                if (item.Equals(viewInfo) == true) {
+
+                    return true;
+
+                }
+                
+            }
+
+            return false;//this.rendering.Contains(viewInfo);
 
         }
 
@@ -803,11 +815,11 @@ namespace ME.ECS.Views {
 
             for (var id = 0; id < this.list.Length; ++id) {
                 
+                var list = this.list[id];
+                if (list == null) continue;
+
                 if (aliveEntities.Contains(id) == false) {
 
-                    var list = this.list[id];
-                    if (list == null) continue;
-                    
                     for (int i = 0, count = list.Count; i < count; ++i) {
 
                         var instance = list[i];
@@ -819,7 +831,41 @@ namespace ME.ECS.Views {
 
                     list.Clear();
 
+                } else {
+                    
+                    // If entity is alive - check if we are rendering needed view
+                    for (int i = 0, count = list.Count; i < count; ++i) {
+
+                        var instance = list[i];
+                        var allViews = this.world.ForEachComponent<ViewComponent<TState>>(instance.entity);
+                        if (allViews == null) continue;
+                        
+                        var found = false;
+                        foreach (var viewComponent in allViews) {
+                            
+                            var view = (ViewComponent<TState>)viewComponent;
+                            if (instance.prefabSourceId == view.viewInfo.prefabSourceId &&
+                                instance.creationTick == view.viewInfo.creationTick) {
+
+                                found = true;
+                                break;
+
+                            }
+                            
+                        }
+
+                        if (found == false) {
+                            
+                            this.RecycleView_INTERNAL(ref instance);
+                            --i;
+                            --count;
+                            
+                        }
+
+                    }
+                    
                 }
+
             }
 
             {

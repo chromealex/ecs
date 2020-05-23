@@ -8,18 +8,6 @@ namespace ME.ECSEditor {
     
     using ME.ECS;
 
-    public class CustomEditorAttribute : System.Attribute {
-
-        public System.Type type;
-
-        public CustomEditorAttribute(System.Type type) {
-
-            this.type = type;
-
-        }
-
-    }
-
     public class WorldsViewerEditor : EditorWindow {
 
         public class WorldEditor {
@@ -312,11 +300,11 @@ namespace ME.ECSEditor {
 
             }
 
-            /*public Dictionary<int, ME.ECS.IComponentsBase> GetComponentsStorage() {
+            public ME.ECS.IComponentsBase GetComponentsStorage() {
 
                 return WorldHelper.GetComponentsStorage(this.world);
 
-            }*/
+            }
 
             public IStructComponentsContainer GetStructComponentsStorage() {
 
@@ -365,7 +353,8 @@ namespace ME.ECSEditor {
         public static void ShowInstance() {
 
             var instance = EditorWindow.GetWindow(typeof(WorldsViewerEditor));
-            instance.titleContent = new GUIContent("Worlds Viewer");
+            var icon = UnityEditor.Experimental.EditorResources.Load<Texture2D>("Assets/ECS/ECSEditor/EditorResources/icon-worldviewer.png");
+            instance.titleContent = new GUIContent("Worlds Viewer", icon);
             instance.Show();
 
         }
@@ -376,7 +365,8 @@ namespace ME.ECSEditor {
 
         }
 
-        private IGUIEditorBase GetEditor<T>(T instance, IGUIEditorBase editor) {
+        private static Dictionary<System.Type, IGUIEditorBase> editors;
+        private static IGUIEditorBase GetEditor<T>(T instance, IGUIEditorBase editor) {
             
             var editorT = editor as IGUIEditor<T>;
             if (editorT != null) {
@@ -400,12 +390,12 @@ namespace ME.ECSEditor {
 
         }
 
-        private IGUIEditorBase GetEditor<T>(T instance, System.Type type) {
+        private static IGUIEditorBase GetEditor<T>(T instance, System.Type type) {
             
             IGUIEditorBase editor;
-            if (this.editors.TryGetValue(type, out editor) == true) {
+            if (WorldsViewerEditor.editors.TryGetValue(type, out editor) == true) {
 
-                return this.GetEditor(instance, editor);
+                return WorldsViewerEditor.GetEditor(instance, editor);
                 
             }
 
@@ -413,19 +403,41 @@ namespace ME.ECSEditor {
 
         }
 
-        private IGUIEditorBase GetEditor<T>(T instance) {
+        private static IGUIEditorBase GetEditor<T>(T instance) {
 
+            return WorldsViewerEditor.GetEditor(instance, out _);
+
+        }
+
+        private static IGUIEditorBase GetEditor<T>(T instance, out int order) {
+
+            if (WorldsViewerEditor.editors == null) GUILayoutExt.CollectEditors<IGUIEditorBase, CustomEditorAttribute>(ref WorldsViewerEditor.editors);
+
+            order = 0;
+            
             var type = instance.GetType();
             while (type != null && type != typeof(object)) {
 
-                var editor = this.GetEditor(instance, type);
-                if (editor != null) return editor;
+                var editor = WorldsViewerEditor.GetEditor(instance, type);
+                if (editor != null) {
+                    
+                    var attrs = editor.GetType().GetCustomAttributes(typeof(CustomEditorAttribute), inherit: true);
+                    order = ((CustomEditorAttribute)attrs[0]).order;
+                    return editor;
+                    
+                }
                 
                 var interfaces = type.GetInterfaces();
                 foreach (var @interface in interfaces) {
 
-                    editor = this.GetEditor(instance, @interface);
-                    if (editor != null) return editor;
+                    editor = WorldsViewerEditor.GetEditor(instance, @interface);
+                    if (editor != null) {
+
+                        var attrs = editor.GetType().GetCustomAttributes(typeof(CustomEditorAttribute), inherit: true);
+                        order = ((CustomEditorAttribute)attrs[0]).order;
+                        return editor;
+                        
+                    }
 
                 }
 
@@ -437,46 +449,116 @@ namespace ME.ECSEditor {
 
         }
 
-        private Dictionary<System.Type, IGUIEditorBase> editors;
-        private void CollectEditors() {
+        private void OnEnable()  { EditorApplication.update += this.OnTryRepaint; }
+        private void OnDisable() { EditorApplication.update -= this.OnTryRepaint; }
+        private void OnTryRepaint() {
+            
+            if(!this.refresh) return;
+            this.refresh = false;
+            
+            base.Repaint();
+            
+        }
+        
+        private static readonly int resizePanelControlID = "ResizePanel".GetHashCode();
+        private float worldsSizeWidth = 300f;
+        private Vector2 lastMousePos;
+        private Vector2 dragDistance;
+        private float dragStartWidth;
+        private bool refresh;
+        private bool isDrag;
 
-            if (this.editors == null) {
+        private void HandleResizePanels() {
 
-                this.editors = new Dictionary<System.Type, IGUIEditorBase>();
-                
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var types = assembly.GetTypes();
-                foreach (var type in types) {
+            this.refresh = this.position.Contains(Event.current.mousePosition);
 
-                    var attrs = type.GetCustomAttributes(typeof(ME.ECSEditor.CustomEditorAttribute), inherit: true);
-                    if (attrs.Length > 0) {
+            var panelRect = new Rect(this.worldsSizeWidth + 6f, 0f, 6f, this.position.height);
 
-                        if (attrs[0] is CustomEditorAttribute attr) {
+            var current = Event.current;
+            var controlID = GUIUtility.GetControlID(WorldsViewerEditor.resizePanelControlID, FocusType.Passive);
+            var hotControl = GUIUtility.hotControl;
+            //specify the area where you can click and drag from
+            var dragRegion = new Rect(panelRect.xMax - 5, panelRect.yMin - 5, 10, panelRect.height + 10);
+            EditorGUIUtility.AddCursorRect(dragRegion, MouseCursor.ResizeHorizontal);
 
-                            var editor = System.Activator.CreateInstance(type) as IGUIEditorBase;
-                            if (editor == null) {
-                             
-                                Debug.LogError("Editor class must inherit from IGUIEditor");
-                                
-                            } else {
+            if (this.isDrag == true) {
 
-                                this.editors.Add(attr.type, editor);
-
-                            }
-
-                        }
-
-                    }
-
-                }
+                var color = Color.white;
+                color.a = 0.1f;
+                EditorGUI.DrawRect(panelRect, color);
 
             }
 
-        }
+            switch (current.GetTypeForControl(controlID)) {
+                case EventType.MouseDown:
+                    if (current.button == 0) {
+                        var canDrag = dragRegion.Contains(current.mousePosition);
+                        if (!canDrag) {
+                            return;
+                        }
 
+                        //record in screenspace, not GUI space so that the resizing is consistent even if the cursor leaves the window
+                        this.lastMousePos = GUIUtility.GUIToScreenPoint(current.mousePosition);
+                        this.dragDistance = Vector2.zero;
+                        this.dragStartWidth = this.worldsSizeWidth;
+
+                        this.isDrag = true;
+
+                        GUIUtility.hotControl = controlID;
+                        current.Use();
+                    }
+
+                    break;
+
+                case EventType.MouseUp:
+                    if (hotControl == controlID) {
+                        this.isDrag = false;
+                        GUIUtility.hotControl = 0;
+                        current.Use();
+                    }
+
+                    break;
+
+                case EventType.MouseDrag:
+                    if (hotControl == controlID) {
+                        EditorGUIUtility.AddCursorRect(this.position, MouseCursor.ResizeHorizontal);
+
+                        this.isDrag = true;
+                        var screenPoint = GUIUtility.GUIToScreenPoint(current.mousePosition);
+                        this.dragDistance += screenPoint - this.lastMousePos;
+                        this.lastMousePos = screenPoint;
+                        this.worldsSizeWidth = Mathf.Max(200, Mathf.Min(this.dragStartWidth + this.dragDistance.x, this.position.width - 200));
+
+                        //this.refresh = true;
+                        this.refresh = true;
+                        current.Use();
+                    }
+
+                    break;
+
+                case EventType.KeyDown:
+                    if (hotControl == controlID && current.keyCode == KeyCode.Escape) {
+                        this.worldsSizeWidth = Mathf.Max(200, Mathf.Min(this.dragStartWidth, this.position.width - 200));
+
+                        this.isDrag = false;
+                        GUIUtility.hotControl = 0;
+                        current.Use();
+                    }
+
+                    break;
+
+                /*case EventType.Layout:
+                case EventType.Repaint:
+                    EditorGUI.DrawRect(dragRegion,Color.black);
+                    break;*/
+                
+            }
+            
+        }
+        
         public void OnGUI() {
 
-            this.CollectEditors();
+            if (WorldsViewerEditor.editors == null) GUILayoutExt.CollectEditors<IGUIEditorBase, ComponentCustomEditorAttribute>(ref WorldsViewerEditor.editors);
 
             if (this.worlds.Count != ME.ECS.Worlds.registeredWorlds.Count) {
 
@@ -495,7 +577,7 @@ namespace ME.ECSEditor {
 
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                 {
-                    GUILayout.BeginVertical(GUILayout.Width(400f), GUILayout.ExpandHeight(true));
+                    GUILayout.BeginVertical(GUILayout.Width(this.worldsSizeWidth), GUILayout.ExpandHeight(true));
                     GUILayout.Space(1.5f); // Unity GUI bug: we need to add extra space when use GUILayout.Width() control
                     var world = this.DrawWorlds();
                     GUILayout.Space(2f); // Unity GUI bug: we need to add extra space when use GUILayout.Width() control
@@ -510,6 +592,8 @@ namespace ME.ECSEditor {
                 GUILayout.EndHorizontal();
 
             });
+
+            this.HandleResizePanels();
 
         }
 
@@ -536,7 +620,7 @@ namespace ME.ECSEditor {
 
                     var modules = world.GetModules();
 
-                    //var componentsStorage = world.GetComponentsStorage();
+                    var componentsStorage = world.GetComponentsStorage();
                     var componentsStructStorage = world.GetStructComponentsStorage();
                     var storage = (IStorage)world.GetEntitiesStorage();
                     
@@ -623,18 +707,18 @@ namespace ME.ECSEditor {
                                           var entityData = item;
 
                                           GUILayout.Space(2f);
-                                          this.DrawEntity(entityData, world, storage, componentsStructStorage, modules);
+                                          WorldsViewerEditor.DrawEntity(entityData, world, storage, componentsStructStorage, componentsStorage, modules);
                                           list.Set(elementsIdx[i], entityData);
 
                                       }
 
                                   }
 
-                              }, (onPage) => { world.SetOnPageCount(storage, onPage); },
-                              () => {
-                                  world.SetSearch(
-                                      storage, EditorGUILayout.TextField(world.GetSearch(storage), EditorStyles.toolbarSearchField));
-                              }
+                                }, (onPage) => { world.SetOnPageCount(storage, onPage); },
+                                () => {
+                                world.SetSearch(
+                                storage, EditorGUILayout.TextField(world.GetSearch(storage), EditorStyles.toolbarSearchField));
+                                }
                                           ));
                             
 
@@ -654,16 +738,37 @@ namespace ME.ECSEditor {
 
         }
 
-        public void DrawEntity(Entity entityData, WorldEditor world, IStorage storage, IStructComponentsContainer componentsStructStorage, IList<IModuleBase> modules) {
+        public class DuplicateKeyComparer<TKey>
+            :
+                IComparer<TKey> where TKey : System.IComparable
+        {
+            #region IComparer<TKey> Members
+
+            public int Compare(TKey x, TKey y)
+            {
+                int result = x.CompareTo(y);
+
+                if (result == 0)
+                    return 1;   // Handle equality as beeing greater
+                else
+                    return result;
+            }
+
+            #endregion
+        }
+        
+        public static void DrawEntity(Entity entityData, WorldEditor world, IStorage storage, IStructComponentsContainer componentsStructStorage, IComponentsBase componentsStorage, IList<IModuleBase> modules) {
             
-            var padding = 8f;
+            const float padding = 8f;
 
             EditorGUIUtility.wideMode = true;
             
-            var name = entityData.GetData<ME.ECS.Name.Name>().value;
+            var name = (entityData.HasData<ME.ECS.Name.Name>() == true ? entityData.GetData<ME.ECS.Name.Name>().value : "Unnamed");
             GUILayoutExt.DrawHeader("Entity " + entityData.id.ToString() + " (" + entityData.storageIdx.ToString() + ") " + name);
             {
 
+                var usedComponents = new HashSet<System.Type>();
+                
                 var style = new GUIStyle(EditorStyles.toolbar);
                 style.fixedHeight = 0f;
                 style.stretchHeight = true;
@@ -675,9 +780,22 @@ namespace ME.ECSEditor {
 
                         #region Data
                         //var foldoutData = world.IsFoldOutData(storage, entityData.id);
-                        EditorGUI.BeginDisabledGroup(true);
-                        GUILayoutExt.DrawFields(entityData);
-                        EditorGUI.EndDisabledGroup();
+                        //GUILayoutExt.DrawFields(entityData);
+                        var backStyle = new GUIStyle(EditorStyles.label);
+                        backStyle.normal.background = Texture2D.whiteTexture;
+                        var header = new GUIStyle(backStyle);
+                        header.fixedHeight = 40f;
+                        header.alignment = TextAnchor.MiddleCenter;
+                        var backColor = GUI.backgroundColor;
+                        GUI.backgroundColor = new Color(1f, 1f, 1f, 0.05f);
+                        GUILayout.BeginHorizontal(backStyle);
+                        {
+                            GUILayout.Label("ID: " + entityData.id.ToString(), EditorStyles.miniLabel);
+                            GUILayout.Label("Index: " + entityData.storageIdx.ToString(), EditorStyles.miniLabel);
+                        }
+                        GUILayout.EndHorizontal();
+                        GUILayoutExt.Separator();
+                        GUI.backgroundColor = backColor;
 
                         /*
                         GUILayoutExt.FoldOut(ref foldoutData, "Data", () => {
@@ -695,7 +813,9 @@ namespace ME.ECSEditor {
                         EditorGUILayout.Separator();
 
                         #region Components
+                        var kz = 0;
                         var registries = componentsStructStorage.GetAllRegistries();
+                        var sortedRegistries = new SortedDictionary<int, IStructRegistryBase>(new DuplicateKeyComparer<int>());
                         foreach (var registry in registries) {
 
                             if (registry == null) {
@@ -707,151 +827,172 @@ namespace ME.ECSEditor {
                                 continue;
                             }
 
-                            GUILayout.Space(2f);
-                            var editor = this.GetEditor(component);
+                            usedComponents.Add(component.GetType());
+
+                            var editor = WorldsViewerEditor.GetEditor(component, out var order);
                             if (editor != null) {
                                 
-                                EditorGUI.BeginChangeCheck();
-                                editor.OnDrawGUI();
-                                if (EditorGUI.EndChangeCheck() == true) {
-
-                                    component = editor.GetTarget<IStructComponent>();
-                                    registry.SetObject(entityData, component);
-                                    
-                                }
-
+                                sortedRegistries.Add(order, registry);
+                                
                             } else {
+                                
+                                sortedRegistries.Add(0, registry);
+                                
+                            }
 
-                                var componentName = component.GetType().Name;
-                                var fieldsCount = GUILayoutExt.GetFieldsCount(component);
-                                if (fieldsCount == 0) {
+                        }
+                        
+                        foreach (var registryKv in sortedRegistries) {
 
-                                    EditorGUI.BeginDisabledGroup(true);
-                                    EditorGUILayout.Toggle(componentName, true);
-                                    EditorGUI.EndDisabledGroup();
+                            var registry = registryKv.Value;
+                            var component = registry.GetObject(entityData);
+                            
+                            backColor = GUI.backgroundColor;
+                            GUI.backgroundColor = new Color(1f, 1f, 1f, kz++ % 2 == 0 ? 0f : 0.05f);
+                            
+                            GUILayout.BeginVertical(backStyle);
+                            {
+                                GUI.backgroundColor = backColor;
+                                var editor = WorldsViewerEditor.GetEditor(component);
+                                if (editor != null) {
 
-                                } else if (fieldsCount == 1) {
+                                    EditorGUI.BeginChangeCheck();
+                                    editor.OnDrawGUI();
+                                    if (EditorGUI.EndChangeCheck() == true) {
 
-                                    var changed = GUILayoutExt.DrawFields(component, componentName);
-                                    if (changed == true) {
-
+                                        component = editor.GetTarget<IStructComponent>();
                                         registry.SetObject(entityData, component);
 
                                     }
 
                                 } else {
 
-                                    var key = "ME.ECS.WorldsViewerEditor.FoldoutTypes." + component.GetType().FullName;
-                                    var foldout = EditorPrefs.GetBool(key, true);
-                                    GUILayoutExt.FoldOut(ref foldout, componentName, () => {
+                                    var componentName = component.GetType().Name;
+                                    var fieldsCount = GUILayoutExt.GetFieldsCount(component);
+                                    if (fieldsCount == 0) {
 
-                                        var changed = GUILayoutExt.DrawFields(component);
+                                        EditorGUI.BeginDisabledGroup(true);
+                                        EditorGUILayout.Toggle(componentName, true);
+                                        EditorGUI.EndDisabledGroup();
+
+                                    } else if (fieldsCount == 1) {
+
+                                        var changed = GUILayoutExt.DrawFields(component, componentName);
                                         if (changed == true) {
 
                                             registry.SetObject(entityData, component);
 
                                         }
 
-                                    });
-                                    EditorPrefs.SetBool(key, foldout);
+                                    } else {
+
+                                        GUILayout.BeginHorizontal();
+                                        {
+                                            GUILayout.Space(18f);
+                                            GUILayout.BeginVertical();
+                                            {
+
+                                                var key = "ME.ECS.WorldsViewerEditor.FoldoutTypes." + component.GetType().FullName;
+                                                var foldout = EditorPrefs.GetBool(key, true);
+                                                GUILayoutExt.FoldOut(ref foldout, componentName, () => {
+
+                                                    var changed = GUILayoutExt.DrawFields(component);
+                                                    if (changed == true) {
+
+                                                        registry.SetObject(entityData, component);
+
+                                                    }
+
+                                                });
+                                                EditorPrefs.SetBool(key, foldout);
+
+                                            }
+                                            GUILayout.EndVertical();
+                                        }
+                                        GUILayout.EndHorizontal();
+
+                                    }
 
                                 }
-                                
                             }
+                            GUILayout.EndVertical();
 
                             GUILayoutExt.Separator();
 
                         }
 
-                        /*var foldoutStructComponents = world.IsFoldOutStructComponents(storage, entityData.id);
-                        GUILayoutExt.FoldOut(ref foldoutStructComponents, "Struct Components", () => {
-    
-                        });
-                        world.SetFoldOutStructComponents(storage, entityData.id, foldoutStructComponents);*/
+                        GUILayoutExt.DrawAddComponentMenu(entityData, usedComponents, componentsStructStorage);
 
-                        /*var foldoutComponents = world.IsFoldOutComponents(storage, entityData.id);
-                        GUILayoutExt.FoldOut(ref foldoutComponents, "Components", () => {
+                        var cnt = 0;
+                        var components = componentsStorage.GetData(entityData.id);
+                        foreach (var component in components) {
 
-                            GUILayout.Label(
-                                "Due to technical issues components list is not supported for now",
-                                EditorStyles.miniBoldLabel);
-                            ME.ECS.IComponentsBase components;
-                            if (componentsStorage.TryGetValue(entityData.entity.id, out components) == true) {
-                            
-                              var componentsDic = components.GetData(entityData.entity.id);
-                              foreach (var component in componentsDic) {
-                            
-                                  GUILayoutExt.Box(
-                                      padding,
-                                      margin,
-                                      () => {
-                            
-                                          GUILayout.Space(2f);
-                                          GUILayout.BeginHorizontal();
-                                          GUILayout.Label(component.GetType().Name, GUILayout.Width(90f));
-                                          GUILayoutExt.TypeLabel(component.GetType());
-                                          GUILayout.EndHorizontal();
-                            
-                                          GUILayoutExt.Box(
-                                              padding,
-                                              margin,
-                                              () => {
-                            
-                                                  GUILayout.Label("Data", EditorStyles.miniBoldLabel);
-                                                  GUILayoutExt.DrawFields(component, 120f);
-                            
-                                              }, GUIStyle.none);
-                            
-                                      }, "dragtabdropwindow");
-                            
-                              }
-                            
-                            }
+                            if (component is ME.ECS.Views.IViewComponent) continue;
 
-                        });
-                        world.SetFoldOutComponents(storage, entityData.id, foldoutComponents);*/
+                            ++cnt;
+
+                        }
+
+                        if (cnt > 0) {
+
+                            var foldoutComponents = world.IsFoldOutComponents(storage, entityData.id);
+                            GUILayoutExt.FoldOut(ref foldoutComponents, "Managed Components (" + cnt.ToString() + ")", () => {
+
+                                foreach (var component in components) {
+
+                                    if (component is ME.ECS.Views.IViewComponent) continue;
+
+                                    backColor = GUI.backgroundColor;
+                                    GUI.backgroundColor = new Color(1f, 1f, 1f, kz++ % 2 == 0 ? 0f : 0.05f);
+
+                                    GUILayout.BeginVertical(backStyle);
+                                    {
+                                        GUI.backgroundColor = backColor;
+
+                                        GUILayout.Space(2f);
+                                        GUILayout.BeginHorizontal();
+                                        GUILayout.Label(component.GetType().Name, EditorStyles.miniBoldLabel);
+                                        GUILayout.EndHorizontal();
+                                        GUILayoutExt.DrawFields(component);
+                                        GUILayout.Space(2f);
+                                    }
+                                    GUILayout.EndVertical();
+                                    GUILayoutExt.Separator();
+
+                                }
+
+
+                            });
+                            world.SetFoldOutComponents(storage, entityData.id, foldoutComponents);
+
+                        }
                         #endregion
 
-                        #if VIEWS_MODULE_SUPPORT
-                        var foldoutViews = world.IsFoldOutViews(storage, entityData.id);
-                        GUILayoutExt.FoldOut(ref foldoutViews, "Views", () => {
-                            { // Draw views table
+                        if (cnt > 0) {
 
-                                var viewsModules = modules
-                                                   .OfType<ME.ECS.Views.IViewModuleBase>().ToArray();
-                                foreach (var viewsModule in viewsModules) {
+                            #if VIEWS_MODULE_SUPPORT
+                            var activeViews = PoolList<ME.ECS.Views.IView>.Spawn(1);
+                            var activeViewProviders = PoolList<ME.ECS.Views.IViewModuleBase>.Spawn(1);
+                            var viewsModules = modules.OfType<ME.ECS.Views.IViewModuleBase>().ToArray();
+                            foreach (var viewsModule in viewsModules) {
 
-                                    if (viewsModule != null) {
+                                if (viewsModule != null) {
 
-                                        var allViews = (List<ME.ECS.Views.IView>[])viewsModule.GetData();
-                                        for (var k = 0; k < allViews.Length; ++k) {
+                                    var allViews = (List<ME.ECS.Views.IView>[])viewsModule.GetData();
+                                    for (var k = 0; k < allViews.Length; ++k) {
 
-                                            var key = k;
-                                            if (key == entityData.id) {
+                                        var key = k;
+                                        if (key == entityData.id) {
 
-                                                var listViews = allViews[k];
-                                                if (listViews == null) {
-                                                    continue;
-                                                }
+                                            var listViews = allViews[k];
+                                            if (listViews == null) {
+                                                continue;
+                                            }
 
-                                                for (var j = 0; j < listViews.Count; ++j) {
+                                            for (var j = 0; j < listViews.Count; ++j) {
 
-                                                    var view = listViews[j];
-
-                                                    GUILayout.Label(
-                                                        "Prefab Source Id: " +
-                                                        view.prefabSourceId.ToString());
-                                                    var provider = viewsModule
-                                                        .GetViewSourceProvider(
-                                                            view.prefabSourceId);
-                                                    GUILayout.Label(
-                                                        "Provider: " + GUILayoutExt.GetTypeLabel(
-                                                            provider.GetType()));
-                                                    GUILayout.Label(
-                                                        "Creation Tick: " +
-                                                        view.creationTick.ToString());
-
-                                                }
+                                                activeViews.Add(listViews[j]);
+                                                activeViewProviders.Add(viewsModule);
 
                                             }
 
@@ -862,12 +1003,47 @@ namespace ME.ECSEditor {
                                 }
 
                             }
-                        });
-                        world.SetFoldOutViews(storage, entityData.id, foldoutViews);
-                        #endif
+
+                            if (activeViews.Count > 0) {
+
+                                var foldoutViews = world.IsFoldOutViews(storage, entityData.id);
+                                GUILayoutExt.FoldOut(ref foldoutViews, string.Format("Views ({0})", activeViews.Count), () => {
+                                    { // Draw views table
+
+                                        for (var j = 0; j < activeViews.Count; ++j) {
+
+                                            var view = activeViews[j];
+                                            var provider = activeViewProviders[j].GetViewSourceProvider(view.prefabSourceId);
+                                            GUILayout.Label("Provider: " + GUILayoutExt.GetTypeLabel(provider.GetType()), EditorStyles.miniBoldLabel);
+                                            if (view is Object obj) {
+
+                                                EditorGUI.BeginDisabledGroup(true);
+                                                EditorGUILayout.ObjectField("Scene Object: ", obj, typeof(Object), allowSceneObjects: true);
+                                                EditorGUI.EndDisabledGroup();
+
+                                            }
+
+                                            GUILayout.Label(view.ToString(), EditorStyles.miniLabel);
+
+                                            //GUILayout.Label("Prefab Source Id: " + view.prefabSourceId.ToString());
+                                            //GUILayout.Label("Creation Tick: " +view.creationTick.ToString());
+
+                                        }
+
+                                    }
+                                });
+                                world.SetFoldOutViews(storage, entityData.id, foldoutViews);
+
+                            }
+
+                            PoolList<ME.ECS.Views.IView>.Recycle(ref activeViews);
+                            PoolList<ME.ECS.Views.IViewModuleBase>.Recycle(ref activeViewProviders);
+                            #endif
+
+                        }
 
                     }, style);
-                
+
             }
 
         }
@@ -1085,7 +1261,7 @@ namespace ME.ECSEditor {
                                             {
                                                 GUILayoutExt.Box(padding, margin, () => {
 
-                                                    var editor = this.GetEditor(module);
+                                                    var editor = WorldsViewerEditor.GetEditor(module);
                                                     if (editor != null) editor.OnDrawGUI();
                                                     
                                                 }, tableStyle, GUILayout.ExpandWidth(true));

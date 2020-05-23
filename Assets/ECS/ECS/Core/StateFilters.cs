@@ -39,7 +39,7 @@ namespace ME.ECS {
 
         void SetForEachMode(bool state);
         
-        HashSetCopyable<Entity> GetData();
+        SortedSet<Entity> GetData();
 
         bool IsEquals(IFilterBase other);
 
@@ -53,10 +53,10 @@ namespace ME.ECS {
 
     public interface IFilter<TState> : IFilterBase, IEnumerable<Entity> where TState : class, IState<TState>, new() {
 
-        ref Entity this[int index] {
+        /*ref Entity this[int index] {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get;
-        }
+        }*/
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         bool Contains(Entity entity);
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -318,7 +318,7 @@ namespace ME.ECS {
     public struct FilterEnumerator<TState> : IEnumerator<Entity> where TState : class, IState<TState>, new() {
             
         private readonly IFilterInternal<TState> set;
-        private HashSetCopyable<Entity>.Enumerator setEnumerator;
+        private SortedSet<Entity>.Enumerator setEnumerator;
             
         internal FilterEnumerator(IFilterInternal<TState> set) {
                 
@@ -380,7 +380,7 @@ namespace ME.ECS {
 
         public void Update() {
 
-            if (Worlds<TState>.currentWorld.ForEachEntity(out RefList<Entity> list) == true) {
+            if (this.world.ForEachEntity(out RefList<Entity> list) == true) {
 
                 for (int i = list.FromIndex; i < list.SizeCount; ++i) {
 
@@ -415,7 +415,7 @@ namespace ME.ECS {
         private Archetype archetypeNotContains;
         private int nodesCount;
         private bool[] dataContains;
-        private HashSetCopyable<Entity> data;
+        private SortedSet<Entity> data;
         bool IFilterInternal<TState>.forEachMode { get; set; }
         private SortedSet<Entity> requests;
         private SortedSet<Entity> requestsRemoveEntity;
@@ -437,7 +437,7 @@ namespace ME.ECS {
             this.requests = PoolSortedSet<Entity>.Spawn(Filter<TState>.REQUESTS_CAPACITY);
             this.requestsRemoveEntity = PoolSortedSet<Entity>.Spawn(Filter<TState>.REQUESTS_CAPACITY);
             this.nodes = PoolArray<IFilterNode>.Spawn(Filter<TState>.NODES_CAPACITY);
-            this.data = PoolHashSetCopyable<Entity>.Spawn();
+            this.data = PoolSortedSet<Entity>.Spawn();
             this.dataContains = PoolArray<bool>.Spawn(Filter<TState>.ENTITIES_CAPACITY);
 
             this.id = default;
@@ -451,7 +451,7 @@ namespace ME.ECS {
         void IPoolableRecycle.OnRecycle() {
             
             PoolArray<bool>.Recycle(ref this.dataContains);
-            PoolHashSetCopyable<Entity>.Recycle(ref this.data);
+            PoolSortedSet<Entity>.Recycle(ref this.data);
             PoolArray<IFilterNode>.Recycle(ref this.nodes);
             PoolSortedSet<Entity>.Recycle(ref this.requestsRemoveEntity);
             PoolSortedSet<Entity>.Recycle(ref this.requests);
@@ -564,9 +564,13 @@ namespace ME.ECS {
                 
                 ArrayUtils.Copy(other.nodes, ref this.nodes);
 
-                if (this.data != null) PoolHashSetCopyable<Entity>.Recycle(ref this.data);
-                this.data = PoolHashSetCopyable<Entity>.Spawn(other.data.Count);
-                this.data.CopyFrom(other.data);
+                if (this.data != null) PoolSortedSet<Entity>.Recycle(ref this.data);
+                this.data = PoolSortedSet<Entity>.Spawn(other.data.Count);
+                foreach (var item in other.data) {
+
+                    this.data.Add(item);
+
+                }
 
                 ArrayUtils.Copy(other.dataContains, ref this.dataContains);
                 
@@ -575,7 +579,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public HashSetCopyable<Entity> GetData() {
+        public SortedSet<Entity> GetData() {
 
             return this.data;
 
@@ -600,12 +604,13 @@ namespace ME.ECS {
             }
         }
 
+        /*
         public ref Entity this[int index] {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
-                return ref this.data.Get(index);
+                return ref this.data;
             }
-        }
+        }*/
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Contains(Entity entity) {
@@ -664,13 +669,13 @@ namespace ME.ECS {
 
             lock (this) {
 
-                if (Worlds<TState>.currentWorld.currentSystemContext != null) {
+                if (this.world.currentSystemContext != null) {
 
-                    lock (Worlds<TState>.currentWorld.currentSystemContextFiltersUsed) {
+                    lock (this.world.currentSystemContextFiltersUsed) {
 
-                        if (Worlds<TState>.currentWorld.currentSystemContextFiltersUsed.ContainsKey(this.id) == false) {
+                        if (this.world.currentSystemContextFiltersUsed.ContainsKey(this.id) == false) {
 
-                            Worlds<TState>.currentWorld.currentSystemContextFiltersUsed.Add(this.id, this);
+                            this.world.currentSystemContextFiltersUsed.Add(this.id, this);
 
                         }
 
@@ -708,13 +713,13 @@ namespace ME.ECS {
 
             lock (this) {
 
-                if (Worlds<TState>.currentWorld.currentSystemContext != null) {
+                if (this.world.currentSystemContext != null) {
 
-                    lock (Worlds<TState>.currentWorld.currentSystemContextFiltersUsed) {
+                    lock (this.world.currentSystemContextFiltersUsed) {
 
-                        if (Worlds<TState>.currentWorld.currentSystemContextFiltersUsed.ContainsKey(this.id) == false) {
+                        if (this.world.currentSystemContextFiltersUsed.ContainsKey(this.id) == false) {
 
-                            Worlds<TState>.currentWorld.currentSystemContextFiltersUsed.Add(this.id, this);
+                            this.world.currentSystemContextFiltersUsed.Add(this.id, this);
 
                         }
 

@@ -29,6 +29,7 @@ namespace ME.ECSEditor {
 
                 var asset = UnityEditor.AssetDatabase.GUIDToAssetPath(asm);
                 var dir = System.IO.Path.GetDirectoryName(asset) + "/Core/Collections/CodeGenerator";
+                if (System.IO.Directory.Exists(dir) == false) continue;
 
                 const int maxLength = 1000;
                 var lengths = new int[] {

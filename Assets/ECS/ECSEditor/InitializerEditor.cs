@@ -132,32 +132,6 @@ namespace ME.ECSEditor {
             
             ((Component)this.target).transform.hideFlags = HideFlags.HideInInspector;
 
-            /*var windows = Resources.FindObjectsOfTypeAll<EditorWindow>();
-            foreach (var ew in windows) {
-                
-                if (ew.titleContent.text == "Inspector") {
-
-                    var asm = ew.GetType().Assembly;
-                    var type = asm.GetType("UnityEditor.InspectorWindow+Styles");
-                    var buttonStyle = type.GetField("addComponentButtonStyle", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
-                    var addComponentButton = ew.rootVisualElement.Q(className: "unity-inspector-add-component-button");
-                    if (addComponentButton != null) {
-
-                        addComponentButton.Clear();
-                        //ew.rootVisualElement.Remove(addComponentButton);
-
-                    }
-                    //ew.rootVisualElement.RemoveFromClassList("unity-inspector-add-component-button");
-                    //ew.rootVisualElement.Remove(ew.rootVisualElement.Q(className: "unity-inspector-add-component-button"));
-                    //this.addButtonStyleSaved = (GUIStyle)buttonStyle.GetValue(null);
-                    //var newStyle = new GUIStyle(this.addButtonStyleSaved);
-                    //newStyle.fixedHeight = 100f;
-                    //buttonStyle.SetValue(null, newStyle);
-
-                }
-                
-            }*/
-
         }
 
         public void OnDisable() {
@@ -199,7 +173,7 @@ namespace ME.ECSEditor {
 
                     GUILayout.Space(10f);
                     
-                    EditorGUI.BeginDisabledGroup(EditorApplication.isCompiling == true/* || InitializerEditor.isCompilingManual == true*/);
+                    EditorGUI.BeginDisabledGroup(EditorApplication.isCompiling == true || EditorApplication.isPlaying == true || EditorApplication.isPaused == true/* || InitializerEditor.isCompilingManual == true*/);
 
                     foreach (var defineInfo in InitializerEditor.defines) {
                         
@@ -326,7 +300,7 @@ namespace ME.ECSEditor {
             
             EditorGUILayout.Space();
             
-            EditorGUI.BeginDisabledGroup(Application.isPlaying);
+            EditorGUI.BeginDisabledGroup(EditorApplication.isPlaying == true || EditorApplication.isPaused == true);
             this.list.DoLayoutList();
             EditorGUI.EndDisabledGroup();
 

@@ -31,6 +31,66 @@ namespace ME.ECSEditor {
 
     public static class GUILayoutExt {
 
+	    public static void DrawAddEntityMenu(EntityDebugComponent entityDebugComponent) {
+            
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUIStyle style = new GUIStyle(GUI.skin.button);
+            style.fontSize = 12;
+            style.fixedWidth = 230;
+            style.fixedHeight = 23;
+ 
+            var rect = GUILayoutUtility.GetLastRect();
+ 
+            if (GUILayout.Button("Assign Entity", style)) {
+                
+                rect.y += 26f;
+                rect.x += rect.width;
+                rect.width = style.fixedWidth;
+                //AddEquipmentBehaviourWindow.Show(rect, entity, usedComponents);
+
+                //var lastRect = GUILayoutUtility.GetLastRect();
+                //lastRect.height = 200f;
+                var v2 = GUIUtility.GUIToScreenPoint(new Vector2(rect.x, rect.y));
+                rect.x = v2.x;
+                rect.y = v2.y;
+                rect.height = 320f;
+                
+                var popup = new Popup() {
+	                title = "Entities",
+	                autoHeight = false,
+	                autoClose = true,
+	                screenRect = rect,
+	                searchText = string.Empty,
+	                separator = '.',
+	                
+                };
+                
+                var worldEditor = new WorldsViewerEditor.WorldEditor();
+                worldEditor.world = Worlds.currentWorld;
+                var entities = worldEditor.GetEntitiesStorage();
+                
+                foreach (var idx in entities) {
+
+	                if (entities.IsFree(idx) == true) continue;
+	                var entity = entities[idx];
+	                var name = entity.HasData<ME.ECS.Name.Name>() == true ? entity.GetData<ME.ECS.Name.Name>().value : "Unnamed";
+	                popup.Item(string.Format("{0} ({1})", name, entity), () => {
+		                
+		                entityDebugComponent.world = worldEditor.world;
+		                entityDebugComponent.entity = entity;
+		                
+	                });
+	                
+                }
+                popup.Show();
+
+            }
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+ 
+        }
+	    
 	    private static System.Type[] allStructComponents;
         public static void DrawAddComponentMenu(Entity entity, System.Collections.Generic.HashSet<System.Type> usedComponents, IStructComponentsContainer componentsStructStorage) {
             

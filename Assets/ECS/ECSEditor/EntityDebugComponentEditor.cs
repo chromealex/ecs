@@ -25,6 +25,18 @@
                 WorldsViewerEditor.DrawEntity(target.entity, worldEditor, worldEditor.GetEntitiesStorage(), worldEditor.GetStructComponentsStorage(), worldEditor.GetComponentsStorage(), worldEditor.GetModules());
                 this.Repaint();
 
+            } else {
+
+                if (Worlds.currentWorld == null) {
+                    
+                    GUILayout.Label("No running worlds found", EditorStyles.centeredGreyMiniLabel);
+                    
+                } else {
+
+                    GUILayoutExt.DrawAddEntityMenu(target);
+
+                }
+
             }
 
         }

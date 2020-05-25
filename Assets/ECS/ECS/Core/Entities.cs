@@ -76,7 +76,7 @@
     public readonly struct Entity : System.IEquatable<Entity>, System.IComparable<Entity> {
 
         public readonly int id;
-        public readonly int storageIdx;
+        public readonly int version;
 
         public static Entity Empty {
             get {
@@ -84,47 +84,17 @@
             }
         }
 
-        public Entity(int id, int storageIdx) {
+        public Entity(int id, int version) {
 
             this.id = id;
-            this.storageIdx = storageIdx;
+            this.version = version;
 
         }
 
-        #if ECS_COMPILE_IL2CPP_OPTIONS
-        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-        #endif
-        internal static Entity Create(in int id) {
-
-            return Entity.Create(id, noCheck: false);
-
-        }
-
-        #if ECS_COMPILE_IL2CPP_OPTIONS
-        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-        #endif
-        internal static Entity Create(in int id, bool noCheck) {
-
-            if (noCheck == false && id <= 0) {
-                
-                throw new System.ArgumentOutOfRangeException("id", "Couldn't create entity with negative or zero id!");
-                
-            }
-
-            //var typeId = WorldUtilities.GetKey<TEntity>();
-            var entity = new Entity(id, -1);
-            return entity;
-
-        }
-        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Entity e1, Entity e2) {
 
-            return e1.id == e2.id && e1.storageIdx == e2.storageIdx;
+            return e1.id == e2.id && e1.version == e2.version;
 
         }
 
@@ -157,14 +127,21 @@
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() {
+
+            return this.id ^ this.version;
             
-            return this.id ^ this.storageIdx;
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public int GetHashCode_INTERNAL() {
+
+            return this.id ^ this.version;
             
         }
 
         public override string ToString() {
-            
-            return "Entity Id: " + this.id.ToString() + " Storage Index: " + this.storageIdx.ToString();
+
+            return "Entity Id: " + this.id.ToString() + " Version: " + this.version.ToString();
             
         }
 

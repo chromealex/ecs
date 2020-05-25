@@ -39,7 +39,7 @@ namespace ME.ECS {
         public abstract void Validate(in Entity entity);
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public abstract bool Remove(in Entity entity);
+        public abstract bool Remove(in Entity entity, bool clearAll = false);
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public abstract void OnRecycle();
@@ -209,7 +209,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public override bool Remove(in Entity entity) {
+        public override bool Remove(in Entity entity, bool clearAll = false) {
 
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
@@ -220,8 +220,16 @@ namespace ME.ECS {
                 ref var bucket = ref this.components[index];
                 bucket = default;
                 bucketState = false;
-            
-                this.world.storagesCache.archetypes.Remove<TComponent>(in entity);
+
+                if (clearAll == true) {
+                    
+                    this.world.storagesCache.archetypes.RemoveAll<TComponent>(in entity);
+                    
+                } else {
+
+                    this.world.storagesCache.archetypes.Remove<TComponent>(in entity);
+
+                }
 
                 return true;
 
@@ -316,14 +324,14 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        public void RemoveAll(in Entity entity) {
+        public void RemoveAll(in Entity entity, bool clearAll = false) {
             
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
                 var item = this.list[i];
                 if (item != null) {
 
-                    item.Remove(in entity);
+                    item.Remove(in entity, clearAll);
 
                 }
 
@@ -601,7 +609,7 @@ namespace ME.ECS {
 
         partial void DestroyEntityPlugin1(Entity entity) {
 
-            this.componentsStructCache.RemoveAll(in entity);
+            this.componentsStructCache.RemoveAll(in entity, clearAll: true);
 
         }
 

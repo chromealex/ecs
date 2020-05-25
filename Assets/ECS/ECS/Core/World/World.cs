@@ -695,7 +695,7 @@ namespace ME.ECS {
 
                     // Create shared entity which should store shared components
                     this.sharedEntityInitialized = true;
-                    this.sharedEntity = this.AddEntity_INTERNAL( Entity.Create(0, noCheck: true));
+                    this.sharedEntity = this.AddEntity();
 
                 }
 
@@ -712,7 +712,9 @@ namespace ME.ECS {
                         if (allEntities.IsFree(j) == true) continue;
                     
                         this.UpdateFilters(item);
-                        this.CreateEntityPlugins(item);
+                        //this.DestroyEntityPlugins(item);
+                        //this.CreateEntityPlugins(item);
+                        this.componentsStructCache.OnEntityCreate(in item);
 
                     }
                 
@@ -793,9 +795,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private Entity CreateNewEntity() {
+        private int GetNextEntityId() {
 
-            return Entity.Create(++this.GetState().entityId);
+            return ++this.GetState().entityId;
 
         }
 
@@ -911,20 +913,12 @@ namespace ME.ECS {
 
         public Entity AddEntity(string name = null) {
 
-            var entity = this.CreateNewEntity();
-            return this.AddEntity_INTERNAL(entity, name);
-
-        }
-        
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private Entity AddEntity_INTERNAL(Entity entity, string name = null) {
-
+            var entityVersion = this.GetNextEntityId();
             ref var entitiesList = ref this.storagesCache.GetData();
             var nextIndex = entitiesList.GetNextIndex();
-            entity = new Entity(entity.id, nextIndex);
+            var entity = new Entity(nextIndex, entityVersion);
             entitiesList.Add(entity);
-
-            //this.AddToFilters<TEntity>(data.entity); // Why we need to add empty entity into filters?
+            
             this.UpdateFilters(entity);
             this.CreateEntityPlugins(entity);
 
@@ -975,15 +969,15 @@ namespace ME.ECS {
         }*/
 
         public bool RemoveEntity(Entity entity) {
-
-            this.storagesCache.GetData().RemoveAt(entity.storageIdx);
             
             this.DestroyEntityPlugins(entity);
             this.RemoveComponents(entity);
             this.RemoveFromFilters(entity);
             
+            this.storagesCache.GetData().RemoveAt(entity.id);
+            
             return false;
-
+            
         }
         
         /// <summary>
@@ -1703,6 +1697,8 @@ namespace ME.ECS {
                 ////////////////
                 this.currentStep &= ~WorldStep.SystemsLogicTick;
                 ////////////////
+
+                this.storagesCache.ApplyPrepared();
 
                 /*#if CHECKPOINT_COLLECTOR
                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);

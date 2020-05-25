@@ -28,6 +28,8 @@ namespace ME.ECS.Collections {
         private int capacity;
         private int fromIndex;
         private HashSetCopyable<int> free;
+        private HashSetCopyable<int> freePrepared;
+        private HashSetCopyable<Entity> used;
         private int initCapacity;
 
         public RefList() : this(4) {}
@@ -56,6 +58,8 @@ namespace ME.ECS.Collections {
             this.fromIndex = 0;
             if (this.free == null) this.free = PoolHashSetCopyable<int>.Spawn(capacity);
             this.free.Clear();
+            if (this.freePrepared == null) this.freePrepared = PoolHashSetCopyable<int>.Spawn(capacity);
+            this.freePrepared.Clear();
             this.Resize_INTERNAL(capacity);
 
         }
@@ -64,6 +68,7 @@ namespace ME.ECS.Collections {
             
             PoolArray<T>.Recycle(ref this.arr);
             PoolHashSetCopyable<int>.Recycle(ref this.free);
+            PoolHashSetCopyable<int>.Recycle(ref this.freePrepared);
             
         }
 
@@ -128,11 +133,25 @@ namespace ME.ECS.Collections {
                 
             }
 
+            this.freePrepared.Clear();
+
             if (this.size > 0) System.Array.Clear(this.arr, 0, this.size);
             this.size = 0;
             this.fromIndex = 0;
             this.count = 0;
 
+        }
+
+        public void ApplyPrepared() {
+
+            foreach (var item in this.freePrepared) {
+
+                this.free.Add(item);
+
+            }
+            
+            this.freePrepared.Clear();
+            
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -206,7 +225,7 @@ namespace ME.ECS.Collections {
             if (this.IsFree(index) == false) {
 
                 this.arr[index] = default;
-                this.free.Add(index);
+                this.freePrepared.Add(index);
                 --this.count;
 
                 if (index == this.size - 1) {
@@ -245,6 +264,10 @@ namespace ME.ECS.Collections {
         public void CopyFrom(RefList<T> other) {
 
             ArrayUtils.Copy(other.arr, ref this.arr);
+            
+            if (this.freePrepared != null) PoolHashSetCopyable<int>.Recycle(ref this.freePrepared);
+            this.freePrepared = PoolHashSetCopyable<int>.Spawn(other.freePrepared.Count);
+            this.freePrepared.CopyFrom(other.freePrepared);
             
             if (this.free != null) PoolHashSetCopyable<int>.Recycle(ref this.free);
             this.free = PoolHashSetCopyable<int>.Spawn(other.free.Count);

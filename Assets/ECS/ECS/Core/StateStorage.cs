@@ -157,6 +157,12 @@ namespace ME.ECS {
 
         }
 
+        public void ApplyPrepared() {
+
+            this.list.ApplyPrepared();
+
+        }
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsFree(int index) {
 

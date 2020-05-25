@@ -1,6 +1,6 @@
 namespace ME.ECS.Collections {
 
-    public interface IEntitiesList {
+    /*public interface IEntitiesList {
 
         int Count { get; }
         int Capacity { get; }
@@ -99,20 +99,6 @@ namespace ME.ECS.Collections {
 
         }
 
-        /*public int Add(T data) {
-            
-            var nextIndex = this.GetNextIndex();
-            this.Resize_INTERNAL(nextIndex + 1);
-            var entity = data.entity;
-            entity.storageIdx = nextIndex;
-            data.entity = entity;
-            this.arr[nextIndex] = data;
-            ++this.count;
-            
-            return nextIndex;
-            
-        }*/
-
         public Entity Remove(Entity entity) {
             
             return this.RemoveAt(entity.storageIdx);
@@ -192,6 +178,6 @@ namespace ME.ECS.Collections {
             
         }
 
-    }
+    }*/
 
 }

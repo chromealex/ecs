@@ -927,7 +927,7 @@ namespace ME.ECSEditor {
                         var components = componentsStorage.GetData(entityData.id);
                         foreach (var component in components) {
 
-                            if (component is ME.ECS.Views.IViewComponent) continue;
+                            if ((component is ME.ECS.Views.IViewComponent) == false) continue;
 
                             ++cnt;
 
@@ -940,7 +940,7 @@ namespace ME.ECSEditor {
 
                                 foreach (var component in components) {
 
-                                    if (component is ME.ECS.Views.IViewComponent) continue;
+                                    if ((component is ME.ECS.Views.IViewComponent) == false) continue;
 
                                     backColor = GUI.backgroundColor;
                                     GUI.backgroundColor = new Color(1f, 1f, 1f, kz++ % 2 == 0 ? 0f : 0.05f);

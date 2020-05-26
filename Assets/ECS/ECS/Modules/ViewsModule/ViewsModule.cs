@@ -168,6 +168,8 @@ namespace ME.ECS.Views {
         System.Collections.IDictionary GetViewSourceData();
         IViewsProviderBase GetViewSourceProvider(ViewId viewSourceId);
 
+        void UpdateRequests();
+
     }
 
     public partial interface IViewModule<TState> : IViewModuleBase, IModule<TState> where TState : class, IState<TState>, new() {
@@ -226,8 +228,8 @@ namespace ME.ECS.Views {
 
         public override int GetHashCode() {
 
-            return (int)MathUtils.GetKey(this.entity.id, this.prefabSourceId.GetHashCode()/* ^ this.creationTick.GetHashCode()*/);
-            
+            return this.entity.id ^ this.prefabSourceId.GetHashCode(); //(int)MathUtils.GetKey(this.entity.id, this.prefabSourceId.GetHashCode()/* ^ this.creationTick.GetHashCode()*/);
+
         }
             
         public override bool Equals(object obj) {
@@ -750,7 +752,7 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool IsRenderingNow(in ViewInfo viewInfo) {
 
-            foreach (var item in this.rendering) {
+            /*foreach (var item in this.rendering) {
 
                 if (item.Equals(viewInfo) == true) {
 
@@ -758,15 +760,15 @@ namespace ME.ECS.Views {
 
                 }
                 
-            }
+            }*/
 
-            return false;//this.rendering.Contains(viewInfo);
+            return this.rendering.Contains(viewInfo);
 
         }
 
         //private HashSet<ViewInfo> prevList = new HashSet<ViewInfo>();
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void UpdateRequests() {
+        public void UpdateRequests() {
 
             if (this.isRequestsDirty == false) return;
             this.isRequestsDirty = false;
@@ -813,7 +815,7 @@ namespace ME.ECS.Views {
                 
             }
 
-            for (var id = 0; id < this.list.Length; ++id) {
+            for (var id = this.list.Length - 1; id >= 0; --id) {
                 
                 var list = this.list[id];
                 if (list == null) continue;
@@ -834,19 +836,20 @@ namespace ME.ECS.Views {
                 } else {
                     
                     // If entity is alive - check if we are rendering needed view
-                    for (int i = 0, count = list.Count; i < count; ++i) {
+                    for (int i = list.Count - 1; i >= 0; --i) {
 
                         var instance = list[i];
                         var allViews = this.world.ForEachComponent<ViewComponent<TState>>(instance.entity);
                         if (allViews == null) continue;
-                        
+
+                        ViewComponent<TState> viewFound = null;
                         var found = false;
                         foreach (var viewComponent in allViews) {
                             
                             var view = (ViewComponent<TState>)viewComponent;
-                            if (instance.prefabSourceId == view.viewInfo.prefabSourceId &&
-                                instance.creationTick == view.viewInfo.creationTick) {
+                            if (instance.prefabSourceId == view.viewInfo.prefabSourceId) {
 
+                                viewFound = view;
                                 found = true;
                                 break;
 
@@ -857,10 +860,14 @@ namespace ME.ECS.Views {
                         if (found == false) {
                             
                             this.RecycleView_INTERNAL(ref instance);
-                            --i;
-                            --count;
+                            //--i;
+                            //--count;
                             
-                        }
+                        } /*else {
+                            
+                            if (this.IsRenderingNow(in viewFound.viewInfo) == false) this.CreateVisualInstance(in viewFound.seed, in viewFound.viewInfo);
+                            
+                        }*/
 
                     }
                     

@@ -712,9 +712,7 @@ namespace ME.ECS {
                         if (allEntities.IsFree(j) == true) continue;
                     
                         this.UpdateFilters(item);
-                        //this.DestroyEntityPlugins(item);
-                        //this.CreateEntityPlugins(item);
-                        this.componentsStructCache.OnEntityCreate(in item);
+                        this.CreateEntityPlugin1(item);
 
                     }
                 
@@ -795,9 +793,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private int GetNextEntityId() {
+        private int CreateNewEntity() {
 
-            return ++this.GetState().entityId;
+            return ++this.GetState().entityId; //Entity.Create(++this.GetState().entityId);
 
         }
 
@@ -913,12 +911,13 @@ namespace ME.ECS {
 
         public Entity AddEntity(string name = null) {
 
-            var entityVersion = this.GetNextEntityId();
+            var entityVersion = this.CreateNewEntity();
             ref var entitiesList = ref this.storagesCache.GetData();
             var nextIndex = entitiesList.GetNextIndex();
             var entity = new Entity(nextIndex, entityVersion);
             entitiesList.Add(entity);
-            
+
+            //this.AddToFilters<TEntity>(data.entity); // Why we need to add empty entity into filters?
             this.UpdateFilters(entity);
             this.CreateEntityPlugins(entity);
 
@@ -969,15 +968,26 @@ namespace ME.ECS {
         }*/
 
         public bool RemoveEntity(Entity entity) {
-            
-            this.DestroyEntityPlugins(entity);
-            this.RemoveComponents(entity);
-            this.RemoveFromFilters(entity);
-            
-            this.storagesCache.GetData().RemoveAt(entity.id);
-            
+
+            var data = this.storagesCache.GetData();
+            if (data.IsFree(entity.id) == false) {
+
+                var entityInStorage = data[entity.id];
+                if (entityInStorage.version == entity.version) {
+
+                    data.RemoveAt(entity.id);
+
+                    this.DestroyEntityPlugins(entity);
+                    this.RemoveComponents(entity);
+                    this.RemoveFromFilters(entity);
+                    return true;
+
+                }
+
+            }
+
             return false;
-            
+
         }
         
         /// <summary>

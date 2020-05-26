@@ -29,7 +29,6 @@ namespace ME.ECS.Collections {
         private int fromIndex;
         private HashSetCopyable<int> free;
         private HashSetCopyable<int> freePrepared;
-        private HashSetCopyable<Entity> used;
         private int initCapacity;
 
         public RefList() : this(4) {}
@@ -142,18 +141,6 @@ namespace ME.ECS.Collections {
 
         }
 
-        public void ApplyPrepared() {
-
-            foreach (var item in this.freePrepared) {
-
-                this.free.Add(item);
-
-            }
-            
-            this.freePrepared.Clear();
-            
-        }
-
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private int PeekFree() {
             
@@ -205,6 +192,18 @@ namespace ME.ECS.Collections {
             
         }
 
+        public void ApplyPrepared() {
+
+            foreach (var item in this.freePrepared) {
+
+                this.free.Add(item);
+
+            }
+            
+            this.freePrepared.Clear();
+            
+        }
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void UpdateFromTo(int focusIndex) {
 
@@ -268,7 +267,7 @@ namespace ME.ECS.Collections {
             if (this.freePrepared != null) PoolHashSetCopyable<int>.Recycle(ref this.freePrepared);
             this.freePrepared = PoolHashSetCopyable<int>.Spawn(other.freePrepared.Count);
             this.freePrepared.CopyFrom(other.freePrepared);
-            
+
             if (this.free != null) PoolHashSetCopyable<int>.Recycle(ref this.free);
             this.free = PoolHashSetCopyable<int>.Spawn(other.free.Count);
             this.free.CopyFrom(other.free);

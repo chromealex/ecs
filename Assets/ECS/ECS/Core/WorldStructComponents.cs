@@ -220,7 +220,7 @@ namespace ME.ECS {
                 ref var bucket = ref this.components[index];
                 bucket = default;
                 bucketState = false;
-
+            
                 if (clearAll == true) {
                     
                     this.world.storagesCache.archetypes.RemoveAll<TComponent>(in entity);
@@ -324,14 +324,14 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        public void RemoveAll(in Entity entity, bool clearAll = false) {
+        public void RemoveAll(in Entity entity) {
             
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
                 var item = this.list[i];
                 if (item != null) {
 
-                    item.Remove(in entity, clearAll);
+                    item.Remove(in entity, clearAll: true);
 
                 }
 
@@ -543,7 +543,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         bool HasData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent;
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        ref TComponent GetData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent;
+        ref TComponent GetData<TComponent>(in Entity entity, bool createIfNotExists = true) where TComponent : struct, IStructComponent;
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         void SetData<TComponent>(in Entity entity, in TComponent data) where TComponent : struct, IStructComponent;
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -609,7 +609,7 @@ namespace ME.ECS {
 
         partial void DestroyEntityPlugin1(Entity entity) {
 
-            this.componentsStructCache.RemoveAll(in entity, clearAll: true);
+            this.componentsStructCache.RemoveAll(in entity);
 
         }
 
@@ -640,7 +640,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref TComponent GetSharedData<TComponent>() where TComponent : struct, IStructComponent {
             
-            return ref this.GetData<TComponent>(in this.sharedEntity);
+            return ref this.GetData<TComponent>(in this.sharedEntity, createIfNotExists: true);
 
         }
 
@@ -672,13 +672,13 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ref TComponent GetData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
+        public ref TComponent GetData<TComponent>(in Entity entity, bool createIfNotExists) where TComponent : struct, IStructComponent {
 
             // Inline all manually
             ref var r = ref this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
             var reg = (StructComponents<TState, TComponent>)r;
             ref var state = ref reg.componentsStates[entity.id];
-            if (state == false) {
+            if (state == false && createIfNotExists == true) {
 
                 state = true;
                 this.storagesCache.archetypes.Set<TComponent>(in entity);

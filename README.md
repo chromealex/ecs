@@ -95,7 +95,7 @@ this.world.SaveResetState();
 For creating entities you need to run world.AddEntity().
 Names are used for Editor debug information only.
 ```csharp
-var entity = this.world.AddEntity([name]); // The same as **var entity = new Entity(name);**
+var entity = this.world.AddEntity([name]); // The same as var entity = new Entity(name);
 ...
 ```
 
@@ -116,7 +116,8 @@ this.unitViewSourceId2 = this.world.RegisterViewSource(this.unitSource2);
 #### Instantiating Views
 To instantiate view need to call thread-safe method **world.InstantiateView(viewId, entity)**. Short method is **entity.InstantiateView(viewId)**.
 > You can attach any count of views on each entity.
-> But here are some limitations: for now you couldn't attach one source twice, only different sources for one entity allowed.
+>
+> But here are some **limitations**: for now you couldn't attach one source twice, only different sources for one entity allowed.
 ```csharp
 this.world.InstantiateView(this.pointViewSourceId, entity);
 this.world.InstantiateView(this.pointViewSourceId, entity);
@@ -125,7 +126,7 @@ this.world.InstantiateView(this.pointViewSourceId, entity);
 #### Adding Systems
 You can add systems inside initializer or (the better way) inside feature class. Inside feature class you can add modules and systems in constructor, also could load data for this feature.
 ```csharp
-this.world.AddSystem<YourNewSystem>(); // The same as **this.AddSystem<YourNewSystem>();** in feature class
+this.world.AddSystem<YourNewSystem>(); // The same as this.AddSystem<YourNewSystem>(); in feature class
 ```
 
 #### Sending user input to world
@@ -146,9 +147,34 @@ public class MouseInputModule : IModule<TState> {
 }
 ```
 
+#### Sending UI events to world
+It's the same as the method above. Just 
+```csharp
+public class YourUIBehaviour : MonoBehaviour {
+    
+    public Button button;
+    
+    public void Start() {
+    
+        this.button.onClick.AddListener(this.AddMarker);
+    
+    }
+    
+    ...
+    
+    private void AddMarker() {
+        
+        // Send marker click to world
+        Worlds.currentWorld.AddMarker(new OnYourUIBehaviourClick());
+        
+    }
+    
+}
+```
+
 #### Receiving user input in world system
 To receive data from marker, you need to get it inside Update method.
-> IMPORTANT! Do not receive markers inside AdvanceTick, because markers lifetime is limit by current frame.
+> **IMPORTANT!** Do not receive markers inside AdvanceTick, because markers lifetime is limit by current frame.
 ```csharp
 public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {
     ...
@@ -160,7 +186,7 @@ public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {
 }
 ```
 
-#### Sending and receiving an RPC calls
+#### Sending and receiving RPC calls
 After you have got a marker, you can easily initiate RPC call with marker data.
 ```csharp
 public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {

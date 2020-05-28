@@ -151,7 +151,7 @@ public class MouseInputModule : IModule<TState> {
 ```
 
 #### Sending UI events to world
-It's the same as the method above. Just 
+It's the same as the method above.
 ```csharp
 public class YourUIBehaviour : MonoBehaviour {
     

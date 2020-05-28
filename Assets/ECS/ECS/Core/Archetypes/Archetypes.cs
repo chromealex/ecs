@@ -43,6 +43,15 @@ namespace ME.ECS {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void Validate(in Entity entity) {
+
+            var id = entity.id;
+            ArrayUtils.Resize(id, ref this.types);
+            ArrayUtils.Resize(id, ref this.prevTypes);
+            
+        }
+
         public void CopyFrom(ArchetypeEntities other) {
             
             ArrayUtils.Copy(other.prevTypes, ref this.prevTypes);
@@ -54,7 +63,7 @@ namespace ME.ECS {
         public ref Archetype GetPrevious(in Entity entity) {
 
             var id = entity.id;
-            ArrayUtils.Resize(id, ref this.prevTypes);
+            //ArrayUtils.Resize(id, ref this.prevTypes);
             return ref this.prevTypes[id];
 
         }
@@ -63,7 +72,7 @@ namespace ME.ECS {
         public ref Archetype Get(in Entity entity) {
 
             var id = entity.id;
-            ArrayUtils.Resize(id, ref this.types);
+            //ArrayUtils.Resize(id, ref this.types);
             return ref this.types[id];
 
         }
@@ -72,7 +81,7 @@ namespace ME.ECS {
         public void Has<T>(in Entity entity) {
 
             var id = entity.id;
-            ArrayUtils.Resize(id, ref this.types);
+            //ArrayUtils.Resize(id, ref this.types);
             this.types[id].Has<T>();
 
         }
@@ -81,8 +90,8 @@ namespace ME.ECS {
         public void Set<T>(in Entity entity) {
 
             var id = entity.id;
-            ArrayUtils.Resize(id, ref this.types);
-            ArrayUtils.Resize(id, ref this.prevTypes);
+            //ArrayUtils.Resize(id, ref this.types);
+            //ArrayUtils.Resize(id, ref this.prevTypes);
             this.prevTypes[id] = this.Get(entity);
             this.types[id].Add<T>();
 
@@ -92,8 +101,8 @@ namespace ME.ECS {
         public void Remove<T>(in Entity entity) {
 
             var id = entity.id;
-            ArrayUtils.Resize(id, ref this.types);
-            ArrayUtils.Resize(id, ref this.prevTypes);
+            //ArrayUtils.Resize(id, ref this.types);
+            //ArrayUtils.Resize(id, ref this.prevTypes);
             this.prevTypes[id] = this.Get(entity);
             this.types[id].Subtract<T>();
 
@@ -103,8 +112,8 @@ namespace ME.ECS {
         public void RemoveAll<T>(in Entity entity) {
 
             var id = entity.id;
-            ArrayUtils.Resize(id, ref this.types);
-            ArrayUtils.Resize(id, ref this.prevTypes);
+            //ArrayUtils.Resize(id, ref this.types);
+            //ArrayUtils.Resize(id, ref this.prevTypes);
             this.prevTypes[id].Subtract<T>(); 
             this.types[id].Subtract<T>();
 
@@ -126,8 +135,8 @@ namespace ME.ECS {
         public void RemoveAll(in Entity entity) {
 
             var id = entity.id;
-            ArrayUtils.Resize(id, ref this.types);
-            ArrayUtils.Resize(id, ref this.prevTypes);
+            //ArrayUtils.Resize(id, ref this.types);
+            //ArrayUtils.Resize(id, ref this.prevTypes);
             this.prevTypes[id] = this.Get(entity);
             this.types[id].Clear();
 

@@ -571,6 +571,7 @@ namespace ME.ECSEditor {
 
             var style = new GUIStyle(EditorStyles.label);
             var rect = GUILayoutUtility.GetRect(new GUIContent(content), style, options);
+            style.richText = true;
             style.stretchHeight = false;
             style.fixedHeight = 0f;
             EditorGUI.SelectableLabel(rect, content, style);

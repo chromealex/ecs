@@ -703,6 +703,8 @@ namespace ME.ECS {
 
             if (restore == true) {
 
+                this.BeginRestoreEntities();
+                
                 // Update entities cache
                 if (this.ForEachEntity(out var allEntities) == true) {
 
@@ -712,12 +714,14 @@ namespace ME.ECS {
                         if (allEntities.IsFree(j) == true) continue;
                     
                         this.UpdateFilters(item);
-                        this.CreateEntityPlugin1(item);
+                        this.CreateEntityPlugins(item);
 
                     }
                 
                 }
                 
+                this.EndRestoreEntities();
+
             }
 
         }
@@ -918,8 +922,8 @@ namespace ME.ECS {
             entitiesList.Add(entity);
 
             //this.AddToFilters<TEntity>(data.entity); // Why we need to add empty entity into filters?
-            this.UpdateFilters(entity);
             this.CreateEntityPlugins(entity);
+            this.UpdateFilters(entity);
 
             if (name != null) {
 
@@ -972,8 +976,8 @@ namespace ME.ECS {
             var data = this.storagesCache.GetData();
             if (data.IsFree(entity.id) == false) {
 
-                var entityInStorage = data[entity.id];
-                if (entityInStorage.version == entity.version) {
+                //var entityInStorage = data[entity.id];
+                /*if (entityInStorage.version == entity.version)*/ {
 
                     data.RemoveAt(entity.id);
 
@@ -1803,6 +1807,70 @@ namespace ME.ECS {
             this.DestroyEntityPlugin9(entity);
 
         }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void BeginRestoreEntities() {
+            
+            this.BeginRestoreEntitiesPlugins();
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void BeginRestoreEntitiesPlugins() {
+            
+            this.BeginRestoreEntitiesPlugin1();
+            this.BeginRestoreEntitiesPlugin2();
+            this.BeginRestoreEntitiesPlugin3();
+            this.BeginRestoreEntitiesPlugin4();
+            this.BeginRestoreEntitiesPlugin5();
+            this.BeginRestoreEntitiesPlugin6();
+            this.BeginRestoreEntitiesPlugin7();
+            this.BeginRestoreEntitiesPlugin8();
+            this.BeginRestoreEntitiesPlugin9();
+
+        }
+
+        partial void BeginRestoreEntitiesPlugin1();
+        partial void BeginRestoreEntitiesPlugin2();
+        partial void BeginRestoreEntitiesPlugin3();
+        partial void BeginRestoreEntitiesPlugin4();
+        partial void BeginRestoreEntitiesPlugin5();
+        partial void BeginRestoreEntitiesPlugin6();
+        partial void BeginRestoreEntitiesPlugin7();
+        partial void BeginRestoreEntitiesPlugin8();
+        partial void BeginRestoreEntitiesPlugin9();
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void EndRestoreEntities() {
+            
+            this.EndRestoreEntitiesPlugins();
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void EndRestoreEntitiesPlugins() {
+            
+            this.EndRestoreEntitiesPlugin1();
+            this.EndRestoreEntitiesPlugin2();
+            this.EndRestoreEntitiesPlugin3();
+            this.EndRestoreEntitiesPlugin4();
+            this.EndRestoreEntitiesPlugin5();
+            this.EndRestoreEntitiesPlugin6();
+            this.EndRestoreEntitiesPlugin7();
+            this.EndRestoreEntitiesPlugin8();
+            this.EndRestoreEntitiesPlugin9();
+
+        }
+
+        partial void EndRestoreEntitiesPlugin1();
+        partial void EndRestoreEntitiesPlugin2();
+        partial void EndRestoreEntitiesPlugin3();
+        partial void EndRestoreEntitiesPlugin4();
+        partial void EndRestoreEntitiesPlugin5();
+        partial void EndRestoreEntitiesPlugin6();
+        partial void EndRestoreEntitiesPlugin7();
+        partial void EndRestoreEntitiesPlugin8();
+        partial void EndRestoreEntitiesPlugin9();
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void CreateEntityPlugins(in Entity entity) {

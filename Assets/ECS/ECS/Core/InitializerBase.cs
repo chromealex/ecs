@@ -6,9 +6,13 @@ namespace ME.ECS {
 
     public abstract class InitializerBase : MonoBehaviour {
 
+        [System.Serializable]
+        public struct EndOfBaseClass { }
+
         public FeaturesList featuresList = new FeaturesList();
         public WorldSettings worldSettings = WorldSettings.Default;
         public WorldDebugSettings worldDebugSettings = WorldDebugSettings.Default;
+        public EndOfBaseClass endOfBaseClass;
 
         protected void Initialize<TState>(World<TState> world) where TState : class, IState<TState>, new() {
 

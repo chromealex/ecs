@@ -1332,16 +1332,6 @@ namespace ME.ECSEditor {
                                     dataStyle.richText = true;
                                     GUILayoutExt.Padding(4f, () => {
 
-                                        GUILayout.BeginHorizontal();
-                                        {
-                                            /*GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Caption", EditorStyles.miniBoldLabel); }, tableStyle,
-                                                             GUILayout.Width(col1),
-                                                             GUILayout.Height(cellHeight));*/
-                                            GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TableCaption("Data", EditorStyles.miniBoldLabel); }, tableStyle,
-                                                             GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
-                                        }
-                                        GUILayout.EndHorizontal();
-
                                         GUILayout.BeginVertical();
                                         foreach (var filter in filters.GetData()) {
 
@@ -1353,8 +1343,7 @@ namespace ME.ECSEditor {
                                                     padding,
                                                     margin,
                                                     () => {
-                                                        GUILayoutExt.TypeLabel(filter.GetType());
-                                                        GUILayout.Label(filter.name, dataStyle);
+                                                        GUILayoutExt.DataLabel(string.Format("<b>{0}</b>", filter.name));
                                                         GUILayout.Label("Objects count: " + filter.Count.ToString(), dataStyle);
                                                     },
                                                     tableStyle,

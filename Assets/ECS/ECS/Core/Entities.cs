@@ -70,6 +70,33 @@
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static TComponent AddComponent<TComponent>(this Entity entity)
+            where TComponent : class, IComponent, new()
+        {
+        
+            return Worlds.currentWorld.AddComponent<TComponent>(entity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static TComponent AddOrGetComponent<TComponent>(this Entity entity)
+            where TComponent : class, IComponent, new()
+        {
+        
+            return Worlds.currentWorld.AddOrGetComponent<TComponent>(entity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void RemoveComponents<TComponent>(this Entity entity)
+            where TComponent : class, IComponent
+        {
+        
+            Worlds.currentWorld.RemoveComponents<TComponent>(entity);
+            
+        }
+
     }
 
     [System.Serializable]

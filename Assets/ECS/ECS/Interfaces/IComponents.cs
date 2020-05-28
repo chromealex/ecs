@@ -20,5 +20,6 @@ namespace ME.ECS {
 
     public interface IComponentSharedBase { }
     public interface IComponentShared : IComponent, IComponentSharedBase { }
-    
+    public interface IComponentSharedCopyable<TState> : IComponentCopyable<TState> where TState : IStateBase { }
+
 }

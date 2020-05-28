@@ -129,8 +129,12 @@ namespace ME.ECSEditor {
         }
 
         public void OnEnable() {
-            
-            ((Component)this.target).transform.hideFlags = HideFlags.HideInInspector;
+
+            if (this.target is Component) {
+
+                ((Component)this.target).transform.hideFlags = HideFlags.HideInInspector;
+
+            }
 
         }
 
@@ -288,6 +292,32 @@ namespace ME.ECSEditor {
                         
                     }
                     
+                }
+
+                {
+
+                    var editor = Editor.CreateEditor(target);
+                    var field = editor.serializedObject.GetIterator();
+                    editor.serializedObject.Update();
+                    var baseClassEnd = false;
+                    while (field.NextVisible(true) == true) {
+
+                        if (baseClassEnd == true) {
+                            
+                            EditorGUILayout.PropertyField(field);
+
+                        }
+                        
+                        if (field.type == "EndOfBaseClass") {
+
+                            baseClassEnd = true;
+
+                        }
+                        
+                    }
+
+                    editor.serializedObject.ApplyModifiedProperties();
+
                 }
 
                 if (isDirty == true) {

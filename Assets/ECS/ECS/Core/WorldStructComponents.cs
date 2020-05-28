@@ -76,6 +76,8 @@ namespace ME.ECS {
 
             }
 
+            this.world.storagesCache.archetypes.Validate(in entity);
+            
         }
 
         /*[System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

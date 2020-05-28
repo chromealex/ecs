@@ -2,6 +2,6 @@
 
 namespace #NAMESPACE# {
 
-    public class #SCRIPTNAME# : IComponent<#STATENAME#> {}
+    public class #SCRIPTNAME# : IComponent {}
     
 }

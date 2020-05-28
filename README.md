@@ -47,6 +47,9 @@ void CopyFrom(State other) // copies other state into current
 void OnRecycle() // return all used resources into pools
 ```
 
+#### Features (```FeatureBase```)
+Features are introduced for grouping systems and modules into one block.
+
 #### Modules (```IModule<TState>```)
 Modules do visual update on the beginning of the frame and on the beginning of every tick.
 

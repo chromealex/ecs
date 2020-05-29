@@ -489,3 +489,5 @@ public class FSSerializer : ME.ECS.Network.ISerializer {
 
 }
 ```
+
+[![](Footer.png)](/../../#glossary)

@@ -1,4 +1,4 @@
-# Video Tutorials
+# Video Tutorials ![](Logo-Tiny.png)
 
 | Demo | Tutorial 01: Initialization |
 | ----------- | ----------- |

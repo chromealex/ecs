@@ -11,6 +11,7 @@ ME.ECS - it's ECS implementation for Unity Engine with full state automatic roll
 | [Create Feature](Docs/Manual-CreatingFeature.md) | How to create new feature |
 | [Create Entity](Docs/Manual-CreatingEntities.md) | How to create new entity |
 | [Create Component](Docs/Manual-CreatingComponents.md) | How to create new component |
+| [Create Filter](Docs/Manual-CreatingFilters.md) | How to create new filter |
 | [Register Prefabs](Docs/Manual-RegisteringPrefabs.md) | How to register prefab in ME.ECS |
 | [Instantiate View](Docs/Manual-InstantiatingViews.md) | How to instantiate view from previously registered prefab |
 | [Update Views](Docs/Manual-UpdatingViews.md) | How to update views with entity data |

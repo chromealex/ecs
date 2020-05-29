@@ -1,5 +1,5 @@
 # Sending user input to world
-All you need to send any user input to world - is to create Marker struct and call world.AddMarker(...) method. This could be done in modules or in UI. You shouldn't send markers inside systems because of their lifetime limit and out of state storing.
+All you need to send any user input to world is to create Marker struct and call world.AddMarker(...) method. This could be done in modules or in UI. You shouldn't send markers inside systems because of their lifetime limit and out of state storing.
 ```csharp
 public class MouseInputModule : IModule<TState> {
     ...

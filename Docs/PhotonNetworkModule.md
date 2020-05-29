@@ -1,5 +1,7 @@
 # Photon NetworkModule source code
 Here are some classes for understanding how to set up **NetworkModule** properly for [Photon PUN](https://www.photonengine.com/en-US/sdks#pun-sdkpununity).
+All what you need is to register your project on their website and fill up the photon settings form inside Unity. Do not foget to choose "TCP" in protocol section.
+
 > Note: FSSerializer depends on [FullSerializer](https://github.com/jacobdufault/fullserializer).
 
 Steps to implement Photon NetworkModule:

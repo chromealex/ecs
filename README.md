@@ -4,22 +4,13 @@ In general ME.ECS should be used for multiplayer real-time strategy games games 
 <br>
 <br>
 
-### Demo
+| Demo | Tutorial 01: Initialization |
+| ----------- | ----------- |
+| [![](https://img.youtube.com/vi/360PyjjjZTE/0.jpg)](https://www.youtube.com/watch?v=360PyjjjZTE) | [![](https://img.youtube.com/vi/qRQ2E8pv7Dk/0.jpg)](https://www.youtube.com/watch?v=qRQ2E8pv7Dk) |
 
-[![](https://img.youtube.com/vi/360PyjjjZTE/0.jpg)](https://www.youtube.com/watch?v=360PyjjjZTE)
-###### (Click image to play)
-
-### Tutorial 01: Initialization
-[![](https://img.youtube.com/vi/qRQ2E8pv7Dk/0.jpg)](https://www.youtube.com/watch?v=qRQ2E8pv7Dk)
-###### (Click image to play)
-
-### Tutorial 02: First Feature
-[![](https://img.youtube.com/vi/Y_BNGrEBJnY/0.jpg)](https://www.youtube.com/watch?v=Y_BNGrEBJnY)
-###### (Click image to play)
-
-### Tutorial 02: Draw with particles
-[![](https://img.youtube.com/vi/XWFI7jEHbS4/0.jpg)](https://www.youtube.com/watch?v=XWFI7jEHbS4)
-###### (Click image to play)
+| Tutorial 02: First Feature | Tutorial 02: Draw with particles |
+| ----------- | ----------- |
+| [![](https://img.youtube.com/vi/Y_BNGrEBJnY/0.jpg)](https://www.youtube.com/watch?v=Y_BNGrEBJnY)   | [![](https://img.youtube.com/vi/XWFI7jEHbS4/0.jpg)](https://www.youtube.com/watch?v=XWFI7jEHbS4) |
 
 ## Default Modules
 ### States History Module
@@ -56,6 +47,9 @@ void CopyFrom(State other) // copies other state into current
 void OnRecycle() // return all used resources into pools
 ```
 
+#### Features (```FeatureBase```)
+Features are introduced for grouping systems and modules into one block.
+
 #### Modules (```IModule<TState>```)
 Modules do visual update on the beginning of the frame and on the beginning of every tick.
 
@@ -63,7 +57,7 @@ Modules do visual update on the beginning of the frame and on the beginning of e
 Systems do visual update at the end of the frame and on the ending of every tick.
 
 #### Entities
-Entities are storing base data of your objects like position, rotation, user data, etc.
+Entities are containers with ID and Version.
 
 #### Components (```IComponent<TEntity>```)
 Components are storing data. In ME.ECS there are 2 component types: IComponent and IStructComponent.
@@ -78,23 +72,38 @@ Markers needed to implement UI events or something that doesn't exist in game st
 ## Update
 ![](Readme/UpdateTick.png?raw=true "Update Tick")
 
-## Example
-#### 1. World Initialization
+#### Creating State
+In general you don't need to write state code, you can use **ME.ECS/Initialize Project** menu command to generate the template. State in ME.ECS is the basis which must be initialized and it's type should be present in World class for example.
+
+#### World Initialization
+> In general you don't need to write this code, you can use **ME.ECS/Initialize Project** menu command to generate the template.
 ```csharp
 // Initialize new world with custom tick time and custom world id
 // If customWorldId ignored - it will setup automatically
 WorldUtilities.CreateWorld(ref this.world, 0.133f, [customWorldId]);
 this.world.AddModule<StatesHistoryModule>(); // Add default states history module
 this.world.AddModule<NetworkModule>();       // Add default network module
-```
-
-#### 2. State Initialization
-```csharp
+...
 // Create new state and set it by default
-this.world.SetState(WorldUtilities.CreateState<State>());
+this.world.SetState(WorldUtilities.CreateState<TState>());
+// Initialize default components
+ComponentsInitializer<TState>.DoInit();
+this.Initialize(this.world);
+// Save current world state as a Reset State.
+// It's very important to do after the scene loaded and all default entities were set.
+this.world.SaveResetState();
 ```
 
-#### 3. Register Prefabs
+#### Creating Entities
+For creating entities you need to run world.AddEntity().
+Names are used for Editor debug information only.
+```csharp
+var entity = this.world.AddEntity([name]); // The same as var entity = new Entity(name);
+...
+```
+
+#### Registering Prefabs
+If you need to spawn view, first of all you need to register prefab source (type is based on your provider). **world.RegisterViewSource(viewPrefabSource)** could be called in system or in the feature constructor. It returns **ViewId**.
 ```csharp
 // Register point source prefab with custom views provider
 // GameObject (Will call Instantiate/Destroy)
@@ -105,61 +114,261 @@ this.unitViewSourceId = this.world.RegisterViewSource<UnityParticlesProvider>(th
 // Register unit source prefab with auto views provider
 // Here provider should be choosen by unitSource2 type
 this.unitViewSourceId2 = this.world.RegisterViewSource(this.unitSource2);
-...
 ```
 
-#### 4. Create Default Entities
+#### Instantiating Views
+To instantiate view need to call thread-safe method **world.InstantiateView(viewId, entity)**. Short method is **entity.InstantiateView(viewId)**.
+> You can attach any count of views on each entity.
+>
+> But here are some **limitations**: for now you couldn't attach one source twice, only different sources for one entity allowed.
 ```csharp
-// Create default data for all players at this level
-var p1 = this.world.AddEntity();
-var p2 = this.world.AddEntity();
-...
+this.world.InstantiateView(this.pointViewSourceId, entity);
+this.world.InstantiateView(this.pointViewSourceId, entity);
 ```
 
-#### 5. Instantiate Views (Don't worry, you can call Instantiate on any thread)
+#### Adding Systems
+You can add systems inside initializer or (the better way) inside feature class. Inside feature class you can add modules and systems in constructor, also could load data for this feature.
 ```csharp
-// Attach views onto entities
-// You can attach any count of views on each entity
-// But here are some limitations: for now you couldn't attach one source twice, only different sources for one entity allowed.
-this.world.InstantiateView(this.pointViewSourceId, p1);  // Add view with id pointViewSourceId onto p1 Entity
-this.world.InstantiateView(this.pointViewSourceId, p2);  // Add view with id pointViewSourceId onto p2 Entity
-...
+this.world.AddSystem<YourNewSystem>(); // The same as this.AddSystem<YourNewSystem>(); in feature class
 ```
 
-#### 6. Add Features abd Systems
+#### Sending user input to world
+All you need to send any user input to world - is to create Marker struct and call world.AddMarker(...) method. This could be done in modules or in UI. You shouldn't send markers inside systems because of their lifetime limit and out of state storing.
 ```csharp
-// Add features (inside features you can register systems and modules)
-this.world.AddFeature<InputFeature>();
-this.world.AddFeature<Feature2>();
-this.world.AddFeature<Feature3>();
-
-// Add custom global systems out of any features
-this.world.AddSystem<InputSystem>();
-this.world.AddSystem<PointsSystem>();
-this.world.AddSystem<UnitsSystem>();
-...
+public class MouseInputModule : IModule<TState> {
+    ...
+    void IModule<TState>.Update(in TState state, in float deltaTime) {
+        if (Input.GetMouseButtonDown(0) == true) {
+            // As usual we get ray depends on camera frustum and put it via Physics.Raycast for example
+            var ray = camera.ScreenPointToRay(UnityEngine.Input.mousePosition);
+            if (UnityEngine.Physics.Raycast(ray, out var hitInfo, float.MaxValue, -1) == true) {
+                Worlds.currentWorld.AddMarker(new WorldClick() { worldPos = hitInfo.point });
+            }
+        }
+    }
+    
+}
 ```
 
-#### 7. Save Reset State
+#### Sending UI events to world
+It's the same as the method above.
 ```csharp
-// Save current world state as a Reset State.
-// It's very important to do after the scene loaded and all default entities were set.
-// Sure after that you could run any of API methods, but be sure you call them through RPC calls.
-this.world.SaveResetState();
+public class YourUIBehaviour : MonoBehaviour {
+    
+    public Button button;
+    
+    public void Start() {
+    
+        this.button.onClick.AddListener(this.AddMarker);
+    
+    }
+    
+    ...
+    
+    private void AddMarker() {
+        
+        // Send marker click to world
+        Worlds.currentWorld.AddMarker(new OnYourUIBehaviourClick());
+        
+    }
+    
+}
 ```
 
-## Upcoming plans
-- Implement automatic states history with rollback system <b>(100% done)</b>
-- Decrease initialization time and memory allocs <b>(90% done)</b>
-- Random support to generate random numbers, store RandomState in game state <b>(100% done)</b>
-- Add full game example <b>(80% done)</b>
-- Add auto sync on packets drop (TCP) <b>(100% done)</b>
-- Add auto sync on packets drop (UDP) <b>(20% done)</b>
-- Views module <b>(100% done)</b>
-- Implement UnityGameObjectProvider <b>(100% done)</b>
-- Implement UnityParticlesProvider <b>(95% done)</b> - MeshFilter/MeshRenderer support, inner ParticleSystem effects support, but rewind is not fully implemented.
-- Implement UnityDrawMeshProvider <b>(90% done)</b> - only MeshFilter/MeshRenderer support added
-- Add particle system simulation support on state change <b>(100% done)</b>
-- Add shared components support <b>(100% done)</b>
-- Add multithreading support <b>(80% done)</b>
-- Preformance refactoring <b>(90% done)</b>
+#### Receiving user input in world system
+To receive data from marker, you need to get it inside Update method.
+> **IMPORTANT!** Do not receive markers inside AdvanceTick, because markers lifetime is limit by current frame.
+```csharp
+public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {
+    ...
+    void ISystemUpdate<TState>.Update(in TState state, in float deltaTime) {
+        if (this.world.GetMarker(out WorldClick markerClick) == true) {
+            ...
+        }
+    }
+}
+```
+
+#### Sending and receiving RPC calls
+After you have got a marker, you can easily initiate RPC call with marker data.
+```csharp
+public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {
+    
+    // This number must determined directly
+    private const int GLOBAL_RPC_ID = 1;
+            
+    private RPCId rpcId;
+            
+    void ISystemBase.OnConstruct() {
+            
+        // Get registered Network Module
+        var networkModule = this.world.GetModule<NetworkModule>();
+        // Registering this system as an RPC receiver
+        networkModule.RegisterObject(this, UserInputReceiveSystem.GLOBAL_RPC_ID);
+
+        // Register RPC call. This method returns RPCId which determines your method.
+        this.rpcId = networkModule.RegisterRPC(new System.Action<WorldClick>(this.WorldClick_RPC).Method);
+
+    }
+
+    void ISystemBase.OnDeconstruct() {
+
+        // Unregister object on deconstruction
+        var networkModule = this.world.GetModule<NetworkModule>();
+        networkModule.UnRegisterObject(this, UserInputReceiveSystem.GLOBAL_RPC_ID);
+
+    }
+    
+    void ISystemUpdate<TState>.Update(in TState state, in float deltaTime) {
+    
+        if (this.world.GetMarker(out WorldClick markerClick) == true) {
+            
+            var networkModule = this.world.GetModule<NetworkModule>();
+            networkModule.RPC(this, this.rpcId, markerClick);
+            
+        }
+        
+    }
+    
+    private void WorldClick_RPC(WorldClick worldClick) {
+    
+        // You can use worldClick data here
+        // For example set to some entity or create the new entity here
+        var networkEntity = this.world.AddEntity();
+        networkEntity.SetPosition(worldClick.worldPos);
+    
+    }
+    
+}
+```
+
+#### Updating Views
+There are several View Providers in ME.ECS. Also you can write your own Provider implemenetation (inherit from **ViewsProvider**).
+
+##### No View
+**NoView** class need to draw something special without any view representation. For example if you have 2D grid or something, but all you need is to receive entity data and make an update. NoView provider is a default provider and it is always exists in ME.ECS.
+
+##### Particle View
+```csharp
+public class ApplyYourViewStateParticle : ParticleView<ApplyYourViewStateParticle> {
+        
+    // You can define any public fields here
+    // but note that you need override CopyFrom(T) method to properly instantiate this view from prefab
+    ...
+        
+    public override void OnInitialize() {
+
+        // Initialize view, link some data or cache something here
+
+    }
+
+    public override void OnDeInitialize() {
+
+        // Clean up your cache data
+
+    }
+
+    // By default ApplyStateJob will be called from a job
+    // If jobs are turned off for this provider or globaly, it will be called inside the main thread.
+    public override void ApplyStateJob(float deltaTime, bool immediately) {
+
+        // Getting root data
+        ref var rootData = ref this.GetRootData();
+
+        // Updating root particle position, rotation, scale, etc.
+        rootData.position = this.entity.GetPosition();
+        rootData.startSize = 1f;
+
+        // You need to push data in any way here
+        this.SetRootData(ref rootData);
+
+    }
+
+    // If you need to use something that couldn't be done in jobs - you could use this method
+    public override void ApplyState(float deltaTime, bool immediately) {
+
+    }
+
+}
+```
+
+##### MonoBehaviour View
+```csharp
+public class ApplyYourViewStateParticle : MonoBehaviourView {
+        
+    // You can define any public fields here
+    ...
+        
+    // You can turn off jobs for the certain instance
+    public override bool applyStateJob => true;
+        
+    public override void OnInitialize() {
+
+        // Initialize view, link some data or cache something here
+
+    }
+
+    public override void OnDeInitialize() {
+
+        // Clean up your cache data
+
+    }
+
+    // By default ApplyStateJob will be called from a job
+    // If jobs are turned off for this provider or globaly, this method would be skipped.
+    public override void ApplyStateJob(UnityEngine.Jobs.TransformAccess transform, float deltaTime, bool immediately) {
+
+        transform.position = this.entity.GetPosition();
+
+    }
+
+    // If you need to use something that couldn't be done in jobs - you could use this method
+    public override void ApplyState(float deltaTime, bool immediately) {
+
+    }
+
+}
+```
+
+##### DrawMesh View
+```csharp
+public class ApplyYourViewStateDrawMesh : DrawMeshView<ApplyYourViewStateDrawMesh> {
+        
+    // You can define any public fields here,
+    // but note that you need override CopyFrom(T) method to properly instantiate this view from prefab
+    ...
+        
+    public override void OnInitialize() {
+
+        // Initialize view, link some data or cache something here
+
+    }
+
+    public override void OnDeInitialize() {
+
+        // Clean up your cache data
+
+    }
+
+    // By default ApplyStateJob will be called from a job
+    // If jobs are turned off for this provider or globaly, it will be called inside the main thread.
+    public override void ApplyStateJob(float deltaTime, bool immediately) {
+
+        // Getting root data
+        ref var rootData = ref this.GetRootData();
+
+        // Updating root mesh position, rotation, scale, etc.
+        rootData.position = this.entity.GetPosition();
+
+        // You need to push data in any way here
+        this.SetRootData(ref rootData);
+
+    }
+
+    // If you need to use something that couldn't be done in jobs - you could use this method
+    public override void ApplyState(float deltaTime, bool immediately) {
+
+    }
+
+}
+```

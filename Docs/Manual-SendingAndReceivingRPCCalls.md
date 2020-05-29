@@ -1,11 +1,11 @@
 # Sending and receiving RPC calls
-First you need to set up **NetworkModule** submodules. Go to **Modules/NetworkModule.cs** and in **OnIntiailize** method you need to set up your Transport (**ITransporter**) and Serializer (**ISerializer**). If you don't set up them - none of RPC calls would work. In real production you need use your own implementation of NetworkModule.
 
 NetworkModule implementations:
 | Link | Description |
 | ----- | ----- |
 | [Fake](FakeNetworkModule.md) | You can use it for faster set up demo project. Local project will run and all RPC events will go through NetworkModule |
 | [Photon](PhotonNetworkModule.md) | Photon transport layer implementation. All what you need is to register your project on their website and fill up the photon settings form inside Unity. Do not foget to choose "TCP" in protocol section. |
+| [Manual Implementation](ManualNetworkModule.md) | Manual implementation of network module. |
 
 After you have got a marker, you can easily initiate RPC call with marker data.
 ```csharp

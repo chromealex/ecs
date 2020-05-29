@@ -1,4 +1,4 @@
-# Code Generators
+# Code Generators ![](Logo-Tiny.png)
 > Any of code generators works when Project Directory selected.
 >
 > To run all code generators at once, select your Project Directory and choose **ME.ECS/Generators/Compile All...**

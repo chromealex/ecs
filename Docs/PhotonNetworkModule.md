@@ -2,7 +2,7 @@
 Here are some classes for understanding how to set up **NetworkModule** properly for [Photon PUN](https://www.photonengine.com/en-US/sdks#pun-sdkpununity).
 > Note: FSSerializer depends on [FullSerializer](https://github.com/jacobdufault/fullserializer).
 
-First of all you need to define some markers in your world:
+#### First of all you need to define some markers in your world:
 ```csharp
 public struct NetworkSetActivePlayer : IMarker {
 

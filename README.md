@@ -6,10 +6,6 @@ In general ME.ECS should be used for multiplayer real-time strategy games games 
 
 ## How It Works
 ![](Readme/HowItWorks.png?raw=true "How It Works")
-#### World (```IWorld<TState>```)
-The container for all components like modules, systems, etc.
-You can store multiple worlds with different states, entities, components, modules and systems.
-
 ## Update
 ![](Readme/UpdateTick.png?raw=true "Update Tick")
 

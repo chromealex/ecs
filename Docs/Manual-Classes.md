@@ -23,7 +23,7 @@ Systems do visual update at the end of the frame and on the ending of every tick
 <br>
 
 #### Features (```FeatureBase```)
-[How to create a feature](Manual-CreatingFeatures.md)
+[How to create a feature](Manual-CreatingFeature.md)
 
 Features are introduced for grouping systems and modules into one block. Features are ScriptableObjects and could be ordered in Initializer on your scene
 <br>

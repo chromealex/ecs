@@ -30,9 +30,13 @@ Features are introduced for grouping systems and modules into one block. Feature
 <br>
 
 #### Modules (```IModule<TState>```)
+[How to create a module](Manual-CreatingModules.md)
+
 Modules do visual update on the beginning of the frame and on the beginning of every tick. Here you can get controller input and create some markers.
 <br>
 <br>
 
 #### Markers (```IMarker```)
+[How to create a marker](Manual-CreatingMarkers.md)
+
 Markers needed to implement Controller/UI events or something that doesn't exist in game state.

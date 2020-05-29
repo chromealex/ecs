@@ -17,3 +17,5 @@ public class YourFeature : Feature<TState> {
 
 }
 ```
+
+[![](Footer.png)](/../../#glossary)

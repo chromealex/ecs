@@ -1,5 +1,7 @@
 # Fake NetworkModule source code
 Here are some classes for understanding how to set up **NetworkModule** properly. You should replace FakeTransporter and FakeSerializer with your implementation.
+Local project will run and all RPC events will go through NetworkModule.
+
 > Note: FakeSerializer depends on [FullSerializer](https://github.com/jacobdufault/fullserializer).
 
 ```csharp

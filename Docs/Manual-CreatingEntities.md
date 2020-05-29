@@ -5,3 +5,5 @@ Names are used for Editor debug information only, so they are optional.
 var entity = this.world.AddEntity([name]); // The same as var entity = new Entity(name);
 ...
 ```
+
+[![](Footer.png)](/../../#glossary)

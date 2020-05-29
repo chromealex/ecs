@@ -41,3 +41,5 @@ Modules do visual update on the beginning of the frame and on the beginning of e
 [How to create a marker](Manual-CreatingMarkers.md)
 
 Markers needed to implement Controller/UI events or something that doesn't exist in game state.
+
+[![](Footer.png)](/../../#glossary)

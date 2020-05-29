@@ -19,7 +19,7 @@ public struct NetworkPlayerDisconnected : IMarker {
 public struct NetworkPlayerConnectedTimeSynced : IMarker {}
 ```
 
-Then replace your Modules/NetworkModule.cs with the code below:
+#### Then replace your Modules/NetworkModule.cs with the code below:
 ```csharp
 public class NetworkModule : ME.ECS.Network.NetworkModule<TState> {
 
@@ -90,7 +90,7 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<TState> {
 }
 ```
 
-Photon Receiver is a MonoBehaviour class which allows NetworkModule receive callbacks from Photon.
+#### Photon Receiver is a MonoBehaviour class which allows NetworkModule receive callbacks from Photon.
 ```csharp
 public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
 
@@ -304,7 +304,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
 }
 ```
 
-Add ITransporter implementation:
+#### Add ITransporter implementation:
 ```csharp
 public class PhotonTransporter : ME.ECS.Network.ITransporter {
 
@@ -432,7 +432,7 @@ public class PhotonTransporter : ME.ECS.Network.ITransporter {
 }
 ```
 
-Add ISerializer implementation:
+#### Add ISerializer implementation:
 ```csharp
 public class FSSerializer : ME.ECS.Network.ISerializer {
 

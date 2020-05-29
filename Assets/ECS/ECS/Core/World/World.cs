@@ -271,13 +271,6 @@ namespace ME.ECS {
             
         }
 
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public int GetLastEntityId() {
-
-            return this.GetState().entityId;
-
-        }
-
         public void SetFeatureState(IFeatureBase feature, ModuleState state) {
             
             var index = this.features.IndexOf(feature);

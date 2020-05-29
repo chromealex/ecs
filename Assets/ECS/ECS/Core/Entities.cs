@@ -12,7 +12,7 @@
 
     }
 
-    public static class EntityExtensions {
+    public static partial class EntityExtensions {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Entity RemoveData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
@@ -111,7 +111,15 @@
             }
         }
 
-        public Entity(int id, int version) {
+        public Entity(string name) {
+
+            var entity = Worlds.currentWorld.AddEntity(name);
+            this.id = entity.id;
+            this.version = entity.version;
+
+        }
+        
+        internal Entity(int id, int version) {
 
             this.id = id;
             this.version = version;

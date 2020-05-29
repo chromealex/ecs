@@ -6,21 +6,45 @@ namespace ME.ECS {
     
     using ME.ECS.Views;
     
-    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
+    public partial interface IWorldBase {
+        
+        void InstantiateView(ViewId prefab, Entity entity);
+        void InstantiateView(IView prefab, Entity entity);
+
+        void InstantiateViewShared(ViewId prefab);
+        void InstantiateViewShared(IView prefab);
         
         ViewId RegisterViewSource<TProvider>(TProvider providerInitializer, IView prefab) where TProvider : struct, IViewsProviderInitializer;
         bool UnRegisterViewSource(IView prefab);
-        void InstantiateView(ViewId prefab, Entity entity);
-        void InstantiateView(IView prefab, Entity entity);
         void DestroyView(ref IView instance);
         void DestroyAllViews(Entity entity);
 
         ViewId RegisterViewSourceShared<TProvider>(TProvider providerInitializer, IView prefab) where TProvider : struct, IViewsProviderInitializer;
         bool UnRegisterViewSourceShared(IView prefab);
-        void InstantiateViewShared(ViewId prefab);
-        void InstantiateViewShared(IView prefab);
         void DestroyViewShared(ref IView instance);
         void DestroyAllViewsShared();
+
+    }
+    
+    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
+        
+    }
+
+    public static partial class EntityExtensions {
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void InstantiateView(this Entity entity, ViewId viewId) {
+
+            Worlds.currentWorld.InstantiateView(viewId, entity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void InstantiateView(this Entity entity, IView prefab) {
+
+            Worlds.currentWorld.InstantiateView(prefab, entity);
+            
+        }
 
     }
 
@@ -142,7 +166,7 @@ namespace ME.ECS {
 namespace ME.ECS.Views {
     
     using ME.ECS.Collections;
-    
+
     public interface IViewBase {
         
         Entity entity { get; set; }

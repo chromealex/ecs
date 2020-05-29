@@ -4,29 +4,71 @@ namespace ME.ECS {
     
     using ME.ECS.Collections;
     
+    /// <summary>
+    /// Base world interface
+    /// 
+    /// </summary>
     public partial interface IWorldBase {
 
+        /// <summary>
+        /// Returns current world id
+        /// </summary>
         int id { get; }
         
+        /// <summary>
+        /// Returns current world settings
+        /// </summary>
         WorldSettings settings { get; }
+        /// <summary>
+        /// Returns current world debug settings
+        /// </summary>
         WorldDebugSettings debugSettings { get; }
 
+        /// <summary>
+        /// Set current world settings
+        /// </summary>
+        /// <param name="settings"></param>
         void SetSettings(WorldSettings settings);
+        /// <summary>
+        /// Set current world debug settings
+        /// </summary>
+        /// <param name="settings"></param>
         void SetDebugSettings(WorldDebugSettings settings);
         
+        /// <summary>
+        /// Current running system context. Useful inside system's job or static utils.
+        /// </summary>
         ISystemBase currentSystemContext { get; }
         void SetCheckpointCollector(ICheckpointCollector checkpointCollector);
         void Checkpoint(object interestObj);
 
-        int GetLastEntityId();
-        
+        Entity AddEntity(string name = null);
+        //void RemoveEntities<T>(T data) where T : struct, IEntity;
+        bool RemoveEntity(Entity entity);
+        //bool HasEntity<TEntity>(int entityId) where TEntity : struct, IEntity;
+        bool ForEachEntity(out RefList<Entity> output);
+
+        /// <summary>
+        /// Set feature active state
+        /// </summary>
+        /// <param name="feature"></param>
+        /// <param name="state"></param>
         void SetFeatureState(IFeatureBase feature, ModuleState state);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="feature"></param>
+        /// <returns>Feature active state</returns>
         ModuleState GetFeatureState(IFeatureBase feature);
         void SetSystemState(ISystemBase system, ModuleState state);
         ModuleState GetSystemState(ISystemBase system);
         void SetModuleState(IModuleBase module, ModuleState state);
         ModuleState GetModuleState(IModuleBase module);
 
+        /// <summary>
+        /// Returns unique state hash
+        /// </summary>
+        /// <returns></returns>
         int GetStateHash();
 
         Tick GetStateTick();
@@ -77,12 +119,6 @@ namespace ME.ECS {
         TState GetState();
         
         TState GetResetState();
-
-        Entity AddEntity(string name = null);
-        //void RemoveEntities<T>(T data) where T : struct, IEntity;
-        bool RemoveEntity(Entity entity);
-        //bool HasEntity<TEntity>(int entityId) where TEntity : struct, IEntity;
-        bool ForEachEntity(out RefList<Entity> output);
 
         System.Collections.Generic.List<TModule> GetModules<TModule>(System.Collections.Generic.List<TModule> output) where TModule : IModuleBase;
         bool HasModule<TModule>() where TModule : class, IModule<TState>;

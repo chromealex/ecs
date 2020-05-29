@@ -146,9 +146,9 @@ namespace ME.ECS {
 
     public struct Archetype : System.IEquatable<Archetype> {
 
-        private BitMasks.BitMask value;
+        private BitMask value;
         
-        public Archetype(BitMasks.BitMask value) {
+        public Archetype(BitMask value) {
 
             this.value = value;
             
@@ -157,7 +157,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsEmpty() {
 
-            return this.value == BitMasks.BitMask.None;
+            return this.value == BitMask.None;
 
         }
 
@@ -206,7 +206,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public Archetype Clear() {
 
-            this.value = new BitMasks.BitMask();
+            this.value = new BitMask();
 
             return this;
 

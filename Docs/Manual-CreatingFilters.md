@@ -19,7 +19,7 @@ You can use these methods to filter your entities:
 
 | Method | Description |
 | ----- | ----- |
-| WithStructComponent<T> | Filters all entities having T struct component |
-| WithoutStructComponent<T> | Filters all entities that doesn't have T struct component |
-| WithComponent<T> | Filters all entities having T class component |
-| WithoutComponent<T> | Filters all entities that doesn't have T class component |
+| WithStructComponent\<T\> | Filters all entities having T struct component |
+| WithoutStructComponent\<T\> | Filters all entities that doesn't have T struct component |
+| WithComponent\<T\> | Filters all entities having T class component |
+| WithoutComponent\<T\> | Filters all entities that doesn't have T class component |

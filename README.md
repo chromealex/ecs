@@ -10,6 +10,7 @@ ME.ECS - it's ECS implementation for Unity Engine with full state automatic roll
 | [Create World](Docs/Manual-CreatingWorld.md) | Describe how to create new world and set up your empty project |
 | [Create Feature](Docs/Manual-CreatingFeature.md) | How to create new feature |
 | [Create System](Docs/Manual-CreatingSystems.md) | How to create new system |
+| [Create Module](Docs/Manual-CreatingModules.md) | How to create new module |
 | [Create Entity](Docs/Manual-CreatingEntities.md) | How to create new entity |
 | [Create Component](Docs/Manual-CreatingComponents.md) | How to create new component |
 | [Create Filter](Docs/Manual-CreatingFilters.md) | How to create new filter |

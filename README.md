@@ -57,7 +57,7 @@ Modules do visual update on the beginning of the frame and on the beginning of e
 Systems do visual update at the end of the frame and on the ending of every tick.
 
 #### Entities
-Entities are storing base data of your objects like position, rotation, user data, etc.
+Entities are containers with ID and Version.
 
 #### Components (```IComponent<TEntity>```)
 Components are storing data. In ME.ECS there are 2 component types: IComponent and IStructComponent.

@@ -7,18 +7,22 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
 
     protected override int GetRPCOrder() {
 
+        // TODO: Place here your Network Player Id
         return this.world.id;
 
     }
 
     protected override ME.ECS.Network.NetworkType GetNetworkType() {
 
+        // You can remove RunLocal parameter to avoid run events on local machine immediately.
+        // This behaviour depends on your needs, because in some projects you need to run all user events smoothly without any delay like a ping or awaiting of server logic.
         return ME.ECS.Network.NetworkType.SendToNet | ME.ECS.Network.NetworkType.RunLocal;
 
     }
 
     protected override void OnInitialize() {
 
+        // Here you need to set up transporter and serializer classes
         var instance = (ME.ECS.Network.INetworkModuleBase)this;
         instance.SetTransporter(new FakeTransporter(this.GetNetworkType()));
         instance.SetSerializer(new FakeSerializer());
@@ -51,13 +55,16 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
 
     public void Send(byte[] bytes) {
 
-        if ((this.networkType & ME.ECS.Network.NetworkType.RunLocal) == 0) { // Add to local buffer if RunLocal flag is not set
-
+        if ((this.networkType & ME.ECS.Network.NetworkType.RunLocal) == 0) {
+        
+            // Add to local buffer if RunLocal flag is not set.
+            // If flag RunLocal is set, this event has been run already.
+            // This is FakeTransporter behaviour only.
             this.AddToBuffer(bytes);
 
         }
 
-        // Here you need to send bytes array via your real transport layer
+        // TODO: Here you need to send bytes array via your real transport layer to test real network environment.
         
         this.sentBytesCount += bytes.Length;
         ++this.sentCount;
@@ -75,6 +82,9 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
     private Buffer currentBuffer;
 
     public byte[] Receive() {
+
+        // This method run every tick and should return data from network
+        // byte[] array will be deserialized by ISerializer into HistoryEvent
 
         if (this.currentBuffer.data != null && this.currentBuffer.data.Length > 0) {
 

@@ -1,4 +1,4 @@
-# Sending UI events to world
+# Sending UI events to world ![](Logo-Tiny.png)
 It's the same as the method above.
 ```csharp
 public class YourUIBehaviour : MonoBehaviour {

@@ -1,9 +1,11 @@
 # Sending and receiving RPC calls
+First you need to set up **NetworkModule** submodules. Go to **Modules/NetworkModule.cs** and in **OnIntiailize** method you need to set up your Transport (**ITransporter**) and Serializer (**ISerializer**). If you don't set up them - none of RPC calls would work. [Fake NetworkModule source code](FakeNetworkModule.md) you can use to faster set up demo project. In real production you need use your own implementation of NetworkModule.
+
 After you have got a marker, you can easily initiate RPC call with marker data.
 ```csharp
 public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {
     
-    // This number must determined directly
+    // This number must be determined directly
     private const int GLOBAL_RPC_ID = 1;
             
     private RPCId rpcId;

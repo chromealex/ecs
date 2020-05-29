@@ -16,18 +16,34 @@ public class MyComponent : IComponentCopyable<TState> {
        
     void IPoolableRecycle.OnRecycle() {
 
-        PoolArray.Recycle(ref this.someArray);
+        PoolArray<int>.Recycle(ref this.someArray);
 
     }
 
 }
 ```
 
-In struct components you don't have any methods and all copies make automatically. But here are some limitations about managed arrays. If you store managed array here, only pointer will be copied, so if you have static array with some data you can use managed arrays here, but if you change data by your logic in these arrays, you shouldn't store any managed data here.
+In struct components you don't have any methods and all copies make automatically. But here are some limitations about managed arrays. If you store managed array here, only pointer will be copied, so if you have static array with some data you can use managed arrays here, but if you change data by your logic in these arrays, you shouldn't store any managed data here. In some cases you can use **StackArray** to allocate struct array, but there are some limitations.
 ```csharp
 public struct MyStructComponent : IStructComponent {
         
     public int someData;
+
+}
+```
+
+In systems where you need to use components you could use these methods:
+```csharp
+void ISystemFilter<TState>.AdvanceTick(in Entity entity, in TState state, in float deltaTime) {
+        
+    // Struct components usage example
+    ref var data = ref entity.GetData<MyStructComponent>();
+    ++data.someData;
+    
+    // Class components usage example
+    var component = entity.GetOrAddComponent<MyComponent>();
+    if (component.someArray == null) component.someArray = PoolArray<int>.Spawn(10);
+    component.someArray[...] = ...;
 
 }
 ```

@@ -1,5 +1,7 @@
 # Classes
 #### Entities
+[How to create an entity](Manual-CreatingEntities.md)
+
 Entities are containers with ID and Version.
 <br>
 <br>

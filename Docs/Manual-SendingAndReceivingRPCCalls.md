@@ -4,7 +4,7 @@ NetworkModule implementations:
 | Link         | Description |
 | ------------ | --- |
 | [Fake](FakeNetworkModule.md) | You can use it for faster set up demo project. Local project will run and all RPC events will go through NetworkModule. |
-| [Photon](PhotonNetworkModule.md) | Photon transport layer implementation. All what you need is to register your project on their website and fill up the photon settings form inside Unity. Do not foget to choose "TCP" in protocol section. |
+| [Photon](PhotonNetworkModule.md) | Photon transport layer implementation. |
 | [Manual Implementation](ManualNetworkModule.md) | Manual implementation of network module. |
 
 After you have got a marker, you can easily initiate RPC call with marker data.

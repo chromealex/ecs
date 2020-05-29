@@ -21,6 +21,7 @@ ME.ECS - it's ECS implementation for Unity Engine with full state automatic roll
 | [Receive User Input](Docs/Manual-ReceivingUserInputInWorld.md) | How to receive markers in systems |
 | [Send and Receive RPC Calls](Docs/Manual-SendingAndReceivingRPCCalls.md) | How to register object in **NetworkModule**, send and receive RPC packages |
 | [Defines](Docs/Defines.md) | Define usage |
+| [Code Generators](Docs/CodeGenerators.md) | Code Generators usage |
 
 ## How It Works
 ![](Readme/HowItWorks.png?raw=true "How It Works")

@@ -6,3 +6,5 @@ To instantiate view need to call thread-safe method **world.InstantiateView(view
 ```csharp
 this.world.InstantiateView(this.viewSourceId, entity);
 ```
+
+[![](Footer.png)](/../../#glossary)

@@ -4,11 +4,6 @@ In general ME.ECS should be used for multiplayer real-time strategy games games 
 <br>
 <br>
 
-## How It Works
-![](Readme/HowItWorks.png?raw=true "How It Works")
-## Update
-![](Readme/UpdateTick.png?raw=true "Update Tick")
-
 ## Glossary
 - [Video Tutorials](Docs/VideoTutorials.md)
 - [Default Modules](Docs/DefaultModules.md)
@@ -23,3 +18,8 @@ In general ME.ECS should be used for multiplayer real-time strategy games games 
 - [Register Prefabs](Docs/Manual-RegisteringPrefabs.md)
 - [Send and Receive RPC Calls](Docs/Manual-SendingAndReceivingRPCCalls.md)
 - [Update Views](Docs/Manual-UpdatingViews.md)
+
+## How It Works
+![](Readme/HowItWorks.png?raw=true "How It Works")
+## Update
+![](Readme/UpdateTick.png?raw=true "Update Tick")

@@ -15,3 +15,5 @@ public class MouseInputModule : IModule<TState> {
     
 }
 ```
+
+[![](Footer.png)](/../../#glossary)

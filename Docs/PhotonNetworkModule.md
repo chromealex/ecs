@@ -1,7 +1,15 @@
 # Photon NetworkModule source code
-Here are some classes for understanding how to set up **NetworkModule** properly for Photon.
+Here are some classes for understanding how to set up **NetworkModule** properly for [Photon PUN](https://www.photonengine.com/en-US/sdks#pun-sdkpununity).
 > Note: FSSerializer depends on [FullSerializer](https://github.com/jacobdufault/fullserializer).
 
+Steps to implement Photon NetworkModule:
+1. [Markers](#first-of-all-you-need-to-define-some-markers-in-your-world)
+2. [Network Module](#then-replace-your-modulesnetworkmodulecs-with-the-code-below)
+3. [Photon Receiver](#photon-receiver-is-a-monobehaviour-class-which-allows-networkmodule-receive-callbacks-from-photon)
+4. [ITransporter Implementation](#add-itransporter-implementation)
+5. [ISerializer Implementation](#add-iserializer-implementation)
+
+#### First of all you need to define some markers in your world:
 ```csharp
 public struct NetworkSetActivePlayer : IMarker {
 
@@ -17,7 +25,8 @@ public struct NetworkPlayerDisconnected : IMarker {
 
 public struct NetworkPlayerConnectedTimeSynced : IMarker {}
 ```
-  
+
+#### Then replace your Modules/NetworkModule.cs with the code below:
 ```csharp
 public class NetworkModule : ME.ECS.Network.NetworkModule<TState> {
 
@@ -88,7 +97,7 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<TState> {
 }
 ```
 
-Photon Receiver is a MonoBehaviour class which allows NetworkModule receive callbacks from Photon.
+#### Photon Receiver is a MonoBehaviour class which allows NetworkModule receive callbacks from Photon.
 ```csharp
 public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
 
@@ -302,6 +311,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
 }
 ```
 
+#### Add ITransporter implementation:
 ```csharp
 public class PhotonTransporter : ME.ECS.Network.ITransporter {
 
@@ -429,6 +439,7 @@ public class PhotonTransporter : ME.ECS.Network.ITransporter {
 }
 ```
 
+#### Add ISerializer implementation:
 ```csharp
 public class FSSerializer : ME.ECS.Network.ISerializer {
 

@@ -1,4 +1,4 @@
-# Sending and receiving RPC calls
+# Sending and receiving RPC calls ![](Logo-Tiny.png)
 
 NetworkModule implementations:
 | Link         | Description |

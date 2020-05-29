@@ -3,7 +3,7 @@
 NetworkModule implementations:
 | Link         | Description |
 | ------------ | --- |
-| [Fake](FakeNetworkModule.md) | You can use it for faster set up demo project. Local project will run and all RPC events will go through NetworkModule. |
+| [Fake](FakeNetworkModule.md) | You can use it for faster set up demo project. |
 | [Photon](PhotonNetworkModule.md) | Photon transport layer implementation. |
 | [Manual Implementation](ManualNetworkModule.md) | Manual implementation of network module. |
 

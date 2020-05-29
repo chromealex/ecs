@@ -1,4 +1,4 @@
-# Defines
+# Defines ![](Logo-Tiny.png)
 
 | Define | Description |
 | ------ | ------ |

@@ -1,4 +1,4 @@
-# Creating Filters
+# Creating Filters ![](Logo-Tiny.png)
 In ME.ECS filters are storing entities with the certain components they have or not.
 Filters must be created in constructors of systems or features and shouldn't been added at the runtime.
 By default in **System with Filter** you have already defined filter and have a AdvanceTick method to implement logic working with certain entity.

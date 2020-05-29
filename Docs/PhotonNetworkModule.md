@@ -2,7 +2,7 @@
 Here are some classes for understanding how to set up **NetworkModule** properly for [Photon PUN](https://www.photonengine.com/en-US/sdks#pun-sdkpununity).
 > Note: FSSerializer depends on [FullSerializer](https://github.com/jacobdufault/fullserializer).
 
-Steps:
+Steps to implement Photon NetworkModule:
 1. [Markers](#first-of-all-you-need-to-define-some-markers-in-your-world)
 2. [Network Module](#then-replace-your-modulesnetworkmodulecs-with-the-code-below)
 3. [Photon Receiver](#photon-receiver-is-a-monobehaviour-class-which-allows-networkmodule-receive-callbacks-from-photon)

@@ -29,9 +29,9 @@ namespace #NAMESPACE# {
             return Filter<TState>.Create("Filter-#SCRIPTNAME#").Push();
             
         }
-
+    
         void ISystemFilter<TState>.AdvanceTick(in Entity entity, in TState state, in float deltaTime) {}
-
+    
     }
     
 }

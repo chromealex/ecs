@@ -55,12 +55,14 @@ namespace ME.ECS {
 
         public bool useJobsForSystems;
         public bool useJobsForViews;
+        public bool turnOffViews;
 
         public WorldViewsSettings viewsSettings;
         
         public static WorldSettings Default => new WorldSettings() {
             useJobsForSystems = true,
             useJobsForViews = true,
+            turnOffViews = false,
             viewsSettings = new WorldViewsSettings()
         };
 

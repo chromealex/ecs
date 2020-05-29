@@ -6,7 +6,7 @@ namespace #NAMESPACE# {
     
     public class #SCRIPTNAME# : IComponentSharedCopyable<TState> {
         
-        void IComponentCopyable<TState, SharedEntity>.CopyFrom(IComponent<TState> other) {}
+        void IComponentCopyable<TState>.CopyFrom(IComponent<TState> other) {}
         
         void IPoolableRecycle.OnRecycle() {}
 

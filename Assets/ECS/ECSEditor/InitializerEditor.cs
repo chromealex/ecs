@@ -69,7 +69,7 @@ namespace ME.ECSEditor {
                 return false;
                 #endif
             }, true),
-            new DefineInfo("WORLD_THREAD_CHECK", "If turned on, ECS will check random number usage from non-world thread. If you don't want to synchronize the game, you could turn this check off.", () => {
+            new DefineInfo("WORLD_THREAD_CHECK", "If turned on, ME.ECS will check random number usage from non-world thread. If you don't want to synchronize the game, you could turn this check off.", () => {
                 #if WORLD_THREAD_CHECK
                 return true;
                 #else
@@ -83,7 +83,7 @@ namespace ME.ECSEditor {
                 return false;
                 #endif
             }, true),
-            new DefineInfo("ECS_COMPILE_IL2CPP_OPTIONS", "If turned on, ECS will use IL2CPP options for the faster runtime, this flag removed unnecessary null-checks and bounds array checks.", () => {
+            new DefineInfo("ECS_COMPILE_IL2CPP_OPTIONS", "If turned on, ME.ECS will use IL2CPP options for the faster runtime, this flag removed unnecessary null-checks and bounds array checks.", () => {
                 #if ECS_COMPILE_IL2CPP_OPTIONS
                 return true;
                 #else
@@ -216,6 +216,12 @@ namespace ME.ECSEditor {
                     GUILayout.Space(10f);
 
                     GUILayoutExt.ToggleLeft(
+                        ref target.worldSettings.turnOffViews,
+                        ref isDirty,
+                        "Turn off views module",
+                        "If you want to run ME.ECS on server, you don't need to use Views at all. Turn off views module to avoid updating view instances overhead.");
+
+                    GUILayoutExt.ToggleLeft(
                         ref target.worldSettings.useJobsForSystems,
                         ref isDirty,
                         "Use jobs for Systems",
@@ -226,7 +232,7 @@ namespace ME.ECSEditor {
                         ref isDirty,
                         "Use jobs for Views",
                         "Some view providers have jobs implementation. Turn it on to enable them update views inside jobs. Please note that some providers could lose some method calls.");
-                    
+
                     if (this.viewsJobsEditors != null) {
 
                         GUILayout.BeginHorizontal();

@@ -488,6 +488,8 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void InstantiateView(ViewId sourceId, Entity entity) {
 
+            if (this.world.settings.turnOffViews == true) return;
+
             // Called by tick system
             if (this.world.HasStep(WorldStep.LogicTick) == false && this.world.HasResetState() == true) {
 
@@ -521,6 +523,8 @@ namespace ME.ECS.Views {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void DestroyView(ref IView instance) {
+
+            if (this.world.settings.turnOffViews == true) return;
 
             // Called by tick system
             if (this.world.HasStep(WorldStep.LogicTick) == false && this.world.HasResetState() == true) {
@@ -986,6 +990,8 @@ namespace ME.ECS.Views {
 
         void IModule<TState>.Update(in TState state, in float deltaTime) {
 
+            if (this.world.settings.turnOffViews == true) return;
+            
             this.UpdateRequests();
 
             for (var id = 0; id < this.list.Length; ++id) {

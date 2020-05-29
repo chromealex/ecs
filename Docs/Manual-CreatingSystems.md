@@ -1,4 +1,4 @@
-# Creating System ![](Logo-Tiny.png)
+# Creating System [![](Logo-Tiny.png)](/../../#glossary)
 To create system you can use menu command on folder "Systems", choose **ME.ECS/System with Filter** to create system with predefined filter and jobs support and **ME.ECS/System** to create simple system source. 
 You can add systems inside initializer or inside feature class (best choice). Inside feature class you can add modules and systems in constructor, also could load data for this feature.
 

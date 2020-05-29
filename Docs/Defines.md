@@ -1,4 +1,4 @@
-# Defines ![](Logo-Tiny.png)
+# Defines [![](Logo-Tiny.png)](/../../#glossary)
 
 | Define | Description |
 | ------ | ------ |

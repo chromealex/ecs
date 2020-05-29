@@ -1,4 +1,4 @@
-# Creating World ![](Logo-Tiny.png)
+# Creating World [![](Logo-Tiny.png)](/../../#glossary)
 > Create an empty directory, select it and choose **ME.ECS/Initialize Project** to initialize and set up your new project.
 > 
 > At this page all information and code for understanding only, you do not need to use this manually.

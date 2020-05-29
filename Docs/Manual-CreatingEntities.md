@@ -1,4 +1,4 @@
-# Creating Entities ![](Logo-Tiny.png)
+# Creating Entities [![](Logo-Tiny.png)](/../../#glossary)
 For creating entities you need to run world.AddEntity().
 Names are used for Editor debug information only, so they are optional.
 ```csharp

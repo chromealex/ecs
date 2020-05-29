@@ -1,4 +1,4 @@
-# Creating Components ![](Logo-Tiny.png)
+# Creating Components [![](Logo-Tiny.png)](/../../#glossary)
 In ME.ECS there are 2 component variations: struct and class. Class components could be added multiple times on certain entity. Struct components couldn't been added twice.
 
 In class components you need to implement **CopyFrom** method and copy your data manually. And you need **OnRecycle** implementation to clean up component from your data. It's very important to implement these two methods. Is you need to store complex data like managed arrays or so you need to use these components type.

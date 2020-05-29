@@ -1,4 +1,4 @@
-# Creating Markers ![](Logo-Tiny.png)
+# Creating Markers [![](Logo-Tiny.png)](/../../#glossary)
 To create marker you can choose **ME.ECS/Marker** menu.
 For registering markers you need to run world.AddMarker(...).
 Markers unlike struct components could store any type of data, you **do not need** to implement CopyFrom method because markers not store in State.

@@ -1,4 +1,4 @@
-# Updating Views ![](Logo-Tiny.png)
+# Updating Views [![](Logo-Tiny.png)](/../../#glossary)
 There are several View Providers in ME.ECS. Also you can write your own Provider implementation (inherit from **ViewsProvider**).
 
 ##### No View

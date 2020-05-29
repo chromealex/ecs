@@ -1,4 +1,4 @@
-# Classes ![](Logo-Tiny.png)
+# Classes [![](Logo-Tiny.png)](/../../#glossary)
 
 #### Entities
 [How to create an entity](Manual-CreatingEntities.md)

@@ -1,4 +1,4 @@
-# Instantiating Views ![](Logo-Tiny.png)
+# Instantiating Views [![](Logo-Tiny.png)](/../../#glossary)
 To instantiate view need to call thread-safe method **world.InstantiateView(viewId, entity)**. Short method is **entity.InstantiateView(viewId)**.
 > You can attach any count of views on each entity.
 >

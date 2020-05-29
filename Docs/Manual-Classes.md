@@ -11,7 +11,7 @@ IStructComponent could store just simple types or StackArray. It is value type.
 Systems do visual update at the end of the frame and on the ending of every tick.
 
 #### Features (```FeatureBase```)
-Features are introduced for grouping systems and modules into one block.
+Features are introduced for grouping systems and modules into one block. Features are ScriptableObjects and could be ordered in Initializer on your scene.
 
 #### Modules (```IModule<TState>```)
 Modules do visual update on the beginning of the frame and on the beginning of every tick.

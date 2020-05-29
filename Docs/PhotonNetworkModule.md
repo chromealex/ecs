@@ -1,7 +1,8 @@
 # Photon NetworkModule source code
-Here are some classes for understanding how to set up **NetworkModule** properly for Photon.
+Here are some classes for understanding how to set up **NetworkModule** properly for [Photon PUN](https://www.photonengine.com/en-US/sdks#pun-sdkpununity).
 > Note: FSSerializer depends on [FullSerializer](https://github.com/jacobdufault/fullserializer).
 
+First of all you need to define some markers in your world:
 ```csharp
 public struct NetworkSetActivePlayer : IMarker {
 
@@ -17,7 +18,8 @@ public struct NetworkPlayerDisconnected : IMarker {
 
 public struct NetworkPlayerConnectedTimeSynced : IMarker {}
 ```
-  
+
+Then replace your Modules/NetworkModule.cs with the code below:
 ```csharp
 public class NetworkModule : ME.ECS.Network.NetworkModule<TState> {
 
@@ -302,6 +304,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
 }
 ```
 
+Add ITransporter implementation:
 ```csharp
 public class PhotonTransporter : ME.ECS.Network.ITransporter {
 
@@ -429,6 +432,7 @@ public class PhotonTransporter : ME.ECS.Network.ITransporter {
 }
 ```
 
+Add ISerializer implementation:
 ```csharp
 public class FSSerializer : ME.ECS.Network.ISerializer {
 

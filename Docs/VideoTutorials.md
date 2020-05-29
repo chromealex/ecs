@@ -1,4 +1,4 @@
-# Video Tutorials [![](Logo-Tiny.png)](/../../)
+# Video Tutorials [![](Logo-Tiny.png)](/../../#glossary)
 
 | Demo | Tutorial 01: Initialization |
 | ----------- | ----------- |

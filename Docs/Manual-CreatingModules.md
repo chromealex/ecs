@@ -24,3 +24,5 @@ public class YourModule : IModule<TState> {
     
 }
 ```
+
+[![](Footer.png)](/../../#glossary)

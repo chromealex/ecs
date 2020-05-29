@@ -12,3 +12,5 @@ public struct YourMarker : IMarker {
     
 }
 ```
+
+[![](Footer.png)](/../../#glossary)

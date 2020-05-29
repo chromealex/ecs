@@ -1,4 +1,4 @@
-# Default Modules
+# Default Modules ![](Logo-Tiny.png)
 
 ### States History Module
 ##### Submodules: IEventRunner

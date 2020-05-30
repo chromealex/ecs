@@ -28,6 +28,8 @@ namespace ME.ECS {
         string name { get; }
         int Count { get; }
 
+        string[] GetAllNames();
+        
         void Recycle();
         IFilterBase Clone();
         void CopyFrom(IFilterBase other);
@@ -43,6 +45,13 @@ namespace ME.ECS {
 
         bool IsEquals(IFilterBase other);
 
+        #if UNITY_EDITOR
+        string ToEditorTypesString();
+        string GetEditorStackTraceFilename(int index);
+        int GetEditorStackTraceLineNumber(int index);
+        void OnEditorFilterAddStackTrace(string file, int lineNumber);
+        #endif
+
     }
 
     public interface IFilterNode {
@@ -52,6 +61,8 @@ namespace ME.ECS {
     }
 
     public interface IFilter<TState> : IFilterBase, IEnumerable<Entity> where TState : class, IState<TState>, new() {
+
+        void AddAlias(string name);
 
         /*ref Entity this[int index] {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -103,6 +114,7 @@ namespace ME.ECS {
         internal IFilterBase[] filters;
         private bool freeze;
         private int nextId;
+        private Archetype allFiltersArchetype;
 
         public int Count {
             get {
@@ -110,6 +122,24 @@ namespace ME.ECS {
             }
         }
 
+        public int GetAllFiltersArchetypeCount() {
+
+            return this.allFiltersArchetype.Count;
+
+        }
+        
+        public bool HasInFilters<TComponent>() {
+
+            return this.allFiltersArchetype.Has<TComponent>();
+
+        }
+
+        public void RegisterInAllArchetype(Archetype archetype) {
+
+            this.allFiltersArchetype.Add(archetype);
+
+        }
+        
         void IPoolableRecycle.OnRecycle() {
 
             this.nextId = default;
@@ -364,11 +394,44 @@ namespace ME.ECS {
     #endif
     public class Filter<TState> : IFilterInternal<TState>, IFilter<TState> where TState : class, IState<TState>, new() {
 
+        private const int REQUESTS_CAPACITY = 4;
+        private const int NODES_CAPACITY = 4;
+        private const int ENTITIES_CAPACITY = 100;
+
+        public int id { get; set; }
+
+        public string name {
+            get {
+                return this.aliases[0];
+            }
+        }
+
+        public World<TState> world { get; private set; }
+        private IFilterNode[] nodes;
+        private Archetype archetypeContains;
+        private Archetype archetypeNotContains;
+        private int nodesCount;
+        private bool[] dataContains;
+        private SortedSet<Entity> data;
+        bool IFilterInternal<TState>.forEachMode { get; set; }
+        private SortedSet<Entity> requests;
+        private SortedSet<Entity> requestsRemoveEntity;
+        
+        private List<IFilterNode> tempNodes;
+        private List<IFilterNode> tempNodesCustom;
+        private string[] aliases;
+
+        #if UNITY_EDITOR
+        private string[] editorTypes;
+        private string[] editorStackTraceFile;
+        private int[] editorStackTraceLineNumber;
+        #endif
+
         public Filter() {}
 
         internal Filter(string name) {
 
-            this.name = name;
+            this.AddAlias(name);
 
         }
 
@@ -403,26 +466,84 @@ namespace ME.ECS {
 
         }
 
-        private const int REQUESTS_CAPACITY = 4;
-        private const int NODES_CAPACITY = 4;
-        private const int ENTITIES_CAPACITY = 100;
+        public string[] GetAllNames() {
 
-        public int id { get; set; }
-        public string name { get; private set; }
-        public World<TState> world { get; private set; }
-        private IFilterNode[] nodes;
-        private Archetype archetypeContains;
-        private Archetype archetypeNotContains;
-        private int nodesCount;
-        private bool[] dataContains;
-        private SortedSet<Entity> data;
-        bool IFilterInternal<TState>.forEachMode { get; set; }
-        private SortedSet<Entity> requests;
-        private SortedSet<Entity> requestsRemoveEntity;
+            return this.aliases;
+
+        }
         
-        private List<IFilterNode> tempNodes;
-        private List<IFilterNode> tempNodesCustom;
+        public void AddAlias(string name) {
 
+            if (string.IsNullOrEmpty(name) == true) return;
+            
+            var idx = (this.aliases != null ? this.aliases.Length : 0);
+            ArrayUtils.Resize(idx, ref this.aliases, resizeWithOffset: false);
+            this.aliases[idx] = name;
+
+        }
+
+        #if UNITY_EDITOR
+        public string GetEditorStackTraceFilename(int index) {
+
+            return this.editorStackTraceFile[index];
+
+        }
+
+        public int GetEditorStackTraceLineNumber(int index) {
+
+            return this.editorStackTraceLineNumber[index];
+
+        }
+
+        public string ToEditorTypesString() {
+
+            return string.Join(", ", this.editorTypes);
+
+        }
+
+        public void AddTypeToEditorWith<TComponent>() {
+            
+            var idx = (this.editorTypes != null ? this.editorTypes.Length : 0);
+            ArrayUtils.Resize(idx, ref this.editorTypes, resizeWithOffset: false);
+            this.editorTypes[idx] = "W<" + typeof(TComponent).Name + ">";
+            
+        }
+
+        public void AddTypeToEditorWithout<TComponent>() {
+
+            var idx = (this.editorTypes != null ? this.editorTypes.Length : 0);
+            ArrayUtils.Resize(idx, ref this.editorTypes, resizeWithOffset: false);
+            this.editorTypes[idx] = "WO<" + typeof(TComponent).Name + ">";
+
+        }
+
+        public void OnEditorFilterCreate() {
+
+            const int frameIndex = 2;
+            var st = new System.Diagnostics.StackTrace(true);
+            string currentFile = st.GetFrame(frameIndex).GetFileName(); 
+            int currentLine = st.GetFrame(frameIndex).GetFileLineNumber();
+            
+            var path = UnityEngine.Application.dataPath;
+            currentFile = "Assets" + currentFile.Substring(path.Length);
+            
+            this.OnEditorFilterAddStackTrace(currentFile, currentLine);
+            
+        }
+
+        public void OnEditorFilterAddStackTrace(string file, int lineNumber) {
+            
+            var idx = (this.editorStackTraceFile != null ? this.editorStackTraceFile.Length : 0);
+            ArrayUtils.Resize(idx, ref this.editorStackTraceFile, resizeWithOffset: false);
+            this.editorStackTraceFile[idx] = file;
+            
+            idx = (this.editorStackTraceLineNumber != null ? this.editorStackTraceLineNumber.Length : 0);
+            ArrayUtils.Resize(idx, ref this.editorStackTraceLineNumber, resizeWithOffset: false);
+            this.editorStackTraceLineNumber[idx] = lineNumber;
+
+        }
+        #endif
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public Entity[] GetArray() {
 
@@ -441,11 +562,15 @@ namespace ME.ECS {
             this.dataContains = PoolArray<bool>.Spawn(Filter<TState>.ENTITIES_CAPACITY);
 
             this.id = default;
-            this.name = default;
+            if (this.aliases != null) PoolArray<string>.Recycle(ref this.aliases);
             this.nodesCount = default;
             this.archetypeContains = default;
             this.archetypeNotContains = default;
 
+            #if UNITY_EDITOR
+            if (this.editorTypes != null) PoolArray<string>.Recycle(ref this.editorTypes);
+            #endif
+            
         }
 
         void IPoolableRecycle.OnRecycle() {
@@ -456,6 +581,14 @@ namespace ME.ECS {
             PoolSortedSet<Entity>.Recycle(ref this.requestsRemoveEntity);
             PoolSortedSet<Entity>.Recycle(ref this.requests);
             
+            if (this.aliases != null) PoolArray<string>.Recycle(ref this.aliases);
+            
+            #if UNITY_EDITOR
+            if (this.editorTypes != null) PoolArray<string>.Recycle(ref this.editorTypes);
+            if (this.editorStackTraceFile != null) PoolArray<string>.Recycle(ref this.editorStackTraceFile);
+            if (this.editorStackTraceLineNumber != null) PoolArray<int>.Recycle(ref this.editorStackTraceLineNumber);
+            #endif
+
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -556,7 +689,7 @@ namespace ME.ECS {
             lock (this) {
 
                 this.id = other.id;
-                this.name = other.name;
+                ArrayUtils.Copy(other.aliases, ref this.aliases);
                 this.nodesCount = other.nodesCount;
 
                 this.archetypeContains = other.archetypeContains;
@@ -574,6 +707,12 @@ namespace ME.ECS {
 
                 ArrayUtils.Copy(other.dataContains, ref this.dataContains);
                 
+                #if UNITY_EDITOR
+                ArrayUtils.Copy(other.editorTypes, ref this.editorTypes);
+                this.editorStackTraceFile = other.editorStackTraceFile;
+                this.editorStackTraceLineNumber = other.editorStackTraceLineNumber;
+                #endif
+
             }
             
         }
@@ -899,6 +1038,10 @@ namespace ME.ECS {
                 if (existsFilter != null) {
 
                     filter = existsFilter;
+                    filter.AddAlias(this.name);
+                    #if UNITY_EDITOR
+                    filter.OnEditorFilterAddStackTrace(this.editorStackTraceFile[0], this.editorStackTraceLineNumber[0]);
+                    #endif
                     this.Recycle();
                     return existsFilter;
 
@@ -909,6 +1052,8 @@ namespace ME.ECS {
                     filter = this;
                     this.world = world;
                     world.Register(this);
+                    this.world.filtersStorage.RegisterInAllArchetype(this.archetypeContains);
+                    this.world.filtersStorage.RegisterInAllArchetype(this.archetypeNotContains);
 
                 }
 
@@ -942,6 +1087,9 @@ namespace ME.ECS {
             //var node = new ComponentExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
             this.archetypeContains.Add<TComponent>();
+            #if UNITY_EDITOR
+            this.AddTypeToEditorWith<TComponent>();
+            #endif
             return this;
 
         }
@@ -951,6 +1099,9 @@ namespace ME.ECS {
             //var node = new ComponentNotExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
             this.archetypeNotContains.Add<TComponent>();
+            #if UNITY_EDITOR
+            this.AddTypeToEditorWithout<TComponent>();
+            #endif
             return this;
 
         }
@@ -960,48 +1111,21 @@ namespace ME.ECS {
             //var node = new ComponentStructExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
             this.archetypeContains.Add<TComponent>();
+            #if UNITY_EDITOR
+            this.AddTypeToEditorWith<TComponent>();
+            #endif
             return this;
 
         }
-
-        /*public IFilter<TState> WithOneOfStructComponent<T1, T2, T3, T4>()
-            where T1 : struct, IStructComponent
-            where T2 : struct, IStructComponent
-            where T3 : struct, IStructComponent
-            where T4 : struct, IStructComponent {
-
-            var node = new OneOfStructExistsFilterNode<T1, T2, T3, T4>();
-            this.tempNodes.Add(node);
-            return this;
-
-        }
-
-        public IFilter<TState> WithOneOfStructComponent<T1, T2, T3>()
-            where T1 : struct, IStructComponent
-            where T2 : struct, IStructComponent
-            where T3 : struct, IStructComponent {
-
-            var node = new OneOfStructExistsFilterNode<T1, T2, T3>();
-            this.tempNodes.Add(node);
-            return this;
-
-        }
-
-        public IFilter<TState> WithOneOfStructComponent<T1, T2>()
-            where T1 : struct, IStructComponent
-            where T2 : struct, IStructComponent {
-
-            var node = new OneOfStructExistsFilterNode<T1, T2>();
-            this.tempNodes.Add(node);
-            return this;
-
-        }*/
 
         public IFilter<TState> WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent {
 
             //var node = new ComponentStructNotExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
             this.archetypeNotContains.Add<TComponent>();
+            #if UNITY_EDITOR
+            this.AddTypeToEditorWithout<TComponent>();
+            #endif
             return this;
 
         }
@@ -1009,9 +1133,12 @@ namespace ME.ECS {
         public static IFilter<TState> Create(string customName = null) {
 
             var f = PoolFilters.Spawn<Filter<TState>>();
-            f.name = customName;
+            f.AddAlias(customName);
             f.tempNodes = new List<IFilterNode>();
             f.tempNodesCustom = new List<IFilterNode>();
+            #if UNITY_EDITOR
+            f.OnEditorFilterCreate();
+            #endif
             return f;
 
         }

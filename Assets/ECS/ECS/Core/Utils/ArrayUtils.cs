@@ -52,13 +52,15 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool Resize<T>(in int index, ref T[] arr) {
+        public static bool Resize<T>(in int index, ref T[] arr, bool resizeWithOffset = true) {
 
-            if (arr == null) arr = PoolArray<T>.Spawn(index * 2 + 1);
+            var offset = (resizeWithOffset == true ? 2 : 1);
+            
+            if (arr == null) arr = PoolArray<T>.Spawn(index * offset + 1);
             if (index < arr.Length) return false;
             
-            var newLength = arr.Length * 2;
-            if (newLength == 0 || newLength <= index) newLength = index * 2 + 1;
+            var newLength = arr.Length * offset + 1;
+            if (newLength == 0 || newLength <= index) newLength = index * offset + 1;
         
             var newArr = PoolArray<T>.Spawn(newLength);
             System.Array.Copy(arr, newArr, arr.Length);

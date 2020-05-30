@@ -154,6 +154,12 @@ namespace ME.ECS {
             
         }
 
+        public int Count {
+            get {
+                return this.value.Count;
+            }
+        }
+
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsEmpty() {
 
@@ -178,9 +184,19 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Has<T>() {
 
-            if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
+            //if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
+            if (ComponentType<T>.index == -1) return false;
             return this.value.HasBit(in ComponentType<T>.index);
             
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public Archetype Add(Archetype archetype) {
+
+            this.value.AddBits(in archetype.value);
+            
+            return this;
+
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

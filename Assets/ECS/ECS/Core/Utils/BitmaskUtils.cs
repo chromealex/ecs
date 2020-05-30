@@ -12,7 +12,7 @@ namespace ME.ECS {
         
         private const int FIELD_COUNT = 4;
         private const int BITS_PER_FIELD = 8 * sizeof(FieldType);
-        private const int MAX_BIT_INDEX = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD - 1;
+        public const int MAX_BIT_INDEX = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD - 1;
         //public const int BitSize = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD;
         
         private FieldType field0;
@@ -20,6 +20,16 @@ namespace ME.ECS {
         private FieldType field2;
         private FieldType field3;
 
+        public int Count {
+            get {
+                var count = 0;
+                for (int i = 0; i < BitMask.MAX_BIT_INDEX; ++i) {
+                    if (this.HasBit(i) == true) ++count;
+                }
+                return count;
+            }
+        }
+        
         public BitMask(int[] bits) {
             
             this.field0 = 0;
@@ -55,6 +65,16 @@ namespace ME.ECS {
                 default:
                     throw new Exception($"Nonexistent field: {dataIndex}");
             }
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void AddBits(in BitMask bits) {
+
+            this.field0 |= bits.field0;
+            this.field1 |= bits.field1;
+            this.field2 |= bits.field2;
+            this.field3 |= bits.field3;
 
         }
 

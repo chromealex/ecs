@@ -1078,6 +1078,10 @@ namespace ME.ECSEditor {
 
                                 GUILayoutExt.Box(2f, 4f, () => {
 
+                                    var inUseCount = filters.GetAllFiltersArchetypeCount();
+                                    var max = BitMask.MAX_BIT_INDEX;
+                                    GUILayout.Label("Components in use: " + inUseCount.ToString() + "/" + max.ToString());
+                                    GUILayoutExt.ProgressBar(inUseCount, max);
                                     GUILayout.Label("State Tick: " + worldEditor.world.GetStateTick().ToString());
                                     GUILayout.Label("Tick: " + worldEditor.world.GetCurrentTick().ToString());
                                     GUILayout.Label("Tick Time: " + worldEditor.world.GetTickTime().ToString() + "ms.");
@@ -1342,8 +1346,32 @@ namespace ME.ECSEditor {
                                                     padding,
                                                     margin,
                                                     () => {
-                                                        GUILayoutExt.DataLabel(string.Format("<b>{0}</b>", filter.name));
+
+                                                        var names = filter.GetAllNames();
+                                                        for (int i = 0; i < names.Length; ++i) {
+
+                                                            GUILayout.BeginHorizontal();
+                                                            {
+                                                                if (GUILayout.Button("Open", EditorStyles.toolbarButton, GUILayout.Width(36f)) == true) {
+
+                                                                    var file = filter.GetEditorStackTraceFilename(i);
+                                                                    var line = filter.GetEditorStackTraceLineNumber(i);
+                                                                    AssetDatabase.OpenAsset(AssetDatabase.LoadAssetAtPath<MonoScript>(file), line);
+
+                                                                }
+                                                                GUILayoutExt.DataLabel(string.Format("<b>{0}</b>", names[i]));
+                                                            }
+                                                            GUILayout.EndHorizontal();
+                                                            
+                                                        }
+
                                                         GUILayout.Label("Objects count: " + filter.Count.ToString(), dataStyle);
+                                                        var inUseCount = filter.GetArchetypeContains().Count + filter.GetArchetypeNotContains().Count;
+                                                        var max = filters.GetAllFiltersArchetypeCount();
+                                                        GUILayoutExt.ProgressBar(inUseCount, max);
+                                                        
+                                                        GUILayout.Label(filter.ToEditorTypesString());
+                                                        
                                                     },
                                                     tableStyle,
                                                     GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));

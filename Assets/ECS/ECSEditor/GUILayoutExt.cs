@@ -31,6 +31,25 @@ namespace ME.ECSEditor {
 
     public static class GUILayoutExt {
 
+	    public static void ProgressBar(float value, float max) {
+		    
+		    GUILayoutExt.ProgressBar(value, max, new Color(0f, 0f, 0f, 0.3f), new Color(0.3f, 0.6f, 1f, 1f));
+		    
+	    }
+
+	    public static void ProgressBar(float value, float max, Color back, Color fill) {
+
+		    var progress = value / max;
+		    const float lineHeight = 6f;
+		    Rect rect = EditorGUILayout.GetControlRect(false, lineHeight);
+		    rect.height = lineHeight;
+		    var fillRect = rect;
+		    fillRect.width = progress * rect.width;
+		    EditorGUI.DrawRect(rect, back);
+		    EditorGUI.DrawRect(fillRect, fill);
+
+	    }
+	    
 	    public static void DrawAddEntityMenu(EntityDebugComponent entityDebugComponent) {
             
             EditorGUILayout.BeginHorizontal();

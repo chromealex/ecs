@@ -683,7 +683,7 @@ namespace ME.ECS {
             if (state == false && createIfNotExists == true) {
 
                 state = true;
-                this.storagesCache.archetypes.Set<TComponent>(in entity);
+                if (this.filtersStorage.HasInFilters<TComponent>() == true) this.storagesCache.archetypes.Set<TComponent>(in entity);
                 ++this.componentsStructCache.count;
                 this.AddComponentToFilter(entity);
                 
@@ -706,7 +706,7 @@ namespace ME.ECS {
             if (state == false) {
 
                 state = true;
-                this.storagesCache.archetypes.Set<TComponent>(in entity);
+                if (this.filtersStorage.HasInFilters<TComponent>() == true) this.storagesCache.archetypes.Set<TComponent>(in entity);
                 ++this.componentsStructCache.count;
                 this.AddComponentToFilter(entity);
 
@@ -731,7 +731,7 @@ namespace ME.ECS {
             if (state == false) {
 
                 state = true;
-                this.storagesCache.archetypes.Set<TComponent>(in entity);
+                if (this.filtersStorage.HasInFilters<TComponent>() == true) this.storagesCache.archetypes.Set<TComponent>(in entity);
                 ++this.componentsStructCache.count;
                 if (updateFilters == true) this.AddComponentToFilter(entity);
 
@@ -755,7 +755,7 @@ namespace ME.ECS {
 
                 state = false;
                 reg.components[entity.id] = default;
-                this.storagesCache.archetypes.Remove<TComponent>(in entity);
+                if (this.filtersStorage.HasInFilters<TComponent>() == true) this.storagesCache.archetypes.Remove<TComponent>(in entity);
                 --this.componentsStructCache.count;
                 this.RemoveComponentFromFilter(entity);
                 

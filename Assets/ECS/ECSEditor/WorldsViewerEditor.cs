@@ -1352,7 +1352,7 @@ namespace ME.ECSEditor {
 
                                                             GUILayout.BeginHorizontal();
                                                             {
-                                                                if (GUILayout.Button("Open", EditorStyles.toolbarButton, GUILayout.Width(36f)) == true) {
+                                                                if (GUILayout.Button("Open", EditorStyles.toolbarButton, GUILayout.Width(38f)) == true) {
 
                                                                     var file = filter.GetEditorStackTraceFilename(i);
                                                                     var line = filter.GetEditorStackTraceLineNumber(i);
@@ -1365,12 +1365,11 @@ namespace ME.ECSEditor {
                                                             
                                                         }
 
+                                                        GUILayout.Label(filter.ToEditorTypesString(), EditorStyles.miniLabel);
                                                         GUILayout.Label("Objects count: " + filter.Count.ToString(), dataStyle);
                                                         var inUseCount = filter.GetArchetypeContains().Count + filter.GetArchetypeNotContains().Count;
                                                         var max = filters.GetAllFiltersArchetypeCount();
-                                                        GUILayoutExt.ProgressBar(inUseCount, max);
-                                                        
-                                                        GUILayout.Label(filter.ToEditorTypesString());
+                                                        GUILayoutExt.ProgressBar(inUseCount, max, drawLabel: true);
                                                         
                                                     },
                                                     tableStyle,

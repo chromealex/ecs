@@ -5,11 +5,11 @@ namespace ME.ECS {
     
         public static void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer) {
     
-            structComponentsContainer.Validate<ME.ECS.Transform.Position>();
-            structComponentsContainer.Validate<ME.ECS.Transform.Rotation>();
-            structComponentsContainer.Validate<ME.ECS.Transform.Scale>();
             structComponentsContainer.Validate<ME.ECS.Transform.Childs>();
             structComponentsContainer.Validate<ME.ECS.Transform.Container>();
+
+            Transform2DComponentsInitializer<TState>.Init(ref structComponentsContainer);
+            Transform3DComponentsInitializer<TState>.Init(ref structComponentsContainer);
 
         }
     

@@ -31,22 +31,28 @@ namespace ME.ECSEditor {
 
     public static class GUILayoutExt {
 
-	    public static void ProgressBar(float value, float max) {
+	    public static void ProgressBar(float value, float max, bool drawLabel = false) {
 		    
-		    GUILayoutExt.ProgressBar(value, max, new Color(0f, 0f, 0f, 0.3f), new Color(0.3f, 0.6f, 1f, 1f));
+		    GUILayoutExt.ProgressBar(value, max, new Color(0f, 0f, 0f, 0.3f), new Color32(104, 148, 192, 255), drawLabel);
 		    
 	    }
 
-	    public static void ProgressBar(float value, float max, Color back, Color fill) {
+	    public static void ProgressBar(float value, float max, Color back, Color fill, bool drawLabel = false) {
 
 		    var progress = value / max;
-		    const float lineHeight = 6f;
+		    var lineHeight = (drawLabel == true ? 8f : 4f);
 		    Rect rect = EditorGUILayout.GetControlRect(false, lineHeight);
 		    rect.height = lineHeight;
 		    var fillRect = rect;
 		    fillRect.width = progress * rect.width;
 		    EditorGUI.DrawRect(rect, back);
 		    EditorGUI.DrawRect(fillRect, fill);
+
+		    if (drawLabel == true) {
+			    
+			    EditorGUI.LabelField(rect, string.Format("{0}/{1}", value, max), EditorStyles.centeredGreyMiniLabel);
+			    
+		    }
 
 	    }
 	    

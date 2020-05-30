@@ -92,6 +92,10 @@ namespace ME.ECS {
         void Simulate(Tick from, Tick to);
         void SetFromToTicks(Tick from, Tick to);
 
+        #if WORLD_THREAD_CHECK
+        void SetWorldThread(System.Threading.Thread thread);
+        #endif
+
     }
 
     public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState>, new() {

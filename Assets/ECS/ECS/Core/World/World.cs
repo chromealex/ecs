@@ -157,6 +157,14 @@ namespace ME.ECS {
         private System.Threading.Thread worldThread;
         #endif
         
+        #if WORLD_THREAD_CHECK
+        public void SetWorldThread(System.Threading.Thread thread) {
+
+            this.worldThread = thread;
+
+        }
+        #endif
+        
         void IPoolableSpawn.OnSpawn() {
 
             #if WORLD_THREAD_CHECK

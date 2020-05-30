@@ -1009,10 +1009,14 @@ namespace ME.ECS.Views {
                 
             }
 
-            // Update providers
-            foreach (var providerKv in this.registryPrefabToProvider) {
+            lock (this.registryPrefabToProvider) {
 
-                providerKv.Value.Update(this.list, deltaTime);
+                // Update providers
+                foreach (var providerKv in this.registryPrefabToProvider) {
+
+                    providerKv.Value.Update(this.list, deltaTime);
+
+                }
 
             }
 

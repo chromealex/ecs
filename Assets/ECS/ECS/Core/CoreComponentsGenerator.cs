@@ -7,6 +7,7 @@ namespace ME.ECS {
             
             TransformComponentsInitializer<TState>.Init(ref structComponentsContainer);
             NameComponentsInitializer<TState>.Init(ref structComponentsContainer);
+            CameraComponentsInitializer<TState>.Init(ref structComponentsContainer);
             
         }
 

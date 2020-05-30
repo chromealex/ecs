@@ -32,3 +32,5 @@ this.Initialize(this.world);
 // It's very important to do after the scene loaded and all default entities were set.
 this.world.SaveResetState();
 ```
+
+[![](Footer.png)](/../../#glossary)

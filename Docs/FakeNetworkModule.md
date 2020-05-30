@@ -179,3 +179,5 @@ public class FakeSerializer : ME.ECS.Network.ISerializer {
 
 }
 ```
+
+[![](Footer.png)](/../../#glossary)

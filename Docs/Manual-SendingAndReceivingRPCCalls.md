@@ -58,3 +58,5 @@ public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {
     
 }
 ```
+
+[![](Footer.png)](/../../#glossary)

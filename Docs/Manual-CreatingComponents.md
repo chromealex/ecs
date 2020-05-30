@@ -47,3 +47,5 @@ void ISystemFilter<TState>.AdvanceTick(in Entity entity, in TState state, in flo
 
 }
 ```
+
+[![](Footer.png)](/../../#glossary)

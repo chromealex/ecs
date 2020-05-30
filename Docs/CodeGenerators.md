@@ -11,3 +11,5 @@ To be able to use struct components in jobs, you need some sort of magic to regi
 
 #### Stack Array
 If you want to support different sizes of StackArray, you can run StackArray compiler to re-generate them.
+
+[![](Footer.png)](/../../#glossary)

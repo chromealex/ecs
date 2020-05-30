@@ -23,3 +23,5 @@ You can use these methods to filter your entities:
 | WithoutStructComponent\<T\> | Filters all entities that doesn't have T struct component |
 | WithComponent\<T\> | Filters all entities having T class component |
 | WithoutComponent\<T\> | Filters all entities that doesn't have T class component |
+
+[![](Footer.png)](/../../#glossary)

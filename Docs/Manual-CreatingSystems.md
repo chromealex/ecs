@@ -38,3 +38,5 @@ public class YourSystem : ISystemFilter<TState> {
 
 In **System** you have Update and AdvanceTick methods to implement your logic.
 In Update method you shouldn't implement any logic depends on your state (get world marker is the best choice). In AdvanceTick you shouldn't implement getting markers for example.
+
+[![](Footer.png)](/../../#glossary)

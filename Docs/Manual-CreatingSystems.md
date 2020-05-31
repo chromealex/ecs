@@ -4,9 +4,9 @@ You can add systems inside initializer or inside feature class (best choice). In
 
 In **System with Filter** you should define default filter and jobs behaviour:
 ```csharp
-public class YourSystem : ISystemFilter<TState> {
+public class YourSystem : ISystemFilter {
     
-    public IWorld<TState> world { get; set; }
+    public World world { get; set; }
     
     void ISystemBase.OnConstruct() {
         // Here you can initialize additional filters, load some data, or cache references to features
@@ -16,17 +16,17 @@ public class YourSystem : ISystemFilter<TState> {
         // Here you need to deinitialize all your data
     }
     
-    bool ISystemFilter<TState>.jobs => false; // Do you need jobs?
-    int ISystemFilter<TState>.jobsBatchCount => 64; // If you have jobs, how it should be batched?
-    IFilter<TState> ISystemFilter<TState>.filter { get; set; }
-    IFilter<TState> ISystemFilter<TState>.CreateFilter() {
+    bool ISystemFilter.jobs => false; // Do you need jobs?
+    int ISystemFilter.jobsBatchCount => 64; // If you have jobs, how it should be batched?
+    IFilter ISystemFilter.filter { get; set; }
+    IFilter ISystemFilter.CreateFilter() {
         
 	// Here you should define default system filter
-        return Filter<TState>.Create("Filter-YourSystem").[...].Push();
+        return Filter.Create("Filter-YourSystem").[...].Push();
         
     }
 
-    void ISystemFilter<TState>.AdvanceTick(in Entity entity, in TState state, in float deltaTime) {
+    void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
 
         // Place your logic here
         // Be sure you works with this entity only if you have jobs = true

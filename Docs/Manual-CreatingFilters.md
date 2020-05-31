@@ -5,11 +5,11 @@ By default in **System with Filter** you have already defined filter and have a 
 
 But sometimes you need to create filters manually in constructors like this:
 ```csharp
-IFilter<TState> filter;
+IFilter filter;
 
 void ISystemBase.OnConstruct() {
 
-    Filter<TState>.Create("YourFilterName").WithStructComponent<MyStructComponent>().WithoutComponent<MyComponent>().Push(ref this.filter);
+    Filter.Create("YourFilterName").WithStructComponent<MyStructComponent>().WithoutComponent<MyComponent>().Push(ref this.filter);
 
 }
 ```

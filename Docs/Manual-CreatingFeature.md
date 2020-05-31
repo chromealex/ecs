@@ -3,7 +3,7 @@ To create feature you can use menu command on folder "Features", choose **ME.ECS
 You can add systems inside initializer or inside feature class (best choice). Inside feature class you can add modules and systems in constructor, also could load data for this feature.
 Features are ScriptableObject classes, so you need to use your **Initializer** prefab to set up right feature order and state.
 ```csharp
-public class YourFeature : Feature<TState> {
+public class YourFeature : Feature {
 
     ...
 

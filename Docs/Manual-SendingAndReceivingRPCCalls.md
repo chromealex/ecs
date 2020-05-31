@@ -9,7 +9,7 @@ NetworkModule implementations:
 
 After you have got a marker, you can easily initiate RPC call with marker data.
 ```csharp
-public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {
+public class UserInputReceiveSystem : ISystem, IUpdate {
     
     // This number must be determined directly
     private const int GLOBAL_RPC_ID = 1;
@@ -36,7 +36,7 @@ public class UserInputReceiveSystem : ISystem<TState>, ISystemUpdate<TState> {
 
     }
     
-    void ISystemUpdate<TState>.Update(in TState state, in float deltaTime) {
+    void IUpdate.Update(in float deltaTime) {
     
         if (this.world.GetMarker(out WorldClick markerClick) == true) {
             

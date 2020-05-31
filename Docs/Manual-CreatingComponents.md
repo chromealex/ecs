@@ -3,11 +3,11 @@ In ME.ECS there are 2 component variations: struct and class. Class components c
 
 In class components you need to implement **CopyFrom** method and copy your data manually. And you need **OnRecycle** implementation to clean up component from your data. It's very important to implement these two methods. Is you need to store complex data like managed arrays or so you need to use these components type.
 ```csharp
-public class MyComponent : IComponentCopyable<TState> {
+public class MyComponent : IComponentCopyable {
         
     public int[] someArray;
 
-    void IComponentCopyable<TState>.CopyFrom(IComponentCopyable<TState> other) {
+    void IComponentCopyable.CopyFrom(IComponentCopyable other) {
 
         var _other = (MyComponent)other;
 	ArrayUtils.Copy(_other.someArray, ref this.someArray);
@@ -34,7 +34,7 @@ public struct MyStructComponent : IStructComponent {
 
 In systems where you need to use components you could use these methods:
 ```csharp
-void ISystemFilter<TState>.AdvanceTick(in Entity entity, in TState state, in float deltaTime) {
+void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
         
     // Struct components usage example
     ref var data = ref entity.GetData<MyStructComponent>();

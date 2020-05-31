@@ -16,21 +16,21 @@ IStructComponent could store just simple types or StackArray. It is value type.
 <br>
 <br>
 
-#### Systems (```ISystem<TState>```)
+#### Systems (```ISystem```)
 [How to create a system](Manual-CreatingSystems.md)
 
 Systems do visual update at the end of the frame and on the ending of every tick.
 <br>
 <br>
 
-#### Features (```FeatureBase```)
+#### Features (```Feature```)
 [How to create a feature](Manual-CreatingFeature.md)
 
 Features are introduced for grouping systems and modules into one block. Features are ScriptableObjects and could be ordered in Initializer on your scene
 <br>
 <br>
 
-#### Modules (```IModule<TState>```)
+#### Modules (```IModule```)
 [How to create a module](Manual-CreatingModules.md)
 
 Modules do visual update on the beginning of the frame and on the beginning of every tick. Here you can get controller input and create some markers.

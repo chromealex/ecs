@@ -34,7 +34,7 @@ public struct MyStructComponent : IStructComponent {
 
 In systems where you need to use components you could use these methods:
 ```csharp
-void ISystemFilter<TState>.AdvanceTick(in Entity entity, in TState state, in float deltaTime) {
+void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
         
     // Struct components usage example
     ref var data = ref entity.GetData<MyStructComponent>();

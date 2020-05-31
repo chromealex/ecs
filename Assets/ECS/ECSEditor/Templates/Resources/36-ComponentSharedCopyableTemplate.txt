@@ -4,7 +4,7 @@ namespace #NAMESPACE# {
 
     public class #SCRIPTNAME# : IComponentSharedCopyable {
         
-        void IComponentCopyable.CopyFrom(IComponent other) {}
+        void IComponentCopyable.CopyFrom(IComponentCopyable other) {}
         
         void IPoolableRecycle.OnRecycle() {}
 

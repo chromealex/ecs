@@ -17,7 +17,7 @@ namespace ME.ECS.Collections {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class StatesCircularQueue<TState> : IStatesCircularQueue where TState : class, IState<TState>, new() {
+    public class StatesCircularQueue<TState> : IStatesCircularQueue where TState : State, new() {
 
         //private Dictionary<Tick, TState> data;
         private Tick[] dataTicks;

@@ -11,7 +11,7 @@ namespace ME.ECS {
 
     }
 
-    public interface IFPSModule<TState> : IFPSModuleBase, IModule<TState> where TState : class, IState<TState>, new() {
+    public interface IFPSModule<TState> : IFPSModuleBase, IModule where TState : State, new() {
 
     }
 
@@ -20,7 +20,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class FPSModule<TState> : IFPSModule<TState> where TState : class, IState<TState>, new() {
+    public class FPSModule<TState> : IFPSModule<TState>, IUpdate where TState : State, new() {
 
         private float timeElapsed;
         private int framesElapsed;
@@ -29,7 +29,7 @@ namespace ME.ECS {
         public int maxFps { get; set; }
         public int targetFps { get; set; }
         
-        public IWorld<TState> world { get; set; }
+        public World world { get; set; }
 
         void IModuleBase.OnConstruct() {
 
@@ -45,9 +45,7 @@ namespace ME.ECS {
 
         }
 
-        void IModule<TState>.AdvanceTick(in TState state, in float deltaTime) {}
-
-        void IModule<TState>.Update(in TState state, in float deltaTime) {
+        public void Update(in float deltaTime) {
 
             const float checkTime = 1f;
             

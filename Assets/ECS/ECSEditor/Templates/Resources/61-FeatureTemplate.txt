@@ -2,7 +2,6 @@
 
 namespace #NAMESPACE# {
 
-    using TState = #STATENAME#;
     using Components; using Modules; using Systems; using Features; using Markers;
     using #SCRIPTNAME#.Components; using #SCRIPTNAME#.Modules; using #SCRIPTNAME#.Systems; using #SCRIPTNAME#.Markers;
     
@@ -16,7 +15,7 @@ namespace #NAMESPACE# {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class #SCRIPTNAME#Feature : Feature<TState> {
+    public class #SCRIPTNAME#Feature : Feature {
 
         protected override void OnConstruct() {
             

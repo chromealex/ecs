@@ -38,18 +38,15 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public partial class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
+    public partial class World : IWorld, IPoolableSpawn, IPoolableRecycle {
 
-        private const int COMPONENTS_CAPACITY = 100;
-        
-        //private Dictionary<int, IComponents<TState>> componentsCache; // key = typeof(T:IData), value = list of T:Components
-        private Components<TState> componentsCache;
+        private Components componentsCache;
         private Entity sharedEntity;
         private bool sharedEntityInitialized;
         
         partial void OnSpawnComponents() {
 
-            this.componentsCache = PoolClass<Components<TState>>.Spawn(); //PoolDictionary<int, IComponents<TState>>.Spawn(World<TState>.COMPONENTS_CAPACITY);
+            this.componentsCache = PoolClass<Components>.Spawn();
             this.sharedEntity = default;
             this.sharedEntityInitialized = false;
 
@@ -57,8 +54,7 @@ namespace ME.ECS {
 
         partial void OnRecycleComponents() {
             
-            PoolClass<Components<TState>>.Recycle(ref this.componentsCache);
-            //PoolDictionary<int, IComponents<TState>>.Recycle(ref this.componentsCache);
+            PoolClass<Components>.Recycle(ref this.componentsCache);
             
         }
         
@@ -112,6 +108,14 @@ namespace ME.ECS {
         /// <typeparam name="TComponent"></typeparam>
         public TComponent AddComponent<TComponent>(Entity entity, TComponent data) where TComponent : class, IComponent {
 
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldState();
+
+            }
+            #endif
+
             this.componentsCache.Add<TComponent>(entity.id, data);
             this.storagesCache.archetypes.Set<TComponent>(in entity);
             this.AddComponentToFilter(entity);
@@ -151,6 +155,14 @@ namespace ME.ECS {
         /// <param name="entity"></param>
         public void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent> {
 
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldState();
+
+            }
+            #endif
+
             if (this.componentsCache.RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
                 
                 this.RemoveComponentFromFilter(entity);
@@ -164,6 +176,14 @@ namespace ME.ECS {
         /// </summary>
         /// <param name="entity"></param>
         public void RemoveComponents(Entity entity) {
+
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldState();
+
+            }
+            #endif
 
             if (this.componentsCache.RemoveAll(entity.id) > 0) {
                 
@@ -180,6 +200,14 @@ namespace ME.ECS {
         /// <param name="entity"></param>
         public void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponent {
 
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldState();
+
+            }
+            #endif
+
             if (this.componentsCache.RemoveAll<TComponent>(entity.id) > 0) {
                 
                 this.storagesCache.archetypes.Remove<TComponent>(in entity);
@@ -195,6 +223,14 @@ namespace ME.ECS {
         /// </summary>
         /// <typeparam name="TComponent"></typeparam>
         public void RemoveComponents<TComponent>() where TComponent : class, IComponent {
+
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldState();
+
+            }
+            #endif
 
             if (this.componentsCache.RemoveAll<TComponent>() > 0) {
                 

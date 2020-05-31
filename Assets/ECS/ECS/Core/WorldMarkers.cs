@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace ME.ECS {
 
-    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState>, new() {
+    public partial interface IWorldBase {
 
         bool AddMarker<TMarker>(TMarker marker) where TMarker : struct, IMarker;
         bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker;
@@ -11,18 +11,18 @@ namespace ME.ECS {
         bool RemoveMarker<TMarker>() where TMarker : struct, IMarker;
 
     }
-
+    
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public partial class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
+    public partial class World : IWorld, IPoolableSpawn, IPoolableRecycle {
 
-        private static class MarkersDirectCache<TStateInner, TMarker> where TMarker : struct, IMarker where TStateInner : class, IState<TState> {
+        private static class MarkersDirectCache<TMarker> where TMarker : struct, IMarker {
 
-            internal static TMarker[] data = new TMarker[World<TState>.WORLDS_CAPACITY];
-            internal static bool[] exists = new bool[World<TState>.WORLDS_CAPACITY];
+            internal static TMarker[] data = new TMarker[World.WORLDS_CAPACITY];
+            internal static bool[] exists = new bool[World.WORLDS_CAPACITY];
 
         }
 
@@ -30,7 +30,7 @@ namespace ME.ECS {
 
         partial void OnSpawnMarkers() {
             
-            this.allExistMarkers = PoolHashSet<bool[]>.Spawn(World<TState>.WORLDS_CAPACITY);
+            this.allExistMarkers = PoolHashSet<bool[]>.Spawn(World.WORLDS_CAPACITY);
 
         }
 
@@ -52,8 +52,8 @@ namespace ME.ECS {
 
         public bool AddMarker<TMarker>(TMarker markerData) where TMarker : struct, IMarker {
 
-            ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
-            ref var cache = ref World<TState>.MarkersDirectCache<TState, TMarker>.data;
+            ref var exists = ref World.MarkersDirectCache<TMarker>.exists;
+            ref var cache = ref World.MarkersDirectCache<TMarker>.data;
 
             if (ArrayUtils.WillResize(this.id, ref exists) == true) {
 
@@ -86,10 +86,10 @@ namespace ME.ECS {
 
         public bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker {
             
-            ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
+            ref var exists = ref World.MarkersDirectCache<TMarker>.exists;
             if (this.id >= 0 && this.id < exists.Length && exists[this.id] == true) {
 
-                ref var cache = ref World<TState>.MarkersDirectCache<TState, TMarker>.data;
+                ref var cache = ref World.MarkersDirectCache<TMarker>.data;
                 marker = cache[this.id];
                 return true;
 
@@ -102,17 +102,17 @@ namespace ME.ECS {
 
         public bool HasMarker<TMarker>() where TMarker : struct, IMarker {
             
-            ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
+            ref var exists = ref World.MarkersDirectCache<TMarker>.exists;
             return this.id >= 0 && this.id < exists.Length && exists[this.id] == true;
 
         }
 
         public bool RemoveMarker<TMarker>() where TMarker : struct, IMarker {
             
-            ref var exists = ref World<TState>.MarkersDirectCache<TState, TMarker>.exists;
+            ref var exists = ref World.MarkersDirectCache<TMarker>.exists;
             if (this.id >= 0 && this.id < exists.Length && exists[this.id] == true) {
 
-                ref var cache = ref World<TState>.MarkersDirectCache<TState, TMarker>.data;
+                ref var cache = ref World.MarkersDirectCache<TMarker>.data;
                 cache[this.id] = default;
                 exists[this.id] = false;
                 return true;

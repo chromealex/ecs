@@ -14,12 +14,65 @@ namespace ME.ECS {
 
         int GetHash();
 
+        void Initialize(World world, bool freeze, bool restore);
+        
     }
 
-    public interface IState<T> : IStateBase, IPoolableRecycle where T : class, IState<T>, new() {
+    public interface IState : IStateBase, IPoolableRecycle {
 
-        void Initialize(IWorld<T> world, bool freeze, bool restore);
-        void CopyFrom(T other);
+    }
+
+    public abstract class State : IState {
+
+        public int entityId { get; set; }
+        public Tick tick { get; set; }
+        public RandomState randomState { get; set; }
+
+        private FiltersStorage filters;
+        private StructComponentsContainer structComponents;
+        private Storage storage;
+        private Components components;
+        
+        /// <summary>
+        /// Return most unique hash
+        /// </summary>
+        /// <returns></returns>
+        public virtual int GetHash() {
+
+            return this.components.Count ^ this.structComponents.Count;
+
+        }
+
+        public virtual void Initialize(World world, bool freeze, bool restore) {
+            
+            world.Register(ref this.filters, freeze, restore);
+            world.Register(ref this.structComponents, freeze, restore);
+            world.Register(ref this.storage, freeze, restore);
+            world.Register(ref this.components, freeze, restore);
+
+        }
+
+        public virtual void CopyFrom(State other) {
+            
+            this.entityId = other.entityId;
+            this.tick = other.tick;
+            this.randomState = other.randomState;
+
+            this.filters.CopyFrom(other.filters);
+            this.structComponents.CopyFrom(other.structComponents);
+            this.storage.CopyFrom(other.storage);
+            this.components.CopyFrom(other.components);
+
+        }
+
+        public virtual void OnRecycle() {
+            
+            WorldUtilities.Release(ref this.filters);
+            WorldUtilities.Release(ref this.structComponents);
+            WorldUtilities.Release(ref this.storage);
+            WorldUtilities.Release(ref this.components);
+
+        }
 
     }
 

@@ -1,13 +1,33 @@
 ﻿
 namespace ME.ECS {
 
-    public static class CoreComponentsInitializer<TState> where TState : class, IState<TState>, new() {
+    public static class CoreComponentsInitializer {
 
-        public static void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer) {
+        public static void Init(ref ME.ECS.StructComponentsContainer structComponentsContainer) {
             
-            TransformComponentsInitializer<TState>.Init(ref structComponentsContainer);
-            NameComponentsInitializer<TState>.Init(ref structComponentsContainer);
-            CameraComponentsInitializer<TState>.Init(ref structComponentsContainer);
+            TransformComponentsInitializer.Init(ref structComponentsContainer);
+            NameComponentsInitializer.Init(ref structComponentsContainer);
+            CameraComponentsInitializer.Init(ref structComponentsContainer);
+            PhysicsComponentsInitializer.Init(ref structComponentsContainer);
+            
+        }
+
+    }
+
+    public static class ComponentsInitializerWorld {
+
+        private static System.Action<Entity> onEntity;
+
+        public static void Setup(System.Action<Entity> onEntity) {
+
+            ComponentsInitializerWorld.onEntity = onEntity;
+
+        }
+        
+        public static void Init(in Entity entity) {
+            
+            ComponentsInitializerWorld.onEntity.Invoke(entity);
+            PhysicsComponentsInitializer.Init(in entity);
             
         }
 

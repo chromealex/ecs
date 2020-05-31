@@ -30,6 +30,13 @@
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool HasDataBit(this Entity entity, in int bit) {
+            
+            return Worlds.currentWorld.HasDataBit(entity, bit);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static ref TComponent GetData<TComponent>(this in Entity entity, bool createIfNotExists = true) where TComponent : struct, IStructComponent {
             
             return ref Worlds.currentWorld.GetData<TComponent>(in entity, createIfNotExists);

@@ -9,14 +9,14 @@
 
     }
     
-    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
+    public partial interface IWorld {
 
         ViewId RegisterViewSource(NoViewBase prefab);
         void InstantiateView(NoViewBase prefab, Entity entity);
 
     }
 
-    public partial class World<TState> where TState : class, IState<TState>, new() {
+    public partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(NoViewBase prefab) {

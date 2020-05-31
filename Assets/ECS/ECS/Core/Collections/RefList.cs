@@ -176,14 +176,15 @@ namespace ME.ECS.Collections {
                 
                 nextIndex = this.PeekFree();
                 this.free.Remove(nextIndex);
-
+                
             } else {
                 
-                nextIndex = this.size;
-                
+                this.Resize_INTERNAL(this.size + 1);
+                nextIndex = this.PeekFree();
+                this.free.Remove(nextIndex);
+
             }
             
-            this.Resize_INTERNAL(nextIndex + 1);
             this.arr[nextIndex] = data;
             this.UpdateFromTo(nextIndex);
             ++this.count;
@@ -297,12 +298,12 @@ namespace ME.ECS.Collections {
 
                 }
 
-                ArrayUtils.Resize(this.capacity - 1, ref this.arr);
+                ArrayUtils.Resize(this.capacity, ref this.arr);
                 
                 for (int i = oldCapacity; i < this.capacity; ++i) {
 
                     this.free.Add(i);
-
+                    
                 }
 
             }

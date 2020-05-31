@@ -35,6 +35,8 @@ namespace ME.ECS {
         /// <param name="settings"></param>
         void SetDebugSettings(WorldDebugSettings settings);
         
+        void UpdatePhysics(float deltaTime);
+        
         /// <summary>
         /// Current running system context. Useful inside system's job or static utils.
         /// </summary>
@@ -84,7 +86,7 @@ namespace ME.ECS {
         void UpdateAllFilters();
         
         bool HasResetState();
-        void SaveResetState();
+        void SaveResetState<TState>() where TState : State, new();
         
         WorldStep GetCurrentStep();
         bool HasStep(WorldStep step);
@@ -96,9 +98,37 @@ namespace ME.ECS {
         void SetWorldThread(System.Threading.Thread thread);
         #endif
 
+        System.Collections.Generic.List<TModule> GetModules<TModule>(System.Collections.Generic.List<TModule> output) where TModule : IModuleBase;
+        bool HasModule<TModule>() where TModule : class, IModuleBase;
+        bool AddModule<TModule>() where TModule : class, IModuleBase, new();
+        void RemoveModules<TModule>() where TModule : class, IModuleBase, new();
+
+        bool HasFeature<TFeature>() where TFeature : class, IFeatureBase, new();
+        TFeature GetFeature<TFeature>() where TFeature : IFeatureBase;
+        bool AddFeature(IFeatureBase instance);
+        void RemoveFeature(IFeatureBase instance);
+        
+        bool HasSystem<TSystem>() where TSystem : class, ISystemBase, new();
+        TSystem GetSystem<TSystem>() where TSystem : ISystemBase;
+        bool AddSystem<TSystem>() where TSystem : class, ISystemBase, new();
+        bool AddSystem(ISystemBase instance);
+        void RemoveSystem(ISystemBase instance);
+        void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
+
+        void SetCurrentSystemContextFiltersUsed(SortedList<int, IFilter> currentSystemContextFiltersUsed);
+        SortedList<int, IFilter> GetCurrentSystemContextFiltersUsed();
+
+        bool HasFilter(IFilter filterRef);
+        bool HasFilter(int id);
+        IFilter GetFilter(int id);
+
+        IFilter GetFilterEquals(IFilter filter);
+
+        void Register(IFilter filterRef);
+        
     }
 
-    public partial interface IWorld<TState> : IWorldBase where TState : class, IState<TState>, new() {
+    public partial interface IWorld : IWorldBase {
 
         UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float radius);
         int GetRandomRange(int from, int to);
@@ -112,34 +142,15 @@ namespace ME.ECS {
         //void SetCapacity<TEntity>(int capacity) where TEntity : struct, IEntity;
         //int GetCapacity<TEntity>() where TEntity : struct, IEntity;
 
-        bool HasFilter(IFilter<TState> filterRef);
-        void Register(IFilter<TState> filterRef);
         void Register(ref FiltersStorage filtersRef, bool freeze, bool restore);
-        void Register(ref Components<TState> componentsRef, bool freeze, bool restore);
+        void Register(ref Components componentsRef, bool freeze, bool restore);
         void Register(ref Storage storageRef, bool freeze, bool restore);
 
-        void SetState(TState state);
-        void SetStateDirect(TState state);
-        TState GetState();
+        void SetState<TState>(State state) where TState : State, new();
+        void SetStateDirect(State state);
+        State GetState();
         
-        TState GetResetState();
-
-        System.Collections.Generic.List<TModule> GetModules<TModule>(System.Collections.Generic.List<TModule> output) where TModule : IModuleBase;
-        bool HasModule<TModule>() where TModule : class, IModule<TState>;
-        bool AddModule<TModule>() where TModule : class, IModule<TState>, new();
-        void RemoveModules<TModule>() where TModule : class, IModule<TState>, new();
-
-        bool HasFeature<TFeature>() where TFeature : class, IFeatureBase, new();
-        TFeature GetFeature<TFeature>() where TFeature : IFeatureBase;
-        bool AddFeature(IFeature<TState> instance);
-        void RemoveFeature(IFeatureBase instance);
-        
-        bool HasSystem<TSystem>() where TSystem : class, ISystem<TState>, new();
-        TSystem GetSystem<TSystem>() where TSystem : ISystemBase;
-        bool AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new();
-        bool AddSystem(ISystem<TState> instance);
-        void RemoveSystem(ISystem<TState> instance);
-        void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
+        State GetResetState();
 
         //Entity GetEntity<TEntity>(int entityId) where TEntity : struct, IEntity;
         //bool GetEntityData<TEntity>(Entity entity, out TEntity data) where TEntity : struct, IEntity;

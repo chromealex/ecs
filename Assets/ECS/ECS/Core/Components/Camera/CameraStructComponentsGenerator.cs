@@ -1,9 +1,9 @@
 ﻿
 namespace ME.ECS {
 
-    public static class CameraComponentsInitializer<TState> where TState : class, IState<TState>, new() {
+    public static class CameraComponentsInitializer {
     
-        public static void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer) {
+        public static void Init(ref ME.ECS.StructComponentsContainer structComponentsContainer) {
     
             structComponentsContainer.Validate<ME.ECS.Camera.Camera>();
 

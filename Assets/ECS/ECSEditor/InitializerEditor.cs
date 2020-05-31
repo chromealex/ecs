@@ -69,6 +69,13 @@ namespace ME.ECSEditor {
                 return false;
                 #endif
             }, true),
+            new DefineInfo("WORLD_STATE_CHECK", "If turned on, ME.ECS will check that all write data methods are in right state. If you turn off this check, you'll be able to write data in any state, but it could cause out of sync state.", () => {
+                #if WORLD_STATE_CHECK
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
             new DefineInfo("WORLD_THREAD_CHECK", "If turned on, ME.ECS will check random number usage from non-world thread. If you don't want to synchronize the game, you could turn this check off.", () => {
                 #if WORLD_THREAD_CHECK
                 return true;

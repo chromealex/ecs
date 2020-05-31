@@ -13,23 +13,23 @@ namespace ME.ECS {
 
         public System.Collections.Generic.List<FeatureData> features = new System.Collections.Generic.List<FeatureData>();
 
-        internal void Initialize<TState>(World<TState> world) where TState : class, IState<TState>, new() {
+        internal void Initialize(World world) {
 
             for (int i = 0; i < this.features.Count; ++i) {
 
                 var item = this.features[i];
-                if (item.enabled == true) world.AddFeature((IFeature<TState>)item.feature);
+                if (item.enabled == true) world.AddFeature(item.feature);
                 
             }
 
         }
 
-        internal void DeInitialize<TState>(World<TState> world) where TState : class, IState<TState>, new() {
+        internal void DeInitialize(World world) {
             
             for (int i = 0; i < this.features.Count; ++i) {
                 
                 var item = this.features[i];
-                if (item.enabled == true) world.RemoveFeature((IFeature<TState>)item.feature);
+                if (item.enabled == true) world.RemoveFeature(item.feature);
                 
             }
 
@@ -38,6 +38,8 @@ namespace ME.ECS {
     }
 
     public abstract class FeatureBase : UnityEngine.ScriptableObject, IFeatureBase {
+
+        public World world { get; set; }
 
         internal void DoConstruct() {
             
@@ -54,13 +56,7 @@ namespace ME.ECS {
         protected abstract void OnConstruct();
         protected abstract void OnDeconstruct();
 
-    }
-
-    public abstract class Feature<TState> : FeatureBase, IFeature<TState> where TState : class, IState<TState>, new() {
-
-        public IWorld<TState> world { get; set; }
-
-        protected bool AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
+        protected bool AddSystem<TSystem>() where TSystem : class, ISystemBase, new() {
 
             if (this.world.HasSystem<TSystem>() == false) {
                 
@@ -72,7 +68,35 @@ namespace ME.ECS {
 
         }
 
-        protected bool AddModule<TModule>() where TModule : class, IModule<TState>, new() {
+        protected bool AddModule<TModule>() where TModule : class, IModuleBase, new() {
+
+            if (this.world.HasModule<TModule>() == false) {
+                
+                return this.world.AddModule<TModule>();
+                
+            }
+
+            return false;
+
+        }
+
+    }
+
+    public abstract class Feature : FeatureBase, IFeature {
+
+        new protected bool AddSystem<TSystem>() where TSystem : class, ISystem, new() {
+
+            if (this.world.HasSystem<TSystem>() == false) {
+                
+                return this.world.AddSystem<TSystem>();
+                
+            }
+
+            return false;
+
+        }
+
+        new protected bool AddModule<TModule>() where TModule : class, IModule, new() {
 
             if (this.world.HasModule<TModule>() == false) {
                 

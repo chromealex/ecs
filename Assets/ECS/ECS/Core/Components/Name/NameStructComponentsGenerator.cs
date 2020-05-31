@@ -1,9 +1,9 @@
 ﻿
 namespace ME.ECS {
 
-    public static class NameComponentsInitializer<TState> where TState : class, IState<TState>, new() {
+    public static class NameComponentsInitializer {
     
-        public static void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer) {
+        public static void Init(ref ME.ECS.StructComponentsContainer structComponentsContainer) {
     
             structComponentsContainer.Validate<ME.ECS.Name.Name>();
 

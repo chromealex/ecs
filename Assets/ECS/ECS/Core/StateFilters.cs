@@ -5,7 +5,7 @@ namespace ME.ECS {
     
     using ME.ECS.Collections;
 
-    public interface IFilterInternal<TState> : IFilter<TState> where TState : class, IState<TState>, new() {
+    public interface IFilterInternal : IFilter {
 
         bool OnUpdate(in Entity entity);
         //bool CheckAdd(in Entity entity);
@@ -14,8 +14,8 @@ namespace ME.ECS {
         bool OnRemoveComponent(in Entity entity);
         bool OnRemoveEntity(in Entity entity);
 
-        SortedSet<Entity> GetRequests();
-        SortedSet<Entity> GetRequestsRemoveEntity();
+        SortedSetCopyable<Entity> GetRequests();
+        SortedSetCopyable<Entity> GetRequestsRemoveEntity();
         bool forEachMode { get; set; }
         void Add_INTERNAL(in Entity entity);
         bool Remove_INTERNAL(in Entity entity);
@@ -41,7 +41,7 @@ namespace ME.ECS {
 
         void SetForEachMode(bool state);
         
-        SortedSet<Entity> GetData();
+        SortedSetCopyable<Entity> GetData();
 
         bool IsEquals(IFilterBase other);
 
@@ -60,7 +60,7 @@ namespace ME.ECS {
 
     }
 
-    public interface IFilter<TState> : IFilterBase, IEnumerable<Entity> where TState : class, IState<TState>, new() {
+    public interface IFilter : IFilterBase, IEnumerable<Entity> {
 
         void AddAlias(string name);
 
@@ -78,29 +78,29 @@ namespace ME.ECS {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         Entity[] GetArray();
-        IFilter<TState> Custom(IFilterNode filter);
-        IFilter<TState> Custom<TFilter>() where TFilter : class, IFilterNode, new();
-        IFilter<TState> WithComponent<TComponent>() where TComponent : class, IComponent;
-        IFilter<TState> WithoutComponent<TComponent>() where TComponent : class, IComponent;
-        IFilter<TState> WithStructComponent<TComponent>() where TComponent : struct, IStructComponent;
-        /*IFilter<TState> WithOneOfStructComponent<T1, T2>()
+        IFilter Custom(IFilterNode filter);
+        IFilter Custom<TFilter>() where TFilter : class, IFilterNode, new();
+        IFilter WithComponent<TComponent>() where TComponent : class, IComponent;
+        IFilter WithoutComponent<TComponent>() where TComponent : class, IComponent;
+        IFilter WithStructComponent<TComponent>() where TComponent : struct, IStructComponent;
+        /*IFilter WithOneOfStructComponent<T1, T2>()
             where T1 : struct, IStructComponent
             where T2 : struct, IStructComponent;
-        IFilter<TState> WithOneOfStructComponent<T1, T2, T3>()
+        IFilter WithOneOfStructComponent<T1, T2, T3>()
             where T1 : struct, IStructComponent
             where T2 : struct, IStructComponent
             where T3 : struct, IStructComponent;
-        IFilter<TState> WithOneOfStructComponent<T1, T2, T3, T4>()
+        IFilter WithOneOfStructComponent<T1, T2, T3, T4>()
             where T1 : struct, IStructComponent
             where T2 : struct, IStructComponent
             where T3 : struct, IStructComponent
             where T4 : struct, IStructComponent;*/
-        IFilter<TState> WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent;
+        IFilter WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent;
 
-        IFilter<TState> Push();
-        IFilter<TState> Push(ref IFilter<TState> filter);
+        IFilter Push();
+        IFilter Push(ref IFilter filter);
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        new FilterEnumerator<TState> GetEnumerator();
+        new FilterEnumerator GetEnumerator();
 
     }
 
@@ -114,7 +114,7 @@ namespace ME.ECS {
         internal IFilterBase[] filters;
         private bool freeze;
         private int nextId;
-        private Archetype allFiltersArchetype;
+        internal Archetype allFiltersArchetype;
 
         public int Count {
             get {
@@ -345,12 +345,12 @@ namespace ME.ECS {
 
     }
 
-    public struct FilterEnumerator<TState> : IEnumerator<Entity> where TState : class, IState<TState>, new() {
+    public struct FilterEnumerator : IEnumerator<Entity> {
             
-        private readonly IFilterInternal<TState> set;
-        private SortedSet<Entity>.Enumerator setEnumerator;
+        private readonly IFilterInternal set;
+        private SortedSetCopyable<Entity>.Enumerator setEnumerator;
             
-        internal FilterEnumerator(IFilterInternal<TState> set) {
+        internal FilterEnumerator(IFilterInternal set) {
                 
             this.set = set;
             this.setEnumerator = this.set.GetData().GetEnumerator();
@@ -392,7 +392,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Filter<TState> : IFilterInternal<TState>, IFilter<TState> where TState : class, IState<TState>, new() {
+    public class Filter : IFilterInternal, IFilter {
 
         private const int REQUESTS_CAPACITY = 4;
         private const int NODES_CAPACITY = 4;
@@ -406,16 +406,16 @@ namespace ME.ECS {
             }
         }
 
-        public World<TState> world { get; private set; }
+        public IWorldBase world { get; private set; }
         private IFilterNode[] nodes;
         private Archetype archetypeContains;
         private Archetype archetypeNotContains;
         private int nodesCount;
         private bool[] dataContains;
-        private SortedSet<Entity> data;
-        bool IFilterInternal<TState>.forEachMode { get; set; }
-        private SortedSet<Entity> requests;
-        private SortedSet<Entity> requestsRemoveEntity;
+        private SortedSetCopyable<Entity> data;
+        bool IFilterInternal.forEachMode { get; set; }
+        private SortedSetCopyable<Entity> requests;
+        private SortedSetCopyable<Entity> requestsRemoveEntity;
         
         private List<IFilterNode> tempNodes;
         private List<IFilterNode> tempNodesCustom;
@@ -450,7 +450,7 @@ namespace ME.ECS {
                     var entity = list[i];
                     if (list.IsFree(i) == true) continue;
                     
-                    ((IFilterInternal<TState>)this).OnUpdate(entity);
+                    ((IFilterInternal)this).OnUpdate(entity);
 
                 }
 
@@ -460,7 +460,7 @@ namespace ME.ECS {
 
         public IFilterBase Clone() {
 
-            var instance = PoolFilters.Spawn<Filter<TState>>();
+            var instance = PoolFilters.Spawn<Filter>();
             instance.CopyFrom(this);
             return instance;
 
@@ -555,11 +555,11 @@ namespace ME.ECS {
 
         void IPoolableSpawn.OnSpawn() {
 
-            this.requests = PoolSortedSet<Entity>.Spawn(Filter<TState>.REQUESTS_CAPACITY);
-            this.requestsRemoveEntity = PoolSortedSet<Entity>.Spawn(Filter<TState>.REQUESTS_CAPACITY);
-            this.nodes = PoolArray<IFilterNode>.Spawn(Filter<TState>.NODES_CAPACITY);
-            this.data = PoolSortedSet<Entity>.Spawn();
-            this.dataContains = PoolArray<bool>.Spawn(Filter<TState>.ENTITIES_CAPACITY);
+            this.requests = PoolSortedSetCopyable<Entity>.Spawn(Filter.REQUESTS_CAPACITY);
+            this.requestsRemoveEntity = PoolSortedSetCopyable<Entity>.Spawn(Filter.REQUESTS_CAPACITY);
+            this.nodes = PoolArray<IFilterNode>.Spawn(Filter.NODES_CAPACITY);
+            this.data = PoolSortedSetCopyable<Entity>.Spawn();
+            this.dataContains = PoolArray<bool>.Spawn(Filter.ENTITIES_CAPACITY);
 
             this.id = default;
             if (this.aliases != null) PoolArray<string>.Recycle(ref this.aliases);
@@ -576,10 +576,10 @@ namespace ME.ECS {
         void IPoolableRecycle.OnRecycle() {
             
             PoolArray<bool>.Recycle(ref this.dataContains);
-            PoolSortedSet<Entity>.Recycle(ref this.data);
+            PoolSortedSetCopyable<Entity>.Recycle(ref this.data);
             PoolArray<IFilterNode>.Recycle(ref this.nodes);
-            PoolSortedSet<Entity>.Recycle(ref this.requestsRemoveEntity);
-            PoolSortedSet<Entity>.Recycle(ref this.requests);
+            PoolSortedSetCopyable<Entity>.Recycle(ref this.requestsRemoveEntity);
+            PoolSortedSetCopyable<Entity>.Recycle(ref this.requests);
             
             if (this.aliases != null) PoolArray<string>.Recycle(ref this.aliases);
             
@@ -594,8 +594,8 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsForEntity(in Entity entity) {
 
-            ref var previousArchetype = ref this.world.storagesCache.archetypes.GetPrevious(in entity);
-            ref var currentArchetype = ref this.world.storagesCache.archetypes.Get(in entity);
+            ref var previousArchetype = ref ((WorldBase)this.world).storagesCache.archetypes.GetPrevious(in entity);
+            ref var currentArchetype = ref ((WorldBase)this.world).storagesCache.archetypes.Get(in entity);
 
             if (previousArchetype.ContainsAll(this.archetypeContains) == true) return true;
             if (previousArchetype.NotContains(this.archetypeNotContains) == true) return true;
@@ -630,11 +630,11 @@ namespace ME.ECS {
 
             lock (this) {
 
-                var internalFilter = ((IFilterInternal<TState>)this);
+                var internalFilter = ((IFilterInternal)this);
                 internalFilter.forEachMode = state;
                 if (state == false) {
 
-                    if (Worlds<TState>.currentWorld.currentSystemContext == null) {
+                    if (Worlds.currentWorld.currentSystemContext == null) {
 
                         this.ApplyAllRequests();
 
@@ -649,7 +649,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void ApplyAllRequests() {
             
-            var internalFilter = ((IFilterInternal<TState>)this);
+            var internalFilter = ((IFilterInternal)this);
             {
                 
                 var requests = internalFilter.GetRequests();
@@ -680,11 +680,11 @@ namespace ME.ECS {
 
         public void CopyFrom(IFilterBase other) {
             
-            this.CopyFrom(other as Filter<TState>);
+            this.CopyFrom(other as Filter);
             
         }
         
-        public void CopyFrom(Filter<TState> other) {
+        public void CopyFrom(Filter other) {
 
             lock (this) {
 
@@ -697,13 +697,10 @@ namespace ME.ECS {
                 
                 ArrayUtils.Copy(other.nodes, ref this.nodes);
 
-                if (this.data != null) PoolSortedSet<Entity>.Recycle(ref this.data);
-                this.data = PoolSortedSet<Entity>.Spawn(other.data.Count);
-                foreach (var item in other.data) {
-
-                    this.data.Add(item);
-
-                }
+                if (this.data != null) PoolSortedSetCopyable<Entity>.Recycle(ref this.data);
+                this.data = PoolSortedSetCopyable<Entity>.Spawn(other.data.Count);
+                this.data.CopyFrom(other.data);
+                //this.data = new SortedSetCopyable<Entity>(other.data);
 
                 ArrayUtils.Copy(other.dataContains, ref this.dataContains);
                 
@@ -718,19 +715,19 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public SortedSet<Entity> GetData() {
+        public SortedSetCopyable<Entity> GetData() {
 
             return this.data;
 
         }
         
-        SortedSet<Entity> IFilterInternal<TState>.GetRequests() {
+        SortedSetCopyable<Entity> IFilterInternal.GetRequests() {
 
             return this.requests;
 
         }
 
-        SortedSet<Entity> IFilterInternal<TState>.GetRequestsRemoveEntity() {
+        SortedSetCopyable<Entity> IFilterInternal.GetRequestsRemoveEntity() {
 
             return this.requestsRemoveEntity;
 
@@ -754,7 +751,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Contains(Entity entity) {
 
-            var filter = Worlds<TState>.currentWorld.GetFilter(this.id);
+            var filter = (Filter)this.world.GetFilter(this.id);
             return filter.Contains_INTERNAL(entity.id);
 
         }
@@ -779,25 +776,25 @@ namespace ME.ECS {
 
         }
 
-        public FilterEnumerator<TState> GetEnumerator() {
+        public FilterEnumerator GetEnumerator() {
 
-            return new FilterEnumerator<TState>(this);
+            return new FilterEnumerator(this);
 
         }
 
-        bool IFilterInternal<TState>.OnUpdate(in Entity entity) {
+        bool IFilterInternal.OnUpdate(in Entity entity) {
 
             return this.OnUpdate_INTERNAL(in entity);
 
         }
 
-        bool IFilterInternal<TState>.OnAddComponent(in Entity entity) {
+        bool IFilterInternal.OnAddComponent(in Entity entity) {
 
             return this.OnUpdate_INTERNAL(in entity);
 
         }
 
-        bool IFilterInternal<TState>.OnRemoveComponent(in Entity entity) {
+        bool IFilterInternal.OnRemoveComponent(in Entity entity) {
 
             return this.OnUpdate_INTERNAL(in entity);
 
@@ -810,11 +807,11 @@ namespace ME.ECS {
 
                 if (this.world.currentSystemContext != null) {
 
-                    lock (this.world.currentSystemContextFiltersUsed) {
+                    lock (this.world.GetCurrentSystemContextFiltersUsed()) {
 
-                        if (this.world.currentSystemContextFiltersUsed.ContainsKey(this.id) == false) {
+                        if (this.world.GetCurrentSystemContextFiltersUsed().ContainsKey(this.id) == false) {
 
-                            this.world.currentSystemContextFiltersUsed.Add(this.id, this);
+                            this.world.GetCurrentSystemContextFiltersUsed().Add(this.id, this);
 
                         }
 
@@ -825,7 +822,7 @@ namespace ME.ECS {
 
                 }
 
-                var cast = (IFilterInternal<TState>)this;
+                var cast = (IFilterInternal)this;
                 if (cast.forEachMode == true) {
 
                     if (this.requests.Contains(entity) == false) this.requests.Add(entity);
@@ -848,17 +845,17 @@ namespace ME.ECS {
 
         }
 
-        bool IFilterInternal<TState>.OnRemoveEntity(in Entity entity) {
+        bool IFilterInternal.OnRemoveEntity(in Entity entity) {
 
             lock (this) {
 
                 if (this.world.currentSystemContext != null) {
 
-                    lock (this.world.currentSystemContextFiltersUsed) {
+                    lock (this.world.GetCurrentSystemContextFiltersUsed()) {
 
-                        if (this.world.currentSystemContextFiltersUsed.ContainsKey(this.id) == false) {
+                        if (this.world.GetCurrentSystemContextFiltersUsed().ContainsKey(this.id) == false) {
 
-                            this.world.currentSystemContextFiltersUsed.Add(this.id, this);
+                            this.world.GetCurrentSystemContextFiltersUsed().Add(this.id, this);
 
                         }
 
@@ -869,7 +866,7 @@ namespace ME.ECS {
 
                 }
                 
-                var cast = (IFilterInternal<TState>)this;
+                var cast = (IFilterInternal)this;
                 if (cast.forEachMode == true) {
 
                     if (this.requestsRemoveEntity.Contains(entity) == false) this.requestsRemoveEntity.Add(entity);
@@ -877,14 +874,14 @@ namespace ME.ECS {
 
                 }
 
-                return ((IFilterInternal<TState>)this).Remove_INTERNAL(entity);
+                return ((IFilterInternal)this).Remove_INTERNAL(entity);
 
             }
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void IFilterInternal<TState>.Add_INTERNAL(in Entity entity) {
+        void IFilterInternal.Add_INTERNAL(in Entity entity) {
 
             ArrayUtils.Resize(entity.id, ref this.dataContains);
             this.dataContains[entity.id] = true;
@@ -893,7 +890,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        bool IFilterInternal<TState>.Remove_INTERNAL(in Entity entity) {
+        bool IFilterInternal.Remove_INTERNAL(in Entity entity) {
 
             var idx = entity.id;
             if (idx < 0 || idx >= this.dataContains.Length) return false;
@@ -931,7 +928,7 @@ namespace ME.ECS {
         private bool CheckAdd(in Entity entity) {
 
             // If entity doesn't exist in cache - try to add if entity's archetype fit with contains & notContains
-            ref var entArchetype = ref this.world.storagesCache.archetypes.Get(in entity);
+            ref var entArchetype = ref ((WorldBase)this.world).storagesCache.archetypes.Get(in entity);
             if (entArchetype.ContainsAll(this.archetypeContains) == false) return false;
             if (entArchetype.NotContains(this.archetypeNotContains) == false) return false;
 
@@ -949,7 +946,7 @@ namespace ME.ECS {
 
             }
 
-            var cast = (IFilterInternal<TState>)this;
+            var cast = (IFilterInternal)this;
             cast.Add_INTERNAL(entity);
 
             return true;
@@ -959,7 +956,7 @@ namespace ME.ECS {
         private bool CheckRemove(in Entity entity) {
 
             // If entity already exists in cache - try to remove if entity's archetype doesn't fit with contains & notContains
-            ref var entArchetype = ref this.world.storagesCache.archetypes.Get(in entity);
+            ref var entArchetype = ref ((WorldBase)this.world).storagesCache.archetypes.Get(in entity);
             var allContains = entArchetype.ContainsAll(this.archetypeContains);
             var allNotContains = entArchetype.NotContains(this.archetypeNotContains);
             
@@ -983,7 +980,7 @@ namespace ME.ECS {
             
             if (allContains == true && allNotContains == true) return false;
 
-            return ((IFilterInternal<TState>)this).Remove_INTERNAL(entity);
+            return ((IFilterInternal)this).Remove_INTERNAL(entity);
 
         }
 
@@ -1015,18 +1012,19 @@ namespace ME.ECS {
 
         }
 
-        public IFilter<TState> Push() {
+        public IFilter Push() {
 
-            IFilter<TState> filter = null;
+            IFilter filter = null;
             return this.Push(ref filter);
 
         }
 
-        public IFilter<TState> Push(ref IFilter<TState> filter) {
+        public IFilter Push(ref IFilter filter) {
 
-            var world = Worlds<TState>.currentWorld;
+            var world = (WorldBase)Worlds.currentWorld;
+            var worldInt = Worlds.currentWorld;
             var nextId = world.filtersStorage.GetNextId();
-            if (world.HasFilter(nextId) == false) {
+            if (worldInt.HasFilter(nextId) == false) {
 
                 this.tempNodes.AddRange(this.tempNodesCustom);
                 this.nodes = this.tempNodes.OrderBy(x => x.GetType().GetHashCode()).ToArray();
@@ -1034,7 +1032,7 @@ namespace ME.ECS {
                 this.tempNodes.Clear();
                 this.tempNodesCustom.Clear();
                 
-                var existsFilter = (IFilter<TState>)world.GetFilterEquals(this);
+                var existsFilter = worldInt.GetFilterEquals(this);
                 if (existsFilter != null) {
 
                     filter = existsFilter;
@@ -1050,16 +1048,16 @@ namespace ME.ECS {
                     this.id = world.filtersStorage.AllocateNextId();
 
                     filter = this;
-                    this.world = world;
-                    world.Register(this);
-                    this.world.filtersStorage.RegisterInAllArchetype(this.archetypeContains);
-                    this.world.filtersStorage.RegisterInAllArchetype(this.archetypeNotContains);
-
+                    this.world = worldInt;
+                    world.filtersStorage.RegisterInAllArchetype(this.archetypeContains);
+                    world.filtersStorage.RegisterInAllArchetype(this.archetypeNotContains);
+                    worldInt.Register(this);
+                    
                 }
 
             } else {
 
-                UnityEngine.Debug.LogWarning(string.Format("World #{0} already has filter {1}!", world.id, this));
+                UnityEngine.Debug.LogWarning(string.Format("World #{0} already has filter {1}!", worldInt.id, this));
 
             }
 
@@ -1067,14 +1065,14 @@ namespace ME.ECS {
 
         }
 
-        public IFilter<TState> Custom(IFilterNode filter) {
+        public IFilter Custom(IFilterNode filter) {
 
             this.tempNodesCustom.Add(filter);
             return this;
 
         }
 
-        public IFilter<TState> Custom<TFilter>() where TFilter : class, IFilterNode, new() {
+        public IFilter Custom<TFilter>() where TFilter : class, IFilterNode, new() {
 
             var filter = new TFilter();
             this.tempNodesCustom.Add(filter);
@@ -1082,7 +1080,7 @@ namespace ME.ECS {
 
         }
 
-        public IFilter<TState> WithComponent<TComponent>() where TComponent : class, IComponent {
+        public IFilter WithComponent<TComponent>() where TComponent : class, IComponent {
 
             //var node = new ComponentExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
@@ -1094,7 +1092,7 @@ namespace ME.ECS {
 
         }
         
-        public IFilter<TState> WithoutComponent<TComponent>() where TComponent : class, IComponent {
+        public IFilter WithoutComponent<TComponent>() where TComponent : class, IComponent {
 
             //var node = new ComponentNotExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
@@ -1106,7 +1104,7 @@ namespace ME.ECS {
 
         }
 
-        public IFilter<TState> WithStructComponent<TComponent>() where TComponent : struct, IStructComponent {
+        public IFilter WithStructComponent<TComponent>() where TComponent : struct, IStructComponent {
 
             //var node = new ComponentStructExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
@@ -1118,7 +1116,7 @@ namespace ME.ECS {
 
         }
 
-        public IFilter<TState> WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent {
+        public IFilter WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent {
 
             //var node = new ComponentStructNotExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
@@ -1130,9 +1128,9 @@ namespace ME.ECS {
 
         }
 
-        public static IFilter<TState> Create(string customName = null) {
+        public static IFilter Create(string customName = null) {
 
-            var f = PoolFilters.Spawn<Filter<TState>>();
+            var f = PoolFilters.Spawn<Filter>();
             f.AddAlias(customName);
             f.tempNodes = new List<IFilterNode>();
             f.tempNodesCustom = new List<IFilterNode>();

@@ -14,14 +14,14 @@ namespace ME.ECS {
 
     }
     
-    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
-
+    public partial interface IWorldBase {
+        
         ViewId RegisterViewSource(DrawMeshViewSourceBase prefab);
         void InstantiateView(DrawMeshViewSourceBase prefab, Entity entity);
 
     }
 
-    public partial class World<TState> where TState : class, IState<TState>, new() {
+    public partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(DrawMeshViewSourceBase prefab) {
@@ -45,7 +45,7 @@ namespace ME.ECS.Views {
     
     using ME.ECS.Views.Providers;
     
-    public partial interface IViewModule<TState> where TState : class, IState<TState>, new() {
+    public partial interface IViewModule {
 
         ViewId RegisterViewSource(DrawMeshViewSourceBase prefab);
         void UnRegisterViewSource(DrawMeshViewSourceBase prefab);
@@ -53,7 +53,7 @@ namespace ME.ECS.Views {
 
     }
 
-    public partial class ViewsModule<TState> where TState : class, IState<TState>, new() {
+    public partial class ViewsModule {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(DrawMeshViewSourceBase prefab) {

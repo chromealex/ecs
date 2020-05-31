@@ -115,7 +115,7 @@ namespace ME.ECS.Collections {
     /// the same time. 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class HashSetCopyable<T> : ICollection<T>, ISerializable, IDeserializationCallback, IReadOnlyCollection<T> {
+    public class HashSetCopyable<T> : ICollection<T>, ISerializable, IDeserializationCallback, IReadOnlyCollection<T>, IPoolableRecycle {
 
         // store lower 31 bits of hash code
         private const int Lower31BitMask = 0x7FFFFFFF;
@@ -641,6 +641,18 @@ namespace ME.ECS.Collections {
         }
         #endregion
 
+        public void OnRecycle() {
+
+            this.m_count = default;
+            this.m_lastIndex = default;
+            this.m_freeList = default;
+            this.m_version = default;
+            
+            if (this.m_buckets != null) PoolArray<int>.Recycle(ref this.m_buckets);
+            if (this.m_slots != null) PoolArray<Slot>.Recycle(ref this.m_slots);
+            
+        }
+
         #region Helper methods
         /// <summary>
         /// Initializes buckets and slots arrays. Uses suggested capacity by finding next prime
@@ -652,8 +664,8 @@ namespace ME.ECS.Collections {
 
             var size = HashSetCopyableHashHelpers.GetPrime(capacity);
 
-            this.m_buckets = new int[size];
-            this.m_slots = new Slot[size];
+            this.m_buckets = PoolArray<int>.Spawn(size);
+            this.m_slots = PoolArray<Slot>.Spawn(size);
         }
 
         /// <summary>

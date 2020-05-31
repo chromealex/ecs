@@ -2,16 +2,16 @@
 
 namespace ME.ECS {
 
-    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
+    public partial interface IWorldBase {
 
-        void SetNetworkModule(Network.INetworkModule<TState> module);
+        void SetNetworkModule(Network.INetworkModuleBase module);
 
     }
 
-    public partial class World<TState> where TState : class, IState<TState>, new() {
+    public partial class World {
 
-        private Network.INetworkModule<TState> networkModule;
-        public void SetNetworkModule(Network.INetworkModule<TState> module) {
+        private Network.INetworkModuleBase networkModule;
+        public void SetNetworkModule(Network.INetworkModuleBase module) {
 
             this.networkModule = module;
 
@@ -90,7 +90,7 @@ namespace ME.ECS.Network {
 
     }
 
-    public interface INetworkModule<TState> : INetworkModuleBase, IModule<TState> where TState : class, IState<TState>, new() {
+    public interface INetworkModule<TState> : INetworkModuleBase, IModule where TState : State, new() {
 
     }
 
@@ -112,7 +112,7 @@ namespace ME.ECS.Network {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public abstract class NetworkModule<TState> : INetworkModule<TState>, StatesHistory.IEventRunner, IModuleValidation where TState : class, IState<TState>, new() {
+    public abstract class NetworkModule<TState> : INetworkModule<TState>, IUpdate, StatesHistory.IEventRunner, IModuleValidation where TState : State, new() {
 
         private static readonly RPCId PING_RPC_ID = -1;
         private static readonly RPCId SYNC_RPC_ID = -2;
@@ -130,7 +130,7 @@ namespace ME.ECS.Network {
 
         private double ping;
         
-        public IWorld<TState> world { get; set; }
+        public World world { get; set; }
 
         void IModuleBase.OnConstruct() {
 
@@ -143,7 +143,7 @@ namespace ME.ECS.Network {
             this.statesHistoryModule.SetEventRunner(this);
             
             this.world.SetNetworkModule(this);
-
+            
             this.RegisterRPC(NetworkModule<TState>.PING_RPC_ID, new System.Action<double, bool>(this.Ping_RPC).Method);
             this.RegisterRPC(NetworkModule<TState>.SYNC_RPC_ID, new System.Action<Tick, int>(this.Sync_RPC).Method);
             this.RegisterObject(this, -1, -1);
@@ -530,7 +530,7 @@ namespace ME.ECS.Network {
             }
 
             var st = this.statesHistoryModule.GetStateBeforeTick(historyEvent.tick, out var syncTick);
-            if (st == null || syncTick == Tick.Invalid) st = this.world.GetResetState();
+            if (st == null || syncTick == Tick.Invalid) st = this.world.GetResetState<TState>();
             this.syncedTick = st.tick;
             this.syncHash = this.statesHistoryModule.GetStateHash(st);
 
@@ -538,11 +538,7 @@ namespace ME.ECS.Network {
 
         }
 
-        void IModule<TState>.AdvanceTick(in TState state, in float deltaTime) {
-            
-        }
-
-        void IModule<TState>.Update(in TState state, in float deltaTime) {
+        public void Update(in float deltaTime) {
 
             //this.localOrderIndex = 0;
 
@@ -604,7 +600,7 @@ namespace ME.ECS.Network {
                 var sourceState = this.statesHistoryModule.GetStateBeforeTick(oldestEventTick, out var sourceTick);
                 if (sourceState == null) {
 
-                    sourceState = this.world.GetResetState();
+                    sourceState = this.world.GetResetState<TState>();
                     targetTick = tick;
                     
                 }

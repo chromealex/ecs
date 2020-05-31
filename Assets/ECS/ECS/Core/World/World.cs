@@ -94,12 +94,48 @@ namespace ME.ECS {
 
     }
 
+    public class WorldBase {
+        
+        internal WorldStep currentStep;
+        internal List<IFeatureBase> features;
+        internal List<ISystemBase> systems;
+        internal List<IModuleBase> modules;
+
+        internal List<ModuleState> statesFeatures;
+        internal List<ModuleState> statesSystems;
+        internal List<ModuleState> statesModules;
+
+        internal ICheckpointCollector checkpointCollector;
+        
+        // State cache:
+        internal Storage storagesCache;
+        internal FiltersStorage filtersStorage;
+
+        internal float tickTime;
+        internal double timeSinceStart;
+        public bool isActive;
+
+        public ISystemBase currentSystemContext { get; internal set; }
+        public SortedList<int, IFilter> currentSystemContextFiltersUsed { get; internal set; }
+
+        internal Tick simulationFromTick;
+        internal Tick simulationToTick;
+
+        public WorldSettings settings { get; internal set; }
+        public WorldDebugSettings debugSettings { get; internal set; }
+
+        #if WORLD_THREAD_CHECK
+        internal System.Threading.Thread worldThread;
+        #endif
+
+    }
+
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public partial class World<TState> : IWorld<TState>, IPoolableSpawn, IPoolableRecycle where TState : class, IState<TState>, new() {
+    public partial class World : WorldBase, IWorld, IPoolableSpawn, IPoolableRecycle {
 
         private const int FEATURES_CAPACITY = 100;
         private const int SYSTEMS_CAPACITY = 100;
@@ -108,9 +144,9 @@ namespace ME.ECS {
         private const int WORLDS_CAPACITY = 4;
         private const int FILTERS_CACHE_CAPACITY = 10;
         
-        private static class FiltersDirectCache<TStateInner> where TStateInner : class, IState<TState> {
+        private static class FiltersDirectCache {
 
-            internal static bool[][] dic = new bool[World<TState>.WORLDS_CAPACITY][];
+            internal static bool[][] dic = new bool[World.WORLDS_CAPACITY][];
 
         }
 
@@ -123,40 +159,21 @@ namespace ME.ECS {
             private set;
         }
         
-        private TState resetState;
-        private TState currentState;
-        private WorldStep currentStep;
-        private List<IFeatureBase> features;
-        private List<ISystem<TState>> systems;
-        private List<IModule<TState>> modules;
+        private State resetState;
+        private State currentState;
 
-        private List<ModuleState> statesFeatures;
-        private List<ModuleState> statesSystems;
-        private List<ModuleState> statesModules;
+        public void SetCurrentSystemContextFiltersUsed(SortedList<int, IFilter> currentSystemContextFiltersUsed) {
 
-        private ICheckpointCollector checkpointCollector;
-        
-        // State cache:
-        internal Storage storagesCache;
-        internal FiltersStorage filtersStorage;
+            this.currentSystemContextFiltersUsed = currentSystemContextFiltersUsed;
 
-        private float tickTime;
-        private double timeSinceStart;
-        public bool isActive;
+        }
 
-        public ISystemBase currentSystemContext { get; internal set; }
-        internal SortedList<int, IFilter<TState>> currentSystemContextFiltersUsed;
-        
-        private Tick simulationFromTick;
-        private Tick simulationToTick;
+        public SortedList<int, IFilter> GetCurrentSystemContextFiltersUsed() {
 
-        public WorldSettings settings { get; private set; }
-        public WorldDebugSettings debugSettings { get; private set; }
+            return this.currentSystemContextFiltersUsed;
 
-        #if WORLD_THREAD_CHECK
-        private System.Threading.Thread worldThread;
-        #endif
-        
+        }
+
         #if WORLD_THREAD_CHECK
         public void SetWorldThread(System.Threading.Thread thread) {
 
@@ -171,7 +188,7 @@ namespace ME.ECS {
             this.worldThread = System.Threading.Thread.CurrentThread;
             #endif
 
-            this.currentSystemContextFiltersUsed = PoolSortedList<int, IFilter<TState>>.Spawn(World<TState>.FILTERS_CACHE_CAPACITY);
+            this.currentSystemContextFiltersUsed = PoolSortedList<int, IFilter>.Spawn(World.FILTERS_CACHE_CAPACITY);
             
             this.currentState = default;
             this.resetState = default;
@@ -181,15 +198,15 @@ namespace ME.ECS {
             this.tickTime = default;
             this.timeSinceStart = default;
             
-            this.features = PoolList<IFeatureBase>.Spawn(World<TState>.FEATURES_CAPACITY);
-            this.systems = PoolList<ISystem<TState>>.Spawn(World<TState>.SYSTEMS_CAPACITY);
-            this.modules = PoolList<IModule<TState>>.Spawn(World<TState>.MODULES_CAPACITY);
-            this.statesFeatures = PoolList<ModuleState>.Spawn(World<TState>.FEATURES_CAPACITY);
-            this.statesSystems = PoolList<ModuleState>.Spawn(World<TState>.SYSTEMS_CAPACITY);
-            this.statesModules = PoolList<ModuleState>.Spawn(World<TState>.MODULES_CAPACITY);
+            this.features = PoolList<IFeatureBase>.Spawn(World.FEATURES_CAPACITY);
+            this.systems = PoolList<ISystemBase>.Spawn(World.SYSTEMS_CAPACITY);
+            this.modules = PoolList<IModuleBase>.Spawn(World.MODULES_CAPACITY);
+            this.statesFeatures = PoolList<ModuleState>.Spawn(World.FEATURES_CAPACITY);
+            this.statesSystems = PoolList<ModuleState>.Spawn(World.SYSTEMS_CAPACITY);
+            this.statesModules = PoolList<ModuleState>.Spawn(World.MODULES_CAPACITY);
             this.storagesCache = PoolClass<Storage>.Spawn();
 
-            ArrayUtils.Resize(this.id, ref FiltersDirectCache<TState>.dic);
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
 
             this.OnSpawnStructComponents();
             this.OnSpawnComponents();
@@ -199,9 +216,17 @@ namespace ME.ECS {
 
         }
 
+        public void RecycleStates<TState>() where TState : State, new() {
+            
+            WorldUtilities.ReleaseState<TState>(ref this.resetState);
+            WorldUtilities.ReleaseState<TState>(ref this.currentState);
+
+        }
+        
         void IPoolableRecycle.OnRecycle() {
             
-            PoolSortedList<int, IFilter<TState>>.Recycle(ref this.currentSystemContextFiltersUsed);
+            PoolSortedList<int, IFilter>.Recycle(this.currentSystemContextFiltersUsed);
+            this.currentSystemContextFiltersUsed = null;
             
             #if WORLD_THREAD_CHECK
             this.worldThread = null;
@@ -212,11 +237,8 @@ namespace ME.ECS {
             this.OnRecycleComponents();
             this.OnRecycleStructComponents();
             
-            if (FiltersDirectCache<TState>.dic[this.id] != null) PoolArray<bool>.Recycle(ref FiltersDirectCache<TState>.dic[this.id]);
+            if (FiltersDirectCache.dic[this.id] != null) PoolArray<bool>.Recycle(ref FiltersDirectCache.dic[this.id]);
             PoolClass<FiltersStorage>.Recycle(ref this.filtersStorage);
-            
-            WorldUtilities.ReleaseState(ref this.resetState);
-            WorldUtilities.ReleaseState(ref this.currentState);
 
             /*for (int i = 0; i < this.features.Count; ++i) {
                 
@@ -225,11 +247,11 @@ namespace ME.ECS {
 
             }*/
             PoolList<IFeatureBase>.Recycle(ref this.features);
-
+            
             for (int i = 0; i < this.systems.Count; ++i) {
                 
                 this.systems[i].OnDeconstruct();
-                if (this.systems[i] is ISystemFilter<TState> systemFilter) {
+                if (this.systems[i] is ISystemFilter systemFilter) {
 
                     systemFilter.filter = null;
 
@@ -237,7 +259,7 @@ namespace ME.ECS {
                 PoolSystems.Recycle(this.systems[i]);
 
             }
-            PoolList<ISystem<TState>>.Recycle(ref this.systems);
+            PoolList<ISystemBase>.Recycle(ref this.systems);
             
             for (int i = 0; i < this.modules.Count; ++i) {
                 
@@ -245,7 +267,7 @@ namespace ME.ECS {
                 PoolModules.Recycle(this.modules[i]);
 
             }
-            PoolList<IModule<TState>>.Recycle(ref this.modules);
+            PoolList<IModuleBase>.Recycle(ref this.modules);
             
             PoolList<ModuleState>.Recycle(ref this.statesModules);
             PoolList<ModuleState>.Recycle(ref this.statesSystems);
@@ -307,7 +329,7 @@ namespace ME.ECS {
 
         public void SetSystemState(ISystemBase system, ModuleState state) {
             
-            var index = this.systems.IndexOf((ISystem<TState>)system);
+            var index = this.systems.IndexOf(system);
             if (index >= 0) {
 
                 this.statesSystems[index] = state;
@@ -318,7 +340,7 @@ namespace ME.ECS {
         
         public ModuleState GetSystemState(ISystemBase system) {
 
-            var index = this.systems.IndexOf((ISystem<TState>)system);
+            var index = this.systems.IndexOf(system);
             if (index >= 0) {
 
                 return this.statesSystems[index];
@@ -331,7 +353,7 @@ namespace ME.ECS {
 
         public void SetModuleState(IModuleBase module, ModuleState state) {
             
-            var index = this.modules.IndexOf((IModule<TState>)module);
+            var index = this.modules.IndexOf(module);
             if (index >= 0) {
 
                 this.statesModules[index] = state;
@@ -342,7 +364,7 @@ namespace ME.ECS {
         
         public ModuleState GetModuleState(IModuleBase module) {
 
-            var index = this.modules.IndexOf((IModule<TState>)module);
+            var index = this.modules.IndexOf(module);
             if (index >= 0) {
 
                 return this.statesModules[index];
@@ -362,7 +384,7 @@ namespace ME.ECS {
 
             } else {
                 
-                this.id = ++World<TState>.registryWorldId;
+                this.id = ++World.registryWorldId;
                 
             }
 
@@ -480,21 +502,21 @@ namespace ME.ECS {
         }
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        float IWorldBase.GetTickTime() {
+        public float GetTickTime() {
 
             return this.tickTime;
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        Tick IWorldBase.GetStateTick() {
+        public Tick GetStateTick() {
 
             return this.GetState().tick;
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        double IWorldBase.GetTimeSinceStart() {
+        public double GetTimeSinceStart() {
 
             return this.timeSinceStart;
 
@@ -517,7 +539,7 @@ namespace ME.ECS {
         partial void OnRecycleStructComponents();
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        int IWorldBase.GetStateHash() {
+        public int GetStateHash() {
 
             if (this.statesHistoryModule != null) {
 
@@ -530,27 +552,27 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Filter<TState> GetFilter(int id) {
+        public IFilter GetFilter(int id) {
 
-            return (Filter<TState>)this.filtersStorage.filters[id - 1]; //.Get(id);
-
-        }
-
-        internal IFilter<TState> GetFilterByHashCode(int hashCode) {
-
-            return (IFilter<TState>)this.filtersStorage.GetByHashCode(hashCode);
+            return (Filter)this.filtersStorage.filters[id - 1]; //.Get(id);
 
         }
 
-        internal IFilter<TState> GetFilterEquals(IFilter<TState> other) {
+        internal IFilter GetFilterByHashCode(int hashCode) {
+
+            return (IFilter)this.filtersStorage.GetByHashCode(hashCode);
+
+        }
+
+        public IFilter GetFilterEquals(IFilter other) {
             
-            return (IFilter<TState>)this.filtersStorage.GetFilterEquals(other);
+            return (IFilter)this.filtersStorage.GetFilterEquals(other);
             
         }
 
-        public bool HasFilter(IFilter<TState> filterRef) {
+        public bool HasFilter(IFilter filterRef) {
             
-            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic[this.id];
             if (dic != null) {
             
                 return dic[filterRef.id - 1] == true;
@@ -564,7 +586,7 @@ namespace ME.ECS {
         public bool HasFilter(int id) {
 
             var idx = id - 1;
-            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic[this.id];
             if (dic != null && idx >= 0 && idx < dic.Length) {
             
                 return dic[idx] == true;
@@ -575,11 +597,11 @@ namespace ME.ECS {
 
         }
 
-        public void Register(IFilter<TState> filterRef) {
+        public void Register(IFilter filterRef) {
 
             this.filtersStorage.Register(filterRef);
 
-            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic[this.id];
             ArrayUtils.Resize(filterRef.id - 1, ref dic);
             dic[filterRef.id - 1] = true;
 
@@ -589,7 +611,8 @@ namespace ME.ECS {
                     
                     ref var item = ref allEntities[j];
                     if (allEntities.IsFree(j) == true) continue;
-                    
+
+                    ComponentsInitializerWorld.Init(in item);
                     this.UpdateFilters(item);
 
                 }
@@ -617,7 +640,7 @@ namespace ME.ECS {
 
                 this.filtersStorage = filtersRef;
                 
-                ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+                ref var dic = ref FiltersDirectCache.dic[this.id];
                 if (dic != null) {
                     
                     System.Array.Clear(dic, 0, dic.Length);
@@ -639,12 +662,12 @@ namespace ME.ECS {
             
         }
 
-        public void Register(ref Components<TState> componentsRef, bool freeze, bool restore) {
+        public void Register(ref Components componentsRef, bool freeze, bool restore) {
             
             const int capacity = 4;
             if (componentsRef == null) {
 
-                componentsRef = PoolClass<Components<TState>>.Spawn();
+                componentsRef = PoolClass<Components>.Spawn();
                 componentsRef.Initialize(capacity);
                 componentsRef.SetFreeze(freeze);
 
@@ -685,7 +708,7 @@ namespace ME.ECS {
             if (storageRef == null) {
                 
                 storageRef = PoolClass<Storage>.Spawn();
-                storageRef.Initialize(World<TState>.ENTITIES_CACHE_CAPACITY);
+                storageRef.Initialize(World.ENTITIES_CACHE_CAPACITY);
                 storageRef.SetFreeze(freeze);
                 
             }
@@ -736,9 +759,9 @@ namespace ME.ECS {
 
         }
 
-        public void SaveResetState() {
+        public void SaveResetState<TState>() where TState : State, new() {
 
-            if (this.resetState != null) WorldUtilities.ReleaseState(ref this.resetState);
+            if (this.resetState != null) WorldUtilities.ReleaseState<TState>(ref this.resetState);
             this.resetState = WorldUtilities.CreateState<TState>();
             this.resetState.Initialize(this, freeze: true, restore: false);
             this.resetState.CopyFrom(this.GetState());
@@ -746,18 +769,25 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public TState GetResetState() {
+        public State GetResetState() {
 
             return this.resetState;
 
         }
 
-        public void SetState(TState state) {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public T GetResetState<T>() where T : State {
+
+            return (T)this.resetState;
+
+        }
+
+        public void SetState<TState>(State state) where TState : State, new() {
 
             //System.Array.Clear(this.storagesCache, 0, this.storagesCache.Length);
             //System.Array.Clear(this.componentsCache, 0, this.componentsCache.Length);
             
-            if (this.currentState != null && this.currentState != state) WorldUtilities.ReleaseState(ref this.currentState);
+            if (this.currentState != null && this.currentState != state) WorldUtilities.ReleaseState<TState>(ref this.currentState);
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: true);
 
@@ -771,7 +801,7 @@ namespace ME.ECS {
 
         }
 
-        public void SetStateDirect(TState state) {
+        public void SetStateDirect(State state) {
 
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: false);
@@ -779,9 +809,16 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public TState GetState() {
+        public State GetState() {
 
             return this.currentState;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public T GetState<T>() where T : State {
+
+            return (T)this.currentState;
 
         }
 
@@ -819,14 +856,14 @@ namespace ME.ECS {
 
         public void UpdateFilters(Entity entity) {
 
-            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic[this.id];
             if (dic != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
                     if (dic[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = (IFilterInternal<TState>)this.GetFilter(filterId);
+                    var filter = (IFilterInternal)this.GetFilter(filterId);
                     if (filter.IsForEntity(entity) == false) continue;
                     filter.OnUpdate(entity);
 
@@ -838,14 +875,14 @@ namespace ME.ECS {
 
         public void AddComponentToFilter(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic[this.id];
             if (dic != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
                     if (dic[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = (IFilterInternal<TState>)this.GetFilter(filterId);
+                    var filter = (IFilterInternal)this.GetFilter(filterId);
                     if (filter.IsForEntity(entity) == false) continue;
                     filter.OnAddComponent(entity);
 
@@ -857,14 +894,14 @@ namespace ME.ECS {
 
         public void RemoveComponentFromFilter(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic[this.id];
             if (dic != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
                     if (dic[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = (IFilterInternal<TState>)this.GetFilter(filterId);
+                    var filter = (IFilterInternal)this.GetFilter(filterId);
                     if (filter.IsForEntity(entity) == false) continue;
                     filter.OnRemoveComponent(entity);
 
@@ -877,14 +914,14 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RemoveFromFilters_INTERNAL(Entity entity) {
             
-            ref var dic = ref FiltersDirectCache<TState>.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic[this.id];
             if (dic != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
                     if (dic[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = (IFilterInternal<TState>)this.GetFilter(filterId);
+                    var filter = (IFilterInternal)this.GetFilter(filterId);
                     if (filter.IsForEntity(entity) == false) continue;
                     filter.OnRemoveEntity(entity);
 
@@ -902,7 +939,7 @@ namespace ME.ECS {
 
                 foreach (var filterId in filters) {
 
-                    ((IFilterInternal<TState>)this.GetFilter<TEntity>(filterId)).OnAdd(entity);
+                    ((IFilterInternal)this.GetFilter<TEntity>(filterId)).OnAdd(entity);
 
                 }
 
@@ -1039,7 +1076,7 @@ namespace ME.ECS {
 
         }
 
-        public bool HasModule<TModule>() where TModule : class, IModule<TState> {
+        public bool HasModule<TModule>() where TModule : class, IModuleBase {
 
             for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
@@ -1062,7 +1099,7 @@ namespace ME.ECS {
         /// </summary>
         /// <typeparam name="TModule"></typeparam>
         /// <returns></returns>
-        public bool AddModule<TModule>() where TModule : class, IModule<TState>, new() {
+        public bool AddModule<TModule>() where TModule : class, IModuleBase, new() {
             
             WorldUtilities.SetWorld(this);
             
@@ -1093,7 +1130,7 @@ namespace ME.ECS {
         /// Remove modules by type
         /// Return modules into pool, OnDeconstruct() call
         /// </summary>
-        public void RemoveModules<TModule>() where TModule : class, IModule<TState>, new() {
+        public void RemoveModules<TModule>() where TModule : class, IModuleBase, new() {
 
             for (int i = 0, count = this.modules.Count; i < count; ++i) {
 
@@ -1143,7 +1180,7 @@ namespace ME.ECS {
         /// </summary>
         /// <param name="instance"></param>
         /// <param name="parameters"></param>
-        public bool AddFeature(IFeature<TState> instance) {
+        public bool AddFeature(IFeatureBase instance) {
 
             WorldUtilities.SetWorld(this);
             
@@ -1185,7 +1222,7 @@ namespace ME.ECS {
             
         }
 
-        public bool HasSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
+        public bool HasSystem<TSystem>() where TSystem : class, ISystemBase, new() {
 
             for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
@@ -1202,7 +1239,7 @@ namespace ME.ECS {
         /// Retrieve system from pool, OnConstruct() call
         /// </summary>
         /// <typeparam name="TSystem"></typeparam>
-        public bool AddSystem<TSystem>() where TSystem : class, ISystem<TState>, new() {
+        public bool AddSystem<TSystem>() where TSystem : class, ISystemBase, new() {
 
             var instance = PoolSystems.Spawn<TSystem>();
             if (this.AddSystem(instance) == false) {
@@ -1222,7 +1259,7 @@ namespace ME.ECS {
         /// Pool will not be used, OnConstruct() call
         /// </summary>
         /// <param name="instance"></param>
-        public bool AddSystem(ISystem<TState> instance) {
+        public bool AddSystem(ISystemBase instance) {
 
             WorldUtilities.SetWorld(this);
             
@@ -1242,7 +1279,7 @@ namespace ME.ECS {
             this.statesSystems.Add(ModuleState.AllActive);
             instance.OnConstruct();
 
-            if (instance is ISystemFilter<TState> systemFilter) {
+            if (instance is ISystemFilter systemFilter) {
 
                 systemFilter.filter = systemFilter.CreateFilter();
 
@@ -1257,12 +1294,12 @@ namespace ME.ECS {
         /// Pool will not be used, OnDeconstruct() call
         /// </summary>
         /// <param name="instance"></param>
-        public void RemoveSystem(ISystem<TState> instance) {
+        public void RemoveSystem(ISystemBase instance) {
 
             var idx = this.systems.IndexOf(instance);
             if (idx >= 0) {
                 
-                if (instance is ISystemFilter<TState> systemFilter) {
+                if (instance is ISystemFilter systemFilter) {
 
                     systemFilter.filter = null;
                     
@@ -1360,6 +1397,25 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void UpdatePhysics(float deltaTime) {
+        
+            for (int i = 0, count = this.modules.Count; i < count; ++i) {
+
+                if (this.IsModuleActive(i) == true) {
+
+                    if (this.modules[i] is IModulePhysicsUpdate module) {
+                        
+                        module.UpdatePhysics(deltaTime);
+                        
+                    }
+                    
+                }
+
+            }
+            
+        }
+        
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void UpdateLogic(float deltaTime) {
             
             if (deltaTime < 0f) return;
@@ -1403,8 +1459,12 @@ namespace ME.ECS {
                         if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.VisualTick);
                         #endif
 
-                        this.modules[i].Update(state, deltaTime);
-                        
+                        if (this.modules[i] is IUpdate moduleBase) {
+
+                            moduleBase.Update(in deltaTime);
+
+                        }
+
                         #if CHECKPOINT_COLLECTOR
                         if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.VisualTick);
                         #endif
@@ -1448,7 +1508,11 @@ namespace ME.ECS {
                         if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.VisualTick);
                         #endif
 
-                        if (this.systems[i] is ISystemUpdate<TState> sys) sys.Update(state, deltaTime);
+                        if (this.systems[i] is IUpdate sysBase) {
+                            
+                            sysBase.Update(in deltaTime);
+                            
+                        }
 
                         #if CHECKPOINT_COLLECTOR
                         if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.VisualTick);
@@ -1486,7 +1550,7 @@ namespace ME.ECS {
 
             void Unity.Jobs.IJobParallelFor.Execute(int index) {
 
-                Worlds<TState>.currentWorld.UpdateLogic(this.deltaTime);
+                Worlds.currentWorld.UpdateLogic(this.deltaTime);
 
             }
 
@@ -1511,7 +1575,7 @@ namespace ME.ECS {
 
             // Setup current static variables
             WorldUtilities.SetWorld(this);
-            Worlds<TState>.currentState = this.GetState();
+            Worlds.currentState = this.GetState();
 
             // Update time
             this.timeSinceStart += deltaTime;
@@ -1550,9 +1614,13 @@ namespace ME.ECS {
 
             void Unity.Jobs.IJobParallelFor.Execute(int index) {
 
-                var systemContext = Worlds.currentWorld.currentSystemContext as ISystemFilter<TState>;
-                systemContext.AdvanceTick(this.entities[index], Worlds<TState>.currentWorld.GetState(), in this.deltaTime);
-                
+                if (Worlds.currentWorld.currentSystemContext is ISystemFilter systemContextBase) {
+                    
+                    systemContextBase.AdvanceTick(this.entities[index], in this.deltaTime);
+                    
+                }
+
+
             }
 
         }
@@ -1588,7 +1656,13 @@ namespace ME.ECS {
                             #if CHECKPOINT_COLLECTOR
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.LogicTick);
                             #endif
-                            this.modules[i].AdvanceTick(in state, in fixedDeltaTime);
+                            
+                            if (this.modules[i] is IAdvanceTick moduleBase) {
+
+                                moduleBase.AdvanceTick(in fixedDeltaTime);
+
+                            }
+                            
                             #if CHECKPOINT_COLLECTOR
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.modules[i], WorldStep.LogicTick);
                             #endif
@@ -1646,7 +1720,7 @@ namespace ME.ECS {
                             var system = this.systems[i];
                             this.currentSystemContext = system;
                             this.currentSystemContextFiltersUsed.Clear();
-                            if (system is ISystemFilter<TState> sysFilter) {
+                            if (system is ISystemFilter sysFilter) {
 
                                 sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
                                 if (sysFilter.filter != null) {
@@ -1657,7 +1731,7 @@ namespace ME.ECS {
                                         var arrEntities = sysFilter.filter.GetArray();
                                         using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities, Unity.Collections.Allocator.TempJob)) {
 
-                                            PoolArray<Entity>.Recycle(ref arrEntities);
+                                            PoolArray<Entity>.Recycle(ref arrEntities, checkBlockSize: false);
                                             var job = new ForeachFilterJob() {
                                                 deltaTime = fixedDeltaTime,
                                                 entities = arr
@@ -1669,10 +1743,14 @@ namespace ME.ECS {
                                         //sysFilter.filter.SetForEachMode(false);
                                         
                                     } else {
-                                        
-                                        foreach (var entity in sysFilter.filter) {
 
-                                            sysFilter.AdvanceTick(in entity, in state, in fixedDeltaTime);
+                                        if (sysFilter is ISystemFilter sysFilterContext) {
+
+                                            foreach (var entity in sysFilter.filter) {
+
+                                                sysFilterContext.AdvanceTick(in entity, in fixedDeltaTime);
+
+                                            }
 
                                         }
 
@@ -1682,9 +1760,9 @@ namespace ME.ECS {
 
                             }
 
-                            if (system is ISystemAdvanceTick<TState> sys) {
+                            if (system is IAdvanceTick sysBase) {
                                 
-                                sys.AdvanceTick(in state, in fixedDeltaTime);
+                                sysBase.AdvanceTick(in fixedDeltaTime);
                                 
                             }
 
@@ -1721,7 +1799,7 @@ namespace ME.ECS {
                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);
                 #endif
 
-                this.RemoveComponentsOnce<IComponentOnce<TState>>();
+                this.RemoveComponentsOnce<IComponentOnce>();
 
                 #if CHECKPOINT_COLLECTOR
                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);

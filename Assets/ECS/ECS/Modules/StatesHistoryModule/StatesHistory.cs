@@ -15,13 +15,13 @@
 
     }
 
-    public interface IStatesHistory<TState> : IStatesHistory where TState : class, IState<TState>, new() {
+    public interface IStatesHistory<TState> : IStatesHistory where TState : State, new() {
 
         new LinkedList<StatesHistory<TState>.Entry> GetEntries();
 
     }
 
-    public class StatesHistory<TState> : IStatesHistory<TState> where TState : class, IState<TState>, new() {
+    public class StatesHistory<TState> : IStatesHistory<TState> where TState : State, new() {
 
         public class Entry : IStatesHistoryEntry {
 
@@ -34,7 +34,7 @@
             }
             public TState state;
 
-            public Entry(IWorld<TState> world) {
+            public Entry(World world) {
 
                 this.isEmpty = true;
                 this.state = WorldUtilities.CreateState<TState>();
@@ -84,9 +84,9 @@
         private LinkedListNode<Entry> currentEntryNode;
         public Tick oldestTick;
         public readonly long capacity;
-        private IWorld<TState> world;
+        private World world;
 
-        public StatesHistory(IWorld<TState> world, long capacity) {
+        public StatesHistory(World world, long capacity) {
 
             this.world = world;
             this.capacity = capacity;

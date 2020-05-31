@@ -2,11 +2,9 @@
 
 namespace #NAMESPACE# {
 
-    using TState = #STATENAME#;
-    
-    public class #SCRIPTNAME# : IComponentCopyable<TState> {
+    public class #SCRIPTNAME# : IComponentCopyable {
         
-        void IComponentCopyable<TState>.CopyFrom(IComponentCopyable<TState> other) {}
+        void IComponentCopyable.CopyFrom(IComponentCopyable other) {}
         
         void IPoolableRecycle.OnRecycle() {}
 

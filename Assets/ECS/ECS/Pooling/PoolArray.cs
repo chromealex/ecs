@@ -39,19 +39,19 @@
             
         }
 
-        public static void Recycle(ref T[] buffer) {
+        public static void Recycle(ref T[] buffer, bool checkBlockSize = true) {
             
             PoolArray<T>.Recycle(buffer);
             buffer = null;
             
         }
 
-        public static void Recycle(T[] buffer) {
+        public static void Recycle(T[] buffer, bool checkBlockSize = true) {
 
             var length = buffer.Length;
             
             if (length == 0) return;
-            if (length > PoolArray<T>.BLOCK_SIZE) {
+            if (checkBlockSize == true && length > PoolArray<T>.BLOCK_SIZE) {
 
                 return;
                 

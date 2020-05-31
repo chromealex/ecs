@@ -29,7 +29,13 @@ namespace ME.ECS {
                 return count;
             }
         }
-        
+
+        public int BitsCount {
+            get {
+                return BitMask.MAX_BIT_INDEX;
+            }
+        }
+
         public BitMask(int[] bits) {
             
             this.field0 = 0;

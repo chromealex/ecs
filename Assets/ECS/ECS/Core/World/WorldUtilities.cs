@@ -13,15 +13,14 @@ namespace ME.ECS {
 
         }
 
-        public static void SetWorld<TState>(World<TState> world) where TState : class, IState<TState>, new() {
+        public static void SetWorld(World world) {
 
             Worlds.currentWorld = world;
-            Worlds<TState>.currentWorld = world;
-
+            
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static TState CreateState<TState>() where TState : class, IStateBase, new() {
+        public static TState CreateState<TState>() where TState : State, new() {
 
             var state = PoolClass<TState>.Spawn();
             state.entityId = default;
@@ -32,13 +31,24 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void ReleaseState<TState>(ref TState state) where TState : class, IStateBase, new() {
+        public static void ReleaseState<TState>(ref State state) where TState : State, new() {
 
             state.entityId = default;
             state.tick = default;
             state.randomState = default;
-            PoolClass<TState>.Recycle(ref state);
-            
+            PoolClass<TState>.Recycle((TState)state);
+            state = null;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void ReleaseState<TState>(ref TState state) where TState : State, new() {
+
+            state.entityId = default;
+            state.tick = default;
+            state.randomState = default;
+            PoolStates<TState>.Recycle(ref state);
+
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -56,7 +66,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release<TState>(ref StructComponentsContainer<TState> storage) where TState : class, IState<TState>, new() {
+        public static void Release(ref StructComponentsContainer storage) {
             
             //PoolClass<StructComponentsContainer>.Recycle(ref storage);
             storage.OnRecycle();
@@ -64,25 +74,25 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Release<TState>(ref Components<TState> components) where TState : class, IState<TState>, new() {
+        public static void Release(ref Components components) {
             
-            PoolClass<Components<TState>>.Recycle(ref components);
+            PoolClass<Components>.Recycle(ref components);
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void CreateWorld<TState>(ref World<TState> worldRef, float tickTime, int forcedWorldId = 0) where TState : class, IState<TState>, new() {
+        public static void CreateWorld<TState>(ref World worldRef, float tickTime, int forcedWorldId = 0) where TState : State, new() {
 
-            if (worldRef != null) WorldUtilities.ReleaseWorld(ref worldRef);
-            worldRef = PoolClass<World<TState>>.Spawn();
+            if (worldRef != null) WorldUtilities.ReleaseWorld<TState>(ref worldRef);
+            worldRef = PoolClass<World>.Spawn();
             worldRef.SetId(forcedWorldId);
             ((IWorldBase)worldRef).SetTickTime(tickTime);
-            Worlds<TState>.Register(worldRef);
+            Worlds.Register(worldRef);
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void ReleaseWorld<TState>(ref World<TState> world) where TState : class, IState<TState>, new() {
+        public static void ReleaseWorld<TState>(ref World world) where TState : State, new() {
 
             if (world == null || world.isActive == false) {
 
@@ -92,8 +102,9 @@ namespace ME.ECS {
             }
             
             Worlds.DeInitializeBegin();
-            Worlds<TState>.UnRegister(world);
-            PoolClass<World<TState>>.Recycle(ref world);
+            Worlds.UnRegister(world);
+            world.RecycleStates<TState>();
+            PoolClass<World>.Recycle(ref world);
             Worlds.DeInitializeEnd();
 
         }

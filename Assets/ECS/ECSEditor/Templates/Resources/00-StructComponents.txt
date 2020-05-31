@@ -1,14 +1,25 @@
 ﻿namespace ME.ECS {
 
-    public static partial class ComponentsInitializer<TState> where TState : class, IState<TState>, new() {
+    public static partial class ComponentsInitializer {
     
-        static partial void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer) {
+        static partial void Init(ref ME.ECS.StructComponentsContainer structComponentsContainer) {
     
-            CoreComponentsInitializer<TState>.Init(ref structComponentsContainer);
+            ComponentsInitializerWorld.Setup(ComponentsInitializerWorldGen.Init);
+            CoreComponentsInitializer.Init(ref structComponentsContainer);
 #CONTENT#
     
         }
     
     }
     
+    public static class ComponentsInitializerWorldGen {
+
+        public static void Init(Entity entity) {
+
+#CONTENT2#
+
+        }
+
+    }
+
 }

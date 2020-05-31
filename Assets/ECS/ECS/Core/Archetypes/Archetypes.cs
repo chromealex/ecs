@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
+﻿
 namespace ME.ECS {
 
     #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -146,7 +143,7 @@ namespace ME.ECS {
 
     public struct Archetype : System.IEquatable<Archetype> {
 
-        private BitMask value;
+        internal BitMask value;
         
         public Archetype(BitMask value) {
 
@@ -157,6 +154,12 @@ namespace ME.ECS {
         public int Count {
             get {
                 return this.value.Count;
+            }
+        }
+
+        public int BitsCount {
+            get {
+                return this.value.BitsCount;
             }
         }
 
@@ -204,6 +207,22 @@ namespace ME.ECS {
 
             if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
             this.value.AddBit(in ComponentType<T>.index);
+            
+            return this;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool HasBit(in int bit) {
+
+            return this.value.HasBit(in bit);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public Archetype AddBit(in int bit) {
+
+            this.value.AddBit(in bit);
             
             return this;
 

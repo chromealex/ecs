@@ -2,7 +2,6 @@
 
 namespace #NAMESPACE# {
     
-    using TState = #STATENAME#;
     using Components; using Modules; using Systems; using Features; using Markers;
     
     #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -10,17 +9,15 @@ namespace #NAMESPACE# {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class #SCRIPTNAME# : IModule<TState> {
+    public class #SCRIPTNAME# : IModule, IUpdate {
         
-        public IWorld<TState> world { get; set; }
+        public World world { get; set; }
         
         void IModuleBase.OnConstruct() {}
         
         void IModuleBase.OnDeconstruct() {}
         
-        void IModule<TState>.AdvanceTick(TState state, float deltaTime) {}
-        
-        void IModule<TState>.Update(TState state, float deltaTime) {}
+        void IUpdate.Update(in float deltaTime) {}
         
     }
     

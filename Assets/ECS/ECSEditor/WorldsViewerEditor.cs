@@ -1323,7 +1323,10 @@ namespace ME.ECSEditor {
 
                                 });
 
-                                var filtersCount = filters.Count;
+                                var filtersCount = 0;
+                                foreach (var f in filters.GetData()) {
+                                    if (f != null) ++filtersCount;
+                                }
                                 GUILayoutExt.FoldOut(ref worldEditor.foldoutFilters, "Filters (" + filtersCount.ToString() + ")", () => {
                                     
                                     var cellHeight = 25f;

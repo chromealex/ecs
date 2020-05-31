@@ -1,7 +1,7 @@
 ﻿#if UNITY_EDITOR
 namespace ME.ECS {
 
-    public partial class World<TState> {
+    public partial class World {
 
         private System.Collections.Generic.Dictionary<Entity, EntityDebugComponent> debugEntities = new System.Collections.Generic.Dictionary<Entity, EntityDebugComponent>();
 

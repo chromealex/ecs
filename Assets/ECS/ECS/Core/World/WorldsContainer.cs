@@ -4,8 +4,11 @@ namespace ME.ECS {
 
     public static class Worlds {
 
-        public static IWorldBase currentWorld;
+        public static World currentWorld;
         public static readonly List<IWorldBase> registeredWorlds = new List<IWorldBase>();
+
+        public static IStateBase currentState;
+        private static Dictionary<int, World> cache = new Dictionary<int, World>(1);
 
         internal static bool isInDeInitialization;
         public static void DeInitializeBegin() {
@@ -20,19 +23,10 @@ namespace ME.ECS {
             
         }
 
-    }
+        public static World GetWorld(int id) {
 
-    public static class Worlds<TState> where TState : class, IState<TState>, new() {
-
-        public static World<TState> currentWorld;
-        public static TState currentState;
-        
-        private static Dictionary<int, IWorld<TState>> cache = new Dictionary<int, IWorld<TState>>(1);
-
-        public static IWorld<TState> GetWorld(int id) {
-
-            IWorld<TState> world;
-            if (Worlds<TState>.cache.TryGetValue(id, out world) == true) {
+            World world;
+            if (Worlds.cache.TryGetValue(id, out world) == true) {
 
                 return world;
                 
@@ -42,17 +36,17 @@ namespace ME.ECS {
 
         }
 
-        public static void Register(IWorld<TState> world) {
+        public static void Register(World world) {
             
             Worlds.registeredWorlds.Add(world);
-            Worlds<TState>.cache.Add(world.id, world);
+            Worlds.cache.Add(world.id, world);
             
         }
         
-        public static void UnRegister(IWorld<TState> world) {
+        public static void UnRegister(World world) {
             
             if (Worlds.registeredWorlds != null) Worlds.registeredWorlds.Remove(world);
-            if (Worlds<TState>.cache != null) Worlds<TState>.cache.Remove(world.id);
+            if (Worlds.cache != null) Worlds.cache.Remove(world.id);
             
         }
 

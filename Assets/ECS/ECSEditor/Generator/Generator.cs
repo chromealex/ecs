@@ -7,6 +7,7 @@ namespace ME.ECSEditor {
 
         private static string MENU_ITEM_AUTO;
         private static string CONTENT_ITEM;
+        private static string CONTENT_ITEM2;
         private static string FILE_NAME;
         private static string TEMPLATE;
         private static System.Type SEARCH_TYPE;
@@ -15,10 +16,11 @@ namespace ME.ECSEditor {
         private static bool AUTO_COMPILE_DEFAULT;
 
         protected static void Set(string MENU_ITEM_AUTO, string CONTENT_ITEM, string FILE_NAME, string TEMPLATE, System.Type SEARCH_TYPE, string PREFS_KEY,
-                                  string DIRECTORY_CONTAINS, bool AUTO_COMPILE_DEFAULT) {
+                                  string DIRECTORY_CONTAINS, bool AUTO_COMPILE_DEFAULT, string CONTENT_ITEM2 = null) {
 
             Generator.MENU_ITEM_AUTO = MENU_ITEM_AUTO;
             Generator.CONTENT_ITEM = CONTENT_ITEM;
+            Generator.CONTENT_ITEM2 = CONTENT_ITEM2;
             Generator.FILE_NAME = FILE_NAME;
             Generator.TEMPLATE = TEMPLATE;
             Generator.SEARCH_TYPE = SEARCH_TYPE;
@@ -144,12 +146,14 @@ namespace ME.ECSEditor {
             if (System.IO.Directory.Exists(dir) == false) return;
             
             var itemStr = Generator.CONTENT_ITEM;
+            var itemStr2 = Generator.CONTENT_ITEM2;
 
             var listEntities = new List<System.Type>();
             var asms = UnityEditor.AssetDatabase.FindAssets("t:asmdef", new[] { dir });
             foreach (var asm in asms) {
 
                 var output = string.Empty;
+                var output2 = string.Empty;
                 listEntities.Clear();
 
                 var asmPath = UnityEditor.AssetDatabase.GUIDToAssetPath(asm);
@@ -195,12 +199,17 @@ namespace ME.ECSEditor {
 
                     output += resItem;
 
-                }
+                    var resItem2 = itemStr2;
+                    resItem2 = resItem2.Replace("#PROJECTNAME#", asmName);
+                    resItem2 = resItem2.Replace("#STATENAME#", asmName + "State");
+                    resItem2 = resItem2.Replace("#TYPENAME#", entityType.FullName);
 
-                if (string.IsNullOrEmpty(output) == false) {
-                    ME.ECSEditor.ScriptTemplates.Create(asmNamePath, Generator.FILE_NAME, Generator.TEMPLATE, new Dictionary<string, string>() { { "CONTENT", output } }, false);
-                }
+                    output2 += resItem2;
 
+                }
+                
+                ME.ECSEditor.ScriptTemplates.Create(asmNamePath, Generator.FILE_NAME, Generator.TEMPLATE, new Dictionary<string, string>() { { "CONTENT", output }, { "CONTENT2", output2 } }, false);
+                
             }
 
         }

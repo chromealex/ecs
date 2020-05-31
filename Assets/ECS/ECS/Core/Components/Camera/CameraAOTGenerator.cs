@@ -1,11 +1,11 @@
 ﻿
 namespace ME.ECS {
 
-    public static class CameraAOTCompileHelper<TState> where TState : class, IState<TState>, new() {
+    public static class CameraAOTCompileHelper {
     
         public static void IL2CPP() {
     
-            new ME.ECS.StructComponents<TState, ME.ECS.Camera.Camera>();
+            new ME.ECS.StructComponents<ME.ECS.Camera.Camera>();
 
         }
     

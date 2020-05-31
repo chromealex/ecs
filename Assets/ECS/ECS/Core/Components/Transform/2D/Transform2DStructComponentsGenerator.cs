@@ -1,9 +1,9 @@
 ﻿
 namespace ME.ECS {
 
-    public static class Transform2DComponentsInitializer<TState> where TState : class, IState<TState>, new() {
+    public static class Transform2DComponentsInitializer {
     
-        public static void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer) {
+        public static void Init(ref ME.ECS.StructComponentsContainer structComponentsContainer) {
     
             structComponentsContainer.Validate<ME.ECS.Transform.Position2D>();
             structComponentsContainer.Validate<ME.ECS.Transform.Rotation2D>();

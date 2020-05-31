@@ -12,14 +12,14 @@ namespace ME.ECS {
 
     }
 
-    public interface IComponentCopyable<TState> : IComponent, IPoolableRecycle where TState : IStateBase {
+    public interface IComponentCopyable : IComponent, IPoolableRecycle {
 
-        void CopyFrom(IComponentCopyable<TState> other);
+        void CopyFrom(IComponentCopyable other);
         
     }
 
     public interface IComponentSharedBase { }
     public interface IComponentShared : IComponent, IComponentSharedBase { }
-    public interface IComponentSharedCopyable<TState> : IComponentCopyable<TState> where TState : IStateBase { }
+    public interface IComponentSharedCopyable : IComponentCopyable { }
 
 }

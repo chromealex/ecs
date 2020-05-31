@@ -24,19 +24,22 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public abstract class StructRegistryBase<TState> : IStructRegistryBase, IPoolableRecycle where TState : class, IState<TState>, new() {
+    public abstract class StructRegistryBase : IStructRegistryBase, IPoolableRecycle {
         
-        public World<TState> world;
+        public World world;
         
         public abstract bool HasType(System.Type type);
         public abstract IStructComponent GetObject(Entity entity);
         public abstract void SetObject(Entity entity, IStructComponent data);
         public abstract void RemoveObject(Entity entity);
         
-        public abstract void CopyFrom(StructRegistryBase<TState> other);
+        public abstract void CopyFrom(StructRegistryBase other);
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public abstract void Validate(in Entity entity);
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public abstract bool Has(in Entity entity);
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public abstract bool Remove(in Entity entity, bool clearAll = false);
@@ -51,11 +54,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class StructComponents<TState, TComponent> : StructRegistryBase<TState> where TComponent : struct, IStructComponent where TState : class, IState<TState>, new() {
-
-        private static object lockObject = new object();
-        
-        //private const int COMPONENTS_CAPACITY = 100;
+    public class StructComponents<TComponent> : StructRegistryBase where TComponent : struct, IStructComponent {
 
         internal TComponent[] components;
         internal bool[] componentsStates;
@@ -169,7 +168,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool Has(in Entity entity) {
+        public override bool Has(in Entity entity) {
 
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             //var index = entity.id;
@@ -241,9 +240,9 @@ namespace ME.ECS {
 
         }
 
-        public override void CopyFrom(StructRegistryBase<TState> other) {
+        public override void CopyFrom(StructRegistryBase other) {
 
-            var _other = (StructComponents<TState, TComponent>)other;
+            var _other = (StructComponents<TComponent>)other;
             ArrayUtils.Copy(_other.components, ref this.components);
             ArrayUtils.Copy(_other.componentsStates, ref this.componentsStates);
 
@@ -273,9 +272,9 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif*/
-    public struct StructComponentsContainer<TState> : IStructComponentsContainer where TState : class, IState<TState>, new() {
+    public struct StructComponentsContainer : IStructComponentsContainer {
 
-        internal StructRegistryBase<TState>[] list;
+        internal StructRegistryBase[] list;
         internal int count;
         private bool isCreated;
 
@@ -350,7 +349,7 @@ namespace ME.ECS {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TState, TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list[code];
             reg.Validate(in entity);
             
         }
@@ -389,9 +388,9 @@ namespace ME.ECS {
 
                 lock (this.list) {
 
-                    var instance = (StructRegistryBase<TState>)PoolComponents.Spawn(typeof(StructRegistryBase<TState>));
-                    if (instance == null) instance = PoolClass<StructComponents<TState, TComponent>>.Spawn();//new StructComponents<TComponent>();
-                    instance.world = Worlds<TState>.currentWorld;
+                    var instance = (StructRegistryBase)PoolComponents.Spawn(typeof(StructRegistryBase));
+                    if (instance == null) instance = PoolClass<StructComponents<TComponent>>.Spawn();//new StructComponents<TComponent>();
+                    instance.world = Worlds.currentWorld;
                     this.list[code] = instance;
 
                 }
@@ -406,11 +405,26 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool HasBit(in Entity entity, in int bit) {
+
+            if (bit < 0 || bit >= this.list.Length) return false;
+            var reg = this.list[bit];
+            if (reg == null) return false;
+            return reg.Has(in entity);
+            
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Has<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TState, TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list[code];
             return reg.Has(in entity);
             
         }
@@ -425,7 +439,7 @@ namespace ME.ECS {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TState, TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list[code];
             return ref reg.Get(in entity);
             
         }
@@ -440,7 +454,7 @@ namespace ME.ECS {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TState, TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list[code];
             if (reg.Set(in entity, data) == true) {
             
                 ++this.count;
@@ -462,7 +476,7 @@ namespace ME.ECS {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TState, TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list[code];
             if (reg.Remove(in entity) == true) {
 
                 --this.count;
@@ -495,7 +509,7 @@ namespace ME.ECS {
                     
                 }
                 
-                PoolArray<StructRegistryBase<TState>>.Recycle(ref this.list);
+                PoolArray<StructRegistryBase>.Recycle(ref this.list);
                 
             }
 
@@ -509,23 +523,23 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        public void CopyFrom(StructComponentsContainer<TState> other) {
+        public void CopyFrom(StructComponentsContainer other) {
 
             this.OnRecycle();
             
             this.count = other.count;
             this.isCreated = other.isCreated;
             
-            this.list = PoolArray<StructRegistryBase<TState>>.Spawn(other.list.Length);
+            this.list = PoolArray<StructRegistryBase>.Spawn(other.list.Length);
             for (int i = 0; i < other.list.Length; ++i) {
 
                 if (other.list[i] != null) {
 
                     var type = other.list[i].GetType();
-                    var comp = (StructRegistryBase<TState>)PoolRegistries.Spawn(type);
+                    var comp = (StructRegistryBase)PoolRegistries.Spawn(type);
                     if (comp == null) {
                         
-                        comp = (StructRegistryBase<TState>)System.Activator.CreateInstance(type);
+                        comp = (StructRegistryBase)System.Activator.CreateInstance(type);
                         
                     }
 
@@ -542,6 +556,8 @@ namespace ME.ECS {
 
     public partial interface IWorldBase {
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        bool HasDataBit(in Entity entity, in int bit);
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         bool HasData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent;
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -565,13 +581,9 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         void ValidateData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent;
 
-    }
-
-    public partial interface IWorld<TState> {
+        ref StructComponentsContainer GetStructComponents();
         
-        ref StructComponentsContainer<TState> GetStructComponents();
-        
-        void Register(ref StructComponentsContainer<TState> componentsContainer, bool freeze, bool restore);
+        void Register(ref StructComponentsContainer componentsContainer, bool freeze, bool restore);
 
     }
 
@@ -580,11 +592,11 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public partial class World<TState> {
+    public partial class World {
 
-        private StructComponentsContainer<TState> componentsStructCache;
+        private StructComponentsContainer componentsStructCache;
 
-        public ref StructComponentsContainer<TState> GetStructComponents() {
+        public ref StructComponentsContainer GetStructComponents() {
 
             return ref this.componentsStructCache;
 
@@ -592,7 +604,7 @@ namespace ME.ECS {
 
         partial void OnSpawnStructComponents() {
 
-            this.componentsStructCache = new StructComponentsContainer<TState>();//PoolClass<StructComponentsContainer>.Spawn();
+            this.componentsStructCache = new StructComponentsContainer();//PoolClass<StructComponentsContainer>.Spawn();
 
         }
 
@@ -615,11 +627,11 @@ namespace ME.ECS {
 
         }
 
-        void IWorld<TState>.Register(ref StructComponentsContainer<TState> componentsContainer, bool freeze, bool restore) {
+        public void Register(ref StructComponentsContainer componentsContainer, bool freeze, bool restore) {
 
             if (componentsContainer.IsCreated() == false) {
 
-                componentsContainer = new StructComponentsContainer<TState>(); //PoolClass<StructComponentsContainer>.Spawn();
+                componentsContainer = new StructComponentsContainer(); //PoolClass<StructComponentsContainer>.Spawn();
                 componentsContainer.Initialize(freeze);
 
             }
@@ -667,18 +679,30 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool HasDataBit(in Entity entity, in int bit) {
+
+            return this.componentsStructCache.HasBit(in entity, in bit);
+
+        }
+
         public void ValidateData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
 
             this.componentsStructCache.Validate<TComponent>(in entity);
+            if (this.filtersStorage.HasInFilters<TComponent>() == true && this.HasData<TComponent>(in entity) == true) {
+                
+                this.storagesCache.archetypes.Set<TComponent>(in entity);
+                
+            }
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ref TComponent GetData<TComponent>(in Entity entity, bool createIfNotExists) where TComponent : struct, IStructComponent {
+        public ref TComponent GetData<TComponent>(in Entity entity, bool createIfNotExists = true) where TComponent : struct, IStructComponent {
 
             // Inline all manually
             ref var r = ref this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
-            var reg = (StructComponents<TState, TComponent>)r;
+            var reg = (StructComponents<TComponent>)r;
             ref var state = ref reg.componentsStates[entity.id];
             if (state == false && createIfNotExists == true) {
 
@@ -698,9 +722,17 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetData<TComponent>(in Entity entity, in TComponent data) where TComponent : struct, IStructComponent {
 
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldState();
+                
+            }
+            #endif
+
             // Inline all manually
             ref var r = ref this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
-            var reg = (StructComponents<TState, TComponent>)r;
+            var reg = (StructComponents<TComponent>)r;
             reg.components[entity.id] = data;
             ref var state = ref reg.componentsStates[entity.id];
             if (state == false) {
@@ -724,8 +756,16 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetData<TComponent>(in Entity entity, in TComponent data, bool updateFilters) where TComponent : struct, IStructComponent {
 
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldState();
+
+            }
+            #endif
+            
             // Inline all manually
-            var reg = (StructComponents<TState, TComponent>)this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            var reg = (StructComponents<TComponent>)this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
             reg.components[entity.id] = data;
             ref var state = ref reg.componentsStates[entity.id];
             if (state == false) {
@@ -749,7 +789,15 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RemoveData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
 
-            var reg = (StructComponents<TState, TComponent>)this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldState();
+
+            }
+            #endif
+
+            var reg = (StructComponents<TComponent>)this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
             ref var state = ref reg.componentsStates[entity.id];
             if (state == true) {
 

@@ -14,6 +14,8 @@ namespace ME.ECSEditor {
         private static readonly System.Type SEARCH_TYPE = typeof(ME.ECS.IStructComponent);
         private const string CONTENT_ITEM = @"
             structComponentsContainer.Validate<#TYPENAME#>();";
+        private const string CONTENT_ITEM2 = @"
+            entity.ValidateData<#TYPENAME#>();";
         private const bool AUTO_COMPILE_DEFAULT = true;
 
         public static void Init() {
@@ -26,7 +28,8 @@ namespace ME.ECSEditor {
                 StructComponentsGenerator.SEARCH_TYPE,
                 StructComponentsGenerator.PREFS_KEY,
                 StructComponentsGenerator.DIRECTORY_CONTAINS,
-                StructComponentsGenerator.AUTO_COMPILE_DEFAULT);
+                StructComponentsGenerator.AUTO_COMPILE_DEFAULT,
+                StructComponentsGenerator.CONTENT_ITEM2);
             
         }
 

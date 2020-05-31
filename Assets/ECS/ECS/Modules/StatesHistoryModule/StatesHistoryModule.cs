@@ -11,16 +11,16 @@ namespace ME.ECS {
 
     }
 
-    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
+    public partial interface IWorldBase {
 
-        void SetStatesHistoryModule(StatesHistory.IStatesHistoryModule<TState> module);
+        void SetStatesHistoryModule(StatesHistory.IStatesHistoryModuleBase module);
 
     }
 
-    public partial class World<TState> where TState : class, IState<TState>, new() {
+    public partial class World {
 
-        private StatesHistory.IStatesHistoryModule<TState> statesHistoryModule;
-        public void SetStatesHistoryModule(StatesHistory.IStatesHistoryModule<TState> module) {
+        private StatesHistory.IStatesHistoryModuleBase statesHistoryModule;
+        public void SetStatesHistoryModule(StatesHistory.IStatesHistoryModuleBase module) {
 
             this.statesHistoryModule = module;
 
@@ -148,14 +148,14 @@ namespace ME.ECS.StatesHistory {
         int GetEventsAddedCount();
         int GetEventsPlayedCount();
 
+        int GetStateHash(State state);
+
     }
 
-    public interface IStatesHistoryModule<TState> : IStatesHistoryModuleBase, IModule<TState> where TState : class, IState<TState>, new() {
+    public interface IStatesHistoryModule<TState> : IStatesHistoryModuleBase, IModule where TState : State, new() {
 
         void AddEvents(IList<HistoryEvent> historyEvents);
         void AddEvent(HistoryEvent historyEvent);
-
-        int GetStateHash(IState<TState> state);
 
         new ME.ECS.Network.IStatesHistory<TState> GetDataStates();
         Tick GetAndResetOldestTick(Tick tick);
@@ -171,7 +171,7 @@ namespace ME.ECS.StatesHistory {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public abstract class StatesHistoryModule<TState> : IStatesHistoryModule<TState>, IModuleValidation where TState : class, IState<TState>, new() {
+    public abstract class StatesHistoryModule<TState> : IStatesHistoryModule<TState>, IUpdate, IModuleValidation where TState : State, new() {
 
         private const int OLDEST_TICK_THRESHOLD = 1;
         
@@ -200,10 +200,10 @@ namespace ME.ECS.StatesHistory {
         private Tick oldestTick;
         private Tick lastSavedStateTick;
         
-        public IWorld<TState> world { get; set; }
-
+        public World world { get; set; }
+        
         void IModuleBase.OnConstruct() {
-            
+
             this.statesHistory = new ME.ECS.Network.StatesHistory<TState>(this.world, this.GetQueueCapacity());
             //this.states = new StatesCircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
             this.events = PoolDictionary<Tick, ME.ECS.Collections.SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
@@ -437,7 +437,7 @@ namespace ME.ECS.StatesHistory {
             if (this.syncHash.TryGetValue(tick, out hash) == true) {
 
                 var state = this.GetStateBeforeTick(tick, out _);
-                if (state == null) state = this.world.GetResetState();
+                if (state == null) state = this.world.GetResetState<TState>();
                 var localHash = this.GetStateHash(state);
                 if (localHash != hash) {
 
@@ -449,7 +449,7 @@ namespace ME.ECS.StatesHistory {
 
         }
 
-        public int GetStateHash(IState<TState> state) {
+        public int GetStateHash(State state) {
 
             return state.entityId ^ (int)state.tick ^ state.GetHash();
 
@@ -489,11 +489,7 @@ namespace ME.ECS.StatesHistory {
 
         }
 
-        void IModule<TState>.AdvanceTick(in TState state, in float deltaTime) {
-            
-        }
-
-        void IModule<TState>.Update(in TState state, in float deltaTime) {
+        public void Update(in float deltaTime) {
 
             this.ValidatePrewarm();
             
@@ -618,7 +614,7 @@ namespace ME.ECS.StatesHistory {
                 newState.tick = tick;
                 this.states.Set(tick, newState);*/
 
-                this.statesHistory.Store(tick, this.world.GetState());
+                this.statesHistory.Store(tick, this.world.GetState<TState>());
 
             }
 

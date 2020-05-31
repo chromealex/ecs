@@ -2,39 +2,37 @@ namespace ME.ECS {
 
     public interface ISystemBase {
         
+        World world { get; set; }
+        
         void OnConstruct();
         void OnDeconstruct();
 
     }
 
-    public interface ISystemAdvanceTick<TState> where TState : class, IState<TState>, new() {
+    public interface IAdvanceTick {
 
-        void AdvanceTick(in TState state, in float deltaTime);
-
-    }
-
-    public interface ISystemUpdate<TState> where TState : class, IState<TState>, new() {
-
-        void Update(in TState state, in float deltaTime);
+        void AdvanceTick(in float deltaTime);
 
     }
 
-    public interface ISystem<TState> : ISystemBase where TState : class, IState<TState>, new() {
+    public interface IUpdate {
 
-        IWorld<TState> world { get; set; }
+        void Update(in float deltaTime);
 
     }
 
-    public interface ISystemFilter<TState> : ISystem<TState> where TState : class, IState<TState>, new() {
-        
+    public interface ISystemFilter : ISystem {
+
         bool jobs { get; }
         int jobsBatchCount { get; }
-        IFilter<TState> filter { get; set; }
-        IFilter<TState> CreateFilter();
+        IFilter filter { get; set; }
+        IFilter CreateFilter();
 
-        void AdvanceTick(in Entity entity, in TState state, in float deltaTime);
+        void AdvanceTick(in Entity entity, in float deltaTime);
 
     }
+
+    public interface ISystem : ISystemBase { }
 
     public interface ISystemValidation {
 

@@ -9,7 +9,7 @@ namespace ME.ECS {
         
     }
 
-    public interface IComponents<TState> : IComponentsBase, IPoolableRecycle where TState : class, IState<TState>, new() {
+    public interface IComponents : IComponentsBase, IPoolableRecycle {
 
         int Count { get; }
 
@@ -24,7 +24,7 @@ namespace ME.ECS {
         List<IComponent> ForEach<TComponent>(int entityId) where TComponent : class, IComponent;
         TComponent GetFirst<TComponent>(int entityId) where TComponent : class, IComponent;
 
-        void CopyFrom(Components<TState> other);
+        void CopyFrom(Components other);
 
     }
 
@@ -33,9 +33,9 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Components<TState> : IComponents<TState> where TState : class, IState<TState>, new() {
+    public class Components : IComponents {
 
-        private static class ComponentType<TComponent, TStateInner> {
+        private static class ComponentType<TComponent> {
 
             public static int id = -1;
 
@@ -122,7 +122,7 @@ namespace ME.ECS {
         public int RemoveAllPredicate<TComponent, TComponentPredicate>(int entityId, TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent> {
 
             var count = 0;
-            var typeId = Components<TState>.GetTypeId<TComponent>();
+            var typeId = Components.GetTypeId<TComponent>();
             if (typeId < 0 || typeId >= this.arr.Length) return count;
 
             ref var bucket = ref this.arr[typeId];
@@ -196,7 +196,7 @@ namespace ME.ECS {
         private int RemoveAll_INTERNAL<TComponent>(int entityId) where TComponent : class, IComponentBase {
 
             var count = 0;
-            var typeId = Components<TState>.GetTypeId<TComponent>();
+            var typeId = Components.GetTypeId<TComponent>();
             if (typeId < 0 || typeId >= this.arr.Length) return count;
 
             ref var bucket = ref this.arr[typeId];
@@ -244,13 +244,13 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int GetTypeId<TComponent>() {
 
-            if (ComponentType<TComponent, TState>.id < 0) {
+            if (ComponentType<TComponent>.id < 0) {
 
-                ComponentType<TComponent, TState>.id = Components<TState>.typeId++;
+                ComponentType<TComponent>.id = Components.typeId++;
 
             }
 
-            return ComponentType<TComponent, TState>.id;
+            return ComponentType<TComponent>.id;
 
         }
 
@@ -269,7 +269,7 @@ namespace ME.ECS {
 
         public void Add<TComponent>(int entityId, TComponent data) where TComponent : class, IComponent {
 
-            var typeId = Components<TState>.GetTypeId<TComponent>();
+            var typeId = Components.GetTypeId<TComponent>();
             this.Add_INTERNAL(typeId, entityId, data);
             
         }
@@ -277,7 +277,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private TComponent Get_INTERNAL<TComponent>(int entityId) where TComponent : class, IComponent {
             
-            var typeId = Components<TState>.GetTypeId<TComponent>();
+            var typeId = Components.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -306,7 +306,7 @@ namespace ME.ECS {
 
         public List<IComponent> ForEach<TComponent>(int entityId) where TComponent : class, IComponent {
             
-            var typeId = Components<TState>.GetTypeId<TComponent>();
+            var typeId = Components.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -322,7 +322,7 @@ namespace ME.ECS {
 
         public bool Contains<TComponent>(int entityId) where TComponent : class, IComponent {
 
-            var typeId = Components<TState>.GetTypeId<TComponent>();
+            var typeId = Components.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.arr.Length) {
 
                 ref var bucket = ref this.arr[typeId];
@@ -351,7 +351,7 @@ namespace ME.ECS {
 
         }
 
-        public void CopyFrom(Components<TState> other) {
+        public void CopyFrom(Components other) {
 
             // Clean up current array
             this.CleanUp_INTERNAL();
@@ -384,7 +384,7 @@ namespace ME.ECS {
 
                                 }
 
-                                if (comp is IComponentCopyable<TState> compCopyable) compCopyable.CopyFrom((IComponentCopyable<TState>)element);
+                                if (comp is IComponentCopyable compCopyable) compCopyable.CopyFrom((IComponentCopyable)element);
 
                                 this.arr[i].components[j].Add(comp);
 

@@ -16,16 +16,16 @@ namespace ME.ECS {
 
     }
 
-    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
-
+    public partial interface IWorldBase {
+        
         ViewId RegisterViewSource(UnityEngine.GameObject prefab);
         ViewId RegisterViewSource(MonoBehaviourViewBase prefab);
         void InstantiateView(UnityEngine.GameObject prefab, Entity entity);
         void InstantiateView(MonoBehaviourViewBase prefab, Entity entity);
 
     }
-
-    public partial class World<TState> where TState : class, IState<TState>, new() {
+    
+    public partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(UnityEngine.GameObject prefab) {
@@ -82,7 +82,7 @@ namespace ME.ECS.Views {
 
     using ME.ECS.Views.Providers;
 
-    public partial interface IViewModule<TState> where TState : class, IState<TState>, new() {
+    public partial interface IViewModule {
 
         ViewId RegisterViewSource(UnityEngine.GameObject prefab);
         void UnRegisterViewSource(UnityEngine.GameObject prefab);
@@ -90,7 +90,7 @@ namespace ME.ECS.Views {
 
     }
 
-    public partial class ViewsModule<TState> where TState : class, IState<TState>, new() {
+    public partial class ViewsModule {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(UnityEngine.GameObject prefab) {
@@ -177,6 +177,43 @@ namespace ME.ECS.Views.Providers {
 
     }
 
+    public abstract class PhysicsView : MonoBehaviourView {
+        
+        new public UnityEngine.Rigidbody rigidbody;
+
+        public void OnCollisionEnter(UnityEngine.Collision other) {
+
+            this.entity.SetData(new ME.ECS.Features.PhysicsDeterministic.Components.PhysicsOnCollisionEnter() {
+                collision = other
+            });
+            
+        }
+
+        public void OnCollisionExit(UnityEngine.Collision other) {
+
+            this.entity.SetData(new ME.ECS.Features.PhysicsDeterministic.Components.PhysicsOnCollisionExit() {
+                collision = other
+            });
+            
+        }
+
+        public void OnCollisionStay(UnityEngine.Collision other) {
+
+            this.entity.SetData(new ME.ECS.Features.PhysicsDeterministic.Components.PhysicsOnCollisionStay() {
+                collision = other
+            });
+            
+        }
+        
+        public override void ApplyPhysicsState(float deltaTime) {
+            
+            this.entity.SetPosition(this.rigidbody.position);
+            this.entity.SetRotation(this.rigidbody.rotation);
+            
+        }
+
+    }
+    
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -204,6 +241,7 @@ namespace ME.ECS.Views.Providers {
         public virtual void OnInitialize() { }
         public virtual void OnDeInitialize() { }
         public virtual void ApplyState(float deltaTime, bool immediately) { }
+        public virtual void ApplyPhysicsState(float deltaTime) {}
 
         public override string ToString() {
 

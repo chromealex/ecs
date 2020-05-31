@@ -26,10 +26,6 @@ namespace ME.ECS {
 
     }
     
-    public partial interface IWorld<TState> where TState : class, IState<TState>, new() {
-        
-    }
-
     public static partial class EntityExtensions {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -48,12 +44,12 @@ namespace ME.ECS {
 
     }
 
-    public partial class World<TState> where TState : class, IState<TState>, new() {
+    public partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         partial void DestroyEntityPlugin2(Entity entity) {
 
-            var viewsModule = this.GetModule<ViewsModule<TState>>();
+            var viewsModule = this.GetModule<ViewsModule>();
             viewsModule.DestroyAllViews(entity);
 
         }
@@ -61,9 +57,9 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         partial void RegisterPlugin1ModuleForEntity() {
 
-            if (this.HasModule<ViewsModule<TState>>() == false) {
+            if (this.HasModule<ViewsModule>() == false) {
 
-                this.AddModule<ViewsModule<TState>>();
+                this.AddModule<ViewsModule>();
 
             }
 
@@ -72,7 +68,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool UnRegisterViewSource(IView prefab) {
             
-            var viewsModule = this.GetModule<ViewsModule<TState>>();
+            var viewsModule = this.GetModule<ViewsModule>();
             return viewsModule.UnRegisterViewSource(prefab);
 
         }
@@ -80,7 +76,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource<TProvider>(TProvider providerInitializer, IView prefab) where TProvider : struct, IViewsProviderInitializer {
             
-            var viewsModule = this.GetModule<ViewsModule<TState>>();
+            var viewsModule = this.GetModule<ViewsModule>();
             return viewsModule.RegisterViewSource(providerInitializer, prefab);
 
         }
@@ -88,7 +84,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void InstantiateView(IView prefab, Entity entity) {
 
-            var viewsModule = this.GetModule<ViewsModule<TState>>();
+            var viewsModule = this.GetModule<ViewsModule>();
             viewsModule.InstantiateView(prefab, entity);
             
         }
@@ -96,7 +92,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void InstantiateView(ViewId prefab, Entity entity) {
 
-            var viewsModule = this.GetModule<ViewsModule<TState>>();
+            var viewsModule = this.GetModule<ViewsModule>();
             viewsModule.InstantiateView(prefab, entity);
             
         }
@@ -104,7 +100,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void DestroyView(ref IView instance) {
             
-            var viewsModule = this.GetModule<ViewsModule<TState>>();
+            var viewsModule = this.GetModule<ViewsModule>();
             viewsModule.DestroyView(ref instance);
             
         }
@@ -112,7 +108,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void DestroyAllViews(Entity entity) {
             
-            var viewsModule = this.GetModule<ViewsModule<TState>>();
+            var viewsModule = this.GetModule<ViewsModule>();
             viewsModule.DestroyAllViews(entity);
             
         }
@@ -196,7 +192,7 @@ namespace ME.ECS.Views {
 
     }
 
-    public partial interface IViewModule<TState> : IViewModuleBase, IModule<TState> where TState : class, IState<TState>, new() {
+    public partial interface IViewModule : IViewModuleBase, IModule {
 
         void Register(IView instance);
         bool UnRegister(IView instance);
@@ -279,7 +275,7 @@ namespace ME.ECS.Views {
     /// <summary>
     /// Private component class to describe Views
     /// </summary>
-    public class ViewComponent<TState> : IComponentCopyable<TState>, IViewComponent where TState : IStateBase {
+    public class ViewComponent : IComponentCopyable, IViewComponent {
 
         public ViewInfo viewInfo;
         public uint seed;
@@ -297,9 +293,9 @@ namespace ME.ECS.Views {
 
         }
 
-        void IComponentCopyable<TState>.CopyFrom(IComponentCopyable<TState> other) {
+        void IComponentCopyable.CopyFrom(IComponentCopyable other) {
 
-            var otherView = (ViewComponent<TState>)other;
+            var otherView = (ViewComponent)other;
             this.viewInfo = otherView.viewInfo;
             this.seed = otherView.seed;
 
@@ -307,7 +303,7 @@ namespace ME.ECS.Views {
 
     }
 
-    public interface IViewComponentRequest<TState> : IComponentCopyable<TState> where TState : IStateBase {}
+    public interface IViewComponentRequest<TState> : IComponentCopyable where TState : IStateBase {}
 
     public class DestroyViewComponentRequest<TState> : IViewComponentRequest<TState> where TState : IStateBase {
 
@@ -321,7 +317,7 @@ namespace ME.ECS.Views {
 
         }
 
-        void IComponentCopyable<TState>.CopyFrom(IComponentCopyable<TState> other) {
+        void IComponentCopyable.CopyFrom(IComponentCopyable other) {
             
             var otherView = (DestroyViewComponentRequest<TState>)other;
             this.viewInfo = otherView.viewInfo;
@@ -343,7 +339,7 @@ namespace ME.ECS.Views {
 
         }
 
-        void IComponentCopyable<TState>.CopyFrom(IComponentCopyable<TState> other) {
+        void IComponentCopyable.CopyFrom(IComponentCopyable other) {
             
             var otherView = (CreateViewComponentRequest<TState>)other;
             this.viewInfo = otherView.viewInfo;
@@ -356,17 +352,17 @@ namespace ME.ECS.Views {
     /// <summary>
     /// Private predicate to filter components
     /// </summary>
-    public struct RemoveComponentViewPredicate<TState> : IComponentPredicate<ViewComponent<TState>> where TState : class, IState<TState>, new() {
+    public struct RemoveComponentViewPredicate : IComponentPredicate<ViewComponent> {
 
         public int entityId;
         public ViewId prefabSourceId;
         public Tick creationTick;
         
-        public bool Execute(ViewComponent<TState> data) {
+        public bool Execute(ViewComponent data) {
 
             if (data.viewInfo.creationTick == this.creationTick && data.viewInfo.entity.id == this.entityId && data.viewInfo.prefabSourceId == this.prefabSourceId) {
 
-                Worlds<TState>.currentWorld.storagesCache.archetypes.Remove<ViewComponent<TState>>(in data.viewInfo.entity);
+                Worlds.currentWorld.storagesCache.archetypes.Remove<ViewComponent>(in data.viewInfo.entity);
                 return true;
 
             }
@@ -382,7 +378,7 @@ namespace ME.ECS.Views {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public partial class ViewsModule<TState> : IViewModule<TState> where TState : class, IState<TState>, new() {
+    public partial class ViewsModule : IViewModule, IUpdate, IModulePhysicsUpdate {
 
         private const int REGISTRY_PROVIDERS_CAPACITY = 100;
         private const int REGISTRY_CAPACITY = 100;
@@ -400,18 +396,18 @@ namespace ME.ECS.Views {
         private ViewId viewIdRegistry;
         private bool isRequestsDirty;
         
-        public IWorld<TState> world { get; set; }
-
+        public World world { get; set; }
+        
         void IModuleBase.OnConstruct() {
 
             this.isRequestsDirty = false;
-            this.list = PoolArray<List<IView>>.Spawn(ViewsModule<TState>.VIEWS_CAPACITY);
-            this.rendering = PoolHashSet<ViewInfo>.Spawn(ViewsModule<TState>.VIEWS_CAPACITY);
-            this.registryPrefabToId = PoolDictionary<IView, ViewId>.Spawn(ViewsModule<TState>.REGISTRY_CAPACITY);
-            this.registryIdToPrefab = PoolDictionary<ViewId, IView>.Spawn(ViewsModule<TState>.REGISTRY_CAPACITY);
+            this.list = PoolArray<List<IView>>.Spawn(ViewsModule.VIEWS_CAPACITY);
+            this.rendering = PoolHashSet<ViewInfo>.Spawn(ViewsModule.VIEWS_CAPACITY);
+            this.registryPrefabToId = PoolDictionary<IView, ViewId>.Spawn(ViewsModule.REGISTRY_CAPACITY);
+            this.registryIdToPrefab = PoolDictionary<ViewId, IView>.Spawn(ViewsModule.REGISTRY_CAPACITY);
 
-            this.registryPrefabToProvider = PoolDictionary<ViewId, IViewsProvider>.Spawn(ViewsModule<TState>.REGISTRY_PROVIDERS_CAPACITY);
-            this.registryPrefabToProviderInitializer = PoolDictionary<ViewId, IViewsProviderInitializerBase>.Spawn(ViewsModule<TState>.REGISTRY_PROVIDERS_CAPACITY);
+            this.registryPrefabToProvider = PoolDictionary<ViewId, IViewsProvider>.Spawn(ViewsModule.REGISTRY_PROVIDERS_CAPACITY);
+            this.registryPrefabToProviderInitializer = PoolDictionary<ViewId, IViewsProviderInitializerBase>.Spawn(ViewsModule.REGISTRY_PROVIDERS_CAPACITY);
 
         }
 
@@ -507,7 +503,7 @@ namespace ME.ECS.Views {
 
                 var viewInfo = new ViewInfo(entity, sourceId, this.world.GetStateTick());
                 
-                var component = this.world.AddComponent<ViewComponent<TState>>(entity);
+                var component = this.world.AddComponent<ViewComponent>(entity);
                 component.viewInfo = viewInfo;
                 component.seed = (uint)this.world.GetSeedValue();
 
@@ -535,12 +531,12 @@ namespace ME.ECS.Views {
 
             lock (this) {
 
-                var predicate = new RemoveComponentViewPredicate<TState>();
+                var predicate = new RemoveComponentViewPredicate();
                 predicate.entityId = instance.entity.id;
                 predicate.prefabSourceId = instance.prefabSourceId;
                 predicate.creationTick = instance.creationTick;
 
-                this.world.RemoveComponentsPredicate<ViewComponent<TState>, RemoveComponentViewPredicate<TState>>(instance.entity, predicate);
+                this.world.RemoveComponentsPredicate<ViewComponent, RemoveComponentViewPredicate>(instance.entity, predicate);
 
                 this.isRequestsDirty = true;
                 
@@ -757,8 +753,6 @@ namespace ME.ECS.Views {
 
         }
 
-        void IModule<TState>.AdvanceTick(in TState state, in float deltaTime) {}
-
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void CreateVisualInstance(in uint seed, in ViewInfo viewInfo) {
             
@@ -801,7 +795,7 @@ namespace ME.ECS.Views {
             if (this.isRequestsDirty == false) return;
             this.isRequestsDirty = false;
             
-            var aliveEntities = PoolHashSet<int>.Spawn(ViewsModule<TState>.INTERNAL_ENTITIES_CACHE_CAPACITY);
+            var aliveEntities = PoolHashSet<int>.Spawn(ViewsModule.INTERNAL_ENTITIES_CACHE_CAPACITY);
             if (this.world.ForEachEntity(out RefList<Entity> allEntities) == true) {
 
                 for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
@@ -811,7 +805,7 @@ namespace ME.ECS.Views {
 
                     aliveEntities.Add(item.id);
                     
-                    var allViews = this.world.ForEachComponent<ViewComponent<TState>>(item);
+                    var allViews = this.world.ForEachComponent<ViewComponent>(item);
                     if (allViews != null) {
 
                         lock (this) {
@@ -819,7 +813,7 @@ namespace ME.ECS.Views {
                             // Comparing current state views to current rendering
                             foreach (var viewComponent in allViews) {
 
-                                var view = (ViewComponent<TState>)viewComponent;
+                                var view = (ViewComponent)viewComponent;
                                 if (this.IsRenderingNow(in view.viewInfo) == true) {
 
                                     // is rendering now
@@ -867,14 +861,14 @@ namespace ME.ECS.Views {
                     for (int i = list.Count - 1; i >= 0; --i) {
 
                         var instance = list[i];
-                        var allViews = this.world.ForEachComponent<ViewComponent<TState>>(instance.entity);
+                        var allViews = this.world.ForEachComponent<ViewComponent>(instance.entity);
                         if (allViews == null) continue;
 
-                        ViewComponent<TState> viewFound = null;
+                        ViewComponent viewFound = null;
                         var found = false;
                         foreach (var viewComponent in allViews) {
                             
-                            var view = (ViewComponent<TState>)viewComponent;
+                            var view = (ViewComponent)viewComponent;
                             if (instance.prefabSourceId == view.viewInfo.prefabSourceId) {
 
                                 viewFound = view;
@@ -988,7 +982,25 @@ namespace ME.ECS.Views {
             
         }
 
-        void IModule<TState>.Update(in TState state, in float deltaTime) {
+        void IModulePhysicsUpdate.UpdatePhysics(float deltaTime) {
+            
+            for (var id = 0; id < this.list.Length; ++id) {
+                
+                var list = this.list[id];
+                if (list == null) continue;
+                
+                for (int i = 0, count = list.Count; i < count; ++i) {
+
+                    var instance = list[i] as ME.ECS.Views.Providers.MonoBehaviourView;
+                    if (instance != null) instance.ApplyPhysicsState(deltaTime);
+                    
+                }
+                
+            }
+            
+        }
+
+        public void Update(in float deltaTime) {
 
             if (this.world.settings.turnOffViews == true) return;
             

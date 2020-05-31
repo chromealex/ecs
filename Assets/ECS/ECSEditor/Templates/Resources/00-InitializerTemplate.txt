@@ -25,7 +25,7 @@ namespace #NAMESPACE# {
             if (this.world == null) {
 
                 // Initialize world with 0.033 time step
-                WorldUtilities.CreateWorld(ref this.world, 0.033f);
+                WorldUtilities.CreateWorld<TState>(ref this.world, 0.033f);
                 {
                     #if FPS_MODULE_SUPPORT
                     this.world.AddModule<FPSModule>();
@@ -36,15 +36,15 @@ namespace #NAMESPACE# {
                     // Add your custom modules here
                     
                     // Create new state
-                    this.world.SetState(WorldUtilities.CreateState<TState>());
-                    ComponentsInitializer<TState>.DoInit();
+                    this.world.SetState<TState>(WorldUtilities.CreateState<TState>());
+                    ComponentsInitializer.DoInit();
                     this.Initialize(this.world);
 
                     // Add your custom systems here
                     
                 }
                 // Save initialization state
-                this.world.SaveResetState();
+                this.world.SaveResetState<TState>();
 
             }
 
@@ -68,7 +68,7 @@ namespace #NAMESPACE# {
 
             this.DeInitializeFeatures(this.world);
             // Release world
-            WorldUtilities.ReleaseWorld(ref this.world);
+            WorldUtilities.ReleaseWorld<TState>(ref this.world);
 
         }
 
@@ -78,15 +78,15 @@ namespace #NAMESPACE# {
 
 namespace ME.ECS {
     
-    public static partial class ComponentsInitializer<TState> where TState : class, IState<TState>, new() {
+    public static partial class ComponentsInitializer {
 
         public static void DoInit() {
             
-            ComponentsInitializer<TState>.Init(ref Worlds<TState>.currentWorld.GetStructComponents());
+            ComponentsInitializer.Init(ref Worlds.currentWorld.GetStructComponents());
             
         }
 
-        static partial void Init(ref ME.ECS.StructComponentsContainer<TState> structComponentsContainer);
+        static partial void Init(ref ME.ECS.StructComponentsContainer structComponentsContainer);
 
     }
 

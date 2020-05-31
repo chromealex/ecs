@@ -14,7 +14,7 @@ namespace ME.ECS {
         public WorldDebugSettings worldDebugSettings = WorldDebugSettings.Default;
         public EndOfBaseClass endOfBaseClass;
 
-        protected void Initialize<TState>(World<TState> world) where TState : class, IState<TState>, new() {
+        protected void Initialize(World world) {
 
             world.SetSettings(this.worldSettings);
             world.SetDebugSettings(this.worldDebugSettings);
@@ -22,13 +22,13 @@ namespace ME.ECS {
             
         }
 
-        protected void InitializeFeatures<TState>(World<TState> world) where TState : class, IState<TState>, new() {
+        protected void InitializeFeatures(World world) {
 
             this.featuresList.Initialize(world);
 
         }
 
-        protected void DeInitializeFeatures<TState>(World<TState> world) where TState : class, IState<TState>, new() {
+        protected void DeInitializeFeatures(World world) {
 
             this.featuresList.DeInitialize(world);
 

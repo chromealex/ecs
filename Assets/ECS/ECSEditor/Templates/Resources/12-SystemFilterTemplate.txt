@@ -2,7 +2,6 @@
 
 namespace #NAMESPACE# {
 
-    using TState = #STATENAME#;
     #pragma warning disable
     using #PROJECTNAME#.Components; using #PROJECTNAME#.Modules; using #PROJECTNAME#.Systems; using #PROJECTNAME#.Markers;
     using Components; using Modules; using Systems; using Markers;
@@ -13,24 +12,24 @@ namespace #NAMESPACE# {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class #SCRIPTNAME# : ISystemFilter<TState> {
+    public class #SCRIPTNAME# : ISystemFilter {
         
-        public IWorld<TState> world { get; set; }
+        public World world { get; set; }
         
         void ISystemBase.OnConstruct() {}
         
         void ISystemBase.OnDeconstruct() {}
         
-        bool ISystemFilter<TState>.jobs => false;
-        int ISystemFilter<TState>.jobsBatchCount => 64;
-        IFilter<TState> ISystemFilter<TState>.filter { get; set; }
-        IFilter<TState> ISystemFilter<TState>.CreateFilter() {
+        bool ISystemFilter.jobs => false;
+        int ISystemFilter.jobsBatchCount => 64;
+        IFilter ISystemFilter.filter { get; set; }
+        IFilter ISystemFilter.CreateFilter() {
             
-            return Filter<TState>.Create("Filter-#SCRIPTNAME#").Push();
+            return Filter.Create("Filter-#SCRIPTNAME#").Push();
             
         }
     
-        void ISystemFilter<TState>.AdvanceTick(in Entity entity, in TState state, in float deltaTime) {}
+        void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {}
     
     }
     

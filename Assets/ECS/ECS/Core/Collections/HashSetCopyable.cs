@@ -115,7 +115,7 @@ namespace ME.ECS.Collections {
     /// the same time. 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class HashSetCopyable<T> : ICollection<T>, ISerializable, IDeserializationCallback, IReadOnlyCollection<T>, IPoolableRecycle {
+    public class HashSetCopyable<T> : ICollection<T>, ISerializable, IDeserializationCallback, IReadOnlyCollection<T>, IPoolableRecycle, IPoolableSpawn {
 
         // store lower 31 bits of hash code
         private const int Lower31BitMask = 0x7FFFFFFF;
@@ -641,12 +641,24 @@ namespace ME.ECS.Collections {
         }
         #endregion
 
+        public void OnSpawn() {
+
+            this.m_count = 0;
+            this.m_lastIndex = 0;
+            this.m_freeList = -1;
+            this.m_version = 0;
+            
+            this.m_buckets = null;
+            this.m_slots = null;
+            
+        }
+
         public void OnRecycle() {
 
-            this.m_count = default;
-            this.m_lastIndex = default;
-            this.m_freeList = default;
-            this.m_version = default;
+            this.m_count = 0;
+            this.m_lastIndex = 0;
+            this.m_freeList = -1;
+            this.m_version = 0;
             
             if (this.m_buckets != null) PoolArray<int>.Recycle(ref this.m_buckets);
             if (this.m_slots != null) PoolArray<Slot>.Recycle(ref this.m_slots);

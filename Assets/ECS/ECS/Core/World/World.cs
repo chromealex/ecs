@@ -1211,6 +1211,8 @@ namespace ME.ECS {
         /// <param name="instance"></param>
         public void RemoveFeature(IFeatureBase instance) {
 
+            if (this.isActive == false) return;
+            
             var idx = this.features.IndexOf(instance);
             if (idx >= 0) {
                 

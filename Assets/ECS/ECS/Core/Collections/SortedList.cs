@@ -65,11 +65,11 @@ namespace ME.ECS.Collections {
     #endif
     [System.Runtime.InteropServices.ComVisible(false)]
     public class SortedList<TKey, TValue> :
-        IDictionary<TKey, TValue>, System.Collections.IDictionary, IReadOnlyDictionary<TKey, TValue> {
+        IDictionary<TKey, TValue>, System.Collections.IDictionary, IReadOnlyDictionary<TKey, TValue>, IPoolableRecycle, IPoolableSpawn {
 
         private TKey[] keys;
         private TValue[] values;
-        private HashSet<TKey> keysContains;
+        private HashSetCopyable<TKey> keysContains;
         private int _size;
         private int version;
         private IComparer<TKey> comparer;
@@ -85,6 +85,51 @@ namespace ME.ECS.Collections {
 
         private const int _defaultCapacity = 4;
 
+        public void OnRecycle() {
+            
+            PoolArray<TKey>.Recycle(ref this.keys);
+            PoolArray<TValue>.Recycle(ref this.values);
+            PoolHashSetCopyable<TKey>.Recycle(ref this.keysContains);
+            this._size = default;
+            this.version = default;
+            this.comparer = default;
+            this.keyList = default;
+            this.valueList = default;
+            this._syncRoot = default;
+
+        }
+
+        public void OnSpawn() {
+            
+            this._size = default;
+            this.version = default;
+            this.keyList = default;
+            this.valueList = default;
+            this._syncRoot = default;
+            
+            this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
+            this.keys = SortedList<TKey, TValue>.emptyKeys;
+            this.values = SortedList<TKey, TValue>.emptyValues;
+            this._size = 0;
+            this.comparer = Comparer<TKey>.Default;
+            
+        }
+
+        public void CopyFrom(SortedList<TKey, TValue> other) {
+            
+            ArrayUtils.Copy(other.keys, ref this.keys);
+            ArrayUtils.Copy(other.values, ref this.values);
+            if (this.keysContains == null) this.keysContains = PoolHashSetCopyable<TKey>.Spawn(); 
+            this.keysContains.CopyFrom(other.keysContains);
+            this._size = other._size;
+            this.version = other.version;
+            this.comparer = other.comparer;
+            this.keyList = new KeyList(this);
+            this.valueList = new ValueList(this);
+            this._syncRoot = other._syncRoot;
+
+        }
+        
         // Constructs a new sorted list. The sorted list is initially empty and has
         // a capacity of zero. Upon adding the first element to the sorted list the
         // capacity is increased to _defaultCapacity, and then increased in multiples of two as
@@ -92,7 +137,7 @@ namespace ME.ECS.Collections {
         // IComparable interface, which must be implemented by the keys of
         // all entries added to the sorted list.
         public SortedList() {
-            this.keysContains = new HashSet<TKey>();
+            this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
             this.keys = SortedList<TKey, TValue>.emptyKeys;
             this.values = SortedList<TKey, TValue>.emptyValues;
             this._size = 0;
@@ -107,9 +152,9 @@ namespace ME.ECS.Collections {
         // all entries added to the sorted list.
         //
         public SortedList(int capacity) {
-            this.keysContains = new HashSet<TKey>();
-            this.keys = new TKey[capacity];
-            this.values = new TValue[capacity];
+            this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
+            this.keys = PoolArray<TKey>.Spawn(capacity);
+            this.values = PoolArray<TValue>.Spawn(capacity);
             this.comparer = Comparer<TKey>.Default;
         }
 
@@ -389,6 +434,13 @@ namespace ME.ECS.Collections {
         }
 
         // Copies the values in this SortedList to an array.
+        public void CopyTo(TValue[] array, int arrayIndex) {
+            for (var i = 0; i < this.Count; i++) {
+                array[arrayIndex + i] = this.values[i];
+            }
+        }
+
+        // Copies the values in this SortedList to an array.
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) {
             for (var i = 0; i < this.Count; i++) {
                 var entry = new KeyValuePair<TKey, TValue>(this.keys[i], this.values[i]);
@@ -440,11 +492,14 @@ namespace ME.ECS.Collections {
             return this.values[index];
         }
 
-
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() {
+        public Enumerator GetEnumerator() {
+            return new Enumerator(this, Enumerator.KeyValuePair);
+        }
+        
+        /*public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() {
             throw new AllocationException();
             //return new Enumerator(this, Enumerator.KeyValuePair);
-        }
+        }*/
 
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() {
             throw new AllocationException();
@@ -623,7 +678,7 @@ namespace ME.ECS.Collections {
         #if !FEATURE_NETCORE
         [Serializable()]
         #endif
-        private struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, System.Collections.IDictionaryEnumerator {
+        public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, System.Collections.IDictionaryEnumerator {
 
             private SortedList<TKey, TValue> _sortedList;
             private TKey key;

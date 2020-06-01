@@ -14,8 +14,8 @@ namespace ME.ECS {
         bool OnRemoveComponent(in Entity entity);
         bool OnRemoveEntity(in Entity entity);
 
-        SortedSetCopyable<Entity> GetRequests();
-        SortedSetCopyable<Entity> GetRequestsRemoveEntity();
+        SortedList<int, Entity> GetRequests();
+        SortedList<int, Entity> GetRequestsRemoveEntity();
         bool forEachMode { get; set; }
         void Add_INTERNAL(in Entity entity);
         bool Remove_INTERNAL(in Entity entity);
@@ -41,7 +41,7 @@ namespace ME.ECS {
 
         void SetForEachMode(bool state);
         
-        SortedSetCopyable<Entity> GetData();
+        SortedList<int, Entity> GetData();
 
         bool IsEquals(IFilterBase other);
 
@@ -348,7 +348,7 @@ namespace ME.ECS {
     public struct FilterEnumerator : IEnumerator<Entity> {
             
         private readonly IFilterInternal set;
-        private SortedSetCopyable<Entity>.Enumerator setEnumerator;
+        private SortedList<int, Entity>.Enumerator setEnumerator;
             
         internal FilterEnumerator(IFilterInternal set) {
                 
@@ -372,7 +372,7 @@ namespace ME.ECS {
  
         public Entity Current {
             get {
-                return this.setEnumerator.Current;
+                return this.setEnumerator.Current.Value;
             }
         }
  
@@ -412,10 +412,10 @@ namespace ME.ECS {
         private Archetype archetypeNotContains;
         private int nodesCount;
         private bool[] dataContains;
-        private SortedSetCopyable<Entity> data;
+        private SortedList<int, Entity> data;
         bool IFilterInternal.forEachMode { get; set; }
-        private SortedSetCopyable<Entity> requests;
-        private SortedSetCopyable<Entity> requestsRemoveEntity;
+        private SortedList<int, Entity> requests;
+        private SortedList<int, Entity> requestsRemoveEntity;
         
         private List<IFilterNode> tempNodes;
         private List<IFilterNode> tempNodesCustom;
@@ -548,17 +548,17 @@ namespace ME.ECS {
         public Entity[] GetArray() {
 
             var arr = PoolArray<Entity>.Spawn(this.data.Count);
-            this.data.CopyTo(arr, 0, arr.Length);
+            this.data.CopyTo(arr, 0);
             return arr;
 
         }
 
         void IPoolableSpawn.OnSpawn() {
 
-            this.requests = PoolSortedSetCopyable<Entity>.Spawn(Filter.REQUESTS_CAPACITY);
-            this.requestsRemoveEntity = PoolSortedSetCopyable<Entity>.Spawn(Filter.REQUESTS_CAPACITY);
+            this.requests = PoolSortedList<int, Entity>.Spawn(Filter.REQUESTS_CAPACITY);
+            this.requestsRemoveEntity = PoolSortedList<int, Entity>.Spawn(Filter.REQUESTS_CAPACITY);
             this.nodes = PoolArray<IFilterNode>.Spawn(Filter.NODES_CAPACITY);
-            this.data = PoolSortedSetCopyable<Entity>.Spawn();
+            this.data = PoolSortedList<int, Entity>.Spawn(Filter.ENTITIES_CAPACITY);
             this.dataContains = PoolArray<bool>.Spawn(Filter.ENTITIES_CAPACITY);
 
             this.id = default;
@@ -576,10 +576,10 @@ namespace ME.ECS {
         void IPoolableRecycle.OnRecycle() {
             
             PoolArray<bool>.Recycle(ref this.dataContains);
-            PoolSortedSetCopyable<Entity>.Recycle(ref this.data);
+            PoolSortedList<int, Entity>.Recycle(ref this.data);
             PoolArray<IFilterNode>.Recycle(ref this.nodes);
-            PoolSortedSetCopyable<Entity>.Recycle(ref this.requestsRemoveEntity);
-            PoolSortedSetCopyable<Entity>.Recycle(ref this.requests);
+            PoolSortedList<int, Entity>.Recycle(ref this.requestsRemoveEntity);
+            PoolSortedList<int, Entity>.Recycle(ref this.requests);
             
             if (this.aliases != null) PoolArray<string>.Recycle(ref this.aliases);
             
@@ -648,14 +648,14 @@ namespace ME.ECS {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void ApplyAllRequests() {
-            
+
             var internalFilter = ((IFilterInternal)this);
             {
                 
                 var requests = internalFilter.GetRequests();
                 foreach (var entity in requests) {
 
-                    internalFilter.OnUpdate(entity);
+                    internalFilter.OnUpdate(entity.Value);
 
                 }
 
@@ -668,7 +668,7 @@ namespace ME.ECS {
                 var requests = internalFilter.GetRequestsRemoveEntity();
                 foreach (var entity in requests) {
 
-                    internalFilter.Remove_INTERNAL(entity);
+                    internalFilter.Remove_INTERNAL(entity.Value);
 
                 }
 
@@ -697,9 +697,10 @@ namespace ME.ECS {
                 
                 ArrayUtils.Copy(other.nodes, ref this.nodes);
 
-                if (this.data != null) PoolSortedSetCopyable<Entity>.Recycle(ref this.data);
-                this.data = PoolSortedSetCopyable<Entity>.Spawn(other.data.Count);
+                if (this.data != null) PoolSortedList<int, Entity>.Recycle(ref this.data);
+                this.data = PoolSortedList<int, Entity>.Spawn(other.data.Count);
                 this.data.CopyFrom(other.data);
+                //this.data.CopyFrom(other.data);
                 //this.data = new SortedSetCopyable<Entity>(other.data);
 
                 ArrayUtils.Copy(other.dataContains, ref this.dataContains);
@@ -715,19 +716,19 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public SortedSetCopyable<Entity> GetData() {
+        public SortedList<int, Entity> GetData() {
 
             return this.data;
 
         }
         
-        SortedSetCopyable<Entity> IFilterInternal.GetRequests() {
+        SortedList<int, Entity> IFilterInternal.GetRequests() {
 
             return this.requests;
 
         }
 
-        SortedSetCopyable<Entity> IFilterInternal.GetRequestsRemoveEntity() {
+        SortedList<int, Entity> IFilterInternal.GetRequestsRemoveEntity() {
 
             return this.requestsRemoveEntity;
 
@@ -817,7 +818,7 @@ namespace ME.ECS {
 
                     }
 
-                    if (this.requests.Contains(entity) == false) this.requests.Add(entity);
+                    if (this.requests.ContainsKey(entity.version) == false) this.requests.Add(entity.version, entity);
                     return false;
 
                 }
@@ -825,7 +826,7 @@ namespace ME.ECS {
                 var cast = (IFilterInternal)this;
                 if (cast.forEachMode == true) {
 
-                    if (this.requests.Contains(entity) == false) this.requests.Add(entity);
+                    if (this.requests.ContainsKey(entity.version) == false) this.requests.Add(entity.version, entity);
                     return false;
 
                 }
@@ -861,7 +862,7 @@ namespace ME.ECS {
 
                     }
 
-                    if (this.requestsRemoveEntity.Contains(entity) == false) this.requestsRemoveEntity.Add(entity);
+                    if (this.requestsRemoveEntity.ContainsKey(entity.version) == false) this.requestsRemoveEntity.Add(entity.version, entity);
                     return false;
 
                 }
@@ -869,7 +870,7 @@ namespace ME.ECS {
                 var cast = (IFilterInternal)this;
                 if (cast.forEachMode == true) {
 
-                    if (this.requestsRemoveEntity.Contains(entity) == false) this.requestsRemoveEntity.Add(entity);
+                    if (this.requestsRemoveEntity.ContainsKey(entity.version) == false) this.requestsRemoveEntity.Add(entity.version, entity);
                     return false;
 
                 }
@@ -885,7 +886,7 @@ namespace ME.ECS {
 
             ArrayUtils.Resize(entity.id, ref this.dataContains);
             this.dataContains[entity.id] = true;
-            this.data.Add(entity);
+            this.data.Add(entity.id, entity);
 
         }
 
@@ -899,7 +900,7 @@ namespace ME.ECS {
             if (res == true) {
 
                 res = false;
-                this.data.Remove(entity);
+                this.data.Remove(entity.id);
                 return true;
 
             }

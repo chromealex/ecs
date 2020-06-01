@@ -205,13 +205,66 @@ namespace ME.ECS.Collections {
         
         public void CopyFrom(SortedSetCopyable<T> other) {
 
+            this.RecycleNodes(ref root);
+            
+            // these are explicit type checks in the mould of HashSet. It would have worked better
+            // with something like an ISorted<T> (we could make this work for SortedList.Keys etc)
+            SortedSetCopyable<T> baseSortedSet = other as SortedSetCopyable<T>;
+            //SortedSetCopyable<T> baseTreeSubSet = other as TreeSubSet;
+            //if (baseSortedSet != null && baseTreeSubSet == null && AreComparersEqual(this, baseSortedSet)) {
+                //breadth first traversal to recreate nodes
+                if (baseSortedSet.Count == 0) {
+                    count = 0;
+                    version = 0;
+                    root = null;
+                    return;
+                }
+ 
+ 
+                //pre order way to replicate nodes
+                Stack<Node> theirStack = PoolStack<SortedSetCopyable<T>.Node>.Spawn(2 * log2(baseSortedSet.Count) + 2);
+                Stack<Node> myStack = PoolStack<SortedSetCopyable<T>.Node>.Spawn(2 * log2(baseSortedSet.Count) + 2);
+                Node theirCurrent = baseSortedSet.root;
+                Node myCurrent = (theirCurrent != null ? new SortedSetCopyable<T>.Node(theirCurrent.Item, theirCurrent.IsRed) : null);
+                root = myCurrent;
+                while (theirCurrent != null) {
+                    theirStack.Push(theirCurrent);
+                    myStack.Push(myCurrent);
+                    myCurrent.Left = (theirCurrent.Left != null ? SortedSetCopyable<T>.Node.Spawn(theirCurrent.Left.Item, theirCurrent.Left.IsRed) : null);
+                    theirCurrent = theirCurrent.Left;
+                    myCurrent = myCurrent.Left;
+                }
+                while (theirStack.Count != 0) {
+                    theirCurrent = theirStack.Pop();
+                    myCurrent = myStack.Pop();
+                    Node theirRight = theirCurrent.Right;
+                    Node myRight = null;
+                    if (theirRight != null) {
+                        myRight = SortedSetCopyable<T>.Node.Spawn(theirRight.Item, theirRight.IsRed);
+                    }
+                    myCurrent.Right = myRight;
+ 
+                    while (theirRight != null) {
+                        theirStack.Push(theirRight);
+                        myStack.Push(myRight);
+                        myRight.Left = (theirRight.Left != null ? SortedSetCopyable<T>.Node.Spawn(theirRight.Left.Item, theirRight.Left.IsRed) : null);
+                        theirRight = theirRight.Left;
+                        myRight = myRight.Left;
+                    }
+                }
+                PoolStack<SortedSetCopyable<T>.Node>.Recycle(ref myStack);
+                PoolStack<SortedSetCopyable<T>.Node>.Recycle(ref theirStack);
+                count = baseSortedSet.count;
+                version = 0;
+            //}
+            
+            //this.RecycleNodes(ref this.root);
+            //this.CopyNodes(ref this.root, other.root);
+            
             this.count = other.count;
             this.version = other.version;
             this._syncRoot = other._syncRoot;
 
-            this.RecycleNodes(ref this.root);
-            this.CopyNodes(ref this.root, other.root);
-            
         }
 
         private void RecycleNodes(ref Node node) {
@@ -240,7 +293,7 @@ namespace ME.ECS.Collections {
             
         }
 
-        private void CopyNodes(ref Node root, Node otherRoot) {
+        /*private void CopyNodes(ref Node root, Node otherRoot) {
 
             if (otherRoot == null) {
 
@@ -285,15 +338,7 @@ namespace ME.ECS.Collections {
                 
             }
             
-            /*
-            root = PoolClass<Node>.Spawn();
-            root.Item = otherRoot.Item;
-            root.IsRed = otherRoot.IsRed;
-            
-            this.CopyNodes(ref root.Left, otherRoot.Left);
-            this.CopyNodes(ref root.Right, otherRoot.Right);
-            */
-        }
+        }*/
         
         #region Constructors
         public SortedSetCopyable() {
@@ -691,7 +736,7 @@ namespace ME.ECS.Collections {
                             // update sibling, this is necessary for following processing
                             sibling = (parent.Left == current) ? parent.Right : parent.Left;
                         }
-                        Debug.Assert(sibling != null || sibling.IsRed == false, "sibling must not be null and it must be black!");
+                        Debug.Assert(sibling != null && sibling.IsRed == false, "sibling must not be null and it must be black!");
  
                         if (Is2Node(sibling)) {
                             Merge2Nodes(parent, current, sibling);
@@ -797,14 +842,37 @@ namespace ME.ECS.Collections {
             //upper bound
             count += index;
  
-            InOrderTreeWalk(delegate(Node node) {
+            Stack<Node> stack = PoolStack<Node>.Spawn(2 * (int)(SortedSetCopyable<T>.log2(Count + 1)));
+            Node current = root;
+            while (current != null) {
+                stack.Push(current);
+                current = current.Left;
+            }
+            while (stack.Count != 0) {
+                current = stack.Pop();
+                
+                if (index >= count) {
+                    return;
+                }
+
+                array[index++] = current.Item;
+
+                Node node = current.Right;
+                while (node != null) {
+                    stack.Push(node);
+                    node = node.Left;
+                }
+            }
+            PoolStack<Node>.Recycle(ref stack);
+            
+            /*InOrderTreeWalk(delegate(Node node) {
                 if (index >= count) {
                     return false;
                 } else {
                     array[index++] = node.Item;
                     return true;
                 }
-            });
+            });*/
         }
  
         void ICollection.CopyTo(Array array, int index) {
@@ -2336,7 +2404,7 @@ namespace ME.ECS.Collections {
                 version = tree.version;
  
                 // 2lg(n + 1) is the maximum height
-                stack = new Stack<SortedSetCopyable<T>.Node>(2 * (int)SortedSetCopyable<T>.log2(set.Count + 1));
+                stack = PoolStack<SortedSetCopyable<T>.Node>.Spawn(2 * (int)SortedSetCopyable<T>.log2(set.Count + 1));
                 current = null;
                 reverse = false;
 #if !FEATURE_NETCORE
@@ -2353,7 +2421,7 @@ namespace ME.ECS.Collections {
                 version = tree.version;
  
                 // 2lg(n + 1) is the maximum height
-                stack = new Stack<SortedSetCopyable<T>.Node>(2 * (int)SortedSetCopyable<T>.log2(set.Count + 1));
+                stack = PoolStack<SortedSetCopyable<T>.Node>.Spawn(2 * (int)SortedSetCopyable<T>.log2(set.Count + 1));
                 current = null;
                 this.reverse = reverse;
 #if !FEATURE_NETCORE
@@ -2460,6 +2528,9 @@ namespace ME.ECS.Collections {
             }
  
             public void Dispose() {
+                
+                PoolStack<Node>.Recycle(ref stack);
+                
             }
  
             public T Current {

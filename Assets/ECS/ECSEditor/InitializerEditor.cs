@@ -451,24 +451,33 @@ namespace ME.ECSEditor {
 
         }
 
+        private System.Collections.Generic.Dictionary<FeatureBase, System.Collections.Generic.List<string>> cacheSystems = new System.Collections.Generic.Dictionary<FeatureBase, System.Collections.Generic.List<string>>();
+        private System.Collections.Generic.Dictionary<FeatureBase, System.Collections.Generic.List<string>> cacheModules = new System.Collections.Generic.Dictionary<FeatureBase, System.Collections.Generic.List<string>>();
+        
         private System.Collections.Generic.List<string> GetSystems(FeatureBase feature) {
 
-            var list = new System.Collections.Generic.List<string>();
-            var script = MonoScript.FromScriptableObject(feature);
-            var text = script.text;
-                
-            var matches = System.Text.RegularExpressions.Regex.Matches(text, @"AddSystem\s*\<(.*?)\>");
-            foreach (System.Text.RegularExpressions.Match match in matches) {
+            if (this.cacheSystems.TryGetValue(feature, out var list) == false) {
 
-                if (match.Groups.Count > 0) {
+                list = new System.Collections.Generic.List<string>();
+                var script = MonoScript.FromScriptableObject(feature);
+                var text = script.text;
 
-                    var systemType = match.Groups[1].Value;
-                    var spl = systemType.Split('.');
-                    systemType = spl[spl.Length - 1];
-                    list.Add(systemType);
-                    
+                var matches = System.Text.RegularExpressions.Regex.Matches(text, @"AddSystem\s*\<(.*?)\>");
+                foreach (System.Text.RegularExpressions.Match match in matches) {
+
+                    if (match.Groups.Count > 0) {
+
+                        var systemType = match.Groups[1].Value;
+                        var spl = systemType.Split('.');
+                        systemType = spl[spl.Length - 1];
+                        list.Add(systemType);
+
+                    }
+
                 }
-                    
+
+                this.cacheSystems.Add(feature, list);
+                
             }
 
             return list;
@@ -477,43 +486,34 @@ namespace ME.ECSEditor {
 
         private int GetSystemsCount(FeatureBase feature) {
 
-            var count = 0;
-            var script = MonoScript.FromScriptableObject(feature);
-            var text = script.text;
-                
-            var matches = System.Text.RegularExpressions.Regex.Matches(text, @"AddSystem\s*\<(.*?)\>");
-            foreach (System.Text.RegularExpressions.Match match in matches) {
-
-                if (match.Groups.Count > 0) {
-
-                    ++count;
-
-                }
-                    
-            }
-
-            return count;
+            return this.GetSystems(feature).Count;
 
         }
 
         private System.Collections.Generic.List<string> GetModules(FeatureBase feature) {
 
-            var list = new System.Collections.Generic.List<string>();
-            var script = MonoScript.FromScriptableObject(feature);
-            var text = script.text;
-                
-            var matches = System.Text.RegularExpressions.Regex.Matches(text, @"AddModule\s*\<(.*?)\>");
-            foreach (System.Text.RegularExpressions.Match match in matches) {
+            if (this.cacheModules.TryGetValue(feature, out var list) == false) {
 
-                if (match.Groups.Count > 0) {
+                list = new System.Collections.Generic.List<string>();
+                var script = MonoScript.FromScriptableObject(feature);
+                var text = script.text;
 
-                    var systemType = match.Groups[1].Value;
-                    var spl = systemType.Split('.');
-                    systemType = spl[spl.Length - 1];
-                    list.Add(systemType);
-                    
+                var matches = System.Text.RegularExpressions.Regex.Matches(text, @"AddModule\s*\<(.*?)\>");
+                foreach (System.Text.RegularExpressions.Match match in matches) {
+
+                    if (match.Groups.Count > 0) {
+
+                        var systemType = match.Groups[1].Value;
+                        var spl = systemType.Split('.');
+                        systemType = spl[spl.Length - 1];
+                        list.Add(systemType);
+
+                    }
+
                 }
-                    
+
+                this.cacheModules.Add(feature, list);
+                
             }
 
             return list;
@@ -522,22 +522,7 @@ namespace ME.ECSEditor {
 
         private int GetModulesCount(FeatureBase feature) {
 
-            var count = 0;
-            var script = MonoScript.FromScriptableObject(feature);
-            var text = script.text;
-                
-            var matches = System.Text.RegularExpressions.Regex.Matches(text, @"AddModule\s*\<(.*?)\>");
-            foreach (System.Text.RegularExpressions.Match match in matches) {
-
-                if (match.Groups.Count > 0) {
-
-                    ++count;
-
-                }
-                    
-            }
-
-            return count;
+            return this.GetModules(feature).Count;
 
         }
 

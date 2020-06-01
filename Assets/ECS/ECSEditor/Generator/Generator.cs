@@ -199,12 +199,16 @@ namespace ME.ECSEditor {
 
                     output += resItem;
 
-                    var resItem2 = itemStr2;
-                    resItem2 = resItem2.Replace("#PROJECTNAME#", asmName);
-                    resItem2 = resItem2.Replace("#STATENAME#", asmName + "State");
-                    resItem2 = resItem2.Replace("#TYPENAME#", entityType.FullName);
+                    if (itemStr2 != null) {
 
-                    output2 += resItem2;
+                        var resItem2 = itemStr2;
+                        resItem2 = resItem2.Replace("#PROJECTNAME#", asmName);
+                        resItem2 = resItem2.Replace("#STATENAME#", asmName + "State");
+                        resItem2 = resItem2.Replace("#TYPENAME#", entityType.FullName);
+
+                        output2 += resItem2;
+
+                    }
 
                 }
                 

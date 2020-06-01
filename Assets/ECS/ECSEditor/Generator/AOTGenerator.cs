@@ -13,7 +13,7 @@ namespace ME.ECSEditor {
         private const string DIRECTORY_CONTAINS = "/Components/";
         private static readonly System.Type SEARCH_TYPE = typeof(ME.ECS.IStructComponent);
         private const string CONTENT_ITEM = @"
-            new ME.ECS.StructComponents<#STATENAME#, #TYPENAME#>();";
+            new ME.ECS.StructComponents<#TYPENAME#>();";
         private const bool AUTO_COMPILE_DEFAULT = false;
 
         public static void Init() {

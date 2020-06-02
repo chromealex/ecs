@@ -595,13 +595,10 @@ namespace ME.ECS {
         public bool IsForEntity(in Entity entity) {
 
             ref var previousArchetype = ref ((WorldBase)this.world).storagesCache.archetypes.GetPrevious(in entity);
+            if (previousArchetype.ContainsAll(this.archetypeContains) == true && previousArchetype.NotContains(this.archetypeNotContains) == true) return true;
+            
             ref var currentArchetype = ref ((WorldBase)this.world).storagesCache.archetypes.Get(in entity);
-
-            if (previousArchetype.ContainsAll(this.archetypeContains) == true) return true;
-            if (previousArchetype.NotContains(this.archetypeNotContains) == true) return true;
-
-            if (currentArchetype.ContainsAll(this.archetypeContains) == true) return true;
-            if (currentArchetype.NotContains(this.archetypeNotContains) == true) return true;
+            if (currentArchetype.ContainsAll(this.archetypeContains) == true && currentArchetype.NotContains(this.archetypeNotContains) == true) return true;
 
             return false;
 

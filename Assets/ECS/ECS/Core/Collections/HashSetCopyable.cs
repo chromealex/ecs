@@ -263,7 +263,7 @@ namespace ME.ECS.Collections {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Contains(T item) {
             if (this.m_buckets != null) {
-                var hashCode = this.InternalGetHashCode(item);
+                var hashCode = this.m_comparer.GetHashCode(item) & HashSetCopyable<T>.Lower31BitMask;//this.InternalGetHashCode(item);
                 // see note at "HashSet" level describing why "- 1" appears in for loop
                 for (var i = this.m_buckets[hashCode % this.m_buckets.Length] - 1; i >= 0; i = this.m_slots[i].next) {
                     if (this.m_slots[i].hashCode == hashCode && this.m_comparer.Equals(this.m_slots[i].value, item)) {

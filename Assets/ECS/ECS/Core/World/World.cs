@@ -1021,9 +1021,9 @@ namespace ME.ECS {
 
                     data.RemoveAt(entity.id);
 
+                    this.RemoveFromFilters(entity);
                     this.DestroyEntityPlugins(entity);
                     this.RemoveComponents(entity);
-                    this.RemoveFromFilters(entity);
                     return true;
 
                 }

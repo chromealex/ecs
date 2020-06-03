@@ -111,7 +111,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
     [Photon.Pun.PunRPC]
     public void RPC_HISTORY_CALL(byte[] bytes) {
 
-        var world = ME.ECS.Worlds<TState>.currentWorld;
+        var world = ME.ECS.Worlds.currentWorld;
         var storageNetworkModule = world.GetModule<NetworkModule>();
         var networkModule = world.GetModule<ME.ECS.Network.INetworkModuleBase>();
         var storage = storageNetworkModule.GetSerializer().DeserializeStorage(bytes); 
@@ -122,7 +122,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
     [Photon.Pun.PunRPC]
     public void RPC_CALL(byte[] bytes) {
 
-        var world = ME.ECS.Worlds<TState>.currentWorld;
+        var world = ME.ECS.Worlds.currentWorld;
         var networkModule = world.GetModule<NetworkModule>();
         networkModule.AddToQueue(bytes);
 
@@ -131,7 +131,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
     [Photon.Pun.PunRPC]
     public void RPC_SYSTEM_CALL(byte[] bytes) {
 
-        var world = ME.ECS.Worlds<TState>.currentWorld;
+        var world = ME.ECS.Worlds.currentWorld;
         var networkModule = world.GetModule<NetworkModule>();
         networkModule.AddToSystemQueue(bytes);
 
@@ -157,12 +157,11 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
         
         UnityEngine.Debug.Log("Disconnected because of " + cause);
 
-        var ww = ME.ECS.Worlds<TState>.currentWorld;
-        WorldUtilities.ReleaseWorld(ref ww);
-        UnityEngine.Debug.Log(ME.ECS.Worlds<TState>.currentWorld.isActive);
+        var ww = ME.ECS.Worlds.currentWorld;
+        WorldUtilities.ReleaseWorld<TState>(ref ww);
         this.timeSyncedConnected = false;
         this.timeSynced = false;
-        ME.ECS.Worlds<TState>.currentWorld = null;
+        ME.ECS.Worlds.currentWorld = null;
 
         var go = UnityEngine.GameObject.FindObjectOfType<InitializerBase>();
         if (go != null) {
@@ -184,7 +183,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
             
             UnityEngine.Debug.Log("OnJoinedRoom. IsMaster: " + Photon.Pun.PhotonNetwork.IsMasterClient);
 
-            var world = ME.ECS.Worlds<TState>.currentWorld;
+            var world = ME.ECS.Worlds.currentWorld;
             var networkModule = world.GetModule<NetworkModule>();
             networkModule.SetRoom(Photon.Pun.PhotonNetwork.CurrentRoom);
 
@@ -215,7 +214,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
         
         base.OnRoomPropertiesUpdate(propertiesThatChanged);
         
-        var world = ME.ECS.Worlds<TState>.currentWorld;
+        var world = ME.ECS.Worlds.currentWorld;
         var networkModule = world.GetModule<NetworkModule>();
         if ((networkModule as ME.ECS.Network.INetworkModuleBase).GetRPCOrder() == 0) {
 
@@ -250,7 +249,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
 
         if (Photon.Pun.PhotonNetwork.IsMasterClient == true) {
 
-            var world = ME.ECS.Worlds<TState>.currentWorld;
+            var world = ME.ECS.Worlds.currentWorld;
             var props = Photon.Pun.PhotonNetwork.CurrentRoom.CustomProperties;
             props["cc"] = (int)props["cc"] + 1;
             Photon.Pun.PhotonNetwork.CurrentRoom.SetCustomProperties(props);
@@ -270,7 +269,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
 
         if (Photon.Pun.PhotonNetwork.IsMasterClient == true) {
 
-            var world = ME.ECS.Worlds<TState>.currentWorld;
+            var world = ME.ECS.Worlds.currentWorld;
             world.AddMarker(new NetworkPlayerDisconnected() {
                 player = otherPlayer
             });
@@ -289,7 +288,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
 
         this.UpdateTime();
 
-        var world = ME.ECS.Worlds<TState>.currentWorld;
+        var world = ME.ECS.Worlds.currentWorld;
         if (this.timeSynced == true && this.timeSyncedConnected == false) {
 
             var networkModule = world.GetModule<NetworkModule>();

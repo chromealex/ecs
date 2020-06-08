@@ -124,6 +124,7 @@ namespace ME.ECS.Views.Providers {
     using ME.ECS.Views;
     using Unity.Jobs;
     using UnityEngine.Jobs;
+    using Collections;
 
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
@@ -136,6 +137,16 @@ namespace ME.ECS.Views.Providers {
         new protected UnityEngine.Transform transform;
 
         public virtual bool applyStateJob => true;
+
+        public bool IsJobsEnabled() {
+
+            var world = Worlds.currentWorld;
+            if (world.settings.useJobsForViews == false || world.settings.viewsSettings.unityGameObjectProviderDisableJobs == true) return false;
+            
+            return this.applyStateJob;
+
+        }
+        
         public virtual void ApplyStateJob(TransformAccess transform, float deltaTime, bool immediately) { }
 
         internal void InitializeTransform() {
@@ -221,6 +232,8 @@ namespace ME.ECS.Views.Providers {
     #endif
     public abstract class MonoBehaviourView : MonoBehaviourViewBase, IView {
 
+        int System.IComparable<IView>.CompareTo(IView other) { return 0; }
+
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
         public Tick creationTick { get; set; }
@@ -273,7 +286,9 @@ namespace ME.ECS.Views.Providers {
         public override void OnDeconstruct() {
 
             this.pool = null;
-            this.currentTransformArray.Dispose();
+            if (this.currentTransformArray.isCreated == true) this.currentTransformArray.Dispose();
+            //if (this.resultTransforms != null) PoolList<UnityEngine.Transform>.Recycle(ref this.resultTransforms);
+            if (this.tempList != null) PoolList<MonoBehaviourView>.Recycle(ref this.tempList);
 
         }
         
@@ -301,70 +316,71 @@ namespace ME.ECS.Views.Providers {
         private struct Job : IJobParallelForTransform {
 
             public float deltaTime;
+            public int length;
             
             public void Execute(int index, TransformAccess transform) {
 
-                var list = UnityGameObjectProvider.currentList;
-                var k = 0;
-                for (int i = 0, length = list.Length; i < length; ++i) {
-
-                    var item = list[i];
-                    if (item == null) continue;
-                    
-                    for (int j = 0, count = item.Count; j < count; ++j) {
-
-                        var instance = item[j] as MonoBehaviourViewBase;
-                        if (instance == null) continue;
-                        
-                        if (instance.applyStateJob == true && k++ == index) {
-                            
-                            instance.ApplyStateJob(transform, this.deltaTime, immediately: false);
-                            return;
-
-                        }
-
-                    }
-
-                }
+                if (index >= this.length) return;
+                
+                UnityGameObjectProvider.resultList[index].ApplyStateJob(transform, this.deltaTime, immediately: false);
 
             }
 
         }
 
-        private static System.Collections.Generic.List<IView>[] currentList;
-        private UnityEngine.Transform[] currentTransforms;
+        private static System.Collections.Generic.List<MonoBehaviourView> resultList;
+        private Unity.Collections.NativeArray<Unity.Mathematics.float3> burstPositions;
+        private Unity.Collections.NativeArray<Unity.Mathematics.quaternion> burstRotations;
+        private Unity.Collections.NativeArray<Unity.Mathematics.float3> burstScales;
+        //private System.Collections.Generic.List<UnityEngine.Transform> resultTransforms;
+        private BufferArray<UnityEngine.Transform> currentTransforms;
         private TransformAccessArray currentTransformArray;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
-
+        private System.Collections.Generic.List<MonoBehaviourView> tempList;
+        public override void Update(BufferArray<Views> list, float deltaTime) {
+            
             if (this.world.settings.useJobsForViews == false || this.world.settings.viewsSettings.unityGameObjectProviderDisableJobs == true) return;
             
-            UnityGameObjectProvider.currentList = list;
-            if (list != null) {
+            if (list.isEmpty == false) {
 
-                if (this.currentTransformArray.isCreated == false) this.currentTransformArray = new TransformAccessArray(list.Length);
-                var changed = ArrayUtils.Resize(list.Length - 1, ref this.currentTransforms);
+                if (this.tempList == null) this.tempList = PoolList<MonoBehaviourView>.Spawn(list.Length);
+                //if (this.resultTransforms == null) this.resultTransforms = PoolList<UnityEngine.Transform>.Spawn(list.Length);
+                //this.resultTransforms.Clear();
+                
+                var changed = false;//ArrayUtils.Resize(list.Length - 1, ref this.currentTransforms);
 
                 var k = 0;
                 for (int i = 0, length = list.Length; i < length; ++i) {
-
+                    
                     var item = list[i];
-                    if (item == null) continue;
+                    if (item.isNotEmpty == false) continue;
+                    
+                    for (int j = 0, count = item.Length; j < count; ++j) {
 
-                    for (int j = 0, count = item.Count; j < count; ++j) {
-
-                        var view = item[j] as MonoBehaviourViewBase;
+                        var view = item[j] as MonoBehaviourView;
                         if (view == null) continue;
                         if (view.applyStateJob == true) {
 
                             changed |= ArrayUtils.Resize(k, ref this.currentTransforms);
-                            ref var tr = ref this.currentTransforms[k++];
-                            if (tr != view.transform) {
-
-                                changed = true;
-                                tr = view.transform;
+                            var isNew = false;
+                            if (k >= this.tempList.Count) {
+                                
+                                this.tempList.Add(view);
+                                isNew = true;
 
                             }
+                            var tempItem = this.tempList[k];
+                            if (isNew == true ||
+                                tempItem.prefabSourceId != view.prefabSourceId ||
+                                tempItem.creationTick != view.creationTick ||
+                                tempItem.entity != view.entity) {
+
+                                this.tempList[k] = view;
+                                this.currentTransforms[k] = view.transform;
+                                changed = true;
+                                
+                            }
+
+                            ++k;
 
                         }
 
@@ -372,33 +388,47 @@ namespace ME.ECS.Views.Providers {
 
                 }
 
-                if (changed == true) this.currentTransformArray.SetTransforms(this.currentTransforms);
+                if (this.currentTransformArray.isCreated == false) this.currentTransformArray = new TransformAccessArray(k);
+                
+                if (changed == true) {
 
-                if (this.currentTransforms.Length > 0) {
+                    //var arr = PoolArray<UnityEngine.Transform>.Spawn(this.resultTransforms.Count);
+                    //for (int i = 0, cnt = this.resultTransforms.Count; i < cnt; ++i) arr[i] = this.resultTransforms[i];
+
+                    this.currentTransformArray.SetTransforms(this.currentTransforms.arr);//arr.arr);
+                    if (UnityGameObjectProvider.resultList != null) PoolList<MonoBehaviourView>.Recycle(ref UnityGameObjectProvider.resultList);
+                    var result = PoolList<MonoBehaviourView>.Spawn(this.tempList.Count);
+                    result.AddRange(this.tempList);
+                    UnityGameObjectProvider.resultList = result;
+                    
+                    //PoolArray<UnityEngine.Transform>.Recycle(ref arr);
+
+                }
+
+                var cnt = UnityGameObjectProvider.resultList.Count;
+                if (cnt > 0) {
 
                     var job = new Job() {
-                        deltaTime = deltaTime
+                        deltaTime = deltaTime,
+                        length = cnt
                     };
 
                     var handle = job.Schedule(this.currentTransformArray);
                     handle.Complete();
-                    UnityGameObjectProvider.currentList = null;
 
                 }
                 
+                //PoolList<MonoBehaviourViewBase>.Recycle(ref this.tempList);
+
             }
 
-        }
-
-        public override void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {
-            
-            this.UpdateViews(list, deltaTime);
-            
         }
 
     }
 
     public struct UnityGameObjectProviderInitializer : IViewsProviderInitializer {
+
+        int System.IComparable<IViewsProviderInitializerBase>.CompareTo(IViewsProviderInitializerBase other) { return 0; }
 
         public IViewsProvider Create() {
             

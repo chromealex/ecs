@@ -56,8 +56,8 @@ namespace ME.ECS {
     #endif
     public class StructComponents<TComponent> : StructRegistryBase where TComponent : struct, IStructComponent {
 
-        internal TComponent[] components;
-        internal bool[] componentsStates;
+        internal BufferArray<TComponent> components;
+        internal BufferArray<bool> componentsStates;
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
@@ -75,7 +75,7 @@ namespace ME.ECS {
 
             }
 
-            this.world.storagesCache.archetypes.Validate(in entity);
+            this.world.currentState.storage.archetypes.Validate(in entity);
             
         }
 
@@ -114,7 +114,7 @@ namespace ME.ECS {
 
         public override bool HasType(System.Type type) {
 
-            return this.components.GetType().GetElementType() == type;
+            return this.components.arr.GetType().GetElementType() == type;
 
         }
         
@@ -123,8 +123,8 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
-            var bucket = this.components[index];
-            var bucketState = this.componentsStates[index];
+            var bucket = this.components.arr[index];
+            var bucketState = this.componentsStates.arr[index];
             if (bucketState == true) return bucket;
 
             return null;
@@ -136,14 +136,14 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
-            ref var bucket = ref this.components[index];
-            ref var bucketState = ref this.componentsStates[index];
+            ref var bucket = ref this.components.arr[index];
+            ref var bucketState = ref this.componentsStates.arr[index];
             bucket = (TComponent)data;
             if (bucketState == false) {
 
                 bucketState = true;
 
-                this.world.storagesCache.archetypes.Set<TComponent>(in entity);
+                this.world.currentState.storage.archetypes.Set<TComponent>(in entity);
                 
             }
 
@@ -154,14 +154,14 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
-            ref var bucketState = ref this.componentsStates[index];
+            ref var bucketState = ref this.componentsStates.arr[index];
             if (bucketState == true) {
             
-                ref var bucket = ref this.components[index];
+                ref var bucket = ref this.components.arr[index];
                 bucket = default;
                 bucketState = false;
             
-                this.world.storagesCache.archetypes.Remove<TComponent>(in entity);
+                this.world.currentState.storage.archetypes.Remove<TComponent>(in entity);
 
             }
 
@@ -173,7 +173,7 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             //var index = entity.id;
             //this.CheckResize(in index);
-            return this.componentsStates[entity.id];
+            return this.componentsStates.arr[entity.id];
             
         }
 
@@ -183,7 +183,7 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             //var index = entity.id;
             //this.CheckResize(in index);
-            return ref this.components[entity.id];
+            return ref this.components.arr[entity.id];
             
         }
 
@@ -193,14 +193,14 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
-            ref var bucketState = ref this.componentsStates[index];
-            ref var bucket = ref this.components[index];
+            ref var bucketState = ref this.componentsStates.arr[index];
+            ref var bucket = ref this.components.arr[index];
             bucket = data;
             if (bucketState == false) {
 
                 bucketState = true;
 
-                this.world.storagesCache.archetypes.Set<TComponent>(in entity);
+                this.world.currentState.storage.archetypes.Set<TComponent>(in entity);
                 return true;
 
             }
@@ -215,20 +215,20 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
-            ref var bucketState = ref this.componentsStates[index];
+            ref var bucketState = ref this.componentsStates.arr[index];
             if (bucketState == true) {
             
-                ref var bucket = ref this.components[index];
+                ref var bucket = ref this.components.arr[index];
                 bucket = default;
                 bucketState = false;
             
                 if (clearAll == true) {
                     
-                    this.world.storagesCache.archetypes.RemoveAll<TComponent>(in entity);
+                    this.world.currentState.storage.archetypes.RemoveAll<TComponent>(in entity);
                     
                 } else {
 
-                    this.world.storagesCache.archetypes.Remove<TComponent>(in entity);
+                    this.world.currentState.storage.archetypes.Remove<TComponent>(in entity);
 
                 }
 
@@ -250,12 +250,8 @@ namespace ME.ECS {
 
         public override void OnRecycle() {
             
-            if (this.components != null) PoolArray<TComponent>.Recycle(ref this.components);
-            if (this.componentsStates != null) {
-
-                PoolArray<bool>.Recycle(ref this.componentsStates);
-
-            }
+            PoolArray<TComponent>.Recycle(ref this.components);
+            PoolArray<bool>.Recycle(ref this.componentsStates);
 
         }
 
@@ -263,7 +259,7 @@ namespace ME.ECS {
 
     public interface IStructComponentsContainer {
 
-        IStructRegistryBase[] GetAllRegistries();
+        BufferArray<StructRegistryBase> GetAllRegistries();
 
     }
     
@@ -274,7 +270,7 @@ namespace ME.ECS {
     #endif*/
     public struct StructComponentsContainer : IStructComponentsContainer {
 
-        internal StructRegistryBase[] list;
+        internal BufferArray<StructRegistryBase> list;
         internal int count;
         private bool isCreated;
 
@@ -291,7 +287,7 @@ namespace ME.ECS {
 
         }
 
-        public IStructRegistryBase[] GetAllRegistries() {
+        public BufferArray<StructRegistryBase> GetAllRegistries() {
 
             return this.list;
 
@@ -313,7 +309,7 @@ namespace ME.ECS {
             // Update all known structs
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
-                var item = this.list[i];
+                var item = this.list.arr[i];
                 if (item != null) item.Validate(in entity);
 
             }
@@ -329,12 +325,8 @@ namespace ME.ECS {
             
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
-                var item = this.list[i];
-                if (item != null) {
-
-                    item.Remove(in entity, clearAll: true);
-
-                }
+                var item = this.list.arr[i];
+                if (item != null) item.Remove(in entity, clearAll: true);
 
             }
             
@@ -351,7 +343,7 @@ namespace ME.ECS {
             this.Validate<TComponent>(in code);
             var reg = (StructComponents<TComponent>)this.list[code];
             reg.Validate(in entity);
-            
+
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -376,24 +368,16 @@ namespace ME.ECS {
 
             if (ArrayUtils.WillResize(code, ref this.list) == true) {
 
-                lock (this.list) {
-                    
-                    ArrayUtils.Resize(code, ref this.list);
-                    
-                }
-
+                ArrayUtils.Resize(code, ref this.list);
+                
             }
             
             if (this.list[code] == null) {
 
-                lock (this.list) {
-
-                    var instance = (StructRegistryBase)PoolComponents.Spawn(typeof(StructRegistryBase));
-                    if (instance == null) instance = PoolClass<StructComponents<TComponent>>.Spawn();//new StructComponents<TComponent>();
-                    instance.world = Worlds.currentWorld;
-                    this.list[code] = instance;
-
-                }
+                var instance = (StructRegistryBase)PoolComponents.Spawn(typeof(StructRegistryBase));
+                if (instance == null) instance = PoolClass<StructComponents<TComponent>>.Spawn();//new StructComponents<TComponent>();
+                instance.world = Worlds.currentWorld;
+                this.list[code] = instance;
 
             }
 
@@ -495,24 +479,20 @@ namespace ME.ECS {
         #endif
         public void OnRecycle() {
             
-            if (this.list != null) {
+            for (int i = 0; i < this.list.Length; ++i) {
                 
-                for (int i = 0; i < this.list.Length; ++i) {
+                if (this.list.arr[i] != null) {
                     
-                    if (this.list[i] != null) {
-                        
-                        this.list[i].OnRecycle();
-                        PoolRegistries.Recycle(this.list[i]);
-                        this.list[i] = null;
+                    this.list.arr[i].OnRecycle();
+                    PoolRegistries.Recycle(this.list.arr[i]);
+                    this.list.arr[i] = null;
 
-                    }
-                    
                 }
                 
-                PoolArray<StructRegistryBase>.Recycle(ref this.list);
-                
             }
-
+            
+            PoolArray<StructRegistryBase>.Recycle(ref this.list);
+            
             this.count = default;
             this.isCreated = default;
 
@@ -533,9 +513,9 @@ namespace ME.ECS {
             this.list = PoolArray<StructRegistryBase>.Spawn(other.list.Length);
             for (int i = 0; i < other.list.Length; ++i) {
 
-                if (other.list[i] != null) {
+                if (other.list.arr[i] != null) {
 
-                    var type = other.list[i].GetType();
+                    var type = other.list.arr[i].GetType();
                     var comp = (StructRegistryBase)PoolRegistries.Spawn(type);
                     if (comp == null) {
                         
@@ -543,8 +523,8 @@ namespace ME.ECS {
                         
                     }
 
-                    this.list[i] = comp;
-                    this.list[i].CopyFrom(other.list[i]);
+                    this.list.arr[i] = comp;
+                    this.list.arr[i].CopyFrom(other.list.arr[i]);
 
                 }
 
@@ -594,36 +574,29 @@ namespace ME.ECS {
     #endif
     public partial class World {
 
-        private StructComponentsContainer componentsStructCache;
-
         public ref StructComponentsContainer GetStructComponents() {
 
-            return ref this.componentsStructCache;
+            return ref this.currentState.structComponents;
 
         }
 
         partial void OnSpawnStructComponents() {
 
-            this.componentsStructCache = new StructComponentsContainer();//PoolClass<StructComponentsContainer>.Spawn();
-
         }
 
         partial void OnRecycleStructComponents() {
-
-            //PoolClass<StructComponentsContainer>.Recycle(ref this.componentsStructCache);
-            this.componentsStructCache.OnRecycle();
 
         }
 
         partial void CreateEntityPlugin1(Entity entity) {
 
-            this.componentsStructCache.OnEntityCreate(in entity);
+            this.currentState.structComponents.OnEntityCreate(in entity);
 
         }
 
         partial void DestroyEntityPlugin1(Entity entity) {
 
-            this.componentsStructCache.RemoveAll(in entity);
+            this.currentState.structComponents.RemoveAll(in entity);
 
         }
 
@@ -633,12 +606,6 @@ namespace ME.ECS {
 
                 componentsContainer = new StructComponentsContainer(); //PoolClass<StructComponentsContainer>.Spawn();
                 componentsContainer.Initialize(freeze);
-
-            }
-
-            if (freeze == false) {
-
-                this.componentsStructCache = componentsContainer;
 
             }
 
@@ -675,23 +642,23 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool HasData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
 
-            return this.componentsStructCache.Has<TComponent>(in entity);
+            return this.currentState.structComponents.Has<TComponent>(in entity);
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool HasDataBit(in Entity entity, in int bit) {
 
-            return this.componentsStructCache.HasBit(in entity, in bit);
+            return this.currentState.structComponents.HasBit(in entity, in bit);
 
         }
 
         public void ValidateData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
 
-            this.componentsStructCache.Validate<TComponent>(in entity);
-            if (this.filtersStorage.HasInFilters<TComponent>() == true && this.HasData<TComponent>(in entity) == true) {
+            this.currentState.structComponents.Validate<TComponent>(in entity);
+            if (this.currentState.filters.HasInFilters<TComponent>() == true && this.HasData<TComponent>(in entity) == true) {
                 
-                this.storagesCache.archetypes.Set<TComponent>(in entity);
+                this.currentState.storage.archetypes.Set<TComponent>(in entity);
                 
             }
 
@@ -701,14 +668,14 @@ namespace ME.ECS {
         public ref TComponent GetData<TComponent>(in Entity entity, bool createIfNotExists = true) where TComponent : struct, IStructComponent {
 
             // Inline all manually
-            ref var r = ref this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            ref var r = ref this.currentState.structComponents.list[WorldUtilities.GetComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
-            ref var state = ref reg.componentsStates[entity.id];
+            ref var state = ref reg.componentsStates.arr[entity.id];
             if (state == false && createIfNotExists == true) {
 
                 state = true;
-                if (this.filtersStorage.HasInFilters<TComponent>() == true) this.storagesCache.archetypes.Set<TComponent>(in entity);
-                ++this.componentsStructCache.count;
+                if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
+                ++this.currentState.structComponents.count;
                 this.AddComponentToFilter(entity);
                 
             }
@@ -731,15 +698,15 @@ namespace ME.ECS {
             #endif
 
             // Inline all manually
-            ref var r = ref this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            ref var r = ref this.currentState.structComponents.list[WorldUtilities.GetComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
             reg.components[entity.id] = data;
-            ref var state = ref reg.componentsStates[entity.id];
+            ref var state = ref reg.componentsStates.arr[entity.id];
             if (state == false) {
 
                 state = true;
-                if (this.filtersStorage.HasInFilters<TComponent>() == true) this.storagesCache.archetypes.Set<TComponent>(in entity);
-                ++this.componentsStructCache.count;
+                if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
+                ++this.currentState.structComponents.count;
                 this.AddComponentToFilter(entity);
 
             }
@@ -765,14 +732,14 @@ namespace ME.ECS {
             #endif
             
             // Inline all manually
-            var reg = (StructComponents<TComponent>)this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            var reg = (StructComponents<TComponent>)this.currentState.structComponents.list[WorldUtilities.GetComponentTypeId<TComponent>()];
             reg.components[entity.id] = data;
-            ref var state = ref reg.componentsStates[entity.id];
+            ref var state = ref reg.componentsStates.arr[entity.id];
             if (state == false) {
 
                 state = true;
-                if (this.filtersStorage.HasInFilters<TComponent>() == true) this.storagesCache.archetypes.Set<TComponent>(in entity);
-                ++this.componentsStructCache.count;
+                if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
+                ++this.currentState.structComponents.count;
                 if (updateFilters == true) this.AddComponentToFilter(entity);
 
             }
@@ -797,14 +764,14 @@ namespace ME.ECS {
             }
             #endif
 
-            var reg = (StructComponents<TComponent>)this.componentsStructCache.list[WorldUtilities.GetComponentTypeId<TComponent>()];
-            ref var state = ref reg.componentsStates[entity.id];
+            var reg = (StructComponents<TComponent>)this.currentState.structComponents.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            ref var state = ref reg.componentsStates.arr[entity.id];
             if (state == true) {
 
                 state = false;
-                reg.components[entity.id] = default;
-                if (this.filtersStorage.HasInFilters<TComponent>() == true) this.storagesCache.archetypes.Remove<TComponent>(in entity);
-                --this.componentsStructCache.count;
+                reg.components.arr[entity.id] = default;
+                if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Remove<TComponent>(in entity);
+                --this.currentState.structComponents.count;
                 this.RemoveComponentFromFilter(entity);
                 
             }

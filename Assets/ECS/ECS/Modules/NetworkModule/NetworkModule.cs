@@ -179,7 +179,7 @@ namespace ME.ECS.Network {
             
             if (forward == true) {
                 
-                this.SystemRPC(this, NetworkModule<TState>.PING_RPC_ID, t, false);
+                this.SystemRPC(this, NetworkModule<TState>.PING_RPC_ID, ME.ECS.Collections.BufferArray<object>.From(new object[] { t, false }));
                 
             } else {
 
@@ -351,7 +351,7 @@ namespace ME.ECS.Network {
 
         }
 
-        private void CallRPC(object instance, RPCId rpcId, bool storeInHistory, params object[] parameters) {
+        private void CallRPC(object instance, RPCId rpcId, bool storeInHistory, object[] parameters) {
 
             Key key;
             if (this.objectToKey.TryGetValue(instance, out key) == true) {
@@ -659,7 +659,7 @@ namespace ME.ECS.Network {
 
             var arr = PoolArray<object>.Spawn(1);
             arr[0] = p1;
-            this.CallRPC(instance, rpcId, true, arr);
+            this.CallRPC(instance, rpcId, true, arr.arr);
             
         }
 
@@ -669,7 +669,7 @@ namespace ME.ECS.Network {
             var arr = PoolArray<object>.Spawn(2);
             arr[0] = p1;
             arr[1] = p2;
-            this.CallRPC(instance, rpcId, true, arr);
+            this.CallRPC(instance, rpcId, true, arr.arr);
             
         }
 
@@ -680,7 +680,7 @@ namespace ME.ECS.Network {
             arr[0] = p1;
             arr[1] = p2;
             arr[2] = p3;
-            this.CallRPC(instance, rpcId, true, arr);
+            this.CallRPC(instance, rpcId, true, arr.arr);
             
         }
 
@@ -692,7 +692,7 @@ namespace ME.ECS.Network {
             arr[1] = p2;
             arr[2] = p3;
             arr[3] = p4;
-            this.CallRPC(instance, rpcId, true, arr);
+            this.CallRPC(instance, rpcId, true, arr.arr);
             
         }
 
@@ -705,7 +705,7 @@ namespace ME.ECS.Network {
             arr[2] = p3;
             arr[3] = p4;
             arr[4] = p5;
-            this.CallRPC(instance, rpcId, true, arr);
+            this.CallRPC(instance, rpcId, true, arr.arr);
             
         }
 

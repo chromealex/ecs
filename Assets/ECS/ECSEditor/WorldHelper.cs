@@ -8,47 +8,63 @@ namespace ME.ECSEditor {
 
     public static class WorldHelper {
 
-        public static FiltersStorage GetFilters(IWorldBase world) {
+        public static FiltersStorage GetFilters(World world) {
 
-            var field = world.GetType().GetField("filtersStorage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            return (FiltersStorage)field.GetValue(world);
+            //var field = world.GetType().GetField("filtersStorage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            //return (FiltersStorage)field.GetValue(world);
+            return world.currentState.filters;
 
         }
 
-        public static ME.ECS.IComponentsBase GetComponentsStorage(IWorldBase world) {
+        public static ME.ECS.IComponentsBase GetComponentsStorage(World world) {
 
+            return world.currentState.components;
+            
+            /*
             var field = world.GetType().GetField("componentsCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             var dic = (ME.ECS.IComponentsBase)field.GetValue(world);
-            return dic;
+            return dic;*/
 
         }
 
-        public static IStructComponentsContainer GetStructComponentsStorage(IWorldBase world) {
+        public static IStructComponentsContainer GetStructComponentsStorage(World world) {
 
-            var field = world.GetType().GetField("componentsStructCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            var dic = (IStructComponentsContainer)field.GetValue(world);
-            return dic;
+            var field = world.currentState.structComponents;//.GetType().GetField("componentsStructCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            //var dic = (IStructComponentsContainer)field.GetValue(world);
+            return field;
 
         }
         
-        public static Storage GetEntitiesStorage(IWorldBase world) {
+        public static Storage GetEntitiesStorage(World world) {
 
-            var field = world.GetType().GetField("storagesCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            return (Storage)field.GetValue(world);
+            //var field = world.GetType().GetField("storagesCache", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            //return (Storage)field.GetValue(world);
+
+            return world.currentState.storage;
 
         }
 
-        public static IList<ME.ECS.ISystemBase> GetSystems(IWorldBase world) {
+        public static IList<ME.ECS.ISystemBase> GetSystems(World world) {
 
+            return world.systems;
+            
+            /*
             var field = world.GetType().GetField("systems", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            return ((IList)field.GetValue(world)).Cast<ME.ECS.ISystemBase>().ToList();
+            var val = field.GetValue(world);
+            if (val == null) return new System.Collections.ObjectModel.Collection<ISystemBase>();
+            return ((IList)val).Cast<ME.ECS.ISystemBase>().ToList();*/
 
         }
 
-        public static IList<ME.ECS.IModuleBase> GetModules(IWorldBase world) {
+        public static IList<ME.ECS.IModuleBase> GetModules(World world) {
 
+            return world.modules;
+            
+            /*
             var field = world.GetType().GetField("modules", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            return ((IList)field.GetValue(world)).Cast<ME.ECS.IModuleBase>().ToList();
+            var val = field.GetValue(world);
+            if (val == null) return new System.Collections.ObjectModel.Collection<IModuleBase>();
+            return ((IList)val).Cast<ME.ECS.IModuleBase>().ToList();*/
 
         }
 

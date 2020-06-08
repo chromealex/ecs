@@ -40,13 +40,11 @@ namespace ME.ECS {
     #endif
     public partial class World : IWorld, IPoolableSpawn, IPoolableRecycle {
 
-        private Components componentsCache;
         private Entity sharedEntity;
         private bool sharedEntityInitialized;
         
         partial void OnSpawnComponents() {
 
-            this.componentsCache = PoolClass<Components>.Spawn();
             this.sharedEntity = default;
             this.sharedEntityInitialized = false;
 
@@ -54,14 +52,12 @@ namespace ME.ECS {
 
         partial void OnRecycleComponents() {
             
-            PoolClass<Components>.Recycle(ref this.componentsCache);
-            
         }
         
         #region Regular Components
         public TComponent AddOrGetComponent<TComponent>(Entity entity) where TComponent : class, IComponent, new() {
 
-            var element = this.componentsCache.GetFirst<TComponent>(entity.id);
+            var element = this.currentState.components.GetFirst<TComponent>(entity.id);
             if (element != null) return element;
             
             return this.AddComponent<TComponent>(entity);
@@ -116,23 +112,23 @@ namespace ME.ECS {
             }
             #endif
 
-            this.componentsCache.Add<TComponent>(entity.id, data);
-            this.storagesCache.archetypes.Set<TComponent>(in entity);
+            this.currentState.components.Add(entity.id, data);
+            this.currentState.storage.archetypes.Set<TComponent>(in entity);
             this.AddComponentToFilter(entity);
             
-            return (TComponent)data;
+            return data;
 
         }
 
         public TComponent GetComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
 
-            return this.componentsCache.GetFirst<TComponent>(entity.id);
+            return this.currentState.components.GetFirst<TComponent>(entity.id);
 
         }
 
         public List<IComponent> ForEachComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
 
-            return this.componentsCache.ForEach<TComponent>(entity.id);
+            return this.currentState.components.ForEach<TComponent>(entity.id);
 
         }
 
@@ -145,7 +141,7 @@ namespace ME.ECS {
         /// <returns></returns>
         public bool HasComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
 
-            return this.componentsCache.Contains<TComponent>(entity.id);
+            return this.currentState.components.Contains<TComponent>(entity.id);
             
         }
 
@@ -163,7 +159,7 @@ namespace ME.ECS {
             }
             #endif
 
-            if (this.componentsCache.RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
+            if (this.currentState.components.RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
                 
                 this.RemoveComponentFromFilter(entity);
 
@@ -185,9 +181,9 @@ namespace ME.ECS {
             }
             #endif
 
-            if (this.componentsCache.RemoveAll(entity.id) > 0) {
+            if (this.currentState.components.RemoveAll(entity.id) > 0) {
                 
-                this.storagesCache.archetypes.RemoveAll(in entity);
+                this.currentState.storage.archetypes.RemoveAll(in entity);
                 this.RemoveComponentFromFilter(entity);
 
             }
@@ -208,9 +204,9 @@ namespace ME.ECS {
             }
             #endif
 
-            if (this.componentsCache.RemoveAll<TComponent>(entity.id) > 0) {
+            if (this.currentState.components.RemoveAll<TComponent>(entity.id) > 0) {
                 
-                this.storagesCache.archetypes.Remove<TComponent>(in entity);
+                this.currentState.storage.archetypes.Remove<TComponent>(in entity);
                 this.RemoveComponentFromFilter(entity);
 
             }
@@ -232,9 +228,9 @@ namespace ME.ECS {
             }
             #endif
 
-            if (this.componentsCache.RemoveAll<TComponent>() > 0) {
+            if (this.currentState.components.RemoveAll<TComponent>() > 0) {
                 
-                this.storagesCache.archetypes.RemoveAll<TComponent>();
+                this.currentState.storage.archetypes.RemoveAll<TComponent>();
 
             }
 

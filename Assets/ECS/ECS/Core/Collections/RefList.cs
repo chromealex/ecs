@@ -21,7 +21,7 @@ namespace ME.ECS.Collections {
 
     public class RefList<T> : IRefList, IPoolableRecycle, IPoolableSpawn {
         
-        private T[] arr;
+        private BufferArray<T> arr;
         // TODO: Add int[] next array which determine next index in arr (useful for enumeration)
         private int count;
         private int size;
@@ -134,7 +134,7 @@ namespace ME.ECS.Collections {
 
             this.freePrepared.Clear();
 
-            if (this.size > 0) System.Array.Clear(this.arr, 0, this.size);
+            if (this.size > 0) System.Array.Clear(this.arr.arr, 0, this.size);
             this.size = 0;
             this.fromIndex = 0;
             this.count = 0;

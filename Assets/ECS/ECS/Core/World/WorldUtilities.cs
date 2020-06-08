@@ -81,12 +81,16 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void CreateWorld<TState>(ref World worldRef, float tickTime, int forcedWorldId = 0) where TState : State, new() {
+        public static void CreateWorld<TState>(ref World worldRef, float tickTime, int forcedWorldId = 0, uint seed = 1u) where TState : State, new() {
 
+            if (seed <= 0u) seed = 1u;
+            
             if (worldRef != null) WorldUtilities.ReleaseWorld<TState>(ref worldRef);
             worldRef = PoolClass<World>.Spawn();
             worldRef.SetId(forcedWorldId);
-            ((IWorldBase)worldRef).SetTickTime(tickTime);
+            var worldInt = worldRef;
+            worldInt.SetSeed(seed);
+            worldInt.SetTickTime(tickTime);
             Worlds.Register(worldRef);
 
         }

@@ -3,6 +3,8 @@ using System.Collections;
 
 namespace ME.ECS {
 
+    using Collections;
+    
     public partial interface IWorldBase {
 
         bool AddMarker<TMarker>(TMarker marker) where TMarker : struct, IMarker;
@@ -21,22 +23,22 @@ namespace ME.ECS {
 
         private static class MarkersDirectCache<TMarker> where TMarker : struct, IMarker {
 
-            internal static TMarker[] data = new TMarker[World.WORLDS_CAPACITY];
-            internal static bool[] exists = new bool[World.WORLDS_CAPACITY];
+            internal static BufferArray<TMarker> data = new BufferArray<TMarker>();
+            internal static BufferArray<bool> exists = new BufferArray<bool>();
 
         }
 
-        private HashSet<bool[]> allExistMarkers;
+        private HashSet<BufferArray<bool>> allExistMarkers;
 
         partial void OnSpawnMarkers() {
             
-            this.allExistMarkers = PoolHashSet<bool[]>.Spawn(World.WORLDS_CAPACITY);
+            this.allExistMarkers = PoolHashSet<BufferArray<bool>>.Spawn(World.WORLDS_CAPACITY);
 
         }
 
         partial void OnRecycleMarkers() {
             
-            PoolHashSet<bool[]>.Recycle(ref this.allExistMarkers);
+            PoolHashSet<BufferArray<bool>>.Recycle(ref this.allExistMarkers);
 
         }
 

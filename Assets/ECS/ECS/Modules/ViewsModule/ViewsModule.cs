@@ -171,7 +171,7 @@ namespace ME.ECS.Views {
 
     }
 
-    public interface IView : IViewBase {
+    public interface IView : IViewBase, System.IComparable<IView> {
 
         void DoInitialize();
         void DoDeInitialize();
@@ -184,7 +184,7 @@ namespace ME.ECS.Views {
 
     public interface IViewModuleBase : IModuleBase {
 
-        System.Collections.ICollection GetData();
+        BufferArray<Views> GetData();
         System.Collections.IDictionary GetViewSourceData();
         IViewsProviderBase GetViewSourceProvider(ViewId viewSourceId);
 
@@ -362,7 +362,7 @@ namespace ME.ECS.Views {
 
             if (data.viewInfo.creationTick == this.creationTick && data.viewInfo.entity.id == this.entityId && data.viewInfo.prefabSourceId == this.prefabSourceId) {
 
-                Worlds.currentWorld.storagesCache.archetypes.Remove<ViewComponent>(in data.viewInfo.entity);
+                Worlds.currentWorld.currentState.storage.archetypes.Remove<ViewComponent>(in data.viewInfo.entity);
                 return true;
 
             }
@@ -373,6 +373,97 @@ namespace ME.ECS.Views {
         
     }
 
+    public struct Views {
+
+        public IView mainView;
+        public List<IView> otherViews;
+        public bool isNotEmpty;
+
+        public int Length {
+            get {
+                var count = 0;
+                if (this.mainView != null) ++count;
+                if (this.otherViews != null) count += this.otherViews.Count;
+                return count;
+            }
+        }
+
+        public IView this[int i] {
+            get {
+                if (i == 0) return this.mainView;
+                return this.otherViews[i - 1];
+            }
+        }
+
+        public void Add(IView view) {
+            
+            if (this.mainView == null) {
+
+                this.mainView = view;
+
+            } else {
+
+                if (this.otherViews == null) {
+
+                    this.otherViews = PoolList<IView>.Spawn(1);
+                    
+                }
+
+                this.otherViews.Add(view);
+
+            }
+            
+            this.isNotEmpty = true;
+
+        }
+
+        public bool Remove(IView view) {
+
+            if (this.otherViews != null) {
+
+                if (this.otherViews.Remove(view) == false) {
+
+                    if (this.mainView == view) {
+
+                        this.mainView = null;
+                        this.isNotEmpty = false;
+                        return true;
+
+                    } else {
+                    
+                        this.mainView = null;
+                        if (this.otherViews.Count > 0) {
+
+                            this.mainView = this.otherViews[0];
+                            this.otherViews.RemoveAt(0);
+                            
+                        }
+                        
+                        this.isNotEmpty = (this.Length > 0);
+                        return true;
+    
+                    }
+                    
+                }
+
+            } else {
+
+                if (this.mainView == view) {
+
+                    this.mainView = null;
+                    this.isNotEmpty = false;
+                    return true;
+
+                }
+
+            }
+
+            return false;
+
+        }
+        
+    }
+    
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -386,7 +477,7 @@ namespace ME.ECS.Views {
         private const int INTERNAL_ENTITIES_CACHE_CAPACITY = 100;
         private const int INTERNAL_COMPONENTS_CACHE_CAPACITY = 10;
         
-        private List<IView>[] list;
+        private BufferArray<Views> list;
         private HashSet<ViewInfo> rendering;
         private Dictionary<ViewId, IViewsProviderInitializerBase> registryPrefabToProviderInitializer;
         private Dictionary<ViewId, IViewsProvider> registryPrefabToProvider;
@@ -401,7 +492,7 @@ namespace ME.ECS.Views {
         void IModuleBase.OnConstruct() {
 
             this.isRequestsDirty = false;
-            this.list = PoolArray<List<IView>>.Spawn(ViewsModule.VIEWS_CAPACITY);
+            this.list = PoolArray<Views>.Spawn(ViewsModule.VIEWS_CAPACITY);
             this.rendering = PoolHashSet<ViewInfo>.Spawn(ViewsModule.VIEWS_CAPACITY);
             this.registryPrefabToId = PoolDictionary<IView, ViewId>.Spawn(ViewsModule.REGISTRY_CAPACITY);
             this.registryIdToPrefab = PoolDictionary<ViewId, IView>.Spawn(ViewsModule.REGISTRY_CAPACITY);
@@ -435,17 +526,18 @@ namespace ME.ECS.Views {
             
             PoolHashSet<ViewInfo>.Recycle(ref this.rendering);
 
-            foreach (var item in this.list) {
-                
-                if (item != null) PoolList<IView>.Recycle(item);
+            for (int i = 0; i < this.list.Length; ++i) {
+
+                var views = this.list[i];
+                if (views.otherViews != null) PoolList<IView>.Recycle(views.otherViews);
                 
             }
             //PoolDictionary<int, List<IView<TEntity>>>.Recycle(ref this.list);
-            PoolArray<List<IView>>.Recycle(ref this.list);
+            PoolArray<Views>.Recycle(ref this.list);
 
         }
 
-        System.Collections.ICollection IViewModuleBase.GetData() {
+        BufferArray<Views> IViewModuleBase.GetData() {
 
             return this.list;
 
@@ -459,14 +551,10 @@ namespace ME.ECS.Views {
 
         IViewsProviderBase IViewModuleBase.GetViewSourceProvider(ViewId viewSourceId) {
 
-            lock (this.registryPrefabToProvider) {
+            IViewsProvider provider;
+            if (this.registryPrefabToProvider.TryGetValue(viewSourceId, out provider) == true) {
 
-                IViewsProvider provider;
-                if (this.registryPrefabToProvider.TryGetValue(viewSourceId, out provider) == true) {
-
-                    return provider;
-
-                }
+                return provider;
 
             }
 
@@ -499,21 +587,17 @@ namespace ME.ECS.Views {
 
             }
 
-            lock (this) {
+            var viewInfo = new ViewInfo(entity, sourceId, this.world.GetStateTick());
+            
+            var component = this.world.AddComponent<ViewComponent>(entity);
+            component.viewInfo = viewInfo;
+            component.seed = (uint)this.world.GetSeedValue();
 
-                var viewInfo = new ViewInfo(entity, sourceId, this.world.GetStateTick());
-                
-                var component = this.world.AddComponent<ViewComponent>(entity);
-                component.viewInfo = viewInfo;
-                component.seed = (uint)this.world.GetSeedValue();
+            /*var request = this.world.AddComponent<CreateViewComponentRequest<TState>, IViewComponentRequest<TState>>(entity);
+            request.viewInfo = viewInfo;
+            request.seed = component.seed;*/
 
-                /*var request = this.world.AddComponent<CreateViewComponentRequest<TState>, IViewComponentRequest<TState>>(entity);
-                request.viewInfo = viewInfo;
-                request.seed = component.seed;*/
-
-                this.isRequestsDirty = true;
-
-            }
+            this.isRequestsDirty = true;
             
         }
 
@@ -529,49 +613,41 @@ namespace ME.ECS.Views {
 
             }
 
-            lock (this) {
+            var predicate = new RemoveComponentViewPredicate();
+            predicate.entityId = instance.entity.id;
+            predicate.prefabSourceId = instance.prefabSourceId;
+            predicate.creationTick = instance.creationTick;
 
-                var predicate = new RemoveComponentViewPredicate();
-                predicate.entityId = instance.entity.id;
-                predicate.prefabSourceId = instance.prefabSourceId;
-                predicate.creationTick = instance.creationTick;
+            this.world.RemoveComponentsPredicate<ViewComponent, RemoveComponentViewPredicate>(instance.entity, predicate);
 
-                this.world.RemoveComponentsPredicate<ViewComponent, RemoveComponentViewPredicate>(instance.entity, predicate);
+            this.isRequestsDirty = true;
+            
+            /*var viewInfo = new ViewInfo();
+            viewInfo.entity = instance.entity;
+            viewInfo.prefabSourceId = instance.prefabSourceId;
+            viewInfo.creationTick = instance.creationTick;
 
-                this.isRequestsDirty = true;
-                
-                /*var viewInfo = new ViewInfo();
-                viewInfo.entity = instance.entity;
-                viewInfo.prefabSourceId = instance.prefabSourceId;
-                viewInfo.creationTick = instance.creationTick;
+            var request = this.world.AddComponent<DestroyViewComponentRequest<TState>, IViewComponentRequest<TState>>(instance.entity);
+            request.viewInfo = viewInfo;
+            request.viewInstance = instance;*/
 
-                var request = this.world.AddComponent<DestroyViewComponentRequest<TState>, IViewComponentRequest<TState>>(instance.entity);
-                request.viewInfo = viewInfo;
-                request.viewInstance = instance;*/
-
-                instance = null;
-
-            }
+            instance = null;
 
         }
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private IView SpawnView_INTERNAL(ViewInfo viewInfo) {
 
-            lock (this.registryPrefabToProvider) {
+            IViewsProvider provider;
+            if (this.registryPrefabToProvider.TryGetValue(viewInfo.prefabSourceId, out provider) == true) {
 
-                IViewsProvider provider;
-                if (this.registryPrefabToProvider.TryGetValue(viewInfo.prefabSourceId, out provider) == true) {
+                var instance = provider.Spawn(this.GetViewSource(viewInfo.prefabSourceId), viewInfo.prefabSourceId);
+                instance.entity = viewInfo.entity;
+                instance.prefabSourceId = viewInfo.prefabSourceId;
+                instance.creationTick = viewInfo.creationTick;
+                this.Register(instance);
 
-                    var instance = provider.Spawn(this.GetViewSource(viewInfo.prefabSourceId), viewInfo.prefabSourceId);
-                    instance.entity = viewInfo.entity;
-                    instance.prefabSourceId = viewInfo.prefabSourceId;
-                    instance.creationTick = viewInfo.creationTick;
-                    this.Register(instance);
-
-                    return instance;
-
-                }
+                return instance;
 
             }
 
@@ -582,15 +658,12 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void RecycleView_INTERNAL(ref IView instance) {
 
+            var viewInstance = instance;
             this.UnRegister(instance);
 
-            lock (this.registryPrefabToProvider) {
+            if (this.registryPrefabToProvider.TryGetValue(viewInstance.prefabSourceId, out var provider) == true) {
 
-                if (this.registryPrefabToProvider.TryGetValue(instance.prefabSourceId, out var provider) == true) {
-
-                    provider.Destroy(ref instance);
-
-                }
+                provider.Destroy(ref viewInstance);
 
             }
 
@@ -602,13 +675,18 @@ namespace ME.ECS.Views {
             if (entity.id >= this.list.Length) return;
             
             var views = this.list[entity.id];
-            if (views == null) return;
-            
-            for (int i = 0, length = views.Count; i < length; ++i) {
-                
-                var view = views[i];
-                this.DestroyView(ref view);
-                
+            if (views.mainView == null) return;
+
+            this.DestroyView(ref views.mainView);
+            if (views.otherViews != null) {
+
+                for (int i = 0, length = views.otherViews.Count; i < length; ++i) {
+
+                    var view = views.otherViews[i];
+                    this.DestroyView(ref view);
+
+                }
+
             }
 
         }
@@ -647,27 +725,23 @@ namespace ME.ECS.Views {
 
             }*/
 
-            lock (this.registryPrefabToProvider) {
+            if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
 
-                if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
-
-                    return viewId;
-
-                }
-
-                ++this.viewSourceIdRegistry;
-                this.registryPrefabToId.Add(prefab, this.viewSourceIdRegistry);
-                this.registryIdToPrefab.Add(this.viewSourceIdRegistry, prefab);
-                var viewsProvider = (IViewsProviderInitializer)providerInitializer;
-                var provider = viewsProvider.Create();
-                provider.world = this.world;
-                provider.OnConstruct();
-                this.registryPrefabToProvider.Add(this.viewSourceIdRegistry, provider);
-                this.registryPrefabToProviderInitializer.Add(this.viewSourceIdRegistry, viewsProvider);
-
-                return this.viewSourceIdRegistry;
+                return viewId;
 
             }
+
+            ++this.viewSourceIdRegistry;
+            this.registryPrefabToId.Add(prefab, this.viewSourceIdRegistry);
+            this.registryIdToPrefab.Add(this.viewSourceIdRegistry, prefab);
+            var viewsProvider = (IViewsProviderInitializer)providerInitializer;
+            var provider = viewsProvider.Create();
+            provider.world = this.world;
+            provider.OnConstruct();
+            this.registryPrefabToProvider.Add(this.viewSourceIdRegistry, provider);
+            this.registryPrefabToProviderInitializer.Add(this.viewSourceIdRegistry, viewsProvider);
+
+            return this.viewSourceIdRegistry;
             
         }
 
@@ -679,20 +753,16 @@ namespace ME.ECS.Views {
 
             }
 
-            lock (this.registryPrefabToProvider) {
+            if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
 
-                if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
-
-                    var provider = this.registryPrefabToProvider[viewId];
-                    provider.world = null;
-                    provider.OnDeconstruct();
-                    ((IViewsProviderInitializer)this.registryPrefabToProviderInitializer[viewId]).Destroy(provider);
-                    this.registryPrefabToProviderInitializer.Remove(viewId);
-                    this.registryPrefabToProvider.Remove(viewId);
-                    this.registryPrefabToId.Remove(prefab);
-                    return this.registryIdToPrefab.Remove(viewId);
-
-                }
+                var provider = this.registryPrefabToProvider[viewId];
+                provider.world = null;
+                provider.OnDeconstruct();
+                ((IViewsProviderInitializer)this.registryPrefabToProviderInitializer[viewId]).Destroy(provider);
+                this.registryPrefabToProviderInitializer.Remove(viewId);
+                this.registryPrefabToProvider.Remove(viewId);
+                this.registryPrefabToId.Remove(prefab);
+                return this.registryIdToPrefab.Remove(viewId);
 
             }
 
@@ -706,18 +776,8 @@ namespace ME.ECS.Views {
             var id = instance.entity.id;
             ArrayUtils.Resize(in id, ref this.list);
 
-            if (this.list[id] == null) {
-                
-                var list = PoolList<IView>.Spawn(100);
-                list.Add(instance);
-                this.list[id] = list;
-
-            } else {
-                
-                this.list[id].Add(instance);
-                
-            }
-
+            this.list[id].Add(instance);
+            
             var viewInfo = new ViewInfo(instance.entity, instance.prefabSourceId, instance.creationTick);
             this.rendering.Add(viewInfo);
 
@@ -728,23 +788,12 @@ namespace ME.ECS.Views {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool UnRegister(IView instance) {
             
-            return this.UnRegister_INTERNAL(instance, removeFromList: true);
-            
-        }
-        
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private bool UnRegister_INTERNAL(IView instance, bool removeFromList = true) {
-            
             instance.DoDeInitialize();
 
-            if (removeFromList == true) {
+            var id = instance.entity.id;
+            if (id < this.list.Length) {
 
-                var id = instance.entity.id;
-                if (id < this.list.Length) {
-
-                    this.list[id].Remove(instance);
-
-                }
+                this.list[id].Remove(instance);
 
             }
 
@@ -808,24 +857,20 @@ namespace ME.ECS.Views {
                     var allViews = this.world.ForEachComponent<ViewComponent>(item);
                     if (allViews != null) {
 
-                        lock (this) {
+                        // Comparing current state views to current rendering
+                        foreach (var viewComponent in allViews) {
 
-                            // Comparing current state views to current rendering
-                            foreach (var viewComponent in allViews) {
+                            var view = (ViewComponent)viewComponent;
+                            if (this.IsRenderingNow(in view.viewInfo) == true) {
 
-                                var view = (ViewComponent)viewComponent;
-                                if (this.IsRenderingNow(in view.viewInfo) == true) {
+                                // is rendering now
+                                //this.prevList.Add(view.viewInfo);
 
-                                    // is rendering now
-                                    //this.prevList.Add(view.viewInfo);
+                            } else {
 
-                                } else {
-
-                                    // is not rendering now
-                                    // create required instance
-                                    this.CreateVisualInstance(in view.seed, in view.viewInfo);
-
-                                }
+                                // is not rendering now
+                                // create required instance
+                                this.CreateVisualInstance(in view.seed, in view.viewInfo);
 
                             }
 
@@ -839,39 +884,45 @@ namespace ME.ECS.Views {
 
             for (var id = this.list.Length - 1; id >= 0; --id) {
                 
-                var list = this.list[id];
-                if (list == null) continue;
-
+                ref var views = ref this.list[id];
+                if (views.mainView == null) continue;
+                
                 if (aliveEntities.Contains(id) == false) {
 
-                    for (int i = 0, count = list.Count; i < count; ++i) {
+                    if (views.otherViews != null) {
 
-                        var instance = list[i];
-                        this.RecycleView_INTERNAL(ref instance);
-                        --i;
-                        --count;
+                        for (int i = 0, count = views.otherViews.Count; i < count; ++i) {
+
+                            var instance = views.otherViews[i];
+                            this.RecycleView_INTERNAL(ref instance);
+                            --i;
+                            --count;
+
+                        }
+                        views.otherViews.Clear();
 
                     }
 
-                    list.Clear();
+                    this.RecycleView_INTERNAL(ref views.mainView);
 
                 } else {
                     
                     // If entity is alive - check if we are rendering needed view
-                    for (int i = list.Count - 1; i >= 0; --i) {
+                    for (int i = views.Length - 1; i >= 0; --i) {
 
-                        var instance = list[i];
+                        var instance = views[i];
                         var allViews = this.world.ForEachComponent<ViewComponent>(instance.entity);
                         if (allViews == null) continue;
 
-                        ViewComponent viewFound = null;
+                        //ViewComponent viewFound = null;
                         var found = false;
-                        foreach (var viewComponent in allViews) {
+                        for (int index = 0, count = allViews.Count; index < count; ++index) {
                             
+                            var viewComponent = allViews[index];
                             var view = (ViewComponent)viewComponent;
                             if (instance.prefabSourceId == view.viewInfo.prefabSourceId) {
 
-                                viewFound = view;
+                                //viewFound = view;
                                 found = true;
                                 break;
 
@@ -897,87 +948,6 @@ namespace ME.ECS.Views {
 
             }
 
-            {
-                
-                /*for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
-
-                    // For each entity in state
-                    ref var item = ref allEntities[j];
-                    if (allEntities.IsFree(j) == true) continue;
-
-                    aliveEntities.Add(item.entity.id);
-
-                    // Get all requests
-                    var requests = this.world.ForEachComponent<TEntity, IViewComponentRequest<TState>>(item.entity);
-                    if (requests != null) {
-
-                        foreach (var request in requests) {
-
-                            if (request is CreateViewComponentRequest<TState> createComponentRequest) {
-
-                                this.CreateVisualInstance(in item, in createComponentRequest.seed, in createComponentRequest.viewInfo);
-                                
-                            } else if (request is DestroyViewComponentRequest<TState> destroyComponentRequest) {
-
-                                if (this.list.TryGetValue(item.entity.id, out var viewsList) == true) {
-
-                                    viewsList.Remove(destroyComponentRequest.viewInstance);
-
-                                }
-
-                                this.RecycleView_INTERNAL(ref destroyComponentRequest.viewInstance);
-
-                            }
-
-                        }
-
-                    }
-                    this.world.RemoveComponents<TEntity, IViewComponentRequest<TState>>(item.entity);
-
-                    // Get all views
-                    var allViews = this.world.ForEachComponent<TEntity, ViewComponent<TState>>(item.entity);
-                    if (allViews != null) {
-                        
-                        // Comparing current state views to current rendering
-                        foreach (var viewComponent in allViews) {
-
-                            var view = (ViewComponent<TState>)viewComponent;
-                            if (this.IsRenderingNow(in view.viewInfo) == false) {
-                                
-                                // current data doesn't represent any visual instance
-                                this.CreateVisualInstance(in item, in view.seed, in view.viewInfo);
-
-                            }
-
-                        }
-
-                    }
-
-                }*/
-
-            }
-            // Iterate all current view instances
-            // Search for views that doesn't represent any entity and destroy them
-            /*foreach (var item in this.list) {
-
-                if (aliveEntities.Contains(item.Key) == false) {
-
-                    var list = item.Value;
-                    for (int i = 0, count = list.Count; i < count; ++i) {
-
-                        var instance = list[i];
-                        this.RecycleView_INTERNAL(ref instance);
-                        --i;
-                        --count;
-
-                    }
-
-                    list.Clear();
-
-                }
-
-            }*/
-            
             PoolHashSet<int>.Recycle(ref aliveEntities);
             
         }
@@ -986,10 +956,10 @@ namespace ME.ECS.Views {
             
             for (var id = 0; id < this.list.Length; ++id) {
                 
-                var list = this.list[id];
-                if (list == null) continue;
+                ref var list = ref this.list[id];
+                if (list.mainView == null) continue;
                 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                for (int i = 0, count = list.Length; i < count; ++i) {
 
                     var instance = list[i] as ME.ECS.Views.Providers.MonoBehaviourView;
                     if (instance != null) instance.ApplyPhysicsState(deltaTime);
@@ -1008,10 +978,10 @@ namespace ME.ECS.Views {
 
             for (var id = 0; id < this.list.Length; ++id) {
                 
-                var list = this.list[id];
-                if (list == null) continue;
+                ref var list = ref this.list[id];
+                if (list.mainView == null) continue;
                 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                for (int i = 0, count = list.Length; i < count; ++i) {
 
                     var instance = list[i];
                     instance.ApplyState(deltaTime, immediately: false);
@@ -1021,14 +991,10 @@ namespace ME.ECS.Views {
                 
             }
 
-            lock (this.registryPrefabToProvider) {
+            // Update providers
+            foreach (var providerKv in this.registryPrefabToProvider) {
 
-                // Update providers
-                foreach (var providerKv in this.registryPrefabToProvider) {
-
-                    providerKv.Value.Update(this.list, deltaTime);
-
-                }
+                providerKv.Value.Update(this.list, deltaTime);
 
             }
 

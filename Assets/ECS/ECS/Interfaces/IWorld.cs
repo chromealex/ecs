@@ -8,7 +8,7 @@ namespace ME.ECS {
     /// Base world interface
     /// 
     /// </summary>
-    public partial interface IWorldBase {
+    /*public partial interface IWorldBase {
 
         /// <summary>
         /// Returns current world id
@@ -78,6 +78,7 @@ namespace ME.ECS {
         float GetTickTime();
         double GetTimeSinceStart();
         void SetTimeSinceStart(double time);
+        void SetSeed(uint seed);
 
         TModule GetModule<TModule>() where TModule : IModuleBase;
 
@@ -115,20 +116,20 @@ namespace ME.ECS {
         void RemoveSystem(ISystemBase instance);
         void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new();
 
-        void SetCurrentSystemContextFiltersUsed(SortedList<int, IFilter> currentSystemContextFiltersUsed);
-        SortedList<int, IFilter> GetCurrentSystemContextFiltersUsed();
+        void SetCurrentSystemContextFiltersUsed(BufferArray<bool> currentSystemContextFiltersUsed);
+        BufferArray<bool> GetCurrentSystemContextFiltersUsed();
 
-        bool HasFilter(IFilter filterRef);
+        bool HasFilter(Filter filterRef);
         bool HasFilter(int id);
-        IFilter GetFilter(int id);
+        Filter GetFilter(int id);
 
-        IFilter GetFilterEquals(IFilter filter);
+        Filter GetFilterEquals(Filter filter);
 
-        void Register(IFilter filterRef);
+        void Register(Filter filterRef);
         
-    }
+    }*/
 
-    public partial interface IWorld : IWorldBase {
+    /*public partial interface IWorld : IWorldBase {
 
         UnityEngine.Vector3 GetRandomInSphere(UnityEngine.Vector3 center, float radius);
         int GetRandomRange(int from, int to);
@@ -158,6 +159,6 @@ namespace ME.ECS {
 
         void Update(float deltaTime);
 
-    }
+    }*/
 
 }

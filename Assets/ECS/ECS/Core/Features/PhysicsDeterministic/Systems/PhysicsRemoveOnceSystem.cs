@@ -15,8 +15,8 @@
         
         bool ISystemFilter.jobs => true;
         int ISystemFilter.jobsBatchCount => 64;
-        IFilter ISystemFilter.filter { get; set; }
-        IFilter ISystemFilter.CreateFilter() {
+        Filter ISystemFilter.filter { get; set; }
+        Filter ISystemFilter.CreateFilter() {
             
             return Filter.Create("Filter-PhysicsRemoveOnceSystem")
                          .WithStructComponent<ME.ECS.Features.PhysicsDeterministic.Components.PhysicsRigidbody>()

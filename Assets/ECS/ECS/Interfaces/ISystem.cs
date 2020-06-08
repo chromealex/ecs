@@ -25,13 +25,20 @@ namespace ME.ECS {
 
         bool jobs { get; }
         int jobsBatchCount { get; }
-        IFilter filter { get; set; }
-        IFilter CreateFilter();
+        Filter filter { get; set; }
+        Filter CreateFilter();
 
         void AdvanceTick(in Entity entity, in float deltaTime);
-
+        
     }
 
+    /*
+    public interface IAdvanceTickBurst {
+
+        World.SystemFilterAdvanceTick GetAdvanceTickForBurst();
+
+    }*/
+    
     public interface ISystem : ISystemBase { }
 
     public interface ISystemValidation {

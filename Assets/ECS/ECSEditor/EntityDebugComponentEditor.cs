@@ -7,12 +7,12 @@
     [UnityEditor.CustomEditor(typeof(EntityDebugComponent), true)]
     public class EntityDebugComponentEditor : Editor {
 
-        private static readonly System.Collections.Generic.Dictionary<IWorldBase, WorldsViewerEditor.WorldEditor> worldEditors = new System.Collections.Generic.Dictionary<IWorldBase, WorldsViewerEditor.WorldEditor>();
+        private static readonly System.Collections.Generic.Dictionary<World, WorldsViewerEditor.WorldEditor> worldEditors = new System.Collections.Generic.Dictionary<World, WorldsViewerEditor.WorldEditor>();
         
         public override void OnInspectorGUI() {
 
             var target = this.target as EntityDebugComponent;
-            if (target.world != null) {
+            if (target.world != null && target.world.isActive == true) {
 
                 if (EntityDebugComponentEditor.worldEditors.TryGetValue(target.world, out var worldEditor) == false) {
 

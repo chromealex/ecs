@@ -67,9 +67,10 @@ namespace ME.ECS.Collections {
     public class SortedList<TKey, TValue> :
         IDictionary<TKey, TValue>, System.Collections.IDictionary, IReadOnlyDictionary<TKey, TValue>, IPoolableRecycle, IPoolableSpawn {
 
-        private TKey[] keys;
-        private TValue[] values;
+        private BufferArray<TKey> keys;
+        private BufferArray<TValue> values;
         private HashSetCopyable<TKey> keysContains;
+        //private HashSet<TKey> keysContains;
         private int _size;
         private int version;
         private IComparer<TKey> comparer;
@@ -80,8 +81,8 @@ namespace ME.ECS.Collections {
         #endif
         private Object _syncRoot;
 
-        private static TKey[] emptyKeys = new TKey[0];
-        private static TValue[] emptyValues = new TValue[0];
+        private static BufferArray<TKey> emptyKeys = new BufferArray<TKey>(new TKey[0], 0);
+        private static BufferArray<TValue> emptyValues = new BufferArray<TValue>(new TValue[0], 0);
 
         private const int _defaultCapacity = 4;
 
@@ -90,6 +91,7 @@ namespace ME.ECS.Collections {
             PoolArray<TKey>.Recycle(ref this.keys);
             PoolArray<TValue>.Recycle(ref this.values);
             PoolHashSetCopyable<TKey>.Recycle(ref this.keysContains);
+            //PoolHashSet<TKey>.Recycle(ref this.keysContains);
             this._size = default;
             this.version = default;
             this.comparer = default;
@@ -108,6 +110,7 @@ namespace ME.ECS.Collections {
             this._syncRoot = default;
             
             this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
+            //this.keysContains = PoolHashSet<TKey>.Spawn();
             this.keys = SortedList<TKey, TValue>.emptyKeys;
             this.values = SortedList<TKey, TValue>.emptyValues;
             this._size = 0;
@@ -119,7 +122,10 @@ namespace ME.ECS.Collections {
             
             ArrayUtils.Copy(other.keys, ref this.keys);
             ArrayUtils.Copy(other.values, ref this.values);
-            if (this.keysContains == null) this.keysContains = PoolHashSetCopyable<TKey>.Spawn(); 
+            //if (this.keysContains == null) this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
+            //this.keysContains = new HashSetCopyable<TKey>(other.keysContains);
+            //if (this.keysContains == null) this.keysContains = PoolHashSet<TKey>.Spawn();
+            //this.keysContains = new HashSet<TKey>(other.keysContains);
             this.keysContains.CopyFrom(other.keysContains);
             this._size = other._size;
             this.version = other.version;
@@ -138,6 +144,7 @@ namespace ME.ECS.Collections {
         // all entries added to the sorted list.
         public SortedList() {
             this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
+            //this.keysContains = PoolHashSet<TKey>.Spawn();
             this.keys = SortedList<TKey, TValue>.emptyKeys;
             this.values = SortedList<TKey, TValue>.emptyValues;
             this._size = 0;
@@ -153,6 +160,7 @@ namespace ME.ECS.Collections {
         //
         public SortedList(int capacity) {
             this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
+            //this.keysContains = PoolHashSet<TKey>.Spawn();
             this.keys = PoolArray<TKey>.Spawn(capacity);
             this.values = PoolArray<TValue>.Spawn(capacity);
             this.comparer = Comparer<TKey>.Default;
@@ -189,29 +197,15 @@ namespace ME.ECS.Collections {
             this.Capacity = capacity;
         }
 
-        // Constructs a new sorted list containing a copy of the entries in the
-        // given dictionary. The elements of the sorted list are ordered according
-        // to the IComparable interface, which must be implemented by the
-        // keys of all entries in the the given dictionary as well as keys
-        // subsequently added to the sorted list.
-        // 
-        public SortedList(IDictionary<TKey, TValue> dictionary)
+        public SortedList(SortedList<TKey, TValue> dictionary)
             : this(dictionary, null) { }
 
-        // Constructs a new sorted list containing a copy of the entries in the
-        // given dictionary. The elements of the sorted list are ordered according
-        // to the given IComparer implementation. If comparer is
-        // null, the elements are compared to each other using the
-        // IComparable interface, which in that case must be implemented
-        // by the keys of all entries in the the given dictionary as well as keys
-        // subsequently added to the sorted list.
-        // 
-        public SortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer)
+        public SortedList(SortedList<TKey, TValue> dictionary, IComparer<TKey> comparer)
             : this(dictionary != null ? dictionary.Count : 0, comparer) {
 
             dictionary.Keys.CopyTo(this.keys, 0);
             dictionary.Values.CopyTo(this.values, 0);
-            Array.Sort<TKey, TValue>(this.keys, this.values, comparer);
+            Array.Sort<TKey, TValue>(this.keys.arr, this.values.arr, comparer);
             this._size = dictionary.Count;
         }
 
@@ -219,7 +213,7 @@ namespace ME.ECS.Collections {
         // ArgumentException is thrown if the key is already present in the sorted list.
         // 
         public void Add(TKey key, TValue value) {
-            var i = Array.BinarySearch<TKey>(this.keys, 0, this._size, key, this.comparer);
+            var i = Array.BinarySearch<TKey>(this.keys.arr, 0, this._size, key, this.comparer);
             this.Insert(~i, key, value);
         }
 
@@ -260,11 +254,11 @@ namespace ME.ECS.Collections {
                 if (value != this.keys.Length) {
 
                     if (value > 0) {
-                        var newKeys = new TKey[value];
-                        var newValues = new TValue[value];
+                        var newKeys = PoolArray<TKey>.Spawn(value);//new TKey[value];
+                        var newValues = PoolArray<TValue>.Spawn(value);//new TValue[value];
                         if (this._size > 0) {
-                            Array.Copy(this.keys, 0, newKeys, 0, this._size);
-                            Array.Copy(this.values, 0, newValues, 0, this._size);
+                            Array.Copy(this.keys.arr, 0, newKeys.arr, 0, this._size);
+                            Array.Copy(this.values.arr, 0, newValues.arr, 0, this._size);
                         }
 
                         this.keys = newKeys;
@@ -403,8 +397,8 @@ namespace ME.ECS.Collections {
             this.version++;
             // Don't need to doc this but we clear the elements so that the gc can reclaim the references.
             this.keysContains.Clear();
-            Array.Clear(this.keys, 0, this._size);
-            Array.Clear(this.values, 0, this._size);
+            Array.Clear(this.keys.arr, 0, this._size);
+            Array.Clear(this.values.arr, 0, this._size);
             this._size = 0;
         }
 
@@ -538,7 +532,7 @@ namespace ME.ECS.Collections {
                 return default(TValue);
             }
             set {
-                var i = Array.BinarySearch<TKey>(this.keys, 0, this._size, key, this.comparer);
+                var i = Array.BinarySearch<TKey>(this.keys.arr, 0, this._size, key, this.comparer);
                 if (i >= 0) {
                     this.values[i] = value;
                     this.version++;
@@ -575,7 +569,7 @@ namespace ME.ECS.Collections {
         // key value.
         // 
         public int IndexOfKey(TKey key) {
-            var ret = Array.BinarySearch<TKey>(this.keys, 0, this._size, key, this.comparer);
+            var ret = Array.BinarySearch<TKey>(this.keys.arr, 0, this._size, key, this.comparer);
             return ret >= 0 ? ret : -1;
         }
 
@@ -586,7 +580,7 @@ namespace ME.ECS.Collections {
         // given value using the Object.Equals method.
         // 
         public int IndexOfValue(TValue value) {
-            return Array.IndexOf(this.values, value, 0, this._size);
+            return Array.IndexOf(this.values.arr, value, 0, this._size);
         }
 
         // Inserts an entry with a given key and value at a given index.
@@ -596,8 +590,8 @@ namespace ME.ECS.Collections {
             }
 
             if (index < this._size) {
-                Array.Copy(this.keys, index, this.keys, index + 1, this._size - index);
-                Array.Copy(this.values, index, this.values, index + 1, this._size - index);
+                Array.Copy(this.keys.arr, index, this.keys.arr, index + 1, this._size - index);
+                Array.Copy(this.values.arr, index, this.values.arr, index + 1, this._size - index);
             }
 
             this.keysContains.Add(key);
@@ -624,8 +618,8 @@ namespace ME.ECS.Collections {
         public void RemoveAt(int index) {
             this._size--;
             if (index < this._size) {
-                Array.Copy(this.keys, index + 1, this.keys, index, this._size - index);
-                Array.Copy(this.values, index + 1, this.values, index, this._size - index);
+                Array.Copy(this.keys.arr, index + 1, this.keys.arr, index, this._size - index);
+                Array.Copy(this.values.arr, index + 1, this.values.arr, index, this._size - index);
             }
 
             this.keys[this._size] = default(TKey);
@@ -904,14 +898,19 @@ namespace ME.ECS.Collections {
                 return this._dict.ContainsKey(key);
             }
 
+            public void CopyTo(BufferArray<TKey> array, int arrayIndex) {
+                // defer error checking to Array.Copy
+                Array.Copy(this._dict.keys.arr, 0, array.arr, arrayIndex, this._dict.Count);
+            }
+
             public void CopyTo(TKey[] array, int arrayIndex) {
                 // defer error checking to Array.Copy
-                Array.Copy(this._dict.keys, 0, array, arrayIndex, this._dict.Count);
+                Array.Copy(this._dict.keys.arr, 0, array, arrayIndex, this._dict.Count);
             }
 
             void System.Collections.ICollection.CopyTo(Array array, int arrayIndex) {
                 // defer error checking to Array.Copy
-                Array.Copy(this._dict.keys, 0, array, arrayIndex, this._dict.Count);
+                Array.Copy(this._dict.keys.arr, 0, array, arrayIndex, this._dict.Count);
             }
 
             public void Insert(int index, TKey value) { }
@@ -932,7 +931,7 @@ namespace ME.ECS.Collections {
             }
 
             public int IndexOf(TKey key) {
-                var i = Array.BinarySearch<TKey>(this._dict.keys, 0, this._dict.Count, key, this._dict.comparer);
+                var i = Array.BinarySearch<TKey>(this._dict.keys.arr, 0, this._dict.Count, key, this._dict.comparer);
                 if (i >= 0) {
                     return i;
                 }
@@ -993,14 +992,19 @@ namespace ME.ECS.Collections {
                 return this._dict.ContainsValue(value);
             }
 
+            public void CopyTo(BufferArray<TValue> array, int arrayIndex) {
+                // defer error checking to Array.Copy
+                Array.Copy(this._dict.values.arr, 0, array.arr, arrayIndex, this._dict.Count);
+            }
+
             public void CopyTo(TValue[] array, int arrayIndex) {
                 // defer error checking to Array.Copy
-                Array.Copy(this._dict.values, 0, array, arrayIndex, this._dict.Count);
+                Array.Copy(this._dict.values.arr, 0, array, arrayIndex, this._dict.Count);
             }
 
             void System.Collections.ICollection.CopyTo(Array array, int arrayIndex) {
                 // defer error checking to Array.Copy
-                Array.Copy(this._dict.values, 0, array, arrayIndex, this._dict.Count);
+                Array.Copy(this._dict.values.arr, 0, array, arrayIndex, this._dict.Count);
             }
 
             public void Insert(int index, TValue value) { }
@@ -1021,7 +1025,7 @@ namespace ME.ECS.Collections {
             }
 
             public int IndexOf(TValue value) {
-                return Array.IndexOf(this._dict.values, value, 0, this._dict.Count);
+                return Array.IndexOf(this._dict.values.arr, value, 0, this._dict.Count);
             }
 
             public bool Remove(TValue value) {

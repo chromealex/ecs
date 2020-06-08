@@ -219,6 +219,7 @@
 
         public ParticleSimulationItem[] particleItems;
         public ParticleSimulationSettings settings;
+        public bool hasElements;
 
         [UnityEngine.SerializeField][UnityEngine.HideInInspector]
         private bool hasDefault;
@@ -235,12 +236,18 @@
                 }
                 
                 this.particleItems = new ParticleSimulationItem[particleSystems.Length];
-                for (int i = 0; i < this.particleItems.Length; ++i) {
+                for (int i = 0, cnt = this.particleItems.Length; i < cnt; ++i) {
 
                     this.particleItems[i] = new ParticleSimulationItem();
                     this.particleItems[i].particleSystem = particleSystems[i];
 
                 }
+
+                this.hasElements = particleSystems.Length > 0;
+
+            } else {
+
+                this.hasElements = false;
 
             }
 
@@ -249,7 +256,9 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SimulateParticles(float time, uint seed) {
 
-            for (int i = 0; i < this.particleItems.Length; ++i) {
+            if (this.hasElements == false) return;
+            
+            for (int i = 0, cnt = this.particleItems.Length; i < cnt; ++i) {
 
                 this.particleItems[i].SimulateParticles(time, seed, this.settings);
 
@@ -260,7 +269,9 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Update(float deltaTime) {
             
-            for (int i = 0; i < this.particleItems.Length; ++i) {
+            if (this.hasElements == false) return;
+
+            for (int i = 0, cnt = this.particleItems.Length; i < cnt; ++i) {
 
                 this.particleItems[i].Update(deltaTime, this.settings);
 
@@ -284,7 +295,7 @@
 
     }
 
-    public interface IViewsProviderInitializerBase {}
+    public interface IViewsProviderInitializerBase : System.IComparable<IViewsProviderInitializerBase> {}
 
     public interface IViewsProviderInitializer : IViewsProviderInitializerBase {
 
@@ -300,19 +311,25 @@
 
     }
 
-    public interface IViewsProvider : IViewsProviderBase {
+    public interface IViewsProvider : IViewsProviderBase, System.IComparable<IViewsProvider> {
 
         World world { get; set; }
 
         IView Spawn(IView prefab, ViewId prefabSourceId);
         void Destroy(ref IView instance);
 
-        void Update(System.Collections.Generic.List<IView>[] list, float deltaTime);
+        void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime);
 
     }
 
     public abstract class ViewsProvider : IViewsProvider {
 
+        int System.IComparable<IViewsProvider>.CompareTo(IViewsProvider other) {
+
+            return 0;
+
+        }
+        
         public World world { get; set; }
         
         public abstract void OnConstruct();
@@ -321,7 +338,7 @@
         public abstract IView Spawn(IView prefab, ViewId prefabSourceId);
         public abstract void Destroy(ref IView instance);
 
-        public virtual void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {}
+        public virtual void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime) {}
 
     }
 

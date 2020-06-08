@@ -86,6 +86,7 @@ namespace ME.ECS.Views {
 namespace ME.ECS.Views.Providers {
 
     using Unity.Jobs;
+    using Collections;
     
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
@@ -102,7 +103,7 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public Item[] items;
+        public BufferArray<Item> items;
 
         void IPoolableRecycle.OnRecycle() {
             
@@ -149,7 +150,7 @@ namespace ME.ECS.Views.Providers {
             UnityEngine.ParticleSystem[] particleSystems,
             bool reset) {
 
-            if (this.items == null || this.items.Length != filters.Length + particleSystems.Length) {
+            if (this.items.arr == null || this.items.Length != filters.Length + particleSystems.Length) {
 
                 reset = true;
 
@@ -157,7 +158,7 @@ namespace ME.ECS.Views.Providers {
 
             if (reset == true) {
                 
-                this.items = new Item[0];
+                this.items = BufferArray<Item>.Empty;
                 
             }
 
@@ -201,7 +202,7 @@ namespace ME.ECS.Views.Providers {
 
                 }
 
-                this.items = itemsList.ToArray();
+                this.items = BufferArray<Item>.From(itemsList.ToArray());
 
             }
             
@@ -237,6 +238,8 @@ namespace ME.ECS.Views.Providers {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
     public abstract class ParticleView<T> : ParticleViewBase, IView where T : ParticleView<T> {
+
+        int System.IComparable<IView>.CompareTo(IView other) { return 0; }
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
@@ -380,8 +383,8 @@ namespace ME.ECS.Views.Providers {
 
         private System.Collections.Generic.Dictionary<long, ParticleSystemItem> psItems;
         private PoolInternalBase pool;
-        private UnityEngine.ParticleSystem.Particle[] particles;
-        private UnityEngine.ParticleSystem.Particle[] particlesStatic;
+        private BufferArray<UnityEngine.ParticleSystem.Particle> particles;
+        private BufferArray<UnityEngine.ParticleSystem.Particle> particlesStatic;
         private int maxParticles = 1000;
 
         private UnityEngine.ParticleSystem mainParticleSystem;
@@ -616,16 +619,16 @@ namespace ME.ECS.Views.Providers {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void ValidateParticles() {
 
-            if (this.particles == null || this.particles.Length < this.maxParticles) {
+            if (this.particles.arr == null || this.particles.Length < this.maxParticles) {
                 
-                if (this.particles != null) PoolArray<UnityEngine.ParticleSystem.Particle>.Recycle(ref this.particles);
+                PoolArray<UnityEngine.ParticleSystem.Particle>.Recycle(ref this.particles);
                 this.particles = PoolArray<UnityEngine.ParticleSystem.Particle>.Spawn(this.maxParticles);
                 
             }
 
-            if (this.particlesStatic == null || this.particlesStatic.Length < this.maxParticles) {
+            if (this.particlesStatic.arr == null || this.particlesStatic.Length < this.maxParticles) {
                 
-                if (this.particlesStatic != null) PoolArray<UnityEngine.ParticleSystem.Particle>.Recycle(ref this.particlesStatic);
+                PoolArray<UnityEngine.ParticleSystem.Particle>.Recycle(ref this.particlesStatic);
                 this.particlesStatic = PoolArray<UnityEngine.ParticleSystem.Particle>.Spawn(this.maxParticles);
 
             }
@@ -639,9 +642,9 @@ namespace ME.ECS.Views.Providers {
             public void Execute(int index) {
 
                 var list = UnityParticlesProvider.currentList[index];
-                if (list == null) return;
+                if (list.mainView == null) return;
                 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                for (int i = 0, count = list.Length; i < count; ++i) {
 
                     var instance = list[i] as ParticleViewBase;
                     if (instance == null) continue;
@@ -654,21 +657,20 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        private static System.Collections.Generic.List<IView>[] currentList;
+        private static BufferArray<Views> currentList;
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+        private void UpdateViews(BufferArray<Views> list, float deltaTime) {
 
             if (this.world.settings.useJobsForViews == true && this.world.settings.viewsSettings.unityParticlesProviderDisableJobs == false) {
 
                 UnityParticlesProvider.currentList = list;
-                if (list != null) {
+                if (list.arr != null) {
 
                     var job = new Job() {
                         deltaTime = deltaTime
                     };
                     var handle = job.Schedule(list.Length, 16);
                     handle.Complete();
-                    UnityParticlesProvider.currentList = null;
 
                 }
 
@@ -677,7 +679,7 @@ namespace ME.ECS.Views.Providers {
                 for (int j = 0, cnt = list.Length; j < cnt; ++j) {
 
                     var item = list[j];
-                    for (int i = 0, count = item.Count; i < count; ++i) {
+                    for (int i = 0, count = item.Length; i < count; ++i) {
 
                         var instance = item[i] as ParticleViewBase;
                         if (instance == null) continue;
@@ -692,7 +694,7 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public override void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+        public override void Update(BufferArray<Views> list, float deltaTime) {
 
             this.UpdateViews(list, deltaTime);
             this.ValidateParticles();
@@ -710,9 +712,9 @@ namespace ME.ECS.Views.Providers {
                 for (var id = 0; id < list.Length; ++id) {
                     
                     var itemsList = list[id];
-                    if (itemsList == null) continue;
+                    if (itemsList.mainView == null) continue;
                     
-                    var count = itemsList.Count;
+                    var count = itemsList.Length;
                     for (int i = 0; i < count; ++i) {
 
                         var view = itemsList[i] as ParticleViewBase;
@@ -785,17 +787,19 @@ namespace ME.ECS.Views.Providers {
                     }
                 }
 
-                if (staticK > 0 || dynamicK == 0) ps.SetParticles(this.particlesStatic, staticK, 0);
+                if (staticK > 0 || dynamicK == 0) ps.SetParticles(this.particlesStatic.arr, staticK, 0);
 
             }
 
-            this.mainParticleSystem.SetParticles(this.particles, k, 0);
+            this.mainParticleSystem.SetParticles(this.particles.arr, k, 0);
             
         }
 
     }
 
     public struct UnityParticlesProviderInitializer : IViewsProviderInitializer {
+
+        int System.IComparable<IViewsProviderInitializerBase>.CompareTo(IViewsProviderInitializerBase other) { return 0; }
 
         public IViewsProvider Create() {
 

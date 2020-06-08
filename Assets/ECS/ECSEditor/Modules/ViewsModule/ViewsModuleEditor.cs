@@ -42,12 +42,12 @@ namespace ME.ECSEditor {
 
             var renderersCount = 0;
             var data = this.target.GetData();
-            if (data != null) {
+            if (data.arr != null) {
 
-                foreach (var views in data) {
+                for (int i = 0; i < data.Length; ++i) {
 
-                    if (views == null) continue;
-                    renderersCount += ((System.Collections.IList)views).Count;
+                    var views = data[i];
+                    renderersCount += views.Length;
 
                 }
 

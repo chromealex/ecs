@@ -5,7 +5,7 @@ namespace ME.ECS {
     public static class Worlds {
 
         public static World currentWorld;
-        public static readonly List<IWorldBase> registeredWorlds = new List<IWorldBase>();
+        public static readonly List<World> registeredWorlds = new List<World>();
 
         public static IStateBase currentState;
         private static Dictionary<int, World> cache = new Dictionary<int, World>(1);

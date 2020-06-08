@@ -84,6 +84,7 @@ namespace ME.ECS.Views {
 namespace ME.ECS.Views.Providers {
     
     using Unity.Jobs;
+    using Collections;
 
     public struct DrawMeshData {
 
@@ -115,7 +116,7 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public Item[] items;
+        public BufferArray<Item> items;
 
         void IPoolableRecycle.OnRecycle() {
             
@@ -154,8 +155,8 @@ namespace ME.ECS.Views.Providers {
         }
 
         public void SetItems(UnityEngine.Vector3 rootPosition, UnityEngine.Vector3 rootRotation, UnityEngine.Vector3 rootScale, UnityEngine.MeshFilter[] filters, UnityEngine.Renderer[] renderers) {
-            
-            this.items = new Item[filters.Length];
+
+            this.items = PoolArray<Item>.Spawn(filters.Length);//new Item[filters.Length];
             for (int i = 0; i < filters.Length; ++i) {
 
                 var tr = filters[i].transform;
@@ -193,6 +194,8 @@ namespace ME.ECS.Views.Providers {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
     public abstract class DrawMeshView<T> : DrawMeshViewBase, IView where T : DrawMeshView<T> {
+
+        int System.IComparable<IView>.CompareTo(IView other) { return 0; }
 
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
@@ -264,7 +267,7 @@ namespace ME.ECS.Views.Providers {
 
         private System.Collections.Generic.Dictionary<long, DrawMeshSystemItem> psItems;
         private PoolInternalBase pool;
-        private UnityEngine.Matrix4x4[] matrices;
+        private BufferArray<UnityEngine.Matrix4x4> matrices;
         private int maxMatrices = 1000;
 
         public override void OnConstruct() {
@@ -338,9 +341,9 @@ namespace ME.ECS.Views.Providers {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void ValidateMatrices() {
 
-            if (this.matrices == null || this.matrices.Length < this.maxMatrices) {
+            if (this.matrices.arr == null || this.matrices.Length < this.maxMatrices) {
                 
-                if (this.matrices != null) PoolArray<UnityEngine.Matrix4x4>.Recycle(ref this.matrices);
+                PoolArray<UnityEngine.Matrix4x4>.Recycle(ref this.matrices);
                 this.matrices = PoolArray<UnityEngine.Matrix4x4>.Spawn(this.maxMatrices);
                 
             }
@@ -354,9 +357,9 @@ namespace ME.ECS.Views.Providers {
             public void Execute(int index) {
 
                 var list = UnityDrawMeshProvider.currentList[index];
-                if (list == null) return;
+                if (list.mainView == null) return;
                 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                for (int i = 0, count = list.Length; i < count; ++i) {
 
                     var instance = list[i] as DrawMeshViewBase;
                     if (instance == null) continue;
@@ -369,11 +372,11 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        private static System.Collections.Generic.List<IView>[] currentList;
+        private static BufferArray<Views> currentList;
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+        private void UpdateViews(BufferArray<Views> list, float deltaTime) {
 
-            if (list == null) return;
+            if (list.arr == null) return;
             
             if (this.world.settings.useJobsForViews == true && this.world.settings.viewsSettings.unityDrawMeshProviderDisableJobs == false) {
 
@@ -384,14 +387,13 @@ namespace ME.ECS.Views.Providers {
                 };
                 var handle = job.Schedule(list.Length, 16);
                 handle.Complete();
-                UnityDrawMeshProvider.currentList = null;
 
             } else {
 
                 for (int j = 0; j < list.Length; ++j) {
 
                     var item = list[j];
-                    for (int i = 0, count = item.Count; i < count; ++i) {
+                    for (int i = 0, count = item.Length; i < count; ++i) {
 
                         var instance = item[i] as DrawMeshViewBase;
                         if (instance == null) continue;
@@ -406,7 +408,7 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public override void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {
+        public override void Update(BufferArray<Views> list, float deltaTime) {
             
             this.UpdateViews(list, deltaTime);
             this.ValidateMatrices();
@@ -420,7 +422,7 @@ namespace ME.ECS.Views.Providers {
                 for (var id = 0; id < list.Length; ++id) {
                     
                     var itemsList = list[id];
-                    var count = itemsList.Count;
+                    var count = itemsList.Length;
                     for (int i = 0; i < count; ++i) {
 
                         var view = (DrawMeshViewBase)itemsList[i];
@@ -445,7 +447,7 @@ namespace ME.ECS.Views.Providers {
                     }
                 }
 
-                if (mesh != null && material != null) UnityEngine.Graphics.DrawMeshInstanced(mesh, 0, psItem.material, this.matrices, k);
+                if (mesh != null && material != null) UnityEngine.Graphics.DrawMeshInstanced(mesh, 0, psItem.material, this.matrices.arr, k);
 
             }
             
@@ -454,6 +456,8 @@ namespace ME.ECS.Views.Providers {
     }
 
     public struct UnityDrawMeshProviderInitializer : IViewsProviderInitializer {
+
+        int System.IComparable<IViewsProviderInitializerBase>.CompareTo(IViewsProviderInitializerBase other) { return 0; }
 
         public IViewsProvider Create() {
 

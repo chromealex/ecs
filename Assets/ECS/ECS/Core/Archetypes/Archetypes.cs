@@ -1,6 +1,8 @@
 ﻿
 namespace ME.ECS {
 
+    using Collections;
+    
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -30,13 +32,13 @@ namespace ME.ECS {
     #endif
     public class ArchetypeEntities : IPoolableRecycle {
 
-        private Archetype[] prevTypes;
-        private Archetype[] types;
+        private BufferArray<Archetype> prevTypes;
+        private BufferArray<Archetype> types;
         
         public void OnRecycle() {
 
-            if (this.prevTypes != null) PoolArray<Archetype>.Recycle(ref this.prevTypes);
-            if (this.types != null) PoolArray<Archetype>.Recycle(ref this.types);
+            PoolArray<Archetype>.Recycle(ref this.prevTypes);
+            PoolArray<Archetype>.Recycle(ref this.types);
             
         }
 
@@ -44,9 +46,13 @@ namespace ME.ECS {
         public void Validate(in Entity entity) {
 
             var id = entity.id;
-            ArrayUtils.Resize(id, ref this.types);
-            ArrayUtils.Resize(id, ref this.prevTypes);
-            
+            if (ArrayUtils.WillResize(in id, ref this.types) == true) {
+                
+                ArrayUtils.Resize(id, ref this.types);
+                ArrayUtils.Resize(id, ref this.prevTypes);
+                
+            }
+
         }
 
         public void CopyFrom(ArchetypeEntities other) {

@@ -72,6 +72,8 @@ namespace ME.ECS.Views.Providers {
     #endif
     public abstract class NoView : NoViewBase, IView {
 
+        int System.IComparable<IView>.CompareTo(IView other) { return 0; }
+
         public Entity entity { get; set; }
         public ViewId prefabSourceId { get; set; }
         public Tick creationTick { get; set; }
@@ -149,9 +151,9 @@ namespace ME.ECS.Views.Providers {
             public void Execute(int index) {
 
                 var list = NoViewProvider.currentList[index];
-                if (list == null) return;
+                if (list.mainView == null) return;
                 
-                for (int i = 0, count = list.Count; i < count; ++i) {
+                for (int i = 0, count = list.Length; i < count; ++i) {
 
                     var instance = list[i] as NoView;
                     if (instance == null) continue;
@@ -164,10 +166,9 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        private static System.Collections.Generic.List<IView>[] currentList;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void UpdateViews(System.Collections.Generic.List<IView>[] list, float deltaTime) {
-
+        private static ME.ECS.Collections.BufferArray<Views> currentList;
+        public override void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime) {
+            
             if (this.world.settings.useJobsForViews == true && this.world.settings.viewsSettings.unityNoViewProviderDisableJobs == false) {
 
                 NoViewProvider.currentList = list;
@@ -177,14 +178,13 @@ namespace ME.ECS.Views.Providers {
                 };
                 var handle = job.Schedule(list.Length, 16);
                 handle.Complete();
-                NoViewProvider.currentList = null;
 
             } else {
 
                 for (int j = 0; j < list.Length; ++j) {
 
                     var item = list[j];
-                    for (int i = 0, count = item.Count; i < count; ++i) {
+                    for (int i = 0, count = item.Length; i < count; ++i) {
 
                         var instance = item[i] as NoView;
                         if (instance == null) continue;
@@ -196,18 +196,14 @@ namespace ME.ECS.Views.Providers {
                 }
                 
             }
-            
-        }
 
-        public override void Update(System.Collections.Generic.List<IView>[] list, float deltaTime) {
-            
-            this.UpdateViews(list, deltaTime);
-            
         }
 
     }
 
     public struct NoViewProviderInitializer : IViewsProviderInitializer {
+
+        int System.IComparable<IViewsProviderInitializerBase>.CompareTo(IViewsProviderInitializerBase other) { return 0; }
 
         public IViewsProvider Create() {
 

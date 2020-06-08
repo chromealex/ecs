@@ -108,15 +108,15 @@ namespace ME.ECS {
         internal ICheckpointCollector checkpointCollector;
         
         // State cache:
-        internal Storage storagesCache;
-        internal FiltersStorage filtersStorage;
+        //internal Storage storagesCache;
+        //internal FiltersStorage filtersStorage;
 
         internal float tickTime;
         internal double timeSinceStart;
         public bool isActive;
 
         public ISystemBase currentSystemContext { get; internal set; }
-        public SortedList<int, IFilter> currentSystemContextFiltersUsed { get; internal set; }
+        public BufferArray<bool> currentSystemContextFiltersUsed;
 
         internal Tick simulationFromTick;
         internal Tick simulationToTick;
@@ -146,7 +146,7 @@ namespace ME.ECS {
         
         private static class FiltersDirectCache {
 
-            internal static bool[][] dic = new bool[World.WORLDS_CAPACITY][];
+            internal static BufferArray<BufferArray<bool>> dic = new BufferArray<BufferArray<bool>>(null, 0);//new bool[World.WORLDS_CAPACITY][];
 
         }
 
@@ -160,15 +160,16 @@ namespace ME.ECS {
         }
         
         private State resetState;
-        private State currentState;
+        internal State currentState;
+        private uint seed;
 
-        public void SetCurrentSystemContextFiltersUsed(SortedList<int, IFilter> currentSystemContextFiltersUsed) {
+        public void SetCurrentSystemContextFiltersUsed(BufferArray<bool> currentSystemContextFiltersUsed) {
 
             this.currentSystemContextFiltersUsed = currentSystemContextFiltersUsed;
 
         }
 
-        public SortedList<int, IFilter> GetCurrentSystemContextFiltersUsed() {
+        public BufferArray<bool> GetCurrentSystemContextFiltersUsed() {
 
             return this.currentSystemContextFiltersUsed;
 
@@ -188,13 +189,16 @@ namespace ME.ECS {
             this.worldThread = System.Threading.Thread.CurrentThread;
             #endif
 
-            this.currentSystemContextFiltersUsed = PoolSortedList<int, IFilter>.Spawn(World.FILTERS_CACHE_CAPACITY);
+            #if UNITY_EDITOR
+            Unity.Jobs.LowLevel.Unsafe.JobsUtility.JobDebuggerEnabled = false;
+            #endif
+            
+            this.currentSystemContextFiltersUsed = PoolArray<bool>.Spawn(World.FILTERS_CACHE_CAPACITY);
             
             this.currentState = default;
             this.resetState = default;
             this.currentStep = default;
             this.checkpointCollector = default;
-            this.filtersStorage = default;
             this.tickTime = default;
             this.timeSinceStart = default;
             
@@ -204,8 +208,7 @@ namespace ME.ECS {
             this.statesFeatures = PoolList<ModuleState>.Spawn(World.FEATURES_CAPACITY);
             this.statesSystems = PoolList<ModuleState>.Spawn(World.SYSTEMS_CAPACITY);
             this.statesModules = PoolList<ModuleState>.Spawn(World.MODULES_CAPACITY);
-            this.storagesCache = PoolClass<Storage>.Spawn();
-
+            
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
 
             this.OnSpawnStructComponents();
@@ -225,8 +228,7 @@ namespace ME.ECS {
         
         void IPoolableRecycle.OnRecycle() {
             
-            PoolSortedList<int, IFilter>.Recycle(this.currentSystemContextFiltersUsed);
-            this.currentSystemContextFiltersUsed = null;
+            PoolArray<bool>.Recycle(ref this.currentSystemContextFiltersUsed);
             
             #if WORLD_THREAD_CHECK
             this.worldThread = null;
@@ -237,8 +239,8 @@ namespace ME.ECS {
             this.OnRecycleComponents();
             this.OnRecycleStructComponents();
             
-            if (FiltersDirectCache.dic[this.id] != null) PoolArray<bool>.Recycle(ref FiltersDirectCache.dic[this.id]);
-            PoolClass<FiltersStorage>.Recycle(ref this.filtersStorage);
+            PoolArray<bool>.Recycle(ref FiltersDirectCache.dic[this.id]);
+            //PoolClass<FiltersStorage>.Recycle(ref this.filtersStorage);
 
             /*for (int i = 0; i < this.features.Count; ++i) {
                 
@@ -273,8 +275,6 @@ namespace ME.ECS {
             PoolList<ModuleState>.Recycle(ref this.statesSystems);
             PoolList<ModuleState>.Recycle(ref this.statesFeatures);
             
-            PoolClass<Storage>.Recycle(ref this.storagesCache);
-
         }
 
         public void SetSettings(WorldSettings settings) {
@@ -396,7 +396,7 @@ namespace ME.ECS {
             #if WORLD_THREAD_CHECK
             if (this.worldThread != System.Threading.Thread.CurrentThread) {
                 
-                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disable WORLD_THREAD_CHECK.");
+                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disabling WORLD_THREAD_CHECK.");
 
             }
             #endif
@@ -490,12 +490,30 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int GetSeedValue() {
 
-            return (int)this.GetCurrentTick();
+            return this.GetCurrentTick();
             
         }
 
+        public void SetSeed(uint seed) {
+
+            this.seed = seed;
+
+            if (this.currentState != null) {
+
+                #if UNITY_MATHEMATICS
+                var rnd = new Unity.Mathematics.Random(this.seed);
+                this.currentState.randomState = rnd.state;
+                #else
+                UnityEngine.Random.InitState((int)this.seed);
+                this.currentState.randomState = UnityEngine.Random.state;
+                #endif
+
+            }
+
+        }
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void IWorldBase.SetTickTime(float tickTime) {
+        public void SetTickTime(float tickTime) {
 
             this.tickTime = tickTime;
 
@@ -523,7 +541,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void IWorldBase.SetTimeSinceStart(double time) {
+        public void SetTimeSinceStart(double time) {
 
             this.timeSinceStart = time;
 
@@ -552,28 +570,29 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public IFilter GetFilter(int id) {
+        public Filter GetFilter(int id) {
 
-            return (Filter)this.filtersStorage.filters[id - 1]; //.Get(id);
-
-        }
-
-        internal IFilter GetFilterByHashCode(int hashCode) {
-
-            return (IFilter)this.filtersStorage.GetByHashCode(hashCode);
+            return (Filter)this.currentState.filters.filters[id - 1]; //.Get(id);
 
         }
 
-        public IFilter GetFilterEquals(IFilter other) {
+        internal Filter GetFilterByHashCode(int hashCode) {
+
+            return this.currentState.filters.GetByHashCode(hashCode);
+
+        }
+
+        public Filter GetFilterEquals(Filter other) {
             
-            return (IFilter)this.filtersStorage.GetFilterEquals(other);
+            return this.currentState.filters.GetFilterEquals(other);
             
         }
 
-        public bool HasFilter(IFilter filterRef) {
+        public bool HasFilter(Filter filterRef) {
             
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
             ref var dic = ref FiltersDirectCache.dic[this.id];
-            if (dic != null) {
+            if (dic.arr != null) {
             
                 return dic[filterRef.id - 1] == true;
 
@@ -586,8 +605,9 @@ namespace ME.ECS {
         public bool HasFilter(int id) {
 
             var idx = id - 1;
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
             ref var dic = ref FiltersDirectCache.dic[this.id];
-            if (dic != null && idx >= 0 && idx < dic.Length) {
+            if (dic.arr != null && idx >= 0 && idx < dic.Length) {
             
                 return dic[idx] == true;
 
@@ -597,10 +617,13 @@ namespace ME.ECS {
 
         }
 
-        public void Register(IFilter filterRef) {
+        public void Register(Filter filterRef) {
 
-            this.filtersStorage.Register(filterRef);
+            this.currentState.filters.Register(filterRef);
 
+            ArrayUtils.Resize(filterRef.id, ref this.currentSystemContextFiltersUsed);
+
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
             ref var dic = ref FiltersDirectCache.dic[this.id];
             ArrayUtils.Resize(filterRef.id - 1, ref dic);
             dic[filterRef.id - 1] = true;
@@ -613,8 +636,8 @@ namespace ME.ECS {
                     if (allEntities.IsFree(j) == true) continue;
 
                     ComponentsInitializerWorld.Init(in item);
-                    this.UpdateFilters(item);
-
+                    this.UpdateFiltersOnFilterCreate(item);
+                    
                 }
                 
             }
@@ -638,12 +661,13 @@ namespace ME.ECS {
             
             if (freeze == false) {
 
-                this.filtersStorage = filtersRef;
+                //this.filtersStorage = filtersRef;
                 
+                ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
                 ref var dic = ref FiltersDirectCache.dic[this.id];
-                if (dic != null) {
+                if (dic.arr != null) {
                     
-                    System.Array.Clear(dic, 0, dic.Length);
+                    System.Array.Clear(dic.arr, 0, dic.Length);
                     for (int i = 0; i < filtersRef.filters.Length; ++i) {
 
                         var filterRef = filtersRef.filters[i];
@@ -677,12 +701,6 @@ namespace ME.ECS {
 
             }
 
-            if (freeze == false) {
-
-                this.componentsCache = componentsRef;
-                
-            }
-
             /*if (restore == true) {
 
                 var data = componentsRef.GetData();
@@ -714,8 +732,6 @@ namespace ME.ECS {
             }
 
             if (freeze == false) {
-
-                this.storagesCache = storageRef;
 
                 if (this.sharedEntity.id == 0 && this.sharedEntityInitialized == false) {
 
@@ -791,14 +807,8 @@ namespace ME.ECS {
             this.currentState = state;
             state.Initialize(this, freeze: false, restore: true);
 
-            #if UNITY_MATHEMATICS
-            var rnd = new Unity.Mathematics.Random(1u);
-            state.randomState = rnd.state;
-            #else
-            UnityEngine.Random.InitState(1);
-            state.randomState = UnityEngine.Random.state;
-            #endif
-
+            this.SetSeed(this.seed);
+            
         }
 
         public void SetStateDirect(State state) {
@@ -845,25 +855,66 @@ namespace ME.ECS {
 
         public void UpdateAllFilters() {
             
-            var filters = this.filtersStorage.GetData();
-            foreach (var filter in filters) {
-
-                filter.Update();
-
+            var filters = this.currentState.filters.GetData();
+            for (int i = 0; i < filters.Length; ++i) {
+                
+                filters[i].Update();
+                
             }
-
+            
         }
 
-        public void UpdateFilters(Entity entity) {
+        public void CreateEntityInFilters(Entity entity) {
 
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
             ref var dic = ref FiltersDirectCache.dic[this.id];
-            if (dic != null) {
+            if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
                     if (dic[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = (IFilterInternal)this.GetFilter(filterId);
+                    var filter = this.GetFilter(filterId);
+                    filter.OnEntityCreate(entity);
+
+                }
+
+            }
+
+        }
+        
+        public void UpdateFiltersOnFilterCreate(Entity entity) {
+
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
+            ref var dic = ref FiltersDirectCache.dic[this.id];
+            if (dic.arr != null) {
+
+                for (int i = 0; i < dic.Length; ++i) {
+
+                    if (dic[i] == false) continue;
+                    var filterId = i + 1;
+                    var filter = this.GetFilter(filterId);
+                    filter.OnEntityCreate(entity);
+                    if (filter.IsForEntity(entity) == false) continue;
+                    filter.OnUpdate(entity);
+
+                }
+
+            }
+
+        }
+        
+        public void UpdateFilters(Entity entity) {
+
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
+            ref var dic = ref FiltersDirectCache.dic[this.id];
+            if (dic.arr != null) {
+
+                for (int i = 0; i < dic.Length; ++i) {
+
+                    if (dic[i] == false) continue;
+                    var filterId = i + 1;
+                    var filter = this.GetFilter(filterId);
                     if (filter.IsForEntity(entity) == false) continue;
                     filter.OnUpdate(entity);
 
@@ -875,14 +926,15 @@ namespace ME.ECS {
 
         public void AddComponentToFilter(Entity entity) {
             
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
             ref var dic = ref FiltersDirectCache.dic[this.id];
-            if (dic != null) {
+            if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
                     if (dic[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = (IFilterInternal)this.GetFilter(filterId);
+                    var filter = this.GetFilter(filterId);
                     if (filter.IsForEntity(entity) == false) continue;
                     filter.OnAddComponent(entity);
 
@@ -894,14 +946,15 @@ namespace ME.ECS {
 
         public void RemoveComponentFromFilter(Entity entity) {
             
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
             ref var dic = ref FiltersDirectCache.dic[this.id];
-            if (dic != null) {
+            if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
                     if (dic[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = (IFilterInternal)this.GetFilter(filterId);
+                    var filter = this.GetFilter(filterId);
                     if (filter.IsForEntity(entity) == false) continue;
                     filter.OnRemoveComponent(entity);
 
@@ -914,14 +967,16 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RemoveFromFilters_INTERNAL(Entity entity) {
             
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
             ref var dic = ref FiltersDirectCache.dic[this.id];
-            if (dic != null) {
+            if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
                     if (dic[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = (IFilterInternal)this.GetFilter(filterId);
+                    var filter = this.GetFilter(filterId);
+                    filter.OnEntityDestroy(entity);
                     if (filter.IsForEntity(entity) == false) continue;
                     filter.OnRemoveEntity(entity);
 
@@ -956,15 +1011,16 @@ namespace ME.ECS {
         public Entity AddEntity(string name = null) {
 
             var entityVersion = this.CreateNewEntity();
-            ref var entitiesList = ref this.storagesCache.GetData();
+            ref var entitiesList = ref this.currentState.storage.GetData();
             var nextIndex = entitiesList.GetNextIndex();
             var entity = new Entity(nextIndex, entityVersion);
             entitiesList.Add(entity);
 
             //this.AddToFilters<TEntity>(data.entity); // Why we need to add empty entity into filters?
             this.CreateEntityPlugins(entity);
+            this.CreateEntityInFilters(entity);
             this.UpdateFilters(entity);
-
+            
             if (name != null) {
 
                 entity.SetData(new ME.ECS.Name.Name() {
@@ -979,7 +1035,7 @@ namespace ME.ECS {
 
         public bool ForEachEntity(out RefList<Entity> output) {
 
-            output = this.storagesCache.GetData();
+            output = this.currentState.storage.GetData();
             return output != null;
             
         }
@@ -1013,7 +1069,7 @@ namespace ME.ECS {
 
         public bool RemoveEntity(Entity entity) {
 
-            var data = this.storagesCache.GetData();
+            var data = this.currentState.storage.GetData();
             if (data.IsFree(entity.id) == false) {
 
                 //var entityInStorage = data[entity.id];
@@ -1617,8 +1673,9 @@ namespace ME.ECS {
             void Unity.Jobs.IJobParallelFor.Execute(int index) {
 
                 if (Worlds.currentWorld.currentSystemContext is ISystemFilter systemContextBase) {
-                    
-                    systemContextBase.AdvanceTick(this.entities[index], in this.deltaTime);
+
+                    var ent = this.entities[index];
+                    if (ent.version > 0) systemContextBase.AdvanceTick(this.entities[index], in this.deltaTime);
                     
                 }
 
@@ -1627,6 +1684,25 @@ namespace ME.ECS {
 
         }
 
+        /*[Unity.Burst.BurstCompileAttribute]
+        private unsafe struct ForeachFilterJobBurst : Unity.Jobs.IJobParallelFor {
+
+            [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestrictionAttribute]
+            public void* bws;
+            public Unity.Burst.FunctionPointer<SystemFilterAdvanceTick> function;
+            public Unity.Collections.NativeArray<Entity> entities;
+            public float deltaTime;
+
+            void Unity.Jobs.IJobParallelFor.Execute(int index) {
+
+                this.function.Invoke(this.entities[index], this.deltaTime, this.bws);
+                
+            }
+
+        }
+
+        public unsafe delegate void SystemFilterAdvanceTick(in Entity entity, in float deltaTime, void* burstWorldStructComponentsAccess);*/
+        
         public void Simulate(Tick from, Tick to) {
             
             if (from > to) {
@@ -1639,7 +1715,7 @@ namespace ME.ECS {
             var state = this.GetState();
 
             //UnityEngine.Debug.Log("Simulate " + from + " to " + to);
-            var fixedDeltaTime = ((IWorldBase)this).GetTickTime();
+            var fixedDeltaTime = this.GetTickTime();
             for (state.tick = from; state.tick < to; ++state.tick) {
 
                 ////////////////
@@ -1721,8 +1797,38 @@ namespace ME.ECS {
 
                             var system = this.systems[i];
                             this.currentSystemContext = system;
-                            this.currentSystemContextFiltersUsed.Clear();
+                            System.Array.Clear(this.currentSystemContextFiltersUsed.arr, 0, this.currentSystemContextFiltersUsed.Length);
                             if (system is ISystemFilter sysFilter) {
+
+                                /*if (sysFilter is IAdvanceTickBurst advTick) {
+
+                                    // Under the development process
+                                    // This should not used right now
+                                    
+                                    var functionPointer = Unity.Burst.BurstCompiler.CompileFunctionPointer(advTick.GetAdvanceTickForBurst());
+                                    var arrEntities = sysFilter.filter.GetArray();
+                                    using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities.arr, Unity.Collections.Allocator.TempJob)) {
+
+                                        var length = arrEntities.Length;
+                                        var burstWorldStructComponentsAccess = new BurstWorldStructComponentsAccess();
+                                        unsafe {
+
+                                            var bws = Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref burstWorldStructComponentsAccess);
+                                            PoolArray<Entity>.Recycle(ref arrEntities);
+                                            var job = new ForeachFilterJobBurst() {
+                                                deltaTime = fixedDeltaTime,
+                                                entities = arr,
+                                                function = functionPointer,
+                                                bws = bws
+                                            };
+                                            var jobHandle = job.Schedule(length, sysFilter.jobsBatchCount);
+                                            jobHandle.Complete();
+                                            
+                                        }
+
+                                    }
+                                    
+                                }*/
 
                                 sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
                                 if (sysFilter.filter != null) {
@@ -1731,14 +1837,15 @@ namespace ME.ECS {
 
                                         //sysFilter.filter.SetForEachMode(true);
                                         var arrEntities = sysFilter.filter.GetArray();
-                                        using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities, Unity.Collections.Allocator.TempJob)) {
+                                        using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities.arr, Unity.Collections.Allocator.TempJob)) {
 
-                                            PoolArray<Entity>.Recycle(ref arrEntities, checkBlockSize: false);
+                                            var length = arrEntities.Length;
+                                            PoolArray<Entity>.Recycle(ref arrEntities);
                                             var job = new ForeachFilterJob() {
                                                 deltaTime = fixedDeltaTime,
                                                 entities = arr
                                             };
-                                            var jobHandle = job.Schedule(sysFilter.filter.Count, sysFilter.jobsBatchCount);
+                                            var jobHandle = job.Schedule(length, sysFilter.jobsBatchCount);
                                             jobHandle.Complete();
 
                                         }
@@ -1750,7 +1857,7 @@ namespace ME.ECS {
 
                                             foreach (var entity in sysFilter.filter) {
 
-                                                sysFilterContext.AdvanceTick(in entity, in fixedDeltaTime);
+                                                if (entity.version > 0) sysFilterContext.AdvanceTick(in entity, in fixedDeltaTime);
 
                                             }
 
@@ -1760,9 +1867,7 @@ namespace ME.ECS {
 
                                 }
 
-                            }
-
-                            if (system is IAdvanceTick sysBase) {
+                            } else if (system is IAdvanceTick sysBase) {
                                 
                                 sysBase.AdvanceTick(in fixedDeltaTime);
                                 
@@ -1770,11 +1875,15 @@ namespace ME.ECS {
 
                             this.currentSystemContext = null;
 
-                            var usedFilters = this.currentSystemContextFiltersUsed.Values;
-                            for (int f = 0, fCount = usedFilters.Count; f < fCount; ++f) {
+                            var usedFilters = this.currentSystemContextFiltersUsed;
+                            for (int f = 1, cnt = usedFilters.Length; f < cnt; ++f) {
 
-                                var filter = usedFilters[f];
-                                filter.ApplyAllRequests();
+                                if (usedFilters[f] == true) {
+
+                                    var filter = this.GetFilter(f);
+                                    filter.ApplyAllRequests();
+
+                                }
 
                             }
 
@@ -1795,7 +1904,7 @@ namespace ME.ECS {
                 this.currentStep &= ~WorldStep.SystemsLogicTick;
                 ////////////////
 
-                this.storagesCache.ApplyPrepared();
+                this.currentState.storage.ApplyPrepared();
 
                 /*#if CHECKPOINT_COLLECTOR
                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);

@@ -7,7 +7,7 @@ namespace ME.ECS {
     public class EntityDebugComponent : MonoBehaviour {
 
         public Entity entity;
-        public IWorldBase world;
+        public World world;
         public bool hasName;
 
     }

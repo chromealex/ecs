@@ -28,10 +28,10 @@ namespace ME.ECS {
         public Tick tick { get; set; }
         public RandomState randomState { get; set; }
 
-        private FiltersStorage filters;
-        private StructComponentsContainer structComponents;
-        private Storage storage;
-        private Components components;
+        internal FiltersStorage filters;
+        internal StructComponentsContainer structComponents;
+        internal Storage storage;
+        internal Components components;
         
         /// <summary>
         /// Return most unique hash

@@ -196,8 +196,10 @@ namespace ME.ECSEditor {
 		                
 		                isUsed = usedComponents.Contains(type);
 		                var registries = componentsStructStorage.GetAllRegistries();
-		                foreach (var registry in registries) {
-
+		                for (int i = 0; i < registries.Length; ++i) {
+		                
+			                var registry = registries[i];
+			                if (registry == null) continue;
 			                if (registry.HasType(addType) == true) {
 
 				                if (isUsed == true) {

@@ -834,10 +834,10 @@ namespace ME.ECSEditor {
         }
 
         private Graph graph;
-        private IWorldBase world;
+        private World world;
         private CheckpointCollector checkpointCollector;
         
-        public WorldGraph(IWorldBase world) {
+        public WorldGraph(World world) {
 
             if (world == null) return;
             
@@ -868,7 +868,7 @@ namespace ME.ECSEditor {
 
         }
 
-        private Graph CreateGraph(IWorldBase world) {
+        private Graph CreateGraph(World world) {
 
             if (world == null) return null;
             

@@ -22,8 +22,8 @@ namespace #NAMESPACE# {
         
         bool ISystemFilter.jobs => false;
         int ISystemFilter.jobsBatchCount => 64;
-        IFilter ISystemFilter.filter { get; set; }
-        IFilter ISystemFilter.CreateFilter() {
+        Filter ISystemFilter.filter { get; set; }
+        Filter ISystemFilter.CreateFilter() {
             
             return Filter.Create("Filter-#SCRIPTNAME#").Push();
             

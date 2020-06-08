@@ -115,7 +115,7 @@ namespace ME.ECS.Collections {
     /// the same time. 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class HashSetCopyable<T> : ICollection<T>, ISerializable, IDeserializationCallback, IReadOnlyCollection<T>, IPoolableRecycle, IPoolableSpawn {
+    public class HashSetCopyable<T> : ICollection<T>, IReadOnlyCollection<T>, IPoolableRecycle, IPoolableSpawn {
 
         // store lower 31 bits of hash code
         private const int Lower31BitMask = 0x7FFFFFFF;
@@ -136,8 +136,8 @@ namespace ME.ECS.Collections {
         private const String VersionName = "Version";
         #endif
 
-        private int[] m_buckets;
-        private Slot[] m_slots;
+        private BufferArray<int> m_buckets;
+        private BufferArray<Slot> m_slots;
         private int m_count;
         private int m_lastIndex;
         private int m_freeList;
@@ -155,6 +155,13 @@ namespace ME.ECS.Collections {
 
         public HashSetCopyable(int capacity)
             : this(capacity, EqualityComparer<T>.Default) { }
+
+        public HashSetCopyable(HashSetCopyable<T> other)
+            : this(EqualityComparer<T>.Default) {
+            
+            this.CopyFrom(other);
+            
+        }
 
         public HashSetCopyable(IEqualityComparer<T> comparer) {
             if (comparer == null) {
@@ -189,7 +196,101 @@ namespace ME.ECS.Collections {
             }
         }
 
+        public void OnSpawn() {
+
+            this.m_count = 0;
+            this.m_lastIndex = 0;
+            this.m_freeList = -1;
+            this.m_version = 0;
+            
+            this.m_buckets = new BufferArray<int>(null, 0);
+            this.m_slots = new BufferArray<Slot>(null, 0);
+            
+        }
+
+        public void OnRecycle() {
+
+            this.m_count = 0;
+            this.m_lastIndex = 0;
+            this.m_freeList = -1;
+            this.m_version = 0;
+            
+            PoolArray<int>.Recycle(ref this.m_buckets);
+            PoolArray<Slot>.Recycle(ref this.m_slots);
+            
+        }
+
         public void CopyFrom(HashSetCopyable<T> other) {
+            
+            ArrayUtils.Copy(other.m_buckets, ref this.m_buckets);
+            ArrayUtils.Copy(other.m_slots, ref this.m_slots);
+            this.m_count = other.m_count;
+            this.m_lastIndex = other.m_lastIndex;
+            this.m_freeList = other.m_freeList;
+            this.m_comparer = other.m_comparer;
+            this.m_version = other.m_version;
+            
+            /*
+            this.Clear();
+            foreach (var item in other) {
+
+                this.Add(item);
+
+            }*/
+            
+            
+            /*if (this.m_comparer == null) {
+                this.m_comparer = EqualityComparer<T>.Default;
+            }
+ 
+            this.m_comparer = source.m_comparer;
+            m_lastIndex = 0;
+            m_count = 0;
+            m_freeList = -1;
+            m_version = 0;
+            
+            int count = source.m_count;
+            if (count == 0) {
+                // As well as short-circuiting on the rest of the work done,
+                // this avoids errors from trying to access otherAsHashSet.m_buckets
+                // or otherAsHashSet.m_slots when they aren't initialized.
+                this.Clear();
+                return;
+            }
+ 
+            int capacity = source.m_buckets.Length;
+            int threshold = HashHelpers.ExpandPrime(count + 1);
+ 
+            if (threshold >= capacity) {
+                
+                ArrayUtils.Copy(source.m_buckets, ref this.m_buckets);
+                ArrayUtils.Copy(source.m_slots, ref this.m_slots);
+                //m_buckets = (int[])source.m_buckets.Clone();
+                //m_slots = (Slot[])source.m_slots.Clone();
+ 
+                m_lastIndex = source.m_lastIndex;
+                m_freeList = source.m_freeList;
+            }
+            else {
+                int lastIndex = source.m_lastIndex;
+                Slot[] slots = source.m_slots;
+                Initialize(count);
+                int index = 0;
+                for (int i = 0; i < lastIndex; ++i)
+                {
+                    int hashCode = slots[i].hashCode;
+                    if (hashCode >= 0)
+                    {
+                        AddValue(index, hashCode, slots[i].value);
+                        ++index;
+                    }
+                }
+                m_lastIndex = index;
+            }
+            m_count = count;*/
+        }
+        
+        /*public void CopyFrom(HashSetCopyable<T> other) {
 
             if (this.m_buckets != null) {
                 PoolArray<int>.Recycle(ref this.m_buckets);
@@ -223,7 +324,7 @@ namespace ME.ECS.Collections {
             this.m_comparer = other.m_comparer;
             this.m_version = other.m_version;
 
-        }
+        }*/
         #endregion
 
         #region ICollection<T> methods
@@ -245,8 +346,8 @@ namespace ME.ECS.Collections {
             if (this.m_lastIndex > 0) {
                 // clear the elements so that the gc can reclaim the references.
                 // clear only up to m_lastIndex for m_slots 
-                Array.Clear(this.m_slots, 0, this.m_lastIndex);
-                Array.Clear(this.m_buckets, 0, this.m_buckets.Length);
+                Array.Clear(this.m_slots.arr, 0, this.m_lastIndex);
+                Array.Clear(this.m_buckets.arr, 0, this.m_buckets.Length);
                 this.m_lastIndex = 0;
                 this.m_count = 0;
                 this.m_freeList = -1;
@@ -262,7 +363,7 @@ namespace ME.ECS.Collections {
         /// <returns>true if item contained; false if not</returns>
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Contains(T item) {
-            if (this.m_buckets != null) {
+            if (this.m_count > 0 && this.m_buckets.arr != null) {
                 var hashCode = this.m_comparer.GetHashCode(item) & HashSetCopyable<T>.Lower31BitMask;//this.InternalGetHashCode(item);
                 // see note at "HashSet" level describing why "- 1" appears in for loop
                 for (var i = this.m_buckets[hashCode % this.m_buckets.Length] - 1; i >= 0; i = this.m_slots[i].next) {
@@ -291,7 +392,7 @@ namespace ME.ECS.Collections {
         /// <param name="item">item to remove</param>
         /// <returns>true if removed; false if not (i.e. if the item wasn't in the HashSet)</returns>
         public bool Remove(T item) {
-            if (this.m_buckets != null) {
+            if (this.m_buckets.arr != null) {
                 var hashCode = this.InternalGetHashCode(item);
                 var bucket = hashCode % this.m_buckets.Length;
                 var last = -1;
@@ -360,72 +461,6 @@ namespace ME.ECS.Collections {
         }
         #endregion
 
-        #region ISerializable methods
-        #if !SILVERLIGHT
-        public virtual void GetObjectData(SerializationInfo info, StreamingContext context) {
-            if (info == null) {
-                throw new ArgumentNullException("info");
-            }
-
-            // need to serialize version to avoid problems with serializing while enumerating
-            info.AddValue(HashSetCopyable<T>.VersionName, this.m_version);
-
-            #if FEATURE_RANDOMIZED_STRING_HASHING && !FEATURE_NETCORE
-            info.AddValue(ComparerName, HashHelpers.GetEqualityComparerForSerialization(m_comparer), typeof(IEqualityComparer<T>));
-            #else
-            info.AddValue(HashSetCopyable<T>.ComparerName, this.m_comparer, typeof(IEqualityComparer<T>));
-            #endif
-
-            info.AddValue(HashSetCopyable<T>.CapacityName, this.m_buckets == null ? 0 : this.m_buckets.Length);
-            if (this.m_buckets != null) {
-                var array = new T[this.m_count];
-                this.CopyTo(array);
-                info.AddValue(HashSetCopyable<T>.ElementsName, array, typeof(T[]));
-            }
-        }
-        #endif
-        #endregion
-
-        #region IDeserializationCallback methods
-        #if !SILVERLIGHT
-        public virtual void OnDeserialization(Object sender) {
-
-            if (this.m_siInfo == null) {
-                // It might be necessary to call OnDeserialization from a container if the 
-                // container object also implements OnDeserialization. However, remoting will 
-                // call OnDeserialization again. We can return immediately if this function is 
-                // called twice. Note we set m_siInfo to null at the end of this method.
-                return;
-            }
-
-            var capacity = this.m_siInfo.GetInt32(HashSetCopyable<T>.CapacityName);
-            this.m_comparer = (IEqualityComparer<T>)this.m_siInfo.GetValue(HashSetCopyable<T>.ComparerName, typeof(IEqualityComparer<T>));
-            this.m_freeList = -1;
-
-            if (capacity != 0) {
-                this.m_buckets = new int[capacity];
-                this.m_slots = new Slot[capacity];
-
-                var array = (T[])this.m_siInfo.GetValue(HashSetCopyable<T>.ElementsName, typeof(T[]));
-
-                if (array == null) {
-                    throw new SerializationException();
-                }
-
-                // there are no resizes here because we already set capacity above
-                for (var i = 0; i < array.Length; i++) {
-                    this.AddIfNotPresent(array[i]);
-                }
-            } else {
-                this.m_buckets = null;
-            }
-
-            this.m_version = this.m_siInfo.GetInt32(HashSetCopyable<T>.VersionName);
-            this.m_siInfo = null;
-        }
-        #endif
-        #endregion
-
         #region HashSet methods
         /// <summary>
         /// Add item to this HashSet. Returns bool indicating whether item was added (won't be 
@@ -450,7 +485,7 @@ namespace ME.ECS.Collections {
         /// comparer functions indicate they are equal.
         /// </remarks>
         public bool TryGetValue(T equalValue, out T actualValue) {
-            if (this.m_buckets != null) {
+            if (this.m_buckets.arr != null) {
                 var i = this.InternalIndexOf(equalValue);
                 if (i >= 0) {
                     actualValue = this.m_slots[i].value;
@@ -641,30 +676,6 @@ namespace ME.ECS.Collections {
         }
         #endregion
 
-        public void OnSpawn() {
-
-            this.m_count = 0;
-            this.m_lastIndex = 0;
-            this.m_freeList = -1;
-            this.m_version = 0;
-            
-            this.m_buckets = null;
-            this.m_slots = null;
-            
-        }
-
-        public void OnRecycle() {
-
-            this.m_count = 0;
-            this.m_lastIndex = 0;
-            this.m_freeList = -1;
-            this.m_version = 0;
-            
-            if (this.m_buckets != null) PoolArray<int>.Recycle(ref this.m_buckets);
-            if (this.m_slots != null) PoolArray<Slot>.Recycle(ref this.m_slots);
-            
-        }
-
         #region Helper methods
         /// <summary>
         /// Initializes buckets and slots arrays. Uses suggested capacity by finding next prime
@@ -676,6 +687,9 @@ namespace ME.ECS.Collections {
 
             var size = HashSetCopyableHashHelpers.GetPrime(capacity);
 
+            PoolArray<int>.Recycle(ref this.m_buckets);
+            PoolArray<Slot>.Recycle(ref this.m_slots);
+            
             this.m_buckets = PoolArray<int>.Spawn(size);
             this.m_slots = PoolArray<Slot>.Spawn(size);
         }
@@ -706,9 +720,9 @@ namespace ME.ECS.Collections {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void SetCapacity(int newSize, bool forceNewHashCodes) {
             var newSlots = PoolArray<Slot>.Spawn(newSize);
-            if (this.m_slots != null) {
-                Array.Copy(this.m_slots, 0, newSlots, 0, this.m_lastIndex);
-                PoolArray<Slot>.Recycle(this.m_slots);
+            if (this.m_slots.arr != null) {
+                Array.Copy(this.m_slots.arr, 0, newSlots.arr, 0, this.m_lastIndex);
+                PoolArray<Slot>.Recycle(ref this.m_slots);
             }
 
             if (forceNewHashCodes) {
@@ -720,7 +734,7 @@ namespace ME.ECS.Collections {
             }
 
             var newBuckets = PoolArray<int>.Spawn(newSize);
-            if (this.m_buckets != null) {
+            if (this.m_buckets.arr != null) {
                 PoolArray<int>.Recycle(ref this.m_buckets);
             }
 
@@ -742,7 +756,7 @@ namespace ME.ECS.Collections {
         /// <returns></returns>
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool AddIfNotPresent(T value) {
-            if (this.m_buckets == null) {
+            if (this.m_buckets.arr == null) {
                 this.Initialize(0);
             }
 
@@ -1117,6 +1131,170 @@ namespace ME.ECS.Collections {
 
         }
 
+    }
+    
+    internal static class HashHelpers
+    {
+ 
+#if FEATURE_RANDOMIZED_STRING_HASHING
+        public const int HashCollisionThreshold = 100;
+        public static bool s_UseRandomizedStringHashing = String.UseRandomizedHashing();
+#endif
+ 
+        internal const Int32 HashPrime = 101;
+
+        // Table of prime numbers to use as hash table sizes. 
+        // A typical resize algorithm would pick the smallest prime number in this array
+        // that is larger than twice the previous capacity. 
+        // Suppose our Hashtable currently has capacity x and enough elements are added 
+        // such that a resize needs to occur. Resizing first computes 2x then finds the 
+        // first prime in the table greater than 2x, i.e. if primes are ordered 
+        // p_1, p_2, ..., p_i, ..., it finds p_n such that p_n-1 < 2x < p_n. 
+        // Doubling is important for preserving the asymptotic complexity of the 
+        // hashtable operations such as add.  Having a prime guarantees that double 
+        // hashing does not lead to infinite loops.  IE, your hash function will be 
+        // h1(key) + i*h2(key), 0 <= i < size.  h2 and the size must be relatively prime.
+        public static readonly int[] primes = {
+            3, 7, 11, 17, 23, 29, 37, 47, 59, 71, 89, 107, 131, 163, 197, 239, 293, 353, 431, 521, 631, 761, 919,
+            1103, 1327, 1597, 1931, 2333, 2801, 3371, 4049, 4861, 5839, 7013, 8419, 10103, 12143, 14591,
+            17519, 21023, 25229, 30293, 36353, 43627, 52361, 62851, 75431, 90523, 108631, 130363, 156437,
+            187751, 225307, 270371, 324449, 389357, 467237, 560689, 672827, 807403, 968897, 1162687, 1395263,
+            1674319, 2009191, 2411033, 2893249, 3471899, 4166287, 4999559, 5999471, 7199369};
+ 
+        public static bool IsPrime(int candidate) 
+        {
+            if ((candidate & 1) != 0) 
+            {
+                int limit = (int)Math.Sqrt (candidate);
+                for (int divisor = 3; divisor <= limit; divisor+=2)
+                {
+                    if ((candidate % divisor) == 0)
+                        return false;
+                }
+                return true;
+            }
+            return (candidate == 2);
+        }
+ 
+        public static int GetPrime(int min) 
+        {
+            for (int i = 0; i < primes.Length; i++) 
+            {
+                int prime = primes[i];
+                if (prime >= min) return prime;
+            }
+ 
+            //outside of our predefined table. 
+            //compute the hard way. 
+            for (int i = (min | 1); i < Int32.MaxValue;i+=2) 
+            {
+                if (IsPrime(i) && ((i - 1) % HashHelpers.HashPrime != 0))
+                    return i;
+            }
+            return min;
+        }
+ 
+        public static int GetMinPrime() 
+        {
+            return primes[0];
+        }
+ 
+        // Returns size of hashtable to grow to.
+        public static int ExpandPrime(int oldSize)
+        {
+            int newSize = 2 * oldSize;
+ 
+            // Allow the hashtables to grow to maximum possible size (~2G elements) before encoutering capacity overflow.
+            // Note that this check works even when _items.Length overflowed thanks to the (uint) cast
+            if ((uint)newSize > MaxPrimeArrayLength && MaxPrimeArrayLength > oldSize)
+            {
+                return MaxPrimeArrayLength;
+            }
+ 
+            return GetPrime(newSize);
+        }
+ 
+ 
+        // This is the maximum prime smaller than Array.MaxArrayLength
+        public const int MaxPrimeArrayLength = 0x7FEFFFFD;
+ 
+#if FEATURE_RANDOMIZED_STRING_HASHING
+        public static bool IsWellKnownEqualityComparer(object comparer)
+        {
+            return (comparer == null || comparer == System.Collections.Generic.EqualityComparer<string>.Default || comparer is IWellKnownStringEqualityComparer); 
+        }
+ 
+        public static IEqualityComparer GetRandomizedEqualityComparer(object comparer)
+        {
+            Contract.Assert(comparer == null || comparer == System.Collections.Generic.EqualityComparer<string>.Default || comparer is IWellKnownStringEqualityComparer); 
+ 
+            if(comparer == null) {
+                return new System.Collections.Generic.RandomizedObjectEqualityComparer();
+            } 
+ 
+            if(comparer == System.Collections.Generic.EqualityComparer<string>.Default) {
+                return new System.Collections.Generic.RandomizedStringEqualityComparer();
+            }
+ 
+            IWellKnownStringEqualityComparer cmp = comparer as IWellKnownStringEqualityComparer;
+ 
+            if(cmp != null) {
+                return cmp.GetRandomizedEqualityComparer();
+            }
+ 
+            Contract.Assert(false, "Missing case in GetRandomizedEqualityComparer!");
+ 
+            return null;
+        }
+ 
+        public static object GetEqualityComparerForSerialization(object comparer)
+        {
+            if(comparer == null)
+            {
+                return null;
+            }
+ 
+            IWellKnownStringEqualityComparer cmp = comparer as IWellKnownStringEqualityComparer;
+ 
+            if(cmp != null)
+            {
+                return cmp.GetEqualityComparerForSerialization();
+            }
+ 
+            return comparer;
+        }
+ 
+        private const int bufferSize = 1024;
+        private static RandomNumberGenerator rng;
+        private static byte[] data;
+        private static int currentIndex = bufferSize;
+        private static readonly object lockObj = new Object();
+ 
+        internal static long GetEntropy() 
+        {
+            lock(lockObj) {
+                long ret;
+ 
+                if(currentIndex == bufferSize) 
+                {
+                    if(null == rng)
+                    {
+                        rng = RandomNumberGenerator.Create();
+                        data = new byte[bufferSize];
+                        Contract.Assert(bufferSize % 8 == 0, "We increment our current index by 8, so our buffer size must be a multiple of 8");
+                    }
+ 
+                    rng.GetBytes(data);
+                    currentIndex = 0;
+                }
+ 
+                ret = BitConverter.ToInt64(data, currentIndex);
+                currentIndex += 8;
+ 
+                return ret;
+            }
+        }
+#endif // FEATURE_RANDOMIZED_STRING_HASHING
     }
 
 }

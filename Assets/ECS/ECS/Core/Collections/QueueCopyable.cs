@@ -12,7 +12,7 @@ namespace ME.ECS.Collections {
         System.Collections.ICollection,
         IReadOnlyCollection<T> where T : struct {
 
-        private T[] array;
+        private BufferArray<T> array;
         private int head; // First valid element in the queue
         private int tail; // Last valid element in the queue
         private int size; // Number of elements.
@@ -23,13 +23,13 @@ namespace ME.ECS.Collections {
         private const int SHRINK_THRESHOLD = 32;
         private const int GROW_FACTOR = 200; // double each time
         private const int DEFAULT_CAPACITY = 4;
-        private static T[] emptyArray = new T[0];
+        private static BufferArray<T> emptyArray = new BufferArray<T>(new T[0], 0);
 
         public void CopyFrom(QueueCopyable<T> other) {
 
-            if (this.array != null) PoolArray<T>.Recycle(ref this.array);
+            if (this.array.arr != null) PoolArray<T>.Recycle(ref this.array);
             this.array = PoolArray<T>.Spawn(other.array.Length);
-            System.Array.Copy(other.array, this.array, other.array.Length);
+            System.Array.Copy(other.array.arr, this.array.arr, other.array.Length);
 
             this.head = other.head;
             this.tail = other.tail;
@@ -85,10 +85,10 @@ namespace ME.ECS.Collections {
 
         public void Clear() {
             if (this.head < this.tail) {
-                Array.Clear(this.array, this.head, this.size);
+                Array.Clear(this.array.arr, this.head, this.size);
             } else {
-                Array.Clear(this.array, this.head, this.array.Length - this.head);
-                Array.Clear(this.array, 0, this.tail);
+                Array.Clear(this.array.arr, this.head, this.array.Length - this.head);
+                Array.Clear(this.array.arr, 0, this.tail);
             }
 
             this.head = 0;
@@ -105,10 +105,10 @@ namespace ME.ECS.Collections {
             }
 
             var firstPart = this.array.Length - this.head < numToCopy ? this.array.Length - this.head : numToCopy;
-            Array.Copy(this.array, this.head, array, arrayIndex, firstPart);
+            Array.Copy(this.array.arr, this.head, array, arrayIndex, firstPart);
             numToCopy -= firstPart;
             if (numToCopy > 0) {
-                Array.Copy(this.array, 0, array, arrayIndex + this.array.Length - this.head, numToCopy);
+                Array.Copy(this.array.arr, 0, array, arrayIndex + this.array.Length - this.head, numToCopy);
             }
         }
 
@@ -122,11 +122,11 @@ namespace ME.ECS.Collections {
 
             try {
                 var firstPart = this.array.Length - this.head < numToCopy ? this.array.Length - this.head : numToCopy;
-                Array.Copy(this.array, this.head, array, index, firstPart);
+                Array.Copy(this.array.arr, this.head, array, index, firstPart);
                 numToCopy -= firstPart;
 
                 if (numToCopy > 0) {
-                    Array.Copy(this.array, 0, array, index + this.array.Length - this.head, numToCopy);
+                    Array.Copy(this.array.arr, 0, array, index + this.array.Length - this.head, numToCopy);
                 }
             } catch (ArrayTypeMismatchException) { }
         }
@@ -198,14 +198,14 @@ namespace ME.ECS.Collections {
             var newarray = PoolArray<T>.Spawn(capacity);
             if (this.size > 0) {
                 if (this.head < this.tail) {
-                    Array.Copy(this.array, this.head, newarray, 0, this.size);
+                    Array.Copy(this.array.arr, this.head, newarray.arr, 0, this.size);
                 } else {
-                    Array.Copy(this.array, this.head, newarray, 0, this.array.Length - this.head);
-                    Array.Copy(this.array, 0, newarray, this.array.Length - this.head, this.tail);
+                    Array.Copy(this.array.arr, this.head, newarray.arr, 0, this.array.Length - this.head);
+                    Array.Copy(this.array.arr, 0, newarray.arr, this.array.Length - this.head, this.tail);
                 }
             }
 
-            if (this.array != null) {
+            if (this.array.arr != null) {
                 PoolArray<T>.Recycle(ref this.array);
             }
 

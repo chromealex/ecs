@@ -8,6 +8,7 @@
 
     public struct ComponentTypes<TComponent> where TComponent : IStructComponent {
 
+        public static readonly byte _;
         public static int typeId = -1;
 
     }
@@ -111,7 +112,7 @@
 
         public readonly int id;
         public readonly int version;
-
+        
         public static Entity Empty {
             get {
                 return new Entity(0, 0);

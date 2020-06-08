@@ -12,7 +12,7 @@ namespace ME.ECSEditor {
 
         public class WorldEditor {
 
-            public ME.ECS.IWorldBase world;
+            public World world;
             public bool foldout;
             public bool foldoutSystems;
             public bool foldoutModules;
@@ -648,8 +648,9 @@ namespace ME.ECSEditor {
                                     if (name != null) paramsList.Add(name.ToLower());
                                     
                                     var registries = componentsStructStorage.GetAllRegistries();
-                                    foreach (var registry in registries) {
+                                    for (int k = 0; k < registries.Length; ++k) {
 
+                                        var registry = registries[k];
                                         if (registry == null) continue;
                                         
                                         var component = registry.GetObject(entity);
@@ -816,8 +817,9 @@ namespace ME.ECSEditor {
                         var kz = 0;
                         var registries = componentsStructStorage.GetAllRegistries();
                         var sortedRegistries = new SortedDictionary<int, IStructRegistryBase>(new DuplicateKeyComparer<int>());
-                        foreach (var registry in registries) {
+                        for (int i = 0; i < registries.Length; ++i) {
 
+                            var registry = registries[i];
                             if (registry == null) {
                                 continue;
                             }
@@ -978,18 +980,16 @@ namespace ME.ECSEditor {
 
                                 if (viewsModule != null) {
 
-                                    var allViews = (List<ME.ECS.Views.IView>[])viewsModule.GetData();
+                                    var allViews = viewsModule.GetData();
                                     for (var k = 0; k < allViews.Length; ++k) {
 
                                         var key = k;
                                         if (key == entityData.id) {
 
                                             var listViews = allViews[k];
-                                            if (listViews == null) {
-                                                continue;
-                                            }
+                                            if (listViews.mainView == null) continue;
 
-                                            for (var j = 0; j < listViews.Count; ++j) {
+                                            for (var j = 0; j < listViews.Length; ++j) {
 
                                                 activeViews.Add(listViews[j]);
                                                 activeViewProviders.Add(viewsModule);
@@ -1324,8 +1324,9 @@ namespace ME.ECSEditor {
                                 });
 
                                 var filtersCount = 0;
-                                foreach (var f in filters.GetData()) {
-                                    if (f != null) ++filtersCount;
+                                var filtersArr = filters.GetData();
+                                for (int f = 0; f < filtersArr.Length; ++f) {
+                                    if (filtersArr[f] != null) ++filtersCount;
                                 }
                                 GUILayoutExt.FoldOut(ref worldEditor.foldoutFilters, "Filters (" + filtersCount.ToString() + ")", () => {
                                     
@@ -1339,8 +1340,9 @@ namespace ME.ECSEditor {
                                     GUILayoutExt.Padding(4f, () => {
 
                                         GUILayout.BeginVertical();
-                                        foreach (var filter in filters.GetData()) {
+                                        for (int f = 0; f < filtersArr.Length; ++f) {
 
+                                            var filter = filtersArr[f];
                                             if (filter == null) continue;
                                             
                                             GUILayout.BeginHorizontal();

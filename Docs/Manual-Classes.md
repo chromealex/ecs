@@ -7,11 +7,11 @@ Entities are containers with ID and Version.
 <br>
 <br>
 
-#### Components (```IComponent<TEntity>```)
+#### Components (```IComponent```)
 [How to create a component](Manual-CreatingComponents.md)
 
 Components are storing data. In ME.ECS there are 2 component types: IComponent and IStructComponent.
-IComponent could store multiple times and could be iterated by type. It is reference type and must implement CopyFrom and OnRecycle methods.
+IComponentCopyable(IComponent) could store multiple times and could be iterated by type. It is reference type and must implement CopyFrom and OnRecycle methods.
 IStructComponent could store just simple types or StackArray. It is value type.
 <br>
 <br>

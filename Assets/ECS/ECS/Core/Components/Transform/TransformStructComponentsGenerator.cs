@@ -13,6 +13,16 @@ namespace ME.ECS {
 
         }
     
+        public static void Init(in Entity entity) {
+
+            entity.ValidateData<ME.ECS.Transform.Childs>();
+            entity.ValidateData<ME.ECS.Transform.Container>();
+            
+            Transform2DComponentsInitializer.Init(in entity);
+            Transform3DComponentsInitializer.Init(in entity);
+
+        }
+
     }
 
 }

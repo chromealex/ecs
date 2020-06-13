@@ -154,6 +154,8 @@ namespace ME.ECS.Network {
 
         void IModuleBase.OnDeconstruct() {
             
+            this.OnDeInitialize();
+            
             this.UnRegisterObject(this, -1);
 
             PoolHashSet<int>.Recycle(ref this.runLocalOnly);
@@ -179,7 +181,7 @@ namespace ME.ECS.Network {
             
             if (forward == true) {
                 
-                this.SystemRPC(this, NetworkModule<TState>.PING_RPC_ID, ME.ECS.Collections.BufferArray<object>.From(new object[] { t, false }));
+                this.SystemRPC(this, NetworkModule<TState>.PING_RPC_ID, t, false);
                 
             } else {
 
@@ -193,6 +195,10 @@ namespace ME.ECS.Network {
         }
 
         protected virtual void OnInitialize() {
+            
+        }
+
+        protected virtual void OnDeInitialize() {
             
         }
 
@@ -386,9 +392,7 @@ namespace ME.ECS.Network {
                         if (entry.isEmpty == false) {
 
                             this.world.SetStateDirect(entry.state);
-                            {
-                                this.statesHistoryModule.RunEvent(evt);
-                            }
+                            this.statesHistoryModule.RunEvent(evt);
 
                         }
 
@@ -453,8 +457,7 @@ namespace ME.ECS.Network {
             if (this.registry.TryGetValue(historyEvent.rpcId, out methodInfo) == true) {
 
                 var key = MathUtils.GetKey(historyEvent.groupId, historyEvent.objId);
-                object instance;
-                if (this.keyToObjects.TryGetValue(key, out instance) == true) {
+                if (this.keyToObjects.TryGetValue(key, out var instance) == true) {
 
                     this.runEventTick = historyEvent.tick;
                     methodInfo.Invoke(instance, historyEvent.parameters);

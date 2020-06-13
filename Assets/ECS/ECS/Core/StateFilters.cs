@@ -41,9 +41,9 @@ namespace ME.ECS {
 
         }
 
-        public void RegisterInAllArchetype(Archetype archetype) {
+        public void RegisterInAllArchetype(in Archetype archetype) {
 
-            this.allFiltersArchetype.Add(archetype);
+            this.allFiltersArchetype = this.allFiltersArchetype.Add(in archetype);
 
         }
         
@@ -52,18 +52,14 @@ namespace ME.ECS {
             this.nextId = default;
             this.freeze = default;
             
-            if (this.filters.arr != null) {
-
-                for (int i = 0, count = this.filters.Length; i < count; ++i) {
-                    
-                    if (this.filters[i] == null) continue;
-                    this.filters[i].Recycle();
-
-                }
-
-                PoolArray<Filter>.Recycle(ref this.filters);
+            for (int i = 0, count = this.filters.Length; i < count; ++i) {
                 
+                if (this.filters[i] == null) continue;
+                this.filters[i].Recycle();
+
             }
+
+            PoolArray<Filter>.Recycle(ref this.filters);
             
         }
 
@@ -86,7 +82,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public ref Filter Get(int id) {
+        public ref Filter Get(in int id) {
 
             return ref this.filters[id - 1];
 
@@ -256,33 +252,49 @@ namespace ME.ECS {
             
         private readonly Filter set;
         private BufferArray<Entity>.Enumerator setEnumerator;
+        private BufferArray<Entity> arr;
             
         internal FilterEnumerator(Filter set) {
                 
             this.set = set;
-            this.setEnumerator = this.set.GetData().GetEnumerator();
+            this.arr = this.set.GetArray();
+            this.setEnumerator = this.arr.GetEnumerator();
             this.set.SetForEachMode(true);
 
         }
  
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Dispose() {
 
+            PoolArray<Entity>.Recycle(this.arr);
             this.set.SetForEachMode(false);
 
         }
  
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool MoveNext() {
-
-            do {
-                var res = this.setEnumerator.MoveNext();
-                if (res == false) return false;
-            } while (this.setEnumerator.Current == Entity.Empty);
-
-            return true;
-
+            
+            return this.setEnumerator.MoveNext();
+            
         }
  
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         public Entity Current {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return this.setEnumerator.Current;
             }
@@ -328,6 +340,8 @@ namespace ME.ECS {
         private bool forEachMode;
         private BufferArray<Entity> requests;
         private BufferArray<Entity> requestsRemoveEntity;
+        private int min;
+        private int max;
         
         private List<IFilterNode> tempNodes;
         private List<IFilterNode> tempNodesCustom;
@@ -502,8 +516,13 @@ namespace ME.ECS {
             this.archetypeContains = default;
             this.archetypeNotContains = default;
 
+            this.min = int.MaxValue;
+            this.max = int.MinValue;
+            
             #if UNITY_EDITOR
             if (this.editorTypes.arr != null) PoolArray<string>.Recycle(ref this.editorTypes);
+            if (this.editorStackTraceFile.arr != null) PoolArray<string>.Recycle(ref this.editorStackTraceFile);
+            if (this.editorStackTraceLineNumber.arr != null) PoolArray<int>.Recycle(ref this.editorStackTraceLineNumber);
             #endif
             
         }
@@ -516,6 +535,13 @@ namespace ME.ECS {
             PoolArray<Entity>.Recycle(ref this.requestsRemoveEntity);
             PoolArray<Entity>.Recycle(ref this.requests);
 
+            this.min = int.MaxValue;
+            this.max = int.MinValue;
+
+            this.archetypeContains = default;
+            this.archetypeNotContains = default;
+            this.nodesCount = default;
+            this.id = default;
             if (this.aliases.arr != null) PoolArray<string>.Recycle(ref this.aliases);
             
             #if UNITY_EDITOR
@@ -530,10 +556,10 @@ namespace ME.ECS {
         public bool IsForEntity(in Entity entity) {
 
             ref var previousArchetype = ref this.world.currentState.storage.archetypes.GetPrevious(in entity);
-            if (previousArchetype.ContainsAll(this.archetypeContains) == true && previousArchetype.NotContains(this.archetypeNotContains) == true) return true;
+            if (previousArchetype.ContainsAll(in this.archetypeContains) == true && previousArchetype.NotContains(in this.archetypeNotContains) == true) return true;
             
             ref var currentArchetype = ref this.world.currentState.storage.archetypes.Get(in entity);
-            if (currentArchetype.ContainsAll(this.archetypeContains) == true && currentArchetype.NotContains(this.archetypeNotContains) == true) return true;
+            if (currentArchetype.ContainsAll(in this.archetypeContains) == true && currentArchetype.NotContains(in this.archetypeNotContains) == true) return true;
 
             return false;
 
@@ -610,20 +636,22 @@ namespace ME.ECS {
         public void CopyFrom(Filter other) {
 
             this.id = other.id;
+            this.min = other.min;
+            this.max = other.max;
             this.dataCount = other.dataCount;
-            ArrayUtils.Copy(other.aliases, ref this.aliases);
+            ArrayUtils.Copy(in other.aliases, ref this.aliases);
             this.nodesCount = other.nodesCount;
 
             this.archetypeContains = other.archetypeContains;
             this.archetypeNotContains = other.archetypeNotContains;
             
-            ArrayUtils.Copy(other.nodes, ref this.nodes);
+            ArrayUtils.Copy(in other.nodes, ref this.nodes);
 
-            ArrayUtils.Copy(other.data, ref this.data);
-            ArrayUtils.Copy(other.dataContains, ref this.dataContains);
+            ArrayUtils.Copy(in other.data, ref this.data);
+            ArrayUtils.Copy(in other.dataContains, ref this.dataContains);
             
             #if UNITY_EDITOR
-            ArrayUtils.Copy(other.editorTypes, ref this.editorTypes);
+            ArrayUtils.Copy(in other.editorTypes, ref this.editorTypes);
             this.editorStackTraceFile = other.editorStackTraceFile;
             this.editorStackTraceLineNumber = other.editorStackTraceLineNumber;
             #endif
@@ -672,9 +700,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private bool Contains_INTERNAL(int entityId) {
+        private bool Contains_INTERNAL(in int entityId) {
 
-            if (entityId < 0 || entityId >= this.dataContains.Length) return false;
+            if (entityId >= this.dataContains.Length) return false;
             return this.dataContains[entityId];
 
         }
@@ -739,7 +767,7 @@ namespace ME.ECS {
 
             }
 
-            var isExists = this.Contains_INTERNAL(entity.id);
+            var isExists = this.Contains_INTERNAL(in entity.id);
             if (isExists == true) {
 
                 return this.CheckRemove(in entity);
@@ -789,6 +817,7 @@ namespace ME.ECS {
                 //this.data.Add(entity.id, entity);
                 this.data[idx] = entity;
                 ++this.dataCount;
+                this.UpdateMinMaxAdd(idx);
 
             }
 
@@ -806,11 +835,63 @@ namespace ME.ECS {
                 //this.data.Remove(entity.id);
                 this.data[idx] = default;
                 --this.dataCount;
+                this.UpdateMinMaxRemove(idx);
                 return true;
 
             }
 
             return false;
+
+        }
+        
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void UpdateMinMaxAdd(int idx) {
+
+            if (idx < this.min) this.min = idx;
+            if (idx > this.max) this.max = idx;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void UpdateMinMaxRemove(int idx) {
+
+            if (idx == this.min && idx == this.max) {
+
+                this.min = int.MaxValue;
+                this.max = int.MinValue;
+                return;
+
+            }
+            
+            if (idx == this.min) {
+
+                // Update new min (find next index)
+                for (int i = idx; i < this.data.Length; ++i) {
+
+                    if (this.dataContains[i] == true) {
+
+                        this.min = i;
+                        break;
+
+                    }
+
+                }
+
+            } else if (idx == this.max) {
+
+                // Update new max (find prev index)
+                for (int i = idx; i >= 0; --i) {
+
+                    if (this.dataContains[i] == true) {
+
+                        this.max = i;
+                        break;
+
+                    }
+
+                }
+
+            }
 
         }
 
@@ -831,6 +912,7 @@ namespace ME.ECS {
 
         }*/
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool CheckAdd(in Entity entity) {
 
             // If entity doesn't exist in cache - try to add if entity's archetype fit with contains & notContains
@@ -844,8 +926,8 @@ namespace ME.ECS {
                 UnityEngine.Debug.Log(entArchetype.NotContains(this.archetypeNotContains));
 
             }*/
-            if (entArchetype.ContainsAll(this.archetypeContains) == false) return false;
-            if (entArchetype.NotContains(this.archetypeNotContains) == false) return false;
+            if (entArchetype.ContainsAll(in this.archetypeContains) == false) return false;
+            if (entArchetype.NotContains(in this.archetypeNotContains) == false) return false;
 
             if (this.nodesCount > 0) {
 
@@ -861,18 +943,19 @@ namespace ME.ECS {
 
             }
 
-            this.Add_INTERNAL(entity);
+            this.Add_INTERNAL(in entity);
 
             return true;
 
         }
         
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool CheckRemove(in Entity entity) {
 
             // If entity already exists in cache - try to remove if entity's archetype doesn't fit with contains & notContains
             ref var entArchetype = ref this.world.currentState.storage.archetypes.Get(in entity);
-            var allContains = entArchetype.ContainsAll(this.archetypeContains);
-            var allNotContains = entArchetype.NotContains(this.archetypeNotContains);
+            var allContains = entArchetype.ContainsAll(in this.archetypeContains);
+            var allNotContains = entArchetype.NotContains(in this.archetypeNotContains);
             
             if (this.nodesCount > 0) {
 
@@ -894,10 +977,11 @@ namespace ME.ECS {
             
             if (allContains == true && allNotContains == true) return false;
             
-            return this.Remove_INTERNAL(entity);
+            return this.Remove_INTERNAL(in entity);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsEquals(Filter filter) {
 
             if (this.GetArchetypeContains() == filter.GetArchetypeContains() &&
@@ -965,8 +1049,8 @@ namespace ME.ECS {
 
                     filter = this;
                     this.world = worldInt;
-                    world.currentState.filters.RegisterInAllArchetype(this.archetypeContains);
-                    world.currentState.filters.RegisterInAllArchetype(this.archetypeNotContains);
+                    world.currentState.filters.RegisterInAllArchetype(in this.archetypeContains);
+                    world.currentState.filters.RegisterInAllArchetype(in this.archetypeNotContains);
                     worldInt.Register(this);
                     
                 }
@@ -1000,7 +1084,7 @@ namespace ME.ECS {
 
             //var node = new ComponentExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
-            this.archetypeContains.Add<TComponent>();
+            this.archetypeContains = this.archetypeContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWith<TComponent>();
             #endif
@@ -1012,7 +1096,7 @@ namespace ME.ECS {
 
             //var node = new ComponentNotExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
-            this.archetypeNotContains.Add<TComponent>();
+            this.archetypeNotContains = this.archetypeNotContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWithout<TComponent>();
             #endif
@@ -1024,7 +1108,7 @@ namespace ME.ECS {
 
             //var node = new ComponentStructExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
-            this.archetypeContains.Add<TComponent>();
+            this.archetypeContains = this.archetypeContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWith<TComponent>();
             #endif
@@ -1036,7 +1120,7 @@ namespace ME.ECS {
 
             //var node = new ComponentStructNotExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
-            this.archetypeNotContains.Add<TComponent>();
+            this.archetypeNotContains = this.archetypeNotContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWithout<TComponent>();
             #endif

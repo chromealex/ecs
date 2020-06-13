@@ -2,7 +2,7 @@
 
 namespace ME.ECS {
 
-    public interface IFPSModuleBase {
+    public interface IFPSModuleBase : IModuleBase {
 
         int fps { get; set; }
         int minFps { get; set; }

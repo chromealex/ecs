@@ -1,11 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
+﻿
 namespace ME.ECS {
 
     using ME.ECS.Collections;
-    
+
+    public class IsBitmask : System.Attribute {}
+
+    public enum ComponentLifetime : byte {
+
+        Infinite = 0,
+        
+        EndOfTick = 1,
+        PlayNextTick = 2,
+        
+        EndOfFrame = 3,
+        PlayNextFrame = 4,
+
+    }
+
     public interface IStructComponent {
 
     }
@@ -32,6 +43,8 @@ namespace ME.ECS {
         public abstract IStructComponent GetObject(Entity entity);
         public abstract void SetObject(Entity entity, IStructComponent data);
         public abstract void RemoveObject(Entity entity);
+
+        public abstract void UseLifetimeStep(World world, in byte step);
         
         public abstract void CopyFrom(StructRegistryBase other);
 
@@ -57,13 +70,39 @@ namespace ME.ECS {
     public class StructComponents<TComponent> : StructRegistryBase where TComponent : struct, IStructComponent {
 
         internal BufferArray<TComponent> components;
-        internal BufferArray<bool> componentsStates;
+        internal BufferArray<byte> componentsStates;
 
-        #if ECS_COMPILE_IL2CPP_OPTIONS
-        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-        #endif
+        public override void OnRecycle() {
+            
+            PoolArray<TComponent>.Recycle(ref this.components);
+            PoolArray<byte>.Recycle(ref this.componentsStates);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public override void UseLifetimeStep(World world, in byte step) {
+            
+            for (int i = 0; i < this.componentsStates.Length; ++i) {
+                
+                ref var state = ref this.componentsStates.arr[i];
+                if (state == 0) continue;
+                
+                if (state - 1 == step) {
+                    
+                    state = 0;
+                    
+                    ref var entity = ref world.GetEntityById(in i);
+                    this.components.arr[i] = default;
+                    if (world.currentState.filters.HasInFilters<TComponent>() == true) world.currentState.storage.archetypes.Remove<TComponent>(in entity);
+                    --world.currentState.structComponents.count;
+                    world.RemoveComponentFromFilter(in entity);
+                    
+                }
+                
+            }
+            
+        }
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override void Validate(in Entity entity) {
 
@@ -79,39 +118,6 @@ namespace ME.ECS {
             
         }
 
-        /*[System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private int GetBucketId(in int entityId, out int index) {
-
-            var bucketId = entityId / StructComponents<TComponent>.COMPONENTS_CAPACITY;
-            index = entityId % StructComponents<TComponent>.COMPONENTS_CAPACITY;
-            
-            if (ArrayUtils.WillResize(bucketId, ref this.components) == true) {
-
-                lock (this) {
-
-                    ArrayUtils.Resize(bucketId, ref this.components);
-                    ArrayUtils.Resize(bucketId, ref this.componentsStates);
-                    
-                }
-
-            }
-            
-            ref var bucket = ref this.components[bucketId];
-            if (bucket == null || bucket.Length == 0) {
-
-                lock (this) {
-
-                    this.components[bucketId] = PoolArray<TComponent>.Spawn(StructComponents<TComponent>.COMPONENTS_CAPACITY);
-                    this.componentsStates[bucketId] = PoolArray<bool>.Spawn(StructComponents<TComponent>.COMPONENTS_CAPACITY);
-
-                }
-
-            }
-
-            return bucketId;
-
-        }*/
-
         public override bool HasType(System.Type type) {
 
             return this.components.arr.GetType().GetElementType() == type;
@@ -120,12 +126,20 @@ namespace ME.ECS {
         
         public override IStructComponent GetObject(Entity entity) {
 
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
             var bucket = this.components.arr[index];
             var bucketState = this.componentsStates.arr[index];
-            if (bucketState == true) return bucket;
+            if (bucketState > 0) return bucket;
 
             return null;
 
@@ -133,15 +147,23 @@ namespace ME.ECS {
 
         public override void SetObject(Entity entity, IStructComponent data) {
 
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
             ref var bucket = ref this.components.arr[index];
             ref var bucketState = ref this.componentsStates.arr[index];
             bucket = (TComponent)data;
-            if (bucketState == false) {
+            if (bucketState == 0) {
 
-                bucketState = true;
+                bucketState = 1;
 
                 this.world.currentState.storage.archetypes.Set<TComponent>(in entity);
                 
@@ -151,15 +173,23 @@ namespace ME.ECS {
 
         public override void RemoveObject(Entity entity) {
 
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
             ref var bucketState = ref this.componentsStates.arr[index];
-            if (bucketState == true) {
+            if (bucketState > 0) {
             
                 ref var bucket = ref this.components.arr[index];
                 bucket = default;
-                bucketState = false;
+                bucketState = 0;
             
                 this.world.currentState.storage.archetypes.Remove<TComponent>(in entity);
 
@@ -170,15 +200,31 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override bool Has(in Entity entity) {
 
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             //var index = entity.id;
             //this.CheckResize(in index);
-            return this.componentsStates.arr[entity.id];
+            return this.componentsStates.arr[entity.id] > 0;
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref TComponent Get(in Entity entity) {
+
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
 
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             //var index = entity.id;
@@ -190,15 +236,23 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Set(in Entity entity, in TComponent data) {
 
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
             ref var bucketState = ref this.componentsStates.arr[index];
             ref var bucket = ref this.components.arr[index];
             bucket = data;
-            if (bucketState == false) {
+            if (bucketState == 0) {
 
-                bucketState = true;
+                bucketState = 1;
 
                 this.world.currentState.storage.archetypes.Set<TComponent>(in entity);
                 return true;
@@ -212,15 +266,23 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override bool Remove(in Entity entity, bool clearAll = false) {
 
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
             ref var bucketState = ref this.componentsStates.arr[index];
-            if (bucketState == true) {
+            if (bucketState > 0) {
             
                 ref var bucket = ref this.components.arr[index];
                 bucket = default;
-                bucketState = false;
+                bucketState = 0;
             
                 if (clearAll == true) {
                     
@@ -243,15 +305,8 @@ namespace ME.ECS {
         public override void CopyFrom(StructRegistryBase other) {
 
             var _other = (StructComponents<TComponent>)other;
-            ArrayUtils.Copy(_other.components, ref this.components);
-            ArrayUtils.Copy(_other.componentsStates, ref this.componentsStates);
-
-        }
-
-        public override void OnRecycle() {
-            
-            PoolArray<TComponent>.Recycle(ref this.components);
-            PoolArray<bool>.Recycle(ref this.componentsStates);
+            ArrayUtils.Copy(in _other.components, ref this.components);
+            ArrayUtils.Copy(in _other.componentsStates, ref this.componentsStates);
 
         }
 
@@ -309,7 +364,7 @@ namespace ME.ECS {
             // Update all known structs
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
-                var item = this.list.arr[i];
+                var item = this.list[i];
                 if (item != null) item.Validate(in entity);
 
             }
@@ -325,8 +380,12 @@ namespace ME.ECS {
             
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
-                var item = this.list.arr[i];
-                if (item != null) item.Remove(in entity, clearAll: true);
+                var item = this.list[i];
+                if (item != null) {
+
+                    item.Remove(in entity, clearAll: true);
+
+                }
 
             }
             
@@ -374,7 +433,7 @@ namespace ME.ECS {
             
             if (this.list[code] == null) {
 
-                var instance = (StructRegistryBase)PoolComponents.Spawn(typeof(StructRegistryBase));
+                var instance = (StructRegistryBase)PoolRegistries.Spawn(typeof(StructRegistryBase));
                 if (instance == null) instance = PoolClass<StructComponents<TComponent>>.Spawn();//new StructComponents<TComponent>();
                 instance.world = Worlds.currentWorld;
                 this.list[code] = instance;
@@ -406,6 +465,14 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Has<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
             
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
             var reg = (StructComponents<TComponent>)this.list[code];
@@ -421,6 +488,14 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref TComponent Get<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
             
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
             var reg = (StructComponents<TComponent>)this.list[code];
@@ -436,6 +511,14 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Set<TComponent>(in Entity entity, TComponent data) where TComponent : struct, IStructComponent {
             
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
             var reg = (StructComponents<TComponent>)this.list[code];
@@ -458,6 +541,14 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Remove<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
             
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
             var reg = (StructComponents<TComponent>)this.list[code];
@@ -481,11 +572,11 @@ namespace ME.ECS {
             
             for (int i = 0; i < this.list.Length; ++i) {
                 
-                if (this.list.arr[i] != null) {
+                if (this.list[i] != null) {
                     
-                    this.list.arr[i].OnRecycle();
-                    PoolRegistries.Recycle(this.list.arr[i]);
-                    this.list.arr[i] = null;
+                    this.list[i].OnRecycle();
+                    PoolRegistries.Recycle(this.list[i]);
+                    this.list[i] = null;
 
                 }
                 
@@ -513,9 +604,9 @@ namespace ME.ECS {
             this.list = PoolArray<StructRegistryBase>.Spawn(other.list.Length);
             for (int i = 0; i < other.list.Length; ++i) {
 
-                if (other.list.arr[i] != null) {
+                if (other.list[i] != null) {
 
-                    var type = other.list.arr[i].GetType();
+                    var type = other.list[i].GetType();
                     var comp = (StructRegistryBase)PoolRegistries.Spawn(type);
                     if (comp == null) {
                         
@@ -523,8 +614,8 @@ namespace ME.ECS {
                         
                     }
 
-                    this.list.arr[i] = comp;
-                    this.list.arr[i].CopyFrom(other.list.arr[i]);
+                    this.list[i] = comp;
+                    this.list[i].CopyFrom(other.list[i]);
 
                 }
 
@@ -640,13 +731,6 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool HasData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
-
-            return this.currentState.structComponents.Has<TComponent>(in entity);
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool HasDataBit(in Entity entity, in int bit) {
 
             return this.currentState.structComponents.HasBit(in entity, in bit);
@@ -665,123 +749,247 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool HasData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
+
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
+            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
+            var reg = (StructComponents<TComponent>)r;
+            return reg.Has(in entity);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref TComponent GetData<TComponent>(in Entity entity, bool createIfNotExists = true) where TComponent : struct, IStructComponent {
 
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             // Inline all manually
-            ref var r = ref this.currentState.structComponents.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
             ref var state = ref reg.componentsStates.arr[entity.id];
-            if (state == false && createIfNotExists == true) {
+            if (state == 0 && createIfNotExists == true) {
 
-                state = true;
+                state = 1;
                 if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
                 ++this.currentState.structComponents.count;
                 this.AddComponentToFilter(entity);
                 
             }
 
-            return ref reg.components[entity.id];
+            return ref reg.components.arr[entity.id];
             
-            //return ref this.componentsStructCache.Get<TComponent>(in entity);
-
         }
 
+        /// <summary>
+        /// Lifetime default is Infinite
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="data"></param>
+        /// <typeparam name="TComponent"></typeparam>
+        /// <returns></returns>
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void SetData<TComponent>(in Entity entity, in TComponent data) where TComponent : struct, IStructComponent {
+        public ref byte SetData<TComponent>(in Entity entity, in TComponent data) where TComponent : struct, IStructComponent {
 
             #if WORLD_STATE_CHECK
             if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
 
-                OutOfStateException.ThrowWorldState();
+                OutOfStateException.ThrowWorldStateCheck();
                 
             }
             #endif
 
-            // Inline all manually
-            ref var r = ref this.currentState.structComponents.list[WorldUtilities.GetComponentTypeId<TComponent>()];
-            var reg = (StructComponents<TComponent>)r;
-            reg.components[entity.id] = data;
-            ref var state = ref reg.componentsStates.arr[entity.id];
-            if (state == false) {
-
-                state = true;
-                if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
-                ++this.currentState.structComponents.count;
-                this.AddComponentToFilter(entity);
-
-            }
-
-            /*
-            if (this.componentsStructCache.Set(in entity, data) == true) {
-            
-                this.AddComponentToFilter(entity);
-
-            }*/
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void SetData<TComponent>(in Entity entity, in TComponent data, bool updateFilters) where TComponent : struct, IStructComponent {
-
-            #if WORLD_STATE_CHECK
-            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
-
-                OutOfStateException.ThrowWorldState();
-
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
             }
             #endif
             
             // Inline all manually
-            var reg = (StructComponents<TComponent>)this.currentState.structComponents.list[WorldUtilities.GetComponentTypeId<TComponent>()];
-            reg.components[entity.id] = data;
+            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
+            var reg = (StructComponents<TComponent>)r;
+            reg.components.arr[entity.id] = data;
             ref var state = ref reg.componentsStates.arr[entity.id];
-            if (state == false) {
+            if (state == 0) {
 
-                state = true;
+                state = 1;
                 if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
                 ++this.currentState.structComponents.count;
-                if (updateFilters == true) this.AddComponentToFilter(entity);
+                this.AddComponentToFilter(entity);
+
+            }
+
+            return ref state;
+
+        }
+
+        private interface ITask {
+
+            void Execute();
+            void Recycle();
+
+        }
+        private class NextFrameTask<TComponent> : ITask where TComponent : struct, IStructComponent {
+
+            public Entity entity;
+            public TComponent data;
+            public World world;
+            public ComponentLifetime lifetime;
+            
+            public void Execute() {
+
+                this.world.SetData(in this.entity, in this.data, this.lifetime);
+
+            }
+
+            public void Recycle() {
+
+                this.world = null;
+                this.data = default;
+                this.entity = default;
+                PoolClass<NextFrameTask<TComponent>>.Recycle(this);
+                
+            }
+
+        }
+
+        public void PlayTasksForFrame() {
+
+            if (this.nextFrameTasks.Length > 0) {
+
+                for (int i = 0; i < this.nextFrameTasks.Length; ++i) {
+
+                    ref var task = ref this.nextFrameTasks[i];
+                    task.Execute();
+                    task.Recycle();
+
+                }
+
+                PoolArray<ITask>.Recycle(ref this.nextFrameTasks);
 
             }
             
-            /*
-            if (this.componentsStructCache.Set(in entity, data) == true && updateFilters == true) {
-            
-                this.AddComponentToFilter(entity);
-
-            }*/
-            
         }
 
+        public void PlayTasksForTick() {
+            
+            if (this.nextTickTasks.Length > 0) {
+
+                for (int i = 0; i < this.nextTickTasks.Length; ++i) {
+
+                    ref var task = ref this.nextTickTasks[i];
+                    task.Execute();
+                    task.Recycle();
+
+                }
+
+                PoolArray<ITask>.Recycle(ref this.nextTickTasks);
+
+            }
+            
+        }
+        
+        private BufferArray<ITask> nextFrameTasks;
+        private BufferArray<ITask> nextTickTasks;
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void SetData<TComponent>(in Entity entity, in TComponent data, in ComponentLifetime lifetime) where TComponent : struct, IStructComponent {
+
+            if (lifetime == ComponentLifetime.PlayNextFrame ||
+                lifetime == ComponentLifetime.PlayNextTick) {
+
+                var task = PoolClass<NextFrameTask<TComponent>>.Spawn();
+                task.world = this;
+                task.entity = entity;
+                task.data = data;
+
+                if (lifetime == ComponentLifetime.PlayNextFrame) {
+
+                    task.lifetime = ComponentLifetime.EndOfFrame;
+                    
+                    var idx = this.nextFrameTasks.Length;
+                    ArrayUtils.Resize(in idx, ref this.nextFrameTasks);
+                    this.nextFrameTasks[idx] = task;
+
+                } else if (lifetime == ComponentLifetime.PlayNextTick) {
+                    
+                    task.lifetime = ComponentLifetime.EndOfTick;
+
+                    var idx = this.nextTickTasks.Length;
+                    ArrayUtils.Resize(in idx, ref this.nextTickTasks);
+                    this.nextTickTasks[idx] = task;
+
+                }
+
+            } else {
+
+                ref var state = ref this.SetData(in entity, in data);
+
+                if (lifetime == ComponentLifetime.Infinite) return;
+                state = (byte)(lifetime + 1);
+
+            }
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void UseLifetimeStep(ComponentLifetime step) {
+
+            var bStep = (byte)step;
+            for (int i = 0; i < this.currentState.structComponents.list.Length; ++i) {
+
+                ref var reg = ref this.currentState.structComponents.list.arr[i];
+                if (reg == null) continue;
+                
+                reg.UseLifetimeStep(this, bStep);
+
+            }
+            
+        }
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RemoveData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
-
+            
             #if WORLD_STATE_CHECK
             if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
-
-                OutOfStateException.ThrowWorldState();
-
+                
+                OutOfStateException.ThrowWorldStateCheck();
+                
             }
             #endif
-
-            var reg = (StructComponents<TComponent>)this.currentState.structComponents.list[WorldUtilities.GetComponentTypeId<TComponent>()];
+            
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+            
+            var reg = (StructComponents<TComponent>)this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
             ref var state = ref reg.componentsStates.arr[entity.id];
-            if (state == true) {
-
-                state = false;
+            if (state > 0) {
+                
+                state = 0;
                 reg.components.arr[entity.id] = default;
                 if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Remove<TComponent>(in entity);
                 --this.currentState.structComponents.count;
-                this.RemoveComponentFromFilter(entity);
+                this.RemoveComponentFromFilter(in entity);
                 
             }
-
-            /*
-            if (this.componentsStructCache.Remove<TComponent>(in entity) == true) {
-            
-                this.RemoveComponentFromFilter(entity);
-
-            }*/
             
         }
 

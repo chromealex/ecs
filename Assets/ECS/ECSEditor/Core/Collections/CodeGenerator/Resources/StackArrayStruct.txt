@@ -1,5 +1,5 @@
 [System.Serializable]
-public struct StackArray#LENGTH#<T> where T : struct {
+public struct StackArray#LENGTH#<T> : IStackArray where T : struct {
 
     public const int MAX_LENGTH = #LENGTH#;
     public A#LENGTH#<T> arr;
@@ -18,6 +18,15 @@ public struct StackArray#LENGTH#<T> where T : struct {
         [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
         get {
             return this.length;
+        }
+    }
+
+    object IStackArray.this[int index] {
+        get {
+            return this[index];
+        }
+        set {
+            this[index] = (T)value;
         }
     }
 

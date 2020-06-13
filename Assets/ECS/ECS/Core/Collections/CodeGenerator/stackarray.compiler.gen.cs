@@ -17,6 +17,13 @@ namespace ME.ECS.Collections {
     using Unity.Collections.LowLevel.Unsafe;
     using System.Runtime.CompilerServices;
     
+    public interface IStackArray {
+
+        int Length { get; }
+        object this[int index] { get; set; }
+
+    }
+
     internal static class H {
 
         [MethodImpl(256)]
@@ -36,7 +43,7 @@ namespace ME.ECS.Collections {
     }
 
     [System.Serializable]
-public struct StackArray10<T> where T : struct {
+public struct StackArray10<T> : IStackArray where T : struct {
 
     public const int MAX_LENGTH = 10;
     public A10<T> arr;
@@ -58,6 +65,15 @@ public struct StackArray10<T> where T : struct {
         }
     }
 
+    object IStackArray.this[int index] {
+        get {
+            return this[index];
+        }
+        set {
+            this[index] = (T)value;
+        }
+    }
+
     public T this[int index] {
         [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
         get {
@@ -76,7 +92,7 @@ public struct StackArray10<T> where T : struct {
 
 }
 [System.Serializable]
-public struct StackArray20<T> where T : struct {
+public struct StackArray20<T> : IStackArray where T : struct {
 
     public const int MAX_LENGTH = 20;
     public A20<T> arr;
@@ -98,6 +114,15 @@ public struct StackArray20<T> where T : struct {
         }
     }
 
+    object IStackArray.this[int index] {
+        get {
+            return this[index];
+        }
+        set {
+            this[index] = (T)value;
+        }
+    }
+
     public T this[int index] {
         [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
         get {
@@ -116,7 +141,7 @@ public struct StackArray20<T> where T : struct {
 
 }
 [System.Serializable]
-public struct StackArray30<T> where T : struct {
+public struct StackArray30<T> : IStackArray where T : struct {
 
     public const int MAX_LENGTH = 30;
     public A30<T> arr;
@@ -138,6 +163,15 @@ public struct StackArray30<T> where T : struct {
         }
     }
 
+    object IStackArray.this[int index] {
+        get {
+            return this[index];
+        }
+        set {
+            this[index] = (T)value;
+        }
+    }
+
     public T this[int index] {
         [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
         get {
@@ -156,7 +190,7 @@ public struct StackArray30<T> where T : struct {
 
 }
 [System.Serializable]
-public struct StackArray40<T> where T : struct {
+public struct StackArray40<T> : IStackArray where T : struct {
 
     public const int MAX_LENGTH = 40;
     public A40<T> arr;
@@ -178,6 +212,15 @@ public struct StackArray40<T> where T : struct {
         }
     }
 
+    object IStackArray.this[int index] {
+        get {
+            return this[index];
+        }
+        set {
+            this[index] = (T)value;
+        }
+    }
+
     public T this[int index] {
         [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
         get {
@@ -196,7 +239,7 @@ public struct StackArray40<T> where T : struct {
 
 }
 [System.Serializable]
-public struct StackArray50<T> where T : struct {
+public struct StackArray50<T> : IStackArray where T : struct {
 
     public const int MAX_LENGTH = 50;
     public A50<T> arr;
@@ -215,6 +258,15 @@ public struct StackArray50<T> where T : struct {
         [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
         get {
             return this.length;
+        }
+    }
+
+    object IStackArray.this[int index] {
+        get {
+            return this[index];
+        }
+        set {
+            this[index] = (T)value;
         }
     }
 
@@ -238,7 +290,7 @@ public struct StackArray50<T> where T : struct {
 
 
     [System.Serializable]
-    public struct StackArray<T> where T : struct {
+    public struct StackArray<T> : IStackArray where T : struct {
 
         public const int MAX_LENGTH = 1000;
         public A1000<T> arr;
@@ -257,6 +309,15 @@ public struct StackArray50<T> where T : struct {
             [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
             get {
                 return this.length;
+            }
+        }
+
+        object IStackArray.this[int index] {
+            get {
+                return this[index];
+            }
+            set {
+                this[index] = (T)value;
             }
         }
 

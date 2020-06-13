@@ -8,6 +8,7 @@ namespace ME.ECS {
 
             public bool enabled;
             public FeatureBase feature;
+            public FeatureBase featureInstance;
 
         }
 
@@ -18,7 +19,13 @@ namespace ME.ECS {
             for (int i = 0; i < this.features.Count; ++i) {
 
                 var item = this.features[i];
-                if (item.enabled == true) world.AddFeature(item.feature);
+                if (item.enabled == true) {
+                    
+                    var instance = UnityEngine.Object.Instantiate(item.feature);
+                    instance.name = item.feature.name;
+                    world.AddFeature(item.featureInstance = instance);
+                    
+                }
                 
             }
 
@@ -29,7 +36,13 @@ namespace ME.ECS {
             for (int i = 0; i < this.features.Count; ++i) {
                 
                 var item = this.features[i];
-                if (item.enabled == true) world.RemoveFeature(item.feature);
+                if (item.enabled == true) {
+                    
+                    world.RemoveFeature(item.featureInstance);
+                    UnityEngine.Object.DestroyImmediate(item.featureInstance);
+                    item.featureInstance = null;
+
+                }
                 
             }
 
@@ -40,9 +53,11 @@ namespace ME.ECS {
     public abstract class FeatureBase : UnityEngine.ScriptableObject, IFeatureBase {
 
         public World world { get; set; }
+        public SystemGroup systemGroup;
 
         internal void DoConstruct() {
             
+            this.systemGroup = new SystemGroup(this.world, this.name);
             this.OnConstruct();
             
         }
@@ -58,9 +73,9 @@ namespace ME.ECS {
 
         protected bool AddSystem<TSystem>() where TSystem : class, ISystemBase, new() {
 
-            if (this.world.HasSystem<TSystem>() == false) {
+            if (this.systemGroup.HasSystem<TSystem>() == false) {
                 
-                return this.world.AddSystem<TSystem>();
+                return this.systemGroup.AddSystem<TSystem>();
                 
             }
 
@@ -83,30 +98,6 @@ namespace ME.ECS {
     }
 
     public abstract class Feature : FeatureBase, IFeature {
-
-        new protected bool AddSystem<TSystem>() where TSystem : class, ISystem, new() {
-
-            if (this.world.HasSystem<TSystem>() == false) {
-                
-                return this.world.AddSystem<TSystem>();
-                
-            }
-
-            return false;
-
-        }
-
-        new protected bool AddModule<TModule>() where TModule : class, IModule, new() {
-
-            if (this.world.HasModule<TModule>() == false) {
-                
-                return this.world.AddModule<TModule>();
-                
-            }
-
-            return false;
-
-        }
 
     }
 

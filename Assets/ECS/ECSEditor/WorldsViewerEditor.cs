@@ -23,10 +23,76 @@ namespace ME.ECSEditor {
             private Dictionary<object, int> pageObjects = new Dictionary<object, int>();
             private Dictionary<object, int> onPageCountObjects = new Dictionary<object, int>();
             private Dictionary<object, string> searchObjects = new Dictionary<object, string>();
+            private HashSet<int> foldoutCustoms = new HashSet<int>();
+            private Dictionary<ME.ECS.IStorage, List<int>> foldoutStorageFilters = new Dictionary<ME.ECS.IStorage, List<int>>();
             private Dictionary<ME.ECS.IStorage, List<int>> foldoutStorageData = new Dictionary<ME.ECS.IStorage, List<int>>();
             private Dictionary<ME.ECS.IStorage, List<int>> foldoutStorageComponents = new Dictionary<ME.ECS.IStorage, List<int>>();
             private Dictionary<ME.ECS.IStorage, List<int>> foldoutStorageStructComponents = new Dictionary<ME.ECS.IStorage, List<int>>();
             private Dictionary<ME.ECS.IStorage, List<int>> foldoutStorageViews = new Dictionary<ME.ECS.IStorage, List<int>>();
+
+            public bool IsFoldOutCustom(object instance) {
+
+                var hc = (instance != null ? instance.GetHashCode() : 0);
+                return this.foldoutCustoms.Contains(hc);
+
+            }
+
+            public void SetFoldOutCustom(object instance, bool state) {
+
+                var hc = (instance != null ? instance.GetHashCode() : 0);
+                if (state == true) {
+
+                    if (this.foldoutCustoms.Contains(hc) == false) this.foldoutCustoms.Add(hc);
+
+                } else {
+
+                    this.foldoutCustoms.Remove(hc);
+
+                }
+
+            }
+
+            public bool IsFoldOutFilters(ME.ECS.IStorage storage, int entityId) {
+
+                List<int> list;
+                if (this.foldoutStorageFilters.TryGetValue(storage, out list) == true) {
+
+                    return list.Contains(entityId);
+
+                }
+
+                return false;
+
+            }
+
+            public void SetFoldOutFilters(ME.ECS.IStorage storage, int entityId, bool state) {
+
+                List<int> list;
+                if (this.foldoutStorageFilters.TryGetValue(storage, out list) == true) {
+
+                    if (state == true) {
+
+                        if (list.Contains(entityId) == false) list.Add(entityId);
+
+                    } else {
+
+                        list.Remove(entityId);
+
+                    }
+
+                } else {
+
+                    if (state == true) {
+
+                        list = new List<int>();
+                        list.Add(entityId);
+                        this.foldoutStorageFilters.Add(storage, list);
+
+                    }
+
+                }
+
+            }
 
             public bool IsFoldOutComponents(ME.ECS.IStorage storage, int entityId) {
 
@@ -318,7 +384,7 @@ namespace ME.ECSEditor {
 
             }
 
-            public IList<ME.ECS.ISystemBase> GetSystems() {
+            public ME.ECS.Collections.BufferArray<SystemGroup> GetSystems() {
 
                 return WorldHelper.GetSystems(this.world);
 
@@ -594,6 +660,60 @@ namespace ME.ECSEditor {
             });
 
             this.HandleResizePanels();
+
+        }
+
+        public static void SelectEntity(Entity entity) {
+            
+            var found = false;
+            var entities = Worlds.currentWorld.GetDebugEntities();
+            foreach (var ent in entities) {
+
+                if (ent.Key == entity) {
+
+                    Selection.activeObject = ent.Value.gameObject;
+                    found = true;
+                    break;
+
+                }
+				            
+            }
+
+            if (found == false) {
+
+                var objects = GameObject.FindObjectsOfType<EntityDebugComponent>();
+                foreach (var obj in objects) {
+
+                    if (obj.entity == entity) {
+
+                        Selection.activeObject = obj.gameObject;
+                        found = true;
+                        break;
+
+                    }
+                    
+                }
+
+            }
+            
+            if (found == false) {
+
+                if (entity.IsAlive() == false) {
+                    
+                    EditorWindow.focusedWindow.ShowNotification(new GUIContent(entity.ToString() + " already in pool"));
+
+                } else {
+
+                    var debug = new GameObject("Debug-" + entity.ToString(), typeof(EntityDebugComponent));
+                    var info = debug.GetComponent<EntityDebugComponent>();
+                    info.entity = entity;
+                    info.world = Worlds.currentWorld;
+                    info.hasName = false;
+                    Selection.activeObject = debug;
+
+                }
+                            
+            }
 
         }
 
@@ -879,7 +999,7 @@ namespace ME.ECSEditor {
 
                                     } else if (fieldsCount == 1) {
 
-                                        var changed = GUILayoutExt.DrawFields(component, componentName);
+                                        var changed = GUILayoutExt.DrawFields(world, component, componentName);
                                         if (changed == true) {
 
                                             registry.SetObject(entityData, component);
@@ -898,7 +1018,7 @@ namespace ME.ECSEditor {
                                                 var foldout = EditorPrefs.GetBool(key, true);
                                                 GUILayoutExt.FoldOut(ref foldout, componentName, () => {
 
-                                                    var changed = GUILayoutExt.DrawFields(component);
+                                                    var changed = GUILayoutExt.DrawFields(world, component);
                                                     if (changed == true) {
 
                                                         registry.SetObject(entityData, component);
@@ -925,15 +1045,42 @@ namespace ME.ECSEditor {
 
                         GUILayoutExt.DrawAddComponentMenu(entityData, usedComponents, componentsStructStorage);
 
+                        {
+                            var filtersCnt = 0;
+                            var containsFilters = PoolList<Filter>.Spawn(1);
+                            var filters = world.GetFilters();
+                            for (int i = 0; i < filters.filters.Length; ++i) {
+
+                                var filter = filters.filters[i];
+                                if (filter == null) continue;
+                                
+                                if (filter.Contains(entityData) == true) {
+
+                                    containsFilters.Add(filter);
+                                    ++filtersCnt;
+
+                                }
+
+                            }
+                            
+                            var foldoutFilters = world.IsFoldOutFilters(storage, entityData.id);
+                            GUILayoutExt.FoldOut(ref foldoutFilters, "Filters (" + filtersCnt.ToString() + ")", () => {
+
+                                foreach (var filter in containsFilters) {
+                                    
+                                    WorldsViewerEditor.DrawFilter(filters, filter);
+
+                                }
+                                
+                            });
+                            world.SetFoldOutFilters(storage, entityData.id, foldoutFilters);
+                            
+                            PoolList<Filter>.Recycle(ref containsFilters);
+                        }
+                        
                         var cnt = 0;
                         var components = componentsStorage.GetData(entityData.id);
-                        foreach (var component in components) {
-
-                            if ((component is ME.ECS.Views.IViewComponent) == false) continue;
-
-                            ++cnt;
-
-                        }
+                        cnt = components.Count;
 
                         if (cnt > 0) {
 
@@ -941,8 +1088,6 @@ namespace ME.ECSEditor {
                             GUILayoutExt.FoldOut(ref foldoutComponents, "Managed Components (" + cnt.ToString() + ")", () => {
 
                                 foreach (var component in components) {
-
-                                    if ((component is ME.ECS.Views.IViewComponent) == false) continue;
 
                                     backColor = GUI.backgroundColor;
                                     GUI.backgroundColor = new Color(1f, 1f, 1f, kz++ % 2 == 0 ? 0f : 0.05f);
@@ -955,7 +1100,7 @@ namespace ME.ECSEditor {
                                         GUILayout.BeginHorizontal();
                                         GUILayout.Label(component.GetType().Name, EditorStyles.miniBoldLabel);
                                         GUILayout.EndHorizontal();
-                                        GUILayoutExt.DrawFields(component);
+                                        GUILayoutExt.DrawFields(world, component);
                                         GUILayout.Space(2f);
                                     }
                                     GUILayout.EndVertical();
@@ -983,11 +1128,10 @@ namespace ME.ECSEditor {
                                     var allViews = viewsModule.GetData();
                                     for (var k = 0; k < allViews.Length; ++k) {
 
-                                        var key = k;
-                                        if (key == entityData.id) {
+                                        if (k == entityData.id) {
 
                                             var listViews = allViews[k];
-                                            if (listViews.mainView == null) continue;
+                                            if (listViews.isNotEmpty == false) continue;
 
                                             for (var j = 0; j < listViews.Length; ++j) {
 
@@ -1115,70 +1259,84 @@ namespace ME.ECSEditor {
                                         }
                                         GUILayout.EndHorizontal();
 
-                                        foreach (var system in systems) {
+                                        for (int i = 0; i < systems.Length; ++i) {
 
-                                            GUILayout.BeginHorizontal();
-                                            {
-                                                GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TypeLabel(system.GetType()); }, tableStyle, GUILayout.Width(col1),
-                                                                 GUILayout.Height(cellHeight));
-                                            }
-                                            { // Logic
-                                                GUILayoutExt.Box(padding, margin, () => {
+                                            var group = systems[i];
+                                            var foldoutObj = group.systems;
+                                            var groupState = worldEditor.IsFoldOutCustom(foldoutObj);
+                                            GUILayoutExt.FoldOut(ref groupState, group.name + " (" + group.length.ToString() + ")", () => {
+                                                
+                                                for (int j = 0; j < group.systems.Length; ++j) {
 
-                                                    GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
-                                                    GUILayout.FlexibleSpace();
+                                                    var system = group.systems[j];
 
-                                                    var flag = world.GetSystemState(system);
-                                                    var state = (flag & ME.ECS.ModuleState.LogicInactive) == 0;
-                                                    if (this.ToggleMethod(worldEditor, system, "AdvanceTick", ref state) == true) {
-
-                                                        world.SetSystemState(
-                                                            system, state == false ? flag | ME.ECS.ModuleState.LogicInactive : flag & ~ME.ECS.ModuleState.LogicInactive);
-
+                                                    GUILayout.BeginHorizontal();
+                                                    {
+                                                        GUILayoutExt.Box(padding, margin, () => { GUILayoutExt.TypeLabel(system.GetType()); }, tableStyle, GUILayout.Width(col1),
+                                                                         GUILayout.Height(cellHeight));
                                                     }
+                                                    { // Logic
+                                                        GUILayoutExt.Box(padding, margin, () => {
 
-                                                    GUILayout.FlexibleSpace();
+                                                            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
+                                                            GUILayout.FlexibleSpace();
+
+                                                            var flag = world.GetSystemState(system);
+                                                            var state = (flag & ME.ECS.ModuleState.LogicInactive) == 0;
+                                                            if (this.ToggleMethod(worldEditor, system, "AdvanceTick", ref state) == true) {
+
+                                                                world.SetSystemState(
+                                                                    system, state == false ? flag | ME.ECS.ModuleState.LogicInactive : flag & ~ME.ECS.ModuleState.LogicInactive);
+
+                                                            }
+
+                                                            GUILayout.FlexibleSpace();
+                                                            GUILayout.EndHorizontal();
+
+                                                        }, tableStyle, GUILayout.Width(col2), GUILayout.Height(cellHeight));
+                                                    }
+                                                    { // Visual
+                                                        GUILayoutExt.Box(padding, margin, () => {
+
+                                                            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
+                                                            GUILayout.FlexibleSpace();
+
+                                                            var flag = world.GetSystemState(system);
+                                                            var state = (flag & ME.ECS.ModuleState.VisualInactive) == 0;
+                                                            if (this.ToggleMethod(worldEditor, system, "Update", ref state) == true) {
+
+                                                                world.SetSystemState(
+                                                                    system, state == false ? flag | ME.ECS.ModuleState.VisualInactive : flag & ~ME.ECS.ModuleState.VisualInactive);
+
+                                                            }
+
+                                                            GUILayout.FlexibleSpace();
+                                                            GUILayout.EndHorizontal();
+
+                                                        }, tableStyle, GUILayout.Width(col3), GUILayout.Height(cellHeight));
+                                                    }
                                                     GUILayout.EndHorizontal();
 
-                                                }, tableStyle, GUILayout.Width(col2), GUILayout.Height(cellHeight));
-                                            }
-                                            { // Visual
-                                                GUILayoutExt.Box(padding, margin, () => {
+                                                    {
+                                                        GUILayoutExt.Box(padding, margin, () => {
 
-                                                    GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
-                                                    GUILayout.FlexibleSpace();
+                                                            /*if (system is IGUIEditor systemEditor) {
 
-                                                    var flag = world.GetSystemState(system);
-                                                    var state = (flag & ME.ECS.ModuleState.VisualInactive) == 0;
-                                                    if (this.ToggleMethod(worldEditor, system, "Update", ref state) == true) {
+                                                                systemEditor.OnDrawGUI();
 
-                                                        world.SetSystemState(
-                                                            system, state == false ? flag | ME.ECS.ModuleState.VisualInactive : flag & ~ME.ECS.ModuleState.VisualInactive);
+                                                            }*/
 
+                                                        }, tableStyle, GUILayout.ExpandWidth(true));
+                                                        GUILayout.Space(2f);
                                                     }
 
-                                                    GUILayout.FlexibleSpace();
-                                                    GUILayout.EndHorizontal();
+                                                }
 
-                                                }, tableStyle, GUILayout.Width(col3), GUILayout.Height(cellHeight));
-                                            }
-                                            GUILayout.EndHorizontal();
-
-                                            {
-                                                GUILayoutExt.Box(padding, margin, () => {
-
-                                                    /*if (system is IGUIEditor systemEditor) {
-
-                                                        systemEditor.OnDrawGUI();
-
-                                                    }*/
-
-                                                }, tableStyle, GUILayout.ExpandWidth(true));
-                                                GUILayout.Space(2f);
-                                            }
-
+                                            });
+                                            worldEditor.SetFoldOutCustom(foldoutObj, groupState);
+                                            
                                         }
-
+                                        
                                     });
 
                                 });
@@ -1330,13 +1488,6 @@ namespace ME.ECSEditor {
                                 }
                                 GUILayoutExt.FoldOut(ref worldEditor.foldoutFilters, "Filters (" + filtersCount.ToString() + ")", () => {
                                     
-                                    var cellHeight = 25f;
-                                    var padding = 2f;
-                                    var margin = 1f;
-                                    //var col1 = 80f;
-                                    var tableStyle = (GUIStyle)"Box";
-                                    var dataStyle = new GUIStyle(EditorStyles.label);
-                                    dataStyle.richText = true;
                                     GUILayoutExt.Padding(4f, () => {
 
                                         GUILayout.BeginVertical();
@@ -1344,44 +1495,9 @@ namespace ME.ECSEditor {
 
                                             var filter = filtersArr[f];
                                             if (filter == null) continue;
+
+                                            WorldsViewerEditor.DrawFilter(filters, filter);
                                             
-                                            GUILayout.BeginHorizontal();
-                                            {
-                                                GUILayoutExt.Box(
-                                                    padding,
-                                                    margin,
-                                                    () => {
-
-                                                        var names = filter.GetAllNames();
-                                                        for (int i = 0; i < names.Length; ++i) {
-
-                                                            GUILayout.BeginHorizontal();
-                                                            {
-                                                                if (GUILayout.Button("Open", EditorStyles.toolbarButton, GUILayout.Width(38f)) == true) {
-
-                                                                    var file = filter.GetEditorStackTraceFilename(i);
-                                                                    var line = filter.GetEditorStackTraceLineNumber(i);
-                                                                    AssetDatabase.OpenAsset(AssetDatabase.LoadAssetAtPath<MonoScript>(file), line);
-
-                                                                }
-                                                                GUILayoutExt.DataLabel(string.Format("<b>{0}</b>", names[i]));
-                                                            }
-                                                            GUILayout.EndHorizontal();
-                                                            
-                                                        }
-
-                                                        GUILayout.Label(filter.ToEditorTypesString(), EditorStyles.miniLabel);
-                                                        GUILayout.Label("Objects count: " + filter.Count.ToString(), dataStyle);
-                                                        var inUseCount = filter.GetArchetypeContains().Count + filter.GetArchetypeNotContains().Count;
-                                                        var max = filters.GetAllFiltersArchetypeCount();
-                                                        GUILayoutExt.ProgressBar(inUseCount, max, drawLabel: true);
-                                                        
-                                                    },
-                                                    tableStyle,
-                                                    GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
-                                            }
-                                            GUILayout.EndHorizontal();
-
                                         }
                                         GUILayout.EndVertical();
 
@@ -1416,6 +1532,53 @@ namespace ME.ECSEditor {
             GUILayout.EndScrollView();
 
             return selectedWorld;
+
+        }
+
+        public static void DrawFilter(FiltersStorage filters, Filter filter) {
+            
+            var cellHeight = 25f;
+            var padding = 2f;
+            var margin = 1f;
+            var tableStyle = (GUIStyle)"Box";
+            var dataStyle = new GUIStyle(EditorStyles.label);
+            dataStyle.richText = true;
+            GUILayout.BeginHorizontal();
+            {
+                GUILayoutExt.Box(
+                    padding,
+                    margin,
+                    () => {
+
+                        var names = filter.GetAllNames();
+                        for (int i = 0; i < names.Length; ++i) {
+
+                            GUILayout.BeginHorizontal();
+                            {
+                                if (GUILayout.Button("Open", EditorStyles.toolbarButton, GUILayout.Width(38f)) == true) {
+
+                                    var file = filter.GetEditorStackTraceFilename(i);
+                                    var line = filter.GetEditorStackTraceLineNumber(i);
+                                    AssetDatabase.OpenAsset(AssetDatabase.LoadAssetAtPath<MonoScript>(file), line);
+
+                                }
+                                GUILayoutExt.DataLabel(string.Format("<b>{0}</b>", names[i]));
+                            }
+                            GUILayout.EndHorizontal();
+                            
+                        }
+
+                        GUILayout.Label(filter.ToEditorTypesString(), EditorStyles.miniLabel);
+                        GUILayout.Label("Objects count: " + filter.Count.ToString(), dataStyle);
+                        var inUseCount = filter.GetArchetypeContains().Count + filter.GetArchetypeNotContains().Count;
+                        var max = filters.GetAllFiltersArchetypeCount();
+                        GUILayoutExt.ProgressBar(inUseCount, max, drawLabel: true);
+                        
+                    },
+                    tableStyle,
+                    GUILayout.ExpandWidth(true), GUILayout.Height(cellHeight));
+            }
+            GUILayout.EndHorizontal();
 
         }
 

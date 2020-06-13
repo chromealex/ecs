@@ -151,8 +151,7 @@ namespace ME.ECSEditor {
             var hash = interestObj.GetHashCode();
             var key = MathUtils.GetKey(hash, (int)step);
 
-            double watcherMeasured;
-            if (this.dicMeasured.TryGetValue(key, out watcherMeasured) == true) {
+            if (this.dicMeasured.TryGetValue(key, out var watcherMeasured) == true) {
 
                 return watcherMeasured;
 
@@ -188,6 +187,11 @@ namespace ME.ECSEditor {
             public static Color measureLabelWarning;
             public static Color measureLabelError;
             public static Texture2D connectionTexture;
+            public static GUIStyle background;
+            public static Color gridColor = new Color(0f, 0f, 0f, 1f);
+
+            public static GUIStyle fixedFontLabel;
+            private static Font fixedFont;
 
             static Styles() {
                 
@@ -195,17 +199,56 @@ namespace ME.ECSEditor {
                 
             }
 
-            public static void Init() {
-                
-                var tex = EditorGUIUtility.Load("builtin skins/darkskin/images/animationrowevenselected.png") as Texture2D;
-                var t = new Texture2D(tex.width, tex.height, TextureFormat.RGBA32, false);
-                var arr = new Color32[t.width * t.height];
-                for (int i = 0; i < t.width * t.height; ++i) {
-                    arr[i] = new Color(1f, 0.5f, 0.5f, 1f);
+            public static Color GetColorForMeasuring(float tickTime, double ts) {
+
+                var curColor = Styles.measureLabelNormal;
+                if (ts > tickTime * 1000f) {
+
+                    curColor = Styles.measureLabelError;
+
+                } else if (ts > tickTime * 1000f * 0.5f) {
+                        
+                    curColor = Styles.measureLabelWarning;
+                        
                 }
-                t.SetPixels32(arr);
-                Styles.connectionTexture = t;
+
+                return curColor;
+
+            }
+            
+            public static string ColorToHex(Color color) {
+
+                return ColorUtility.ToHtmlStringRGB(color);
                 
+            }
+
+            public static void Init() {
+
+                {
+                    var t = new Texture2D(3, 3, TextureFormat.RGBA32, false);
+                    var arr = new Color32[t.width * t.height];
+                    for (int i = 0; i < t.width * t.height; ++i) {
+                        arr[i] = new Color(0.3f, 0.5f, 1f, 0.5f);
+                    }
+
+                    t.SetPixels32(arr);
+                    t.Apply();
+                    Styles.connectionTexture = t;
+                }
+
+                {
+                    Styles.background = new GUIStyle();
+                    var t = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+                    var arr = new Color32[t.width * t.height];
+                    for (int i = 0; i < t.width * t.height; ++i) {
+                        arr[i] = new Color(0.17f, 0.17f, 0.17f, 1f);
+                    }
+
+                    t.SetPixels32(arr);
+                    t.Apply();
+                    Styles.background.normal.background = t;
+                }
+
                 Styles.nodeStyle = new GUIStyle();
                 Styles.nodeStyle.normal.background = EditorStyles.miniButton.normal.scaledBackgrounds[0];//EditorGUIUtility.Load("builtin skins/darkskin/images/node1.png") as Texture2D;
                 Styles.nodeStyle.border = new RectOffset(12, 12, 12, 12);
@@ -218,11 +261,6 @@ namespace ME.ECSEditor {
                 Styles.systemNode.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node2.png") as Texture2D;
                 Styles.systemNode.border = new RectOffset(12, 12, 12, 12);
 
-                Styles.measureLabel = new GUIStyle(EditorStyles.miniBoldLabel);
-                Styles.measureLabel.richText = true;
-                Styles.measureLabel.padding = new RectOffset(0, 0, 15, 0);
-                Styles.measureLabel.alignment = TextAnchor.UpperCenter;
-                
                 Styles.measureLabelNormal = Color.green;
                 Styles.measureLabelWarning = Color.yellow;
                 Styles.measureLabelError = Color.red;
@@ -252,6 +290,46 @@ namespace ME.ECSEditor {
                 Styles.endTickStyle.normal.background = EditorGUIUtility.Load("builtin skins/darkskin/images/node4.png") as Texture2D;
                 Styles.endTickStyle.border = new RectOffset(12, 12, 12, 12);
 
+                if (Styles.fixedFontLabel == null) {
+                    
+                    Styles.fixedFontLabel = new GUIStyle(EditorStyles.miniLabel);
+                    string fontName;
+                    if (Application.platform == RuntimePlatform.WindowsEditor) {
+                        fontName = "Consolas";
+                    } else {
+                        fontName = "Courier";
+                    }
+
+                    Styles.CleanupFont();
+
+                    Styles.fixedFont = Font.CreateDynamicFontFromOSFont(fontName, Styles.fixedFontLabel.fontSize);
+                    Styles.fixedFontLabel.richText = true;
+                    Styles.fixedFontLabel.font = Styles.fixedFont;
+                    Styles.fixedFontLabel.fontSize = Styles.fixedFontLabel.fontSize;
+                    
+                    Styles.measureLabel = new GUIStyle(Styles.fixedFontLabel);
+                    Styles.measureLabel.richText = true;
+                    Styles.measureLabel.padding = new RectOffset(0, 0, 15, 0);
+                    Styles.measureLabel.alignment = TextAnchor.UpperCenter;
+
+                }
+                
+                //Styles.measureLabel = new GUIStyle(EditorStyles.miniBoldLabel);
+                //Styles.measureLabel.richText = true;
+                //Styles.measureLabel.padding = new RectOffset(0, 0, 15, 0);
+                //Styles.measureLabel.alignment = TextAnchor.UpperCenter;
+
+            }
+
+            public static void CleanupFont() {
+                
+                if (Styles.fixedFont != null) {
+                    
+                    Object.DestroyImmediate(Styles.fixedFont, true);
+                    Styles.fixedFont = null;
+                    
+                }
+                
             }
 
         }
@@ -263,7 +341,9 @@ namespace ME.ECSEditor {
             public Vector2 graphSize;
             private List<Node> nodes = new List<Node>();
             private float timer;
-            private double maxTs = double.MinValue;
+            public double sumPreviousFrame;
+            public double previousFrameMax;
+            
             public Node rootNode {
                 get {
                     if (this.nodes.Count == 0) return null;
@@ -297,18 +377,30 @@ namespace ME.ECSEditor {
             }
 
             private object prevCheckpoint;
+
             private Vector2 DrawNode(Node node, float x, float y) {
 
-                const float targetFrameRate = 30f;
+                var sumPreviousFrame = 0d;
+                var previousFrameMax = 0d;
+                var result = this.DrawNode(node, x, y, ref sumPreviousFrame, ref previousFrameMax);
+                this.sumPreviousFrame = sumPreviousFrame;
+                this.previousFrameMax = previousFrameMax;
+                return result;
+
+            }
+            
+            private Vector2 DrawNode(Node node, float x, float y, ref double parentPreviousFrame, ref double parentPreviousFrameMax) {
+
+                var subGraph = node.data as Graph;
+
                 var offset = node.GetOffset();
                 var px = x;
                 var py = y;
                 
                 var size = node.GetSize();
                 var style = node.GetStyle();
-                if (node.data is Graph) {
+                if (subGraph != null) {
 
-                    var subGraph = node.data as Graph;
                     size.y += subGraph.graphSize.y;
                     
                 }
@@ -372,40 +464,36 @@ namespace ME.ECSEditor {
                 var mData = string.Empty;
                 if (this.checkpointCollector != null && node.checkpoint != null) {
 
+                    var tickTime = this.worldGraph.world.GetTickTime();
                     var watcherTs = this.checkpointCollector.GetWatcher(node.checkpoint, node.worldStep);
-                    var curColor = Styles.measureLabelNormal;
-                    var maxColor = Styles.measureLabelNormal;
-                    if (watcherTs >= this.maxTs) this.maxTs = watcherTs;
-                    if (watcherTs > 1000f / targetFrameRate) {
+                    if (watcherTs >= node.maxTs) node.maxTs = watcherTs;
+                    var curColor = Styles.GetColorForMeasuring(tickTime, watcherTs);
+                    var maxColor = Styles.GetColorForMeasuring(tickTime, node.maxTs);
+                    
+                    var maxTs = node.maxTs;
+                    parentPreviousFrame += watcherTs;
+                    if (node.maxTs > parentPreviousFrameMax) parentPreviousFrameMax = node.maxTs;
 
-                        curColor = Styles.measureLabelError;
+                    if (node is Container) {
 
-                    } else if (watcherTs > 1000f / targetFrameRate * 0.5f) {
-                        
-                        curColor = Styles.measureLabelWarning;
+                        if (subGraph != null) {
+
+                            watcherTs = subGraph.sumPreviousFrame;
+                            maxTs = subGraph.previousFrameMax;
+
+                        }
                         
                     }
                     
-                    if (this.maxTs > 1000f / targetFrameRate) {
-
-                        maxColor = Styles.measureLabelError;
-
-                    } else if (this.maxTs > 1000f / targetFrameRate * 0.5f) {
-                        
-                        maxColor = Styles.measureLabelWarning;
-                        
-                    }
-
-                    mData = string.Format("<color=#{2}>{0}ms</color>  <color=#{3}>Max: {1}ms</color>", watcherTs.ToString("#0.000"), this.maxTs.ToString("#0.000"), this.ColorToHex(curColor), this.ColorToHex(maxColor));
+                    mData = string.Format("<color=#{2}>{0}ms</color>  <color=#{3}>Max: {1}ms</color>", watcherTs.ToString("#0.000"), maxTs.ToString("#0.000"), Styles.ColorToHex(curColor), Styles.ColorToHex(maxColor));
                     
                     GUI.Label(boxRectOffset, mData, Styles.measureLabel);
 
                 }
 
                 node.OnGUI(boxRectOffset);
-                if (node.data is Graph) {
+                if (subGraph != null) {
 
-                    var subGraph = node.data as Graph;
                     subGraph.prevCheckpoint = this.prevCheckpoint;
                     subGraph.OnGUI(boxRect);
                     if (subGraph.vertical == true) {
@@ -414,13 +502,16 @@ namespace ME.ECSEditor {
 
                     }
 
+                    parentPreviousFrame += subGraph.sumPreviousFrame;
+                    if (subGraph.previousFrameMax > parentPreviousFrameMax) parentPreviousFrameMax = subGraph.previousFrameMax;
+
                 }
 
                 if (node.checkpoint != null) this.prevCheckpoint = node.checkpoint;
 
                 for (int i = 0; i < node.connections.Count; ++i) {
 
-                    var nodeSize = this.DrawNode(node.connections[i], px, py);
+                    var nodeSize = this.DrawNode(node.connections[i], px, py, ref parentPreviousFrame, ref parentPreviousFrameMax);
                     py += nodeSize.y + Styles.verticalSpacing;
                     
                     if (this.vertical == true) {
@@ -433,12 +524,6 @@ namespace ME.ECSEditor {
 
                 return size;
 
-            }
-
-            private string ColorToHex(Color color) {
-
-                return ColorUtility.ToHtmlStringRGB(color);
-                
             }
 
             private void DrawConnection(Rect from, Rect to, Node fromNode, Node toNode) {
@@ -592,6 +677,7 @@ namespace ME.ECSEditor {
             public WorldStep worldStep;
             public List<Node> connections = new List<Node>();
             public object data;
+            public double maxTs = double.MinValue;
 
             public Node(object data) {
 
@@ -644,7 +730,15 @@ namespace ME.ECSEditor {
 
         public abstract class Container : Node {
 
+            private string name;
+            
             public Container(object data) : base(data) { }
+
+            public Container(string name, object data) : base(data) {
+
+                this.name = name;
+
+            }
 
             public override Vector2 GetOffset() {
                 
@@ -665,14 +759,16 @@ namespace ME.ECSEditor {
             }
 
             public override void OnGUI(Rect rect) {
-                
-                var dataType = GUILayoutExt.GetTypeLabel(this.GetType());
+
+                var dataType = this.ToString();//GUILayoutExt.GetTypeLabel(this.GetType());
                 GUI.Label(rect, dataType, Styles.containerCaption);
                 
             }
             
             public override string ToString() {
 
+                if (string.IsNullOrEmpty(this.name) == false) return this.name;
+                
                 return this.GetType().Name;
 
             }
@@ -712,9 +808,9 @@ namespace ME.ECSEditor {
         }
         
         public class WorldNode : Node { public WorldNode(object data) : base(data) { } }
-        public class SystemsVisualContainer : Container { public SystemsVisualContainer(object data) : base(data) { } }
+        public class SystemsVisualContainer : Container { public SystemsVisualContainer(string name, object data) : base(name, data) { } }
         public class ModulesVisualContainer : Container { public ModulesVisualContainer(object data) : base(data) { } }
-        public class SystemsLogicContainer : Container { public SystemsLogicContainer(object data) : base(data) { } }
+        public class SystemsLogicContainer : Container { public SystemsLogicContainer(string name, object data) : base(name, data) { } }
         public class ModulesLogicContainer : Container { public ModulesLogicContainer(object data) : base(data) { } }
         public class PluginsLogicContainer : Container { public PluginsLogicContainer(object data) : base(data) { } }
         public class PluginsLogicSimulateContainer : Container { public PluginsLogicSimulateContainer(object data) : base(data) { } }
@@ -833,8 +929,8 @@ namespace ME.ECSEditor {
 
         }
 
-        private Graph graph;
-        private World world;
+        internal Graph graph;
+        internal World world;
         private CheckpointCollector checkpointCollector;
         
         public WorldGraph(World world) {
@@ -847,7 +943,32 @@ namespace ME.ECSEditor {
 
         }
 
+        private Graph CreateSubGraph<T>(ME.ECS.Collections.IBufferArray list, string methodName, WorldStep step) where T : Node {
+            
+            var innerGraph = new Graph(this.checkpointCollector);
+            innerGraph.worldGraph = this;
+            innerGraph.vertical = true;
+            var enter = innerGraph.AddNode(new SubmoduleEnterNode(null));
+            var lastNode = enter;
+            var arr = list.GetArray();
+            for (int i = 0; i < list.Count; ++i) {
+
+                var item = arr.GetValue(i);
+                if (WorldHelper.HasMethod(item, methodName) == true) {
+
+                    lastNode = innerGraph.AddNode(lastNode, (T)System.Activator.CreateInstance(typeof(T), item), item, step);
+                    
+                }
+
+            }
+            innerGraph.AddNode(lastNode, new SubmoduleExitNode(lastNode));
+            return innerGraph;
+
+        }
+
         private Graph CreateSubGraph<T>(IEnumerable list, string methodName, WorldStep step) where T : Node {
+
+            if (list == null) return null;
             
             var innerGraph = new Graph(this.checkpointCollector);
             innerGraph.worldGraph = this;
@@ -884,11 +1005,27 @@ namespace ME.ECSEditor {
             var beginTick = graph.AddNode(modulesVisualContainer, new BeginTickNode(null), "Simulate");
             var modulesLogicContainer = graph.AddNode(beginTick, new ModulesLogicContainer(this.CreateSubGraph<ModuleLogicNode>(modules, "AdvanceTick", WorldStep.LogicTick)), modules);
             var pluginsLogicContainer = graph.AddNode(modulesLogicContainer, new PluginsLogicContainer(null), "PlayPluginsForTick");
-            var systemsLogicContainer = graph.AddNode(pluginsLogicContainer, new SystemsLogicContainer(this.CreateSubGraph<SystemLogicNode>(systems, "AdvanceTick", WorldStep.LogicTick)), systems);
+
+            Node systemsLogicContainer = pluginsLogicContainer;
+            for (int i = 0; i < systems.Length; ++i) {
+
+                var group = systems[i];
+                if (group.systems.Length == 0) continue;
+                systemsLogicContainer = graph.AddNode(systemsLogicContainer, new SystemsLogicContainer(group.name, this.CreateSubGraph<SystemLogicNode>(group.systems, "AdvanceTick", WorldStep.LogicTick)), group.systems.arr);
+
+            }
             var endTick = graph.AddNode(systemsLogicContainer, new EndTickNode(null));
             
             var pluginsLogicSimulateContainer = graph.AddNode(endTick, new PluginsLogicSimulateContainer(null), "SimulatePluginsForTicks");
-            var systemsVisualContainer = graph.AddNode(pluginsLogicSimulateContainer, new SystemsVisualContainer(this.CreateSubGraph<SystemVisualNode>(systems, "Update", WorldStep.VisualTick)), systems);
+            Node systemsVisualContainer = pluginsLogicSimulateContainer;
+            for (int i = 0; i < systems.Length; ++i) {
+
+                var group = systems[i];
+                if (group.systems.Length == 0) continue;
+                systemsVisualContainer = graph.AddNode(systemsVisualContainer, new SystemsVisualContainer(group.name, this.CreateSubGraph<SystemVisualNode>(group.systems, "Update", WorldStep.VisualTick)), group.systems.arr);
+
+            }
+            
             graph.AddNode(systemsVisualContainer, new RemoveMarkersNode(null), "RemoveMarkers");
             
             return graph;
@@ -913,13 +1050,17 @@ namespace ME.ECSEditor {
 
             this.rect = rect;
             
-            this.DrawGrid(20f, 0.2f, Color.grey);
-            this.DrawGrid(100f, 0.4f, Color.grey);
+            GUI.DrawTexture(this.rect, Styles.background.normal.background);
+            var style = new GUIStyle("CurveEditorBackground");
+            GUI.Box(this.rect, string.Empty, style);
 
-            this.graph.OnGUI(new Rect(this.scrollPosition.x, this.scrollPosition.y, rect.width, rect.height));
+            this.DrawGrid(20f, 0.2f, Styles.gridColor);
+            this.DrawGrid(100f, 0.4f, Styles.gridColor);
 
+            this.graph.OnGUI(new Rect(this.scrollPosition.x + rect.x, this.scrollPosition.y + rect.y, rect.width, rect.height));
+            
             this.ProcessEvents(Event.current);
-
+            
             return this.scrollPosition;
 
         }
@@ -949,9 +1090,10 @@ namespace ME.ECSEditor {
             var heightDivs = Mathf.CeilToInt(this.rect.height / gridSpacing);
 
             Handles.BeginGUI();
+            var oldColor = Handles.color;
             Handles.color = new Color(gridColor.r, gridColor.g, gridColor.b, gridOpacity);
 
-            var newOffset = new Vector3(this.scrollPosition.x % gridSpacing, this.scrollPosition.y % gridSpacing, 0);
+            var newOffset = new Vector3((this.scrollPosition.x + this.rect.x) % gridSpacing, (this.scrollPosition.y + this.rect.y) % gridSpacing, 0);
 
             for (var i = 0; i < widthDivs; ++i) {
                 Handles.DrawLine(new Vector3(gridSpacing * i, -gridSpacing, 0) + newOffset, new Vector3(gridSpacing * i, this.rect.height, 0f) + newOffset);
@@ -961,7 +1103,7 @@ namespace ME.ECSEditor {
                 Handles.DrawLine(new Vector3(-gridSpacing, gridSpacing * j, 0) + newOffset, new Vector3(this.rect.width, gridSpacing * j, 0f) + newOffset);
             }
 
-            Handles.color = Color.white;
+            Handles.color = oldColor;
             Handles.EndGUI();
             
         }
@@ -1013,6 +1155,7 @@ namespace ME.ECSEditor {
 
         }
 
+        private int maxCPF;
         public void OnGUI() {
 
             if (this.worldGraphs.Count > 0 && Worlds.registeredWorlds.Count > 0) {
@@ -1024,10 +1167,13 @@ namespace ME.ECSEditor {
 
                 }
 
-                this.worldGraphs[this.selectedWorldIndex].OnGUI(this.position);
-                EditorGUI.LabelField(new Rect(0f, -2f, this.position.width, 18f), string.Empty, EditorStyles.toolbar);
-                this.selectedWorldIndex = EditorGUI.Popup(new Rect(0f, -2f, 200f, 18f), this.selectedWorldIndex, elements, EditorStyles.toolbarDropDown);
+                var graph = this.worldGraphs[this.selectedWorldIndex];
+                graph.OnGUI(new Rect(0f, 18f, this.position.width, this.position.height - 18f - 18f));
+                EditorGUI.LabelField(new Rect(0f, 0f, this.position.width, 18f), string.Empty, EditorStyles.toolbar);
+                this.selectedWorldIndex = EditorGUI.Popup(new Rect(0f, 0f, 200f, 18f), this.selectedWorldIndex, elements, EditorStyles.toolbarDropDown);
 
+                this.DrawStats(new Rect(0f, this.position.height - 18f, this.position.width, 18f), graph);
+                
             } else {
                 
                 var centeredStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel);
@@ -1036,6 +1182,54 @@ namespace ME.ECSEditor {
                 GUILayout.Label("This is runtime utility to view current running worlds.\nPress <b>Play</b> to start profiling.", centeredStyle);
                 
             }
+
+        }
+
+        public void DrawStats(Rect rect, WorldGraph graph) {
+            
+            GUILayout.BeginArea(rect, EditorStyles.toolbar);
+
+            var px = 10f;
+            var py = 0f;
+            var pHeight = 18f;
+            {
+                var ts = graph.graph.sumPreviousFrame;
+                GUI.Label(new Rect(px, py, 100f, pHeight),
+                          string.Format("Frame: <color=#{1}>{0:#0.000}ms</color>", ts,
+                                        WorldGraph.Styles.ColorToHex(WorldGraph.Styles.GetColorForMeasuring(graph.world.GetTickTime(), ts))), WorldGraph.Styles.fixedFontLabel);
+            }
+
+            px += 100f;
+            {
+                var ts = graph.graph.previousFrameMax;
+                GUI.Label(new Rect(px, py, 100f, pHeight),
+                          string.Format("Max: <color=#{1}>{0:#0.000}ms</color>", ts,
+                                        WorldGraph.Styles.ColorToHex(WorldGraph.Styles.GetColorForMeasuring(graph.world.GetTickTime(), ts))), WorldGraph.Styles.fixedFontLabel);
+            }
+
+            #if FPS_MODULE_SUPPORT
+            px += 100f;
+            {
+                var fpsModule = graph.world.GetModule<IFPSModuleBase>();
+                var frameTime = graph.graph.sumPreviousFrame;
+                var tick = graph.world.GetTickTime();
+                var requiredFps = 1f / tick;
+                GUI.Label(new Rect(px, py, 100f, pHeight),
+                          string.Format("FPS: <color=#{2}>{0:#0.0}</color>/{1:#0.0}",
+                                        fpsModule.fps,
+                                        requiredFps,
+                                        WorldGraph.Styles.ColorToHex(WorldGraph.Styles.GetColorForMeasuring(graph.world.GetTickTime(), frameTime))), WorldGraph.Styles.fixedFontLabel);
+            }
+            #endif
+
+            px += 100f;
+            {
+                var cpf = graph.world.GetCPF();
+                if (cpf > this.maxCPF) this.maxCPF = cpf;
+                GUI.Label(new Rect(px, py, 200f, pHeight), string.Format("CPF: {0} (max: {1})", cpf, this.maxCPF), WorldGraph.Styles.fixedFontLabel);
+            }
+            
+            GUILayout.EndArea();
 
         }
 

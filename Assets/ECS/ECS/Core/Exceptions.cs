@@ -21,6 +21,18 @@ namespace ME.ECS {
 
     }
 
+    public class EmptyEntityException : System.Exception {
+
+        private EmptyEntityException() : base("[ME.ECS] You are trying to change empty entity.") {}
+
+        public static void Throw() {
+
+            throw new EmptyEntityException();
+
+        }
+
+    }
+
     public class InStateException : System.Exception {
 
         public InStateException() : base("[ME.ECS] Could not perform action because current step is in state (" + Worlds.currentWorld.GetCurrentStep().ToString() + ").") {}
@@ -31,7 +43,7 @@ namespace ME.ECS {
 
         public OutOfStateException(string description = "") : base("[ME.ECS] Could not perform action because current step is out of state (" + Worlds.currentWorld.GetCurrentStep().ToString() + "). This could cause out of sync state. " + description) {}
 
-        public static void ThrowWorldState() {
+        public static void ThrowWorldStateCheck() {
 
             throw new OutOfStateException("LogicTick state is required. You can disable this check by turning off WORLD_STATE_CHECK define.");
 
@@ -42,6 +54,19 @@ namespace ME.ECS {
     public class AllocationException : System.Exception {
 
         public AllocationException() : base("Allocation not allowed!") {}
+
+    }
+
+    public class SystemGroupRegistryException : System.Exception {
+
+        private SystemGroupRegistryException() {}
+        private SystemGroupRegistryException(string caption) : base(caption) {}
+
+        public static void Throw() {
+
+            throw new SystemGroupRegistryException("SystemGroup was not registered in world. Be sure you use constructor with parameters (new SystemGroup(name)).");
+
+        }
 
     }
 

@@ -10,6 +10,14 @@ namespace ME.ECS {
             structComponentsContainer.Validate<ME.ECS.Transform.Scale>();
 
         }
+        
+        public static void Init(in Entity entity) {
+
+            entity.ValidateData<ME.ECS.Transform.Position>();
+            entity.ValidateData<ME.ECS.Transform.Rotation>();
+            entity.ValidateData<ME.ECS.Transform.Scale>();
+
+        }
     
     }
 

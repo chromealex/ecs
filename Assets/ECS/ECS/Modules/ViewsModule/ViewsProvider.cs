@@ -318,7 +318,7 @@
         IView Spawn(IView prefab, ViewId prefabSourceId);
         void Destroy(ref IView instance);
 
-        void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime);
+        void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime, bool hasChanged);
 
     }
 
@@ -338,7 +338,7 @@
         public abstract IView Spawn(IView prefab, ViewId prefabSourceId);
         public abstract void Destroy(ref IView instance);
 
-        public virtual void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime) {}
+        public abstract void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime, bool hasChanged);
 
     }
 

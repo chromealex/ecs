@@ -106,9 +106,11 @@ namespace ME.ECS {
             }
             
             Worlds.DeInitializeBegin();
-            Worlds.UnRegister(world);
+            var w = world;
+            world.RecycleResetState<TState>();
+            PoolClass<World>.Recycle(ref w);
             world.RecycleStates<TState>();
-            PoolClass<World>.Recycle(ref world);
+            Worlds.UnRegister(world);
             Worlds.DeInitializeEnd();
 
         }

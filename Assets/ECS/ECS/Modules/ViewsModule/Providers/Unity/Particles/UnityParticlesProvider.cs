@@ -694,7 +694,7 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        public override void Update(BufferArray<Views> list, float deltaTime) {
+        public override void Update(BufferArray<Views> list, float deltaTime, bool hasChanged) {
 
             this.UpdateViews(list, deltaTime);
             this.ValidateParticles();

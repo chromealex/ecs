@@ -49,14 +49,14 @@ namespace ME.ECS {
 
         }
 
-        private BufferArray<Bucket> arr; // arr by component type
+        private BufferArray<Bucket> buckets; // arr by component type
         private static int typeId;
         
         private int capacity;
 
         public void Initialize(int capacity) {
 
-            this.arr = PoolArray<Bucket>.Spawn(capacity);
+            this.buckets = PoolArray<Bucket>.Spawn(capacity);
             
         }
 
@@ -72,46 +72,14 @@ namespace ME.ECS {
             
         }
 
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void CleanUp_INTERNAL() {
-
-            if (this.arr.arr == null) return;
-            
-            for (int i = 0; i < this.arr.Length; ++i) {
-
-                ref var bucket = ref this.arr[i];
-                if (bucket.components.arr != null) {
-
-                    for (int j = 0; j < bucket.components.Length; ++j) {
-
-                        var list = bucket.components[j];
-                        if (list != null) {
-
-                            PoolComponents.Recycle(list);
-                            PoolList<IComponent>.Recycle(ref list);
-                            bucket.components[j] = null;
-
-                        }
-
-                    }
-
-                    PoolArray<List<IComponent>>.Recycle(ref bucket.components);
-
-                }
-
-            }
-            PoolArray<Bucket>.Recycle(ref this.arr);
-            
-        }
-
         public int Count {
 
             get {
 
                 var count = 0;
-                for (int i = 0; i < this.arr.Length; ++i) {
+                for (int i = 0; i < this.buckets.Length; ++i) {
 
-                    if (this.arr[i].components.arr != null) count += this.arr[i].components.Length;
+                    if (this.buckets[i].components.arr != null) count += this.buckets[i].components.Length;
 
                 }
 
@@ -125,9 +93,9 @@ namespace ME.ECS {
 
             var count = 0;
             var typeId = Components.GetTypeId<TComponent>();
-            if (typeId < 0 || typeId >= this.arr.Length) return count;
+            if (typeId < 0 || typeId >= this.buckets.Length) return count;
 
-            ref var bucket = ref this.arr[typeId];
+            ref var bucket = ref this.buckets[typeId];
             if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length) return count;
 
             ref var list = ref bucket.components[entityId];
@@ -137,7 +105,7 @@ namespace ME.ECS {
 
                 var tComp = list[i] as TComponent;
                 if (predicate.Execute(tComp) == false) continue;
-                            
+                
                 PoolComponents.Recycle(ref tComp);
                 list.RemoveAt(i);
                 ++count;
@@ -164,9 +132,9 @@ namespace ME.ECS {
         private int RemoveAll_INTERNAL<TComponent>() where TComponent : class, IComponentBase {
 
             var count = 0;
-            for (int j = 0; j < this.arr.Length; ++j) {
+            for (int j = 0; j < this.buckets.Length; ++j) {
 
-                ref var bucket = ref this.arr[j];
+                ref var bucket = ref this.buckets[j];
                 if (bucket.components.arr == null) continue;
                 
                 for (int k = 0; k < bucket.components.Length; ++k) {
@@ -199,9 +167,9 @@ namespace ME.ECS {
 
             var count = 0;
             var typeId = Components.GetTypeId<TComponent>();
-            if (typeId < 0 || typeId >= this.arr.Length) return count;
+            if (typeId < 0 || typeId >= this.buckets.Length) return count;
 
-            ref var bucket = ref this.arr[typeId];
+            ref var bucket = ref this.buckets[typeId];
             if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length) return count;
 
             var list = bucket.components[entityId];
@@ -223,9 +191,9 @@ namespace ME.ECS {
         public int RemoveAll(int entityId) {
 
             var count = 0;
-            for (int i = 0; i < this.arr.Length; ++i) {
+            for (int i = 0; i < this.buckets.Length; ++i) {
 
-                ref var bucket = ref this.arr[i];
+                ref var bucket = ref this.buckets[i];
                 if (bucket.components.arr != null && entityId >= 0 && entityId < bucket.components.Length) {
 
                     ref var list = ref bucket.components[entityId];
@@ -256,33 +224,25 @@ namespace ME.ECS {
 
         }
 
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void Add_INTERNAL(int typeId, int entityId, IComponent data) {
+        public void Add<TComponent>(int entityId, TComponent data) where TComponent : class, IComponent {
 
-            ArrayUtils.Resize(typeId, ref this.arr);
+            var typeId = Components.GetTypeId<TComponent>();
+            ArrayUtils.Resize(typeId, ref this.buckets);
             
-            ref var bucket = ref this.arr[typeId];
+            ref var bucket = ref this.buckets[typeId];
             ArrayUtils.Resize(entityId, ref bucket.components);
 
             if (bucket.components[entityId] == null) bucket.components[entityId] = PoolList<IComponent>.Spawn(1);
             bucket.components[entityId].Add(data);
-            
-        }
 
-        public void Add<TComponent>(int entityId, TComponent data) where TComponent : class, IComponent {
-
-            var typeId = Components.GetTypeId<TComponent>();
-            this.Add_INTERNAL(typeId, entityId, data);
-            
         }
         
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private TComponent Get_INTERNAL<TComponent>(int entityId) where TComponent : class, IComponent {
+        public TComponent GetFirst<TComponent>(int entityId) where TComponent : class, IComponent {
             
             var typeId = Components.GetTypeId<TComponent>();
-            if (typeId >= 0 && typeId < this.arr.Length) {
+            if (typeId >= 0 && typeId < this.buckets.Length) {
 
-                ref var bucket = ref this.arr[typeId];
+                ref var bucket = ref this.buckets[typeId];
                 if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) return null;
                 
                 var list = bucket.components[entityId];
@@ -294,24 +254,18 @@ namespace ME.ECS {
 
         }
 
-        public TComponent GetFirst<TComponent>(int entityId) where TComponent : class, IComponent {
-            
-            return this.Get_INTERNAL<TComponent>(entityId);
-
-        }
-
         public BufferArray<Bucket> GetAllBuckets() {
             
-            return this.arr;
+            return this.buckets;
 
         }
 
         public List<IComponent> ForEach<TComponent>(int entityId) where TComponent : class, IComponent {
             
             var typeId = Components.GetTypeId<TComponent>();
-            if (typeId >= 0 && typeId < this.arr.Length) {
+            if (typeId >= 0 && typeId < this.buckets.Length) {
 
-                ref var bucket = ref this.arr[typeId];
+                ref var bucket = ref this.buckets[typeId];
                 if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) return null;
                 
                 return bucket.components[entityId];
@@ -325,9 +279,9 @@ namespace ME.ECS {
         public bool Contains<TComponent>(int entityId) where TComponent : class, IComponent {
 
             var typeId = Components.GetTypeId<TComponent>();
-            if (typeId >= 0 && typeId < this.arr.Length) {
+            if (typeId >= 0 && typeId < this.buckets.Length) {
 
-                ref var bucket = ref this.arr[typeId];
+                ref var bucket = ref this.buckets[typeId];
                 if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) return false;
 
                 return bucket.components[entityId].Count > 0;
@@ -341,9 +295,9 @@ namespace ME.ECS {
         IList<IComponentBase> IComponentsBase.GetData(int entityId) {
 
             var list = new List<IComponentBase>();
-            for (int i = 0; i < this.arr.Length; ++i) {
+            for (int i = 0; i < this.buckets.Length; ++i) {
 
-                var bucket = this.arr[i];
+                var bucket = this.buckets[i];
                 if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) continue;
 
                 list.AddRange(bucket.components[entityId]);
@@ -354,61 +308,156 @@ namespace ME.ECS {
 
         }
 
-        public void CopyFrom(Components other) {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void CleanUp_INTERNAL() {
 
-            // Clean up current array
-            this.CleanUp_INTERNAL();
-
-            this.capacity = other.capacity;
+            if (this.buckets.arr == null) return;
             
-            // Clone other array
-            this.arr = PoolArray<Bucket>.Spawn(other.arr.Length);
-            for (int i = 0; i < other.arr.Length; ++i) {
+            for (int i = 0; i < this.buckets.Length; ++i) {
 
-                ref var otherBucket = ref other.arr[i];
-                if (otherBucket.components.arr != null) {
+                ref var bucket = ref this.buckets[i];
+                if (bucket.components.arr != null) {
 
-                    this.arr[i].components = PoolArray<List<IComponent>>.Spawn(otherBucket.components.Length);
-                    for (int j = 0; j < otherBucket.components.Length; ++j) {
+                    for (int j = 0; j < bucket.components.Length; ++j) {
 
-                        ref var otherList = ref otherBucket.components[j];
-                        if (otherList != null) {
+                        var list = bucket.components.arr[j];
+                        if (list != null) {
 
-                            this.arr[i].components[j] = PoolList<IComponent>.Spawn(otherList.Capacity);
-                            for (int k = 0, count = otherList.Count; k < count; ++k) {
-
-                                var element = otherList[k];
-                                var type = element.GetType();
-                                var comp = (IComponent)PoolComponents.Spawn(type);
-                                if (comp == null) {
-
-                                    comp = (IComponent)System.Activator.CreateInstance(type);
-                                    PoolInternalBase.CallOnSpawn(comp);
-
-                                }
-
-                                if (comp is IComponentCopyable compCopyable) compCopyable.CopyFrom((IComponentCopyable)element);
-
-                                this.arr[i].components[j].Add(comp);
-
-                            }
-
-                        } else {
-
-                            //if (this.arr[i].components[j] != null) PoolComponents.Recycle(this.arr[i].components[j]);
-                            this.arr[i].components[j] = null;
+                            PoolComponents.Recycle(list);
+                            PoolList<IComponent>.Recycle(ref list);
+                            bucket.components.arr[j] = null;
 
                         }
 
                     }
 
-                } else {
-
-                    this.arr[i].components = new BufferArray<List<IComponent>>(null, 0);
+                    PoolArray<List<IComponent>>.Recycle(ref bucket.components);
 
                 }
 
             }
+            PoolArray<Bucket>.Recycle(ref this.buckets);
+            
+        }
+
+        private struct CopyComponent : IArrayElementCopy<IComponent> {
+
+            public void Copy(IComponent from, ref IComponent to) {
+                
+                var type = from.GetType();
+                var comp = (IComponent)PoolComponents.Spawn(type);
+                if (comp == null) {
+
+                    comp = (IComponent)System.Activator.CreateInstance(type);
+                    PoolInternalBase.CallOnSpawn(comp);
+
+                }
+
+                if (comp is IComponentCopyable compCopyable) compCopyable.CopyFrom((IComponentCopyable)from);
+                to = comp;
+
+            }
+
+            public void Recycle(IComponent item) {
+                
+                PoolComponents.Recycle(item, item.GetType());
+                
+            }
+
+        }
+
+        private struct CopyComponentsList : IArrayElementCopy<List<IComponent>> {
+
+            public void Copy(List<IComponent> from, ref List<IComponent> to) {
+                
+                ArrayUtils.Copy(from, ref to, new CopyComponent());
+                
+            }
+            
+            public void Recycle(List<IComponent> item) {
+
+                ArrayUtils.Recycle(ref item, new CopyComponent());
+
+            }
+
+        }
+
+        private struct CopyBucket : IArrayElementCopy<Bucket> {
+
+            public void Copy(Bucket from, ref Bucket to) {
+                
+                ArrayUtils.Copy(from.components, ref to.components, new CopyComponentsList());
+                
+            }
+
+            public void Recycle(Bucket item) {
+
+                ArrayUtils.Recycle(ref item.components, new CopyComponentsList());
+
+            }
+
+        }
+        
+        public void CopyFrom(Components other) {
+            
+            this.capacity = other.capacity;
+            
+            // Clone other array
+            ArrayUtils.Copy(other.buckets, ref this.buckets, new CopyBucket());
+            
+            // Check-test
+            /*
+            if ((other.buckets.arr != null && this.buckets.arr == null) ||
+                (other.buckets.arr == null && this.buckets.arr != null) ||
+                (other.buckets.Length != this.buckets.Length)) {
+                
+                UnityEngine.Debug.LogError("Copy test failure");
+
+            }
+
+            for (int i = 0; i < other.buckets.Length; ++i) {
+
+                if (other.buckets[i].components.Length != this.buckets[i].components.Length) {
+                    
+                    UnityEngine.Debug.LogError("Copy test failure");
+                    
+                }
+                
+                for (int j = 0; j < other.buckets[i].components.Length; ++j) {
+
+                    var c = other.buckets[i].components[j];
+                    var c2 = this.buckets[i].components[j];
+                    if (c != null) {
+
+                        if (c2 == null) {
+                            
+                            UnityEngine.Debug.LogError("Copy test failure");
+
+                        }
+                        
+                        if (c.Count == c2.Count) {
+
+                            for (int k = 0; k < c.Count; ++k) {
+
+                                if (c[k].GetType() != c2[k].GetType()) {
+
+                                    UnityEngine.Debug.LogError("Copy test failure");
+
+                                }
+
+                            }
+
+                        } else {
+
+                            UnityEngine.Debug.LogError("Copy test failure");
+
+                        }
+
+                    }
+                    
+                }
+
+            }*/
 
         }
         

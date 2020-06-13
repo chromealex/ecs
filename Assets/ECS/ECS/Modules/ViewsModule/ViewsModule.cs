@@ -188,7 +188,7 @@ namespace ME.ECS.Views {
         System.Collections.IDictionary GetViewSourceData();
         IViewsProviderBase GetViewSourceProvider(ViewId viewSourceId);
 
-        void UpdateRequests();
+        bool UpdateRequests();
 
     }
 
@@ -379,7 +379,13 @@ namespace ME.ECS.Views {
         public List<IView> otherViews;
         public bool isNotEmpty;
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         public int Length {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 var count = 0;
                 if (this.mainView != null) ++count;
@@ -388,13 +394,25 @@ namespace ME.ECS.Views {
             }
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         public IView this[int i] {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 if (i == 0) return this.mainView;
                 return this.otherViews[i - 1];
             }
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Add(IView view) {
             
             if (this.mainView == null) {
@@ -417,6 +435,12 @@ namespace ME.ECS.Views {
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Remove(IView view) {
 
             if (this.otherViews != null) {
@@ -425,23 +449,21 @@ namespace ME.ECS.Views {
 
                     if (this.mainView == view) {
 
-                        this.mainView = null;
-                        this.isNotEmpty = false;
-                        return true;
-
-                    } else {
-                    
-                        this.mainView = null;
+                        //this.mainView = null;
                         if (this.otherViews.Count > 0) {
-
-                            this.mainView = this.otherViews[0];
-                            this.otherViews.RemoveAt(0);
                             
+                            this.mainView = this.otherViews[this.otherViews.Count - 1];
+                            this.otherViews.RemoveAt(this.otherViews.Count - 1);
+                            this.isNotEmpty = true;
+                            
+                        } else {
+
+                            this.mainView = null;
+                            this.isNotEmpty = false;
+
                         }
-                        
-                        this.isNotEmpty = (this.Length > 0);
                         return true;
-    
+
                     }
                     
                 }
@@ -504,6 +526,9 @@ namespace ME.ECS.Views {
 
         void IModuleBase.OnDeconstruct() {
 
+            this.isRequestsDirty = true;
+            this.UpdateRequests();
+            
             var temp = PoolList<IView>.Spawn(this.registryPrefabToId.Count);
             foreach (var prefab in this.registryIdToPrefab) {
 
@@ -839,11 +864,12 @@ namespace ME.ECS.Views {
 
         //private HashSet<ViewInfo> prevList = new HashSet<ViewInfo>();
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void UpdateRequests() {
+        public bool UpdateRequests() {
 
-            if (this.isRequestsDirty == false) return;
+            if (this.isRequestsDirty == false) return false;
             this.isRequestsDirty = false;
-            
+
+            var hasChanged = false;
             var aliveEntities = PoolHashSet<int>.Spawn(ViewsModule.INTERNAL_ENTITIES_CACHE_CAPACITY);
             if (this.world.ForEachEntity(out RefList<Entity> allEntities) == true) {
 
@@ -871,6 +897,7 @@ namespace ME.ECS.Views {
                                 // is not rendering now
                                 // create required instance
                                 this.CreateVisualInstance(in view.seed, in view.viewInfo);
+                                hasChanged = true;
 
                             }
 
@@ -904,6 +931,7 @@ namespace ME.ECS.Views {
                     }
 
                     this.RecycleView_INTERNAL(ref views.mainView);
+                    hasChanged = true;
 
                 } else {
                     
@@ -933,6 +961,7 @@ namespace ME.ECS.Views {
                         if (found == false) {
                             
                             this.RecycleView_INTERNAL(ref instance);
+                            hasChanged = true;
                             //--i;
                             //--count;
                             
@@ -949,7 +978,9 @@ namespace ME.ECS.Views {
             }
 
             PoolHashSet<int>.Recycle(ref aliveEntities);
-            
+
+            return hasChanged;
+
         }
 
         void IModulePhysicsUpdate.UpdatePhysics(float deltaTime) {
@@ -974,7 +1005,7 @@ namespace ME.ECS.Views {
 
             if (this.world.settings.turnOffViews == true) return;
             
-            this.UpdateRequests();
+            var hasChanged = this.UpdateRequests();
 
             for (var id = 0; id < this.list.Length; ++id) {
                 
@@ -994,7 +1025,7 @@ namespace ME.ECS.Views {
             // Update providers
             foreach (var providerKv in this.registryPrefabToProvider) {
 
-                providerKv.Value.Update(this.list, deltaTime);
+                providerKv.Value.Update(this.list, deltaTime, hasChanged);
 
             }
 

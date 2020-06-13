@@ -285,6 +285,7 @@ namespace ME.ECS.Views.Providers {
 
         public override void OnDeconstruct() {
 
+            this.pool.Clear();
             this.pool = null;
             if (this.currentTransformArray.isCreated == true) this.currentTransformArray.Dispose();
             //if (this.resultTransforms != null) PoolList<UnityEngine.Transform>.Recycle(ref this.resultTransforms);
@@ -329,88 +330,87 @@ namespace ME.ECS.Views.Providers {
         }
 
         private static System.Collections.Generic.List<MonoBehaviourView> resultList;
-        private Unity.Collections.NativeArray<Unity.Mathematics.float3> burstPositions;
-        private Unity.Collections.NativeArray<Unity.Mathematics.quaternion> burstRotations;
-        private Unity.Collections.NativeArray<Unity.Mathematics.float3> burstScales;
-        //private System.Collections.Generic.List<UnityEngine.Transform> resultTransforms;
+        private static int resultCount;
+        //private Unity.Collections.NativeArray<Unity.Mathematics.float3> burstPositions;
+        //private Unity.Collections.NativeArray<Unity.Mathematics.quaternion> burstRotations;
+        //private Unity.Collections.NativeArray<Unity.Mathematics.float3> burstScales;
         private BufferArray<UnityEngine.Transform> currentTransforms;
         private TransformAccessArray currentTransformArray;
         private System.Collections.Generic.List<MonoBehaviourView> tempList;
-        public override void Update(BufferArray<Views> list, float deltaTime) {
+        public override void Update(BufferArray<Views> list, float deltaTime, bool hasChanged) {
             
             if (this.world.settings.useJobsForViews == false || this.world.settings.viewsSettings.unityGameObjectProviderDisableJobs == true) return;
             
             if (list.isEmpty == false) {
 
-                if (this.tempList == null) this.tempList = PoolList<MonoBehaviourView>.Spawn(list.Length);
-                //if (this.resultTransforms == null) this.resultTransforms = PoolList<UnityEngine.Transform>.Spawn(list.Length);
-                //this.resultTransforms.Clear();
-                
-                var changed = false;//ArrayUtils.Resize(list.Length - 1, ref this.currentTransforms);
+                if (hasChanged == true) {
 
-                var k = 0;
-                for (int i = 0, length = list.Length; i < length; ++i) {
-                    
-                    var item = list[i];
-                    if (item.isNotEmpty == false) continue;
-                    
-                    for (int j = 0, count = item.Length; j < count; ++j) {
+                    if (this.tempList == null) this.tempList = PoolList<MonoBehaviourView>.Spawn(list.Length);
 
-                        var view = item[j] as MonoBehaviourView;
-                        if (view == null) continue;
-                        if (view.applyStateJob == true) {
+                    var changed = false; //ArrayUtils.Resize(list.Length - 1, ref this.currentTransforms);
 
-                            changed |= ArrayUtils.Resize(k, ref this.currentTransforms);
-                            var isNew = false;
-                            if (k >= this.tempList.Count) {
-                                
-                                this.tempList.Add(view);
-                                isNew = true;
+                    var k = 0;
+                    for (int i = 0, length = list.Length; i < length; ++i) {
+
+                        var item = list[i];
+                        if (item.isNotEmpty == false) continue;
+
+                        for (int j = 0, count = item.Length; j < count; ++j) {
+
+                            var view = item[j] as MonoBehaviourView;
+                            if (view == null) continue;
+                            if (view.applyStateJob == true) {
+
+                                changed |= ArrayUtils.Resize(k, ref this.currentTransforms);
+                                var isNew = false;
+                                if (k >= this.tempList.Count) {
+
+                                    this.tempList.Add(view);
+                                    this.currentTransforms[k] = view.transform;
+                                    isNew = true;
+
+                                }
+
+                                var tempItem = this.tempList[k];
+                                if (isNew == true ||
+                                    tempItem.prefabSourceId != view.prefabSourceId ||
+                                    tempItem.creationTick != view.creationTick ||
+                                    tempItem.entity != view.entity) {
+
+                                    this.tempList[k] = view;
+                                    this.currentTransforms[k] = view.transform;
+                                    changed = true;
+
+                                }
+
+                                ++k;
 
                             }
-                            var tempItem = this.tempList[k];
-                            if (isNew == true ||
-                                tempItem.prefabSourceId != view.prefabSourceId ||
-                                tempItem.creationTick != view.creationTick ||
-                                tempItem.entity != view.entity) {
-
-                                this.tempList[k] = view;
-                                this.currentTransforms[k] = view.transform;
-                                changed = true;
-                                
-                            }
-
-                            ++k;
 
                         }
 
                     }
 
-                }
+                    if (this.currentTransformArray.isCreated == false) this.currentTransformArray = new TransformAccessArray(k);
 
-                if (this.currentTransformArray.isCreated == false) this.currentTransformArray = new TransformAccessArray(k);
-                
-                if (changed == true) {
+                    if (changed == true) {
 
-                    //var arr = PoolArray<UnityEngine.Transform>.Spawn(this.resultTransforms.Count);
-                    //for (int i = 0, cnt = this.resultTransforms.Count; i < cnt; ++i) arr[i] = this.resultTransforms[i];
+                        this.currentTransformArray.SetTransforms(this.currentTransforms.arr);
+                        //if (UnityGameObjectProvider.resultList != null) PoolList<MonoBehaviourView>.Recycle(ref UnityGameObjectProvider.resultList);
+                        //var result = PoolList<MonoBehaviourView>.Spawn(this.tempList.Count);
+                        //result.AddRange(this.tempList);
+                        UnityGameObjectProvider.resultList = this.tempList;
+                        UnityGameObjectProvider.resultCount = k;
 
-                    this.currentTransformArray.SetTransforms(this.currentTransforms.arr);//arr.arr);
-                    if (UnityGameObjectProvider.resultList != null) PoolList<MonoBehaviourView>.Recycle(ref UnityGameObjectProvider.resultList);
-                    var result = PoolList<MonoBehaviourView>.Spawn(this.tempList.Count);
-                    result.AddRange(this.tempList);
-                    UnityGameObjectProvider.resultList = result;
-                    
-                    //PoolArray<UnityEngine.Transform>.Recycle(ref arr);
+                    }
 
                 }
 
-                var cnt = UnityGameObjectProvider.resultList.Count;
-                if (cnt > 0) {
+                if (UnityGameObjectProvider.resultCount > 0) {
 
                     var job = new Job() {
                         deltaTime = deltaTime,
-                        length = cnt
+                        length = UnityGameObjectProvider.resultCount
                     };
 
                     var handle = job.Schedule(this.currentTransformArray);
@@ -418,8 +418,6 @@ namespace ME.ECS.Views.Providers {
 
                 }
                 
-                //PoolList<MonoBehaviourViewBase>.Recycle(ref this.tempList);
-
             }
 
         }

@@ -7,6 +7,12 @@ namespace ME.ECS {
 
         private float updateNamesTimer = 0f;
 
+        public System.Collections.Generic.Dictionary<Entity, EntityDebugComponent> GetDebugEntities() {
+
+            return this.debugEntities;
+
+        }
+        
         private string GetName(Entity entity, out bool hasName) {
 
             hasName = entity.HasData<ME.ECS.Name.Name>();
@@ -119,7 +125,7 @@ namespace ME.ECS {
             if (this.debugSettings.createGameObjectsRepresentation == true) {
 
                 this.updateNamesTimer += this.tickTime;
-                if (this.updateNamesTimer >= 3f) {
+                if (this.updateNamesTimer >= 1f) {
 
                     this.updateNamesTimer = 0f;
                     this.UpdateNames();

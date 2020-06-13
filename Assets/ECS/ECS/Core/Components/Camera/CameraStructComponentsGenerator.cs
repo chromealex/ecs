@@ -9,6 +9,12 @@ namespace ME.ECS {
 
         }
     
+        public static void Init(in Entity entity) {
+
+            entity.ValidateData<ME.ECS.Camera.Camera>();
+            
+        }
+
     }
 
 }

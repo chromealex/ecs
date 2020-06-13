@@ -46,19 +46,15 @@ namespace ME.ECS {
         public void Validate(in Entity entity) {
 
             var id = entity.id;
-            if (ArrayUtils.WillResize(in id, ref this.types) == true) {
-                
-                ArrayUtils.Resize(id, ref this.types);
-                ArrayUtils.Resize(id, ref this.prevTypes);
-                
-            }
-
+            ArrayUtils.Resize(id, ref this.types);
+            ArrayUtils.Resize(id, ref this.prevTypes);
+            
         }
 
         public void CopyFrom(ArchetypeEntities other) {
             
-            ArrayUtils.Copy(other.prevTypes, ref this.prevTypes);
-            ArrayUtils.Copy(other.types, ref this.types);
+            ArrayUtils.Copy(in other.prevTypes, ref this.prevTypes);
+            ArrayUtils.Copy(in other.types, ref this.types);
             
         }
 
@@ -67,7 +63,7 @@ namespace ME.ECS {
 
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.prevTypes);
-            return ref this.prevTypes[id];
+            return ref this.prevTypes.arr[id];
 
         }
 
@@ -76,7 +72,7 @@ namespace ME.ECS {
 
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
-            return ref this.types[id];
+            return ref this.types.arr[id];
 
         }
 
@@ -85,7 +81,7 @@ namespace ME.ECS {
 
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
-            this.types[id].Has<T>();
+            this.types.arr[id].Has<T>();
 
         }
 
@@ -95,8 +91,8 @@ namespace ME.ECS {
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
-            this.prevTypes[id] = this.Get(entity);
-            this.types[id].Add<T>();
+            this.prevTypes.arr[id] = this.Get(entity);
+            this.types.arr[id] = this.types.arr[id].Add<T>();
 
         }
 
@@ -106,8 +102,8 @@ namespace ME.ECS {
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
-            this.prevTypes[id] = this.Get(entity);
-            this.types[id].Subtract<T>();
+            this.prevTypes.arr[id] = this.Get(entity);
+            this.types.arr[id] = this.types.arr[id].Subtract<T>();
 
         }
         
@@ -117,18 +113,18 @@ namespace ME.ECS {
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
-            this.prevTypes[id].Subtract<T>(); 
-            this.types[id].Subtract<T>();
+            this.prevTypes.arr[id].Subtract<T>(); 
+            this.types.arr[id] = this.types.arr[id].Subtract<T>();
 
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RemoveAll<T>() {
 
-            ArrayUtils.Copy(this.types, ref this.prevTypes);
+            ArrayUtils.Copy(in this.types, ref this.prevTypes);
             for (int i = 0; i < this.types.Length; ++i) {
 
-                this.types[i].Subtract<T>();
+                this.types.arr[i] = this.types.arr[i].Subtract<T>();
 
             }
 
@@ -140,35 +136,52 @@ namespace ME.ECS {
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
-            this.prevTypes[id] = this.Get(entity);
-            this.types[id].Clear();
-
+            this.prevTypes.arr[id] = this.Get(entity);
+            this.types.arr[id] = new Archetype();
+            
         }
 
     }
 
-    public struct Archetype : System.IEquatable<Archetype> {
+    public readonly struct Archetype : System.IEquatable<Archetype> {
 
-        internal BitMask value;
+        internal readonly BitMask value;
         
-        public Archetype(BitMask value) {
+        public Archetype(in BitMask value) {
 
             this.value = value;
             
         }
 
         public int Count {
+            #if ECS_COMPILE_IL2CPP_OPTIONS
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+             Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+             Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+            #endif
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return this.value.Count;
             }
         }
 
         public int BitsCount {
+            #if ECS_COMPILE_IL2CPP_OPTIONS
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+             Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+             Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+            #endif
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return this.value.BitsCount;
             }
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsEmpty() {
 
@@ -176,20 +189,35 @@ namespace ME.ECS {
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool ContainsAll(Archetype archetype) {
+        public bool ContainsAll(in Archetype archetype) {
 
-            return this.value.Has(archetype.value);
+            return this.value.Has(in archetype.value);
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool NotContains(Archetype archetype) {
+        public bool NotContains(in Archetype archetype) {
 
-            return this.value.HasNot(archetype.value);
+            return this.value.HasNot(in archetype.value);
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Has<T>() {
 
@@ -199,25 +227,11 @@ namespace ME.ECS {
             
         }
 
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Archetype Add(Archetype archetype) {
-
-            this.value.AddBits(in archetype.value);
-            
-            return this;
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Archetype Add<T>() {
-
-            if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
-            this.value.AddBit(in ComponentType<T>.index);
-            
-            return this;
-
-        }
-
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool HasBit(in int bit) {
 
@@ -225,34 +239,52 @@ namespace ME.ECS {
             
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Archetype AddBit(in int bit) {
+        public Archetype Add(in Archetype archetype) {
 
-            this.value.AddBit(in bit);
-            
-            return this;
+            var mask = this.value.AddBits(in archetype.value);
+            return new Archetype(in mask);
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public Archetype Add<T>() {
+
+            if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
+            var mask = this.value.AddBit(in ComponentType<T>.index);
+            return new Archetype(in mask);
+
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public Archetype Subtract<T>() {
 
             if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
-            this.value.SubtractBit(in ComponentType<T>.index);
-
-            return this;
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Archetype Clear() {
-
-            this.value = new BitMask();
-
-            return this;
+            var mask = this.value.SubtractBit(in ComponentType<T>.index);
+            return new Archetype(in mask);
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Archetype e1, Archetype e2) {
 
@@ -260,6 +292,11 @@ namespace ME.ECS {
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Archetype e1, Archetype e2) {
 
@@ -267,6 +304,11 @@ namespace ME.ECS {
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Equals(Archetype other) {
 
@@ -280,6 +322,11 @@ namespace ME.ECS {
             
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() {
             

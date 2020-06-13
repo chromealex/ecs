@@ -167,7 +167,7 @@ namespace ME.ECS.Views.Providers {
         }
 
         private static ME.ECS.Collections.BufferArray<Views> currentList;
-        public override void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime) {
+        public override void Update(ME.ECS.Collections.BufferArray<Views> list, float deltaTime, bool hasChanged) {
             
             if (this.world.settings.useJobsForViews == true && this.world.settings.viewsSettings.unityNoViewProviderDisableJobs == false) {
 

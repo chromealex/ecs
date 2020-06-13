@@ -2,7 +2,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 #define CHECKPOINT_COLLECTOR
 #endif
-using System.Collections;
 using System.Collections.Generic;
 using Unity.Jobs;
 
@@ -94,15 +93,21 @@ namespace ME.ECS {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class WorldBase {
         
         internal WorldStep currentStep;
         internal List<IFeatureBase> features;
-        internal List<ISystemBase> systems;
+        //internal List<ISystemBase> systems;
         internal List<IModuleBase> modules;
+        internal BufferArray<SystemGroup> systemGroups;
 
         internal List<ModuleState> statesFeatures;
-        internal List<ModuleState> statesSystems;
+        //internal List<ModuleState> statesSystems;
         internal List<ModuleState> statesModules;
 
         internal ICheckpointCollector checkpointCollector;
@@ -162,7 +167,33 @@ namespace ME.ECS {
         private State resetState;
         internal State currentState;
         private uint seed;
+        private int cpf; // CPF = Calculations per frame
 
+        /// <summary>
+        /// Returns last frame CPF
+        /// </summary>
+        /// <returns></returns>
+        public int GetCPF() {
+
+            return this.cpf;
+
+        }
+        
+        internal void UpdateGroup(SystemGroup group) {
+
+            this.systemGroups[group.worldIndex] = group;
+
+        }
+        
+        public int AddSystemGroup(ref SystemGroup group) {
+
+            var index = this.systemGroups.Length;
+            ArrayUtils.Resize(in index, ref this.systemGroups, resizeWithOffset: false);
+            this.systemGroups[index] = group;
+            return index;
+
+        }
+        
         public void SetCurrentSystemContextFiltersUsed(BufferArray<bool> currentSystemContextFiltersUsed) {
 
             this.currentSystemContextFiltersUsed = currentSystemContextFiltersUsed;
@@ -203,10 +234,10 @@ namespace ME.ECS {
             this.timeSinceStart = default;
             
             this.features = PoolList<IFeatureBase>.Spawn(World.FEATURES_CAPACITY);
-            this.systems = PoolList<ISystemBase>.Spawn(World.SYSTEMS_CAPACITY);
+            //this.systems = PoolList<ISystemBase>.Spawn(World.SYSTEMS_CAPACITY);
             this.modules = PoolList<IModuleBase>.Spawn(World.MODULES_CAPACITY);
             this.statesFeatures = PoolList<ModuleState>.Spawn(World.FEATURES_CAPACITY);
-            this.statesSystems = PoolList<ModuleState>.Spawn(World.SYSTEMS_CAPACITY);
+            //this.statesSystems = PoolList<ModuleState>.Spawn(World.SYSTEMS_CAPACITY);
             this.statesModules = PoolList<ModuleState>.Spawn(World.MODULES_CAPACITY);
             
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
@@ -219,49 +250,51 @@ namespace ME.ECS {
 
         }
 
-        public void RecycleStates<TState>() where TState : State, new() {
+        public void RecycleResetState<TState>() where TState : State, new() {
             
             WorldUtilities.ReleaseState<TState>(ref this.resetState);
+            
+        }
+
+        public void RecycleStates<TState>() where TState : State, new() {
+            
             WorldUtilities.ReleaseState<TState>(ref this.currentState);
 
         }
         
         void IPoolableRecycle.OnRecycle() {
             
+            if (this.ForEachEntity(out var entities) == true) {
+
+                for (int i = entities.FromIndex; i < entities.SizeCount; ++i) {
+                    
+                    if (entities.IsFree(i) == true) continue;
+                    this.RemoveEntity(entities[i]);
+
+                }
+                
+            }
+
             PoolArray<bool>.Recycle(ref this.currentSystemContextFiltersUsed);
             
             #if WORLD_THREAD_CHECK
             this.worldThread = null;
             #endif
             this.isActive = false;
-            
+
             this.OnRecycleMarkers();
             this.OnRecycleComponents();
             this.OnRecycleStructComponents();
             
             PoolArray<bool>.Recycle(ref FiltersDirectCache.dic[this.id]);
-            //PoolClass<FiltersStorage>.Recycle(ref this.filtersStorage);
-
-            /*for (int i = 0; i < this.features.Count; ++i) {
-                
-                this.features[i].DoDeconstruct();
-                PoolFeatures.Recycle(this.features[i]);
-
-            }*/
-            PoolList<IFeatureBase>.Recycle(ref this.features);
             
-            for (int i = 0; i < this.systems.Count; ++i) {
-                
-                this.systems[i].OnDeconstruct();
-                if (this.systems[i] is ISystemFilter systemFilter) {
+            PoolList<IFeatureBase>.Recycle(ref this.features);
 
-                    systemFilter.filter = null;
+            for (int i = 0; i < this.systemGroups.Length; ++i) {
 
-                }
-                PoolSystems.Recycle(this.systems[i]);
+                this.systemGroups[i].Deconstruct();
 
             }
-            PoolList<ISystemBase>.Recycle(ref this.systems);
             
             for (int i = 0; i < this.modules.Count; ++i) {
                 
@@ -272,8 +305,10 @@ namespace ME.ECS {
             PoolList<IModuleBase>.Recycle(ref this.modules);
             
             PoolList<ModuleState>.Recycle(ref this.statesModules);
-            PoolList<ModuleState>.Recycle(ref this.statesSystems);
             PoolList<ModuleState>.Recycle(ref this.statesFeatures);
+            
+            //PoolInternalBaseNoStackPool.Clear();
+            //PoolInternalBase.Clear();
             
         }
 
@@ -328,11 +363,14 @@ namespace ME.ECS {
         }
 
         public void SetSystemState(ISystemBase system, ModuleState state) {
-            
-            var index = this.systems.IndexOf(system);
-            if (index >= 0) {
 
-                this.statesSystems[index] = state;
+            for (int i = 0; i < this.systemGroups.Length; ++i) {
+
+                if (this.systemGroups[i].SetSystemState(system, state) == true) {
+
+                    return;
+
+                }
 
             }
             
@@ -340,13 +378,16 @@ namespace ME.ECS {
         
         public ModuleState GetSystemState(ISystemBase system) {
 
-            var index = this.systems.IndexOf(system);
-            if (index >= 0) {
+            for (int i = 0; i < this.systemGroups.Length; ++i) {
 
-                return this.statesSystems[index];
+                if (this.systemGroups[i].GetSystemState(system, out var state) == true) {
+
+                    return state;
+
+                }
 
             }
-
+            
             return ModuleState.AllActive;
 
         }
@@ -506,6 +547,18 @@ namespace ME.ECS {
                 #else
                 UnityEngine.Random.InitState((int)this.seed);
                 this.currentState.randomState = UnityEngine.Random.state;
+                #endif
+
+            }
+
+            if (this.resetState != null) {
+                
+                #if UNITY_MATHEMATICS
+                var rnd = new Unity.Mathematics.Random(this.seed);
+                this.resetState.randomState = rnd.state;
+                #else
+                UnityEngine.Random.InitState((int)this.seed);
+                this.resetState.randomState = UnityEngine.Random.state;
                 #endif
 
             }
@@ -846,13 +899,6 @@ namespace ME.ECS {
 
         }
 
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private int CreateNewEntity() {
-
-            return ++this.GetState().entityId; //Entity.Create(++this.GetState().entityId);
-
-        }
-
         public void UpdateAllFilters() {
             
             var filters = this.currentState.filters.GetData();
@@ -944,7 +990,7 @@ namespace ME.ECS {
             
         }
 
-        public void RemoveComponentFromFilter(Entity entity) {
+        public void RemoveComponentFromFilter(in Entity entity) {
             
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
             ref var dic = ref FiltersDirectCache.dic[this.id];
@@ -1008,12 +1054,35 @@ namespace ME.ECS {
 
         }
 
+        public bool IsAlive(in Entity entity) {
+            
+            ref var entitiesList = ref this.currentState.storage.GetData();
+            if (entitiesList[entity.id].version == entity.version && entitiesList.IsFree(entity.id) == false) {
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        public ref Entity GetEntityById(in int id) {
+            
+            ref var entitiesList = ref this.currentState.storage.GetData();
+            ref var ent = ref entitiesList[id];
+            if (this.IsAlive(in ent) == false) return ref Entity.Empty;
+            
+            return ref ent;
+
+        }
+        
         public Entity AddEntity(string name = null) {
 
-            var entityVersion = this.CreateNewEntity();
             ref var entitiesList = ref this.currentState.storage.GetData();
             var nextIndex = entitiesList.GetNextIndex();
-            var entity = new Entity(nextIndex, entityVersion);
+            var ent = entitiesList[nextIndex];
+            var entity = new Entity(nextIndex, (ushort)(ent.version + 1));
             entitiesList.Add(entity);
 
             //this.AddToFilters<TEntity>(data.entity); // Why we need to add empty entity into filters?
@@ -1069,6 +1138,14 @@ namespace ME.ECS {
 
         public bool RemoveEntity(Entity entity) {
 
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+
+                EmptyEntityException.Throw();
+
+            }
+            #endif
+            
             var data = this.currentState.storage.GetData();
             if (data.IsFree(entity.id) == false) {
 
@@ -1280,96 +1357,26 @@ namespace ME.ECS {
             
         }
 
-        public bool HasSystem<TSystem>() where TSystem : class, ISystemBase, new() {
-
-            for (int i = 0, count = this.systems.Count; i < count; ++i) {
-
-                if (this.systems[i] is TSystem) return true;
-
-            }
-
-            return false;
-
-        }
-
+        #region Systems
         /// <summary>
-        /// Add system by type
-        /// Retrieve system from pool, OnConstruct() call
+        /// Search TSystem in all groups
         /// </summary>
         /// <typeparam name="TSystem"></typeparam>
-        public bool AddSystem<TSystem>() where TSystem : class, ISystemBase, new() {
+        /// <returns></returns>
+        public bool HasSystem<TSystem>() where TSystem : class, ISystemBase, new() {
 
-            var instance = PoolSystems.Spawn<TSystem>();
-            if (this.AddSystem(instance) == false) {
+            for (int i = 0; i < this.systemGroups.Length; ++i) {
 
-                instance.world = null;
-                PoolSystems.Recycle(ref instance);
-                return false;
+                if (this.systemGroups[i].HasSystem<TSystem>() == true) {
 
-            }
+                    return true;
 
-            return true;
-
-        }
-
-        /// <summary>
-        /// Add system manually
-        /// Pool will not be used, OnConstruct() call
-        /// </summary>
-        /// <param name="instance"></param>
-        public bool AddSystem(ISystemBase instance) {
-
-            WorldUtilities.SetWorld(this);
-            
-            instance.world = this;
-            if (instance is ISystemValidation instanceValidate) {
-
-                if (instanceValidate.CouldBeAdded() == false) {
-                    
-                    instance.world = null;
-                    return false;
-                    
-                }
-
-            }
-            
-            this.systems.Add(instance);
-            this.statesSystems.Add(ModuleState.AllActive);
-            instance.OnConstruct();
-
-            if (instance is ISystemFilter systemFilter) {
-
-                systemFilter.filter = systemFilter.CreateFilter();
-
-            }
-
-            return true;
-
-        }
-
-        /// <summary>
-        /// Remove system manually
-        /// Pool will not be used, OnDeconstruct() call
-        /// </summary>
-        /// <param name="instance"></param>
-        public void RemoveSystem(ISystemBase instance) {
-
-            var idx = this.systems.IndexOf(instance);
-            if (idx >= 0) {
-                
-                if (instance is ISystemFilter systemFilter) {
-
-                    systemFilter.filter = null;
-                    
                 }
                 
-                instance.world = null;
-                this.systems.RemoveAt(idx);
-                this.statesSystems.RemoveAt(idx);
-                instance.OnDeconstruct();
-                
             }
             
+            return false;
+
         }
 
         /// <summary>
@@ -1377,46 +1384,19 @@ namespace ME.ECS {
         /// </summary>
         /// <typeparam name="TSystem"></typeparam>
         /// <returns></returns>
-        public TSystem GetSystem<TSystem>() where TSystem : ISystemBase {
+        public TSystem GetSystem<TSystem>() where TSystem : class, ISystemBase {
 
-            for (int i = 0, count = this.systems.Count; i < count; ++i) {
+            for (int i = 0, count = this.systemGroups.Length; i < count; ++i) {
 
-                var system = this.systems[i];
-                if (system is TSystem tSystem) {
-
-                    return tSystem;
-
-                }
+                var system = this.systemGroups[i].GetSystem<TSystem>();
+                if (system != null) return system;
 
             }
 
             return default;
 
         }
-
-        /// <summary>
-        /// Remove systems by type
-        /// Return systems into pool, OnDeconstruct() call
-        /// </summary>
-        public void RemoveSystems<TSystem>() where TSystem : class, ISystemBase, new() {
-
-            for (int i = 0, count = this.systems.Count; i < count; ++i) {
-
-                var system = this.systems[i];
-                if (system is TSystem tSystem) {
-
-                    PoolSystems.Recycle(tSystem);
-                    this.systems.RemoveAt(i);
-                    this.statesSystems.RemoveAt(i);
-                    system.OnDeconstruct();
-                    --i;
-                    --count;
-
-                }
-
-            }
-
-        }
+        #endregion
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool IsModuleActive(int index) {
@@ -1429,24 +1409,6 @@ namespace ME.ECS {
             } else if ((step & WorldStep.VisualTick) != 0) {
 
                 return (this.statesModules[index] & ModuleState.VisualInactive) == 0;
-
-            }
-
-            return false;
-
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private bool IsSystemActive(int index) {
-
-            var step = this.currentStep;
-            if ((step & WorldStep.LogicTick) != 0) {
-
-                return (this.statesSystems[index] & ModuleState.LogicInactive) == 0;
-
-            } else if ((step & WorldStep.VisualTick) != 0) {
-
-                return (this.statesSystems[index] & ModuleState.VisualInactive) == 0;
 
             }
 
@@ -1555,33 +1517,40 @@ namespace ME.ECS {
             {
 
                 #if CHECKPOINT_COLLECTOR
-                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems, WorldStep.VisualTick);
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systemGroups.arr, WorldStep.VisualTick);
                 #endif
 
-                for (int i = 0, count = this.systems.Count; i < count; ++i) {
+                for (int i = 0, count = this.systemGroups.Length; i < count; ++i) {
 
-                    if (this.IsSystemActive(i) == true) {
-                        
-                        #if CHECKPOINT_COLLECTOR
-                        if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.VisualTick);
-                        #endif
+                    ref var group = ref this.systemGroups[i];
+                    for (int j = 0; j < group.systems.Length; ++j) {
 
-                        if (this.systems[i] is IUpdate sysBase) {
+                        if (group.IsSystemActive(j) == true) {
+
+                            ref var system = ref group.systems[j];
                             
-                            sysBase.Update(in deltaTime);
-                            
+                            #if CHECKPOINT_COLLECTOR
+                            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(system, WorldStep.VisualTick);
+                            #endif
+
+                            if (system is IUpdate sysBase) {
+
+                                sysBase.Update(in deltaTime);
+
+                            }
+
+                            #if CHECKPOINT_COLLECTOR
+                            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(system, WorldStep.VisualTick);
+                            #endif
+
                         }
 
-                        #if CHECKPOINT_COLLECTOR
-                        if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.VisualTick);
-                        #endif
-                        
                     }
 
                 }
 
                 #if CHECKPOINT_COLLECTOR
-                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems, WorldStep.VisualTick);
+                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systemGroups.arr, WorldStep.VisualTick);
                 #endif
 
             }
@@ -1674,11 +1643,9 @@ namespace ME.ECS {
 
                 if (Worlds.currentWorld.currentSystemContext is ISystemFilter systemContextBase) {
 
-                    var ent = this.entities[index];
-                    if (ent.version > 0) systemContextBase.AdvanceTick(this.entities[index], in this.deltaTime);
+                    systemContextBase.AdvanceTick(this.entities[index], in this.deltaTime);
                     
                 }
-
 
             }
 
@@ -1702,9 +1669,12 @@ namespace ME.ECS {
         }
 
         public unsafe delegate void SystemFilterAdvanceTick(in Entity entity, in float deltaTime, void* burstWorldStructComponentsAccess);*/
-        
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Simulate(Tick from, Tick to) {
             
+            this.PlayTasksForFrame();
+
             if (from > to) {
 
                 //UnityEngine.Debug.LogError( UnityEngine.Time.frameCount + " From: " + from + ", To: " + to);
@@ -1715,6 +1685,7 @@ namespace ME.ECS {
             var state = this.GetState();
 
             //UnityEngine.Debug.Log("Simulate " + from + " to " + to);
+            this.cpf = to - from;
             var fixedDeltaTime = this.GetTickTime();
             for (state.tick = from; state.tick < to; ++state.tick) {
 
@@ -1784,80 +1755,88 @@ namespace ME.ECS {
                 {
                     
                     #if CHECKPOINT_COLLECTOR
-                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems, WorldStep.LogicTick);
+                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systemGroups.arr, WorldStep.LogicTick);
                     #endif
 
-                    for (int i = 0, count = this.systems.Count; i < count; ++i) {
+                    this.PlayTasksForTick();
 
-                        if (this.IsSystemActive(i) == true) {
-                            
-                            #if CHECKPOINT_COLLECTOR
-                            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);
-                            #endif
+                    for (int i = 0, count = this.systemGroups.Length; i < count; ++i) {
 
-                            var system = this.systems[i];
-                            this.currentSystemContext = system;
-                            System.Array.Clear(this.currentSystemContextFiltersUsed.arr, 0, this.currentSystemContextFiltersUsed.Length);
-                            if (system is ISystemFilter sysFilter) {
+                        ref var group = ref this.systemGroups[i];
+                        for (int j = 0; j < group.systems.Length; ++j) {
 
-                                /*if (sysFilter is IAdvanceTickBurst advTick) {
+                            if (group.IsSystemActive(j) == true) {
 
-                                    // Under the development process
-                                    // This should not used right now
-                                    
-                                    var functionPointer = Unity.Burst.BurstCompiler.CompileFunctionPointer(advTick.GetAdvanceTickForBurst());
-                                    var arrEntities = sysFilter.filter.GetArray();
-                                    using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities.arr, Unity.Collections.Allocator.TempJob)) {
+                                ref var system = ref group.systems[j];
+                                
+                                #if CHECKPOINT_COLLECTOR
+                                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(system, WorldStep.LogicTick);
+                                #endif
 
-                                        var length = arrEntities.Length;
-                                        var burstWorldStructComponentsAccess = new BurstWorldStructComponentsAccess();
-                                        unsafe {
+                                this.currentSystemContext = system;
+                                System.Array.Clear(this.currentSystemContextFiltersUsed.arr, 0, this.currentSystemContextFiltersUsed.Length);
+                                if (system is ISystemFilter sysFilter) {
 
-                                            var bws = Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref burstWorldStructComponentsAccess);
-                                            PoolArray<Entity>.Recycle(ref arrEntities);
-                                            var job = new ForeachFilterJobBurst() {
-                                                deltaTime = fixedDeltaTime,
-                                                entities = arr,
-                                                function = functionPointer,
-                                                bws = bws
-                                            };
-                                            var jobHandle = job.Schedule(length, sysFilter.jobsBatchCount);
-                                            jobHandle.Complete();
-                                            
-                                        }
-
-                                    }
-                                    
-                                }*/
-
-                                sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
-                                if (sysFilter.filter != null) {
-
-                                    if (this.settings.useJobsForSystems == true && sysFilter.jobs == true) {
-
-                                        //sysFilter.filter.SetForEachMode(true);
+                                    /*if (sysFilter is IAdvanceTickBurst advTick) {
+    
+                                        // Under the development process
+                                        // This should not used right now
+                                        
+                                        var functionPointer = Unity.Burst.BurstCompiler.CompileFunctionPointer(advTick.GetAdvanceTickForBurst());
                                         var arrEntities = sysFilter.filter.GetArray();
                                         using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities.arr, Unity.Collections.Allocator.TempJob)) {
-
+    
                                             var length = arrEntities.Length;
-                                            PoolArray<Entity>.Recycle(ref arrEntities);
-                                            var job = new ForeachFilterJob() {
-                                                deltaTime = fixedDeltaTime,
-                                                entities = arr
-                                            };
-                                            var jobHandle = job.Schedule(length, sysFilter.jobsBatchCount);
-                                            jobHandle.Complete();
-
+                                            var burstWorldStructComponentsAccess = new BurstWorldStructComponentsAccess();
+                                            unsafe {
+    
+                                                var bws = Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref burstWorldStructComponentsAccess);
+                                                PoolArray<Entity>.Recycle(ref arrEntities);
+                                                var job = new ForeachFilterJobBurst() {
+                                                    deltaTime = fixedDeltaTime,
+                                                    entities = arr,
+                                                    function = functionPointer,
+                                                    bws = bws
+                                                };
+                                                var jobHandle = job.Schedule(length, sysFilter.jobsBatchCount);
+                                                jobHandle.Complete();
+                                                
+                                            }
+    
                                         }
-                                        //sysFilter.filter.SetForEachMode(false);
                                         
-                                    } else {
+                                    }*/
 
-                                        if (sysFilter is ISystemFilter sysFilterContext) {
+                                    sysFilter.filter = (sysFilter.filter != null ? sysFilter.filter : sysFilter.CreateFilter());
+                                    if (sysFilter.filter != null) {
 
-                                            foreach (var entity in sysFilter.filter) {
+                                        if (this.settings.useJobsForSystems == true && sysFilter.jobs == true) {
 
-                                                if (entity.version > 0) sysFilterContext.AdvanceTick(in entity, in fixedDeltaTime);
+                                            //sysFilter.filter.SetForEachMode(true);
+                                            var arrEntities = sysFilter.filter.GetArray();
+                                            using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities.arr, Unity.Collections.Allocator.TempJob)) {
+
+                                                var length = arrEntities.Length;
+                                                PoolArray<Entity>.Recycle(ref arrEntities);
+                                                var job = new ForeachFilterJob() {
+                                                    deltaTime = fixedDeltaTime,
+                                                    entities = arr
+                                                };
+                                                var jobHandle = job.Schedule(length, sysFilter.jobsBatchCount);
+                                                jobHandle.Complete();
+
+                                            }
+                                            //sysFilter.filter.SetForEachMode(false);
+
+                                        } else {
+
+                                            if (sysFilter is ISystemFilter sysFilterContext) {
+
+                                                foreach (var entity in sysFilter.filter) {
+
+                                                    if (entity.version > 0) sysFilterContext.AdvanceTick(in entity, in fixedDeltaTime);
+
+                                                }
 
                                             }
 
@@ -1865,40 +1844,40 @@ namespace ME.ECS {
 
                                     }
 
-                                }
+                                } else if (system is IAdvanceTick sysBase) {
 
-                            } else if (system is IAdvanceTick sysBase) {
-                                
-                                sysBase.AdvanceTick(in fixedDeltaTime);
-                                
-                            }
-
-                            this.currentSystemContext = null;
-
-                            var usedFilters = this.currentSystemContextFiltersUsed;
-                            for (int f = 1, cnt = usedFilters.Length; f < cnt; ++f) {
-
-                                if (usedFilters[f] == true) {
-
-                                    var filter = this.GetFilter(f);
-                                    filter.ApplyAllRequests();
+                                    sysBase.AdvanceTick(in fixedDeltaTime);
 
                                 }
 
-                            }
+                                this.currentSystemContext = null;
 
-                            #if CHECKPOINT_COLLECTOR
-                            if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems[i], WorldStep.LogicTick);
-                            #endif
+                                var usedFilters = this.currentSystemContextFiltersUsed;
+                                for (int f = 1, cnt = usedFilters.Length; f < cnt; ++f) {
+
+                                    if (usedFilters[f] == true) {
+
+                                        var filter = this.GetFilter(f);
+                                        filter.ApplyAllRequests();
+
+                                    }
+
+                                }
+
+                                #if CHECKPOINT_COLLECTOR
+                                if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(system, WorldStep.LogicTick);
+                                #endif
+
+                            }
 
                         }
 
+                        #if CHECKPOINT_COLLECTOR
+                        if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systemGroups.arr, WorldStep.LogicTick);
+                        #endif
+
                     }
-
-                    #if CHECKPOINT_COLLECTOR
-                    if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(this.systems, WorldStep.LogicTick);
-                    #endif
-
+                    
                 }
                 ////////////////
                 this.currentStep &= ~WorldStep.SystemsLogicTick;
@@ -1915,6 +1894,8 @@ namespace ME.ECS {
                 #if CHECKPOINT_COLLECTOR
                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);
                 #endif*/
+
+                this.UseLifetimeStep(ComponentLifetime.EndOfTick);
 
             }
             
@@ -1937,6 +1918,8 @@ namespace ME.ECS {
             ////////////////
             this.currentStep &= ~WorldStep.PluginsLogicSimulate;
             ////////////////
+
+            this.UseLifetimeStep(ComponentLifetime.EndOfFrame);
 
         }
 

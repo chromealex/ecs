@@ -40,15 +40,15 @@
             if (child == root) return;
             
             var container = child.GetData<Container>();
-            if (container.entity == root && root != Entity.Empty) return;
+            if (container.entity == root && root.IsEmpty() == false) return;
 
-            if (root != Entity.Empty && (root.HasData<Childs>() == false || root.GetData<Childs>().childs.Length == 0)) {
+            if (root.IsEmpty() == false && (root.HasData<Childs>() == false || root.GetData<Childs>().childs.Length == 0)) {
 
                 if (registerChilds == true) root.SetData(new Childs() { childs = new ME.ECS.Collections.StackArray50<Entity>(ME.ECS.Collections.StackArray50<int>.MAX_LENGTH) });
 
             }
 
-            if (container.entity != Entity.Empty) {
+            if (container.entity.IsEmpty() == false) {
 
                 if (registerChilds == true) {
 
@@ -71,7 +71,7 @@
                 
             }
 
-            if (root == Entity.Empty) {
+            if (root.IsEmpty() == true) {
 
                 child.RemoveData<Container>();
                 //child.SetData(new Container() { entity = Entity.Empty });
@@ -90,7 +90,7 @@
                     var childs = root.GetData<Childs>();
                     for (int i = 0; i < childs.childs.Length; ++i) {
 
-                        if (childs.childs[i] == Entity.Empty) {
+                        if (childs.childs[i].IsEmpty() == true) {
 
                             childs.childs[i] = child;
                             set = true;
@@ -121,7 +121,7 @@
         public static Entity GetRoot(this in Entity child) {
 
             var container = Worlds.currentWorld.GetData<Container>(in child).entity;
-            while (container != Entity.Empty) {
+            while (container.IsEmpty() == false) {
 
                 container = Worlds.currentWorld.GetData<Container>(in container).entity;
 

@@ -127,6 +127,8 @@ namespace ME.ECS {
 	    public static int deallocated;
 	    public static int used;
 
+	    private static List<PoolInternalBaseNoStackPool> list = new List<PoolInternalBaseNoStackPool>();
+
 	    public override string ToString() {
 		    
 		    return "Allocated: " + this.poolAllocated + ", Deallocated: " + this.poolDeallocated + ", Used: " + this.poolUsed + ", cached: " + this.cache.Count + ", new: " + this.poolNewAllocated;
@@ -137,9 +139,26 @@ namespace ME.ECS {
 
 		    this.constructor = constructor;
 		    this.desctructor = desctructor;
+		    
+		    PoolInternalBaseNoStackPool.list.Add(this);
 
 	    }
 
+	    public static void Clear() {
+
+		    var pools = PoolInternalBaseNoStackPool.list;
+		    for (int i = 0; i < pools.Count; ++i) {
+			    
+			    var pool = pools[i];
+			    pool.cache.Clear();
+			    pool.constructor = null;
+			    pool.desctructor = null;
+
+		    }
+		    pools.Clear();
+		    
+	    }
+	    
 	    public static T Create<T>() where T : new() {
 		    
 		    var instance = new T();
@@ -250,14 +269,27 @@ namespace ME.ECS {
 	    protected int poolNewAllocated;
 	    protected int poolUsed;
 
-	    #if UNITY_EDITOR
 	    private static List<PoolInternalBase> list = new List<PoolInternalBase>();
-	    #endif
 	    
 	    public static int newAllocated;
 	    public static int allocated;
 	    public static int deallocated;
 	    public static int used;
+
+	    public static void Clear() {
+
+		    var pools = PoolInternalBase.list;
+		    for (int i = 0; i < pools.Count; ++i) {
+			    
+			    var pool = pools[i];
+			    pool.cache.Clear();
+			    pool.constructor = null;
+			    pool.desctructor = null;
+
+		    }
+		    pools.Clear();
+		    
+	    }
 
 	    #if UNITY_EDITOR
 	    [UnityEditor.MenuItem("ME.ECS/Debug Pools")]
@@ -299,9 +331,7 @@ namespace ME.ECS {
 		    this.constructor = constructor;
 		    this.desctructor = desctructor;
 
-		    #if UNITY_EDITOR
 		    PoolInternalBase.list.Add(this);
-		    #endif
 		    
 	    }
 

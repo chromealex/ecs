@@ -55,6 +55,42 @@ namespace ME.ECSEditor {
 		    }
 
 	    }
+
+	    public static Entity DrawEntitySelection(World world, in Entity entity, bool checkAlive) {
+		    
+		    ref var currentEntity = ref world.GetEntityById(in entity.id);
+		    if (checkAlive == true && entity.IsAlive() == false) {
+
+			    EditorGUILayout.HelpBox("This entity version is already in pool, the list of components has been changed.", MessageType.Warning);
+			    if (currentEntity.version > 0) {
+                        
+				    GUILayout.Label("New entity: " + currentEntity.ToSmallString());
+                        
+			    } else {
+                        
+				    GUILayout.Label("New entity is not active");
+                        
+			    }
+
+		    }
+
+		    if (currentEntity.version > 0) {
+
+			    UnityEngine.GUILayout.BeginHorizontal();
+			    UnityEngine.GUILayout.FlexibleSpace();
+			    if (UnityEngine.GUILayout.Button("Select Entity", UnityEngine.GUILayout.Width(150f)) == true) {
+
+				    WorldsViewerEditor.SelectEntity(currentEntity);
+
+			    }
+			    UnityEngine.GUILayout.FlexibleSpace();
+			    UnityEngine.GUILayout.EndHorizontal();
+
+		    }
+
+		    return currentEntity;
+
+	    }
 	    
 	    public static void DrawAddEntityMenu(EntityDebugComponent entityDebugComponent) {
             
@@ -411,7 +447,7 @@ namespace ME.ECSEditor {
 
         }
 
-        public static bool DrawFields(object instance, string customName = null) {
+        public static bool DrawFields(WorldsViewerEditor.WorldEditor world, object instance, string customName = null) {
 
             //var padding = 2f;
             //var margin = 1f;
@@ -445,9 +481,9 @@ namespace ME.ECSEditor {
                         //var lastRect = GUILayoutUtility.GetLastRect();
                         var value = field.GetValue(instance);
                         var oldValue = value;
-                        var isEditable = GUILayoutExt.PropertyField(field.Name, field, ref value, typeCheckOnly: true);
+                        var isEditable = GUILayoutExt.PropertyField(world, field.Name, field, field.FieldType, ref value, typeCheckOnly: true);
                         EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
-                        if (GUILayoutExt.PropertyField(customName != null ? customName : field.Name, field, ref value, typeCheckOnly: false) == true) {
+                        if (GUILayoutExt.PropertyField(world, customName != null ? customName : field.Name, field, field.FieldType, ref value, typeCheckOnly: false) == true) {
 
                             if (oldValue.ToString() != value.ToString()) {
 
@@ -472,22 +508,193 @@ namespace ME.ECSEditor {
 
         }
 
-        public static bool PropertyField(System.Reflection.FieldInfo fieldInfo, ref object value, bool typeCheckOnly) {
+        public static void Icon(string path, float width = 32f, float height = 32f) {
 
-            return GUILayoutExt.PropertyField(null, fieldInfo, ref value, typeCheckOnly);
+	        var icon = new GUIStyle();
+	        icon.normal.background = UnityEditor.Experimental.EditorResources.Load<Texture2D>(path);
+	        EditorGUILayout.LabelField(string.Empty, icon, GUILayout.Width(width), GUILayout.Height(height));
 
         }
 
-        public static bool PropertyField(string caption, System.Reflection.FieldInfo fieldInfo, ref object value, bool typeCheckOnly) {
+        private static bool HasBaseType(this System.Type type, System.Type baseType) {
 
-            if (value == null) {
+	        return baseType.IsAssignableFrom(type);
 
-                if (typeCheckOnly == false) EditorGUILayout.LabelField("Null");
+        }
+
+        private static bool HasInterface(this System.Type type, System.Type interfaceType) {
+
+	        return interfaceType.IsAssignableFrom(type);
+	        
+        }
+
+        public static bool PropertyField(WorldsViewerEditor.WorldEditor world, string caption, System.Reflection.FieldInfo fieldInfo, System.Type type, ref object value, bool typeCheckOnly) {
+
+            if (typeCheckOnly == false && value == null) {
+
+                EditorGUILayout.LabelField("Null");
                 return false;
 
             }
 
-            if (fieldInfo.FieldType == typeof(Color)) {
+            if (type.IsEnum == true) {
+
+	            if (typeCheckOnly == false) {
+
+		            var attrs = fieldInfo.GetCustomAttributes(typeof(IsBitmask), true);
+		            if (attrs.Length == 0) {
+				        
+			            value = EditorGUILayout.EnumPopup(caption, (Enum)value);
+    
+		            } else {
+			            
+			            value = EditorGUILayout.EnumFlagsField(caption, (Enum)value);
+
+		            }
+		            
+	            }
+
+            } else if (type.HasInterface(typeof(ME.ECS.Collections.IBufferArray)) == true ||
+                       type.IsArray == true ||
+                       type.HasInterface(typeof(ME.ECS.Collections.IStackArray)) == true)
+            {
+
+	            if (typeCheckOnly == false) {
+
+		            if (type.HasInterface(typeof(ME.ECS.Collections.IStackArray)) == true) {
+			            
+			            var arr = (ME.ECS.Collections.IStackArray)value;
+			            var state = world.IsFoldOutCustom(value);
+			            GUILayoutExt.FoldOut(ref state, string.Format("{0} [{1}]", caption, arr.Length), () => {
+
+				            for (int i = 0; i < arr.Length; ++i) {
+
+					            if (i > 0) GUILayoutExt.Separator();
+					            var arrValue = arr[i];
+					            object v = default;
+					            var isEditable = GUILayoutExt.PropertyField(world, null, fieldInfo, arrValue.GetType(), ref v, typeCheckOnly: true);
+					            EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
+					            GUILayoutExt.PropertyField(world, "Element [" + i.ToString() + "]", fieldInfo, arrValue.GetType(), ref arrValue, typeCheckOnly: false);
+					            EditorGUI.EndDisabledGroup();
+					            arr[i] = arrValue;
+
+				            }
+			            
+			            });
+			            world.SetFoldOutCustom(value, state);
+			            value = arr;
+
+		            } else if (type.HasInterface(typeof(ME.ECS.Collections.IBufferArray)) == true) {
+			            
+			            var arr = (ME.ECS.Collections.IBufferArray)value;
+			            var state = true;
+			            GUILayoutExt.FoldOut(ref state, string.Format("{0} [{1}]", caption, arr.Count), () => {
+
+				            var array = arr.GetArray();
+				            for (int i = 0; i < arr.Count; ++i) {
+
+					            if (i > 0) GUILayoutExt.Separator();
+					            var arrValue = array.GetValue(i);
+					            object v = default;
+					            var isEditable = GUILayoutExt.PropertyField(world, null, fieldInfo, arrValue.GetType(), ref v, typeCheckOnly: true);
+					            EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
+					            GUILayoutExt.PropertyField(world, "Element [" + i.ToString() + "]", fieldInfo, arrValue.GetType(), ref arrValue, typeCheckOnly: false);
+					            EditorGUI.EndDisabledGroup();
+					            array.SetValue(arrValue, i);
+
+				            }
+			            
+			            });
+			            value = arr;
+
+		            } else if (type.IsArray == true) {
+
+			            var arr = (System.Array)value;
+			            var state = true;
+			            GUILayoutExt.FoldOut(ref state, string.Format("{0} [{1}]", caption, arr.Length), () => {
+
+				            var array = arr;
+				            for (int i = 0; i < arr.Length; ++i) {
+
+					            if (i > 0) GUILayoutExt.Separator();
+					            var arrValue = array.GetValue(i);
+					            object v = default;
+					            var isEditable = GUILayoutExt.PropertyField(world, null, fieldInfo, arrValue.GetType(), ref v, typeCheckOnly: true);
+					            EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
+					            GUILayoutExt.PropertyField(world, "Element [" + i.ToString() + "]", fieldInfo, arrValue.GetType(), ref arrValue, typeCheckOnly: false);
+					            EditorGUI.EndDisabledGroup();
+					            array.SetValue(arrValue, i);
+
+				            }
+
+			            });
+
+		            }
+
+	            }
+	            
+            } else if (type == typeof(RefEntity)) {
+
+	            if (typeCheckOnly == false) {
+
+		            var entity = ((RefEntity)value).entity;
+		            GUILayout.BeginHorizontal();
+		            var buttonWidth = 50f;
+		            EditorGUILayout.LabelField(caption, GUILayout.Width(EditorGUIUtility.labelWidth));
+		            GUILayoutExt.Icon("Assets/ECS/ECSEditor/EditorResources/icon-link.png", 16f, 16f);
+		            if (entity == Entity.Empty) {
+						GUILayout.Label("Empty");   
+		            } else {
+			            var customName = entity.GetData<ME.ECS.Name.Name>(createIfNotExists: false).value;
+			            GUILayout.BeginVertical();
+			            GUILayout.Label(string.IsNullOrEmpty(customName) == false ? customName : "Unnamed");
+			            GUILayout.Label(entity.ToSmallString(), EditorStyles.miniLabel);
+			            GUILayout.EndVertical();
+		            }
+
+		            GUILayout.FlexibleSpace();
+		            EditorGUI.BeginDisabledGroup(entity == Entity.Empty);
+		            if (GUILayout.Button("Select", GUILayout.Width(buttonWidth)) == true) {
+
+			            WorldsViewerEditor.SelectEntity(entity);
+
+		            }
+		            EditorGUI.EndDisabledGroup();
+		            GUILayout.EndHorizontal();
+		            
+	            }
+
+            } else if (type == typeof(Entity)) {
+
+	            if (typeCheckOnly == false) {
+
+		            var entity = (Entity)value;
+		            GUILayout.BeginHorizontal();
+		            var buttonWidth = 50f;
+		            EditorGUILayout.LabelField(caption, GUILayout.Width(EditorGUIUtility.labelWidth));
+		            if (entity == Entity.Empty) {
+			            GUILayout.Label("Empty");   
+		            } else {
+			            var customName = entity.GetData<ME.ECS.Name.Name>(createIfNotExists: false).value;
+			            GUILayout.BeginVertical();
+			            GUILayout.Label(string.IsNullOrEmpty(customName) == false ? customName : "Unnamed");
+			            GUILayout.Label(entity.ToSmallString(), EditorStyles.miniLabel);
+			            GUILayout.EndVertical();
+		            }
+
+		            GUILayout.FlexibleSpace();
+		            EditorGUI.BeginDisabledGroup(entity == Entity.Empty);
+		            if (GUILayout.Button("Select", GUILayout.Width(buttonWidth)) == true) {
+
+			            WorldsViewerEditor.SelectEntity(entity);
+
+		            }
+		            EditorGUI.EndDisabledGroup();
+		            GUILayout.EndHorizontal();
+
+	            }
+
+            } else if (type == typeof(Color)) {
 
                 if (typeCheckOnly == false) {
 
@@ -496,7 +703,7 @@ namespace ME.ECSEditor {
 
                 }
                 
-            } else if (fieldInfo.FieldType == typeof(Color32)) {
+            } else if (type == typeof(Color32)) {
 
                 if (typeCheckOnly == false) {
 
@@ -505,7 +712,7 @@ namespace ME.ECSEditor {
 
                 }
                 
-            } else if (fieldInfo.FieldType == typeof(Vector2)) {
+            } else if (type == typeof(Vector2)) {
 
                 if (typeCheckOnly == false) {
 
@@ -513,7 +720,7 @@ namespace ME.ECSEditor {
 
                 }
 
-            } else if (fieldInfo.FieldType == typeof(Vector3)) {
+            } else if (type == typeof(Vector3)) {
 
                 if (typeCheckOnly == false) {
 
@@ -521,7 +728,7 @@ namespace ME.ECSEditor {
 
                 }
 
-            } else if (fieldInfo.FieldType == typeof(Vector4)) {
+            } else if (type == typeof(Vector4)) {
 
                 if (typeCheckOnly == false) {
 
@@ -529,7 +736,7 @@ namespace ME.ECSEditor {
 
                 }
 
-            } else if (fieldInfo.FieldType == typeof(Quaternion)) {
+            } else if (type == typeof(Quaternion)) {
 
                 if (typeCheckOnly == false) {
 
@@ -537,7 +744,7 @@ namespace ME.ECSEditor {
 
                 }
 
-            } else if (fieldInfo.FieldType == typeof(int)) {
+            } else if (type == typeof(int)) {
 
                 if (typeCheckOnly == false) {
 
@@ -545,7 +752,7 @@ namespace ME.ECSEditor {
 
                 }
 
-            } else if (fieldInfo.FieldType == typeof(float)) {
+            } else if (type == typeof(float)) {
 
                 if (typeCheckOnly == false) {
 
@@ -553,7 +760,7 @@ namespace ME.ECSEditor {
 
                 }
 
-            } else if (fieldInfo.FieldType == typeof(double)) {
+            } else if (type == typeof(double)) {
 
                 if (typeCheckOnly == false) {
 
@@ -561,13 +768,23 @@ namespace ME.ECSEditor {
 
                 }
 
-            } else if (fieldInfo.FieldType == typeof(long)) {
+            } else if (type == typeof(long)) {
 
                 if (typeCheckOnly == false) {
 
                     value = EditorGUILayout.LongField(caption, (long)value);
 
                 }
+
+            } else if (type.HasBaseType(typeof(UnityEngine.Object)) == true) {
+
+	            if (typeCheckOnly == false) {
+
+		            var obj = (UnityEngine.Object)value;
+		            obj = EditorGUILayout.ObjectField(caption, obj, type, allowSceneObjects: true);
+		            value = obj;
+
+	            }
 
             } else {
 

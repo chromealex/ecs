@@ -44,9 +44,9 @@ namespace ME.ECSEditor {
 
         }
 
-        public static IList<ME.ECS.ISystemBase> GetSystems(World world) {
+        public static ME.ECS.Collections.BufferArray<SystemGroup> GetSystems(World world) {
 
-            return world.systems;
+            return world.systemGroups;
             
             /*
             var field = world.GetType().GetField("systems", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -70,6 +70,8 @@ namespace ME.ECSEditor {
 
         public static bool HasMethod(object instance, string methodName) {
 
+            if (instance == null) return false;
+            
             var hasAny = false;
             var targetType = instance.GetType();
             foreach (var @interface in targetType.GetInterfaces()) {

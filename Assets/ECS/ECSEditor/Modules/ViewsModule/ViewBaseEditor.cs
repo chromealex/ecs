@@ -7,7 +7,7 @@ namespace ME.ECSEditor {
     [CanEditMultipleObjects]
     public class ViewBaseEditor : Editor {
 
-        public void DrawInspectorGUI(bool drawDefaultInspector = false) {
+        public void DrawInspectorGUI(ME.ECS.Entity entity, bool drawDefaultInspector = false) {
 
             var isMultiple = false;
             string output = string.Empty;
@@ -28,7 +28,22 @@ namespace ME.ECSEditor {
 
             }
 
-            EditorGUILayout.HelpBox(isMultiple == true ? "-" : this.target.ToString(), MessageType.Info);
+            if (entity != ME.ECS.Entity.Empty) {
+
+                GUILayoutExt.Box(2f, 2f, () => {
+
+                    EditorGUILayout.HelpBox(isMultiple == true ? "-" : this.target.ToString(), MessageType.Info);
+
+                    if (isMultiple == false) {
+
+                        GUILayoutExt.DrawEntitySelection(ME.ECS.Worlds.currentWorld, in entity, checkAlive: true);
+
+                    }
+
+                }, UnityEngine.GUIStyle.none);
+                GUILayoutExt.Separator();
+
+            }
 
             EditorGUILayout.BeginHorizontal();
             UnityEngine.GUILayout.FlexibleSpace();

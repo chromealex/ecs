@@ -83,6 +83,13 @@ namespace ME.ECSEditor {
                 return false;
                 #endif
             }, true),
+            new DefineInfo("WORLD_EXCEPTIONS", "If turned on, ME.ECS will throw exceptions on unexpected behaviour. Turn off this check in release builds.", () => {
+                #if WORLD_EXCEPTIONS
+                return true;
+                #else
+                return false;
+                #endif
+            }, true),
             new DefineInfo("FPS_MODULE_SUPPORT", "FPS module support.", () => {
                 #if FPS_MODULE_SUPPORT
                 return true;
@@ -150,6 +157,8 @@ namespace ME.ECSEditor {
             //((Component)this.target).transform.hideFlags = HideFlags.None;
 
         }
+
+        public Entity entity;
         
         //private GUIStyle addButtonStyleSaved;
         private System.Collections.Generic.Dictionary<System.Type, IDebugViewGUIEditor<InitializerBase>> viewsDebugEditors;

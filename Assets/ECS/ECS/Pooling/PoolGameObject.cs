@@ -7,6 +7,21 @@ namespace ME.ECS.Views {
     public class PoolGameObject<T> where T : Component, IViewBase {
 
         private Dictionary<ViewId, Stack<T>> prefabToInstances = new Dictionary<ViewId, Stack<T>>();
+
+        public void Clear() {
+
+            foreach (var instance in this.prefabToInstances) {
+
+                foreach (var view in instance.Value) {
+                    
+                    if (view != null) GameObject.Destroy(view.gameObject);
+                    
+                }
+                
+            }
+            this.prefabToInstances.Clear();
+            
+        }
         
         public T Spawn(T source, ViewId sourceId) {
 
@@ -49,10 +64,14 @@ namespace ME.ECS.Views {
             var key = instance.prefabSourceId;
             Stack<T> list;
             if (this.prefabToInstances.TryGetValue(key, out list) == true) {
-                
-                instance.gameObject.SetActive(false);
-                list.Push(instance);
-                
+
+                if (instance != null) {
+
+                    if (instance.gameObject != null) instance.gameObject.SetActive(false);
+                    list.Push(instance);
+
+                }
+
             } else {
 
                 GameObject.Destroy(instance.gameObject);

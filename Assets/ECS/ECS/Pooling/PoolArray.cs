@@ -3,7 +3,9 @@
 	using Collections;
 	
     #if ECS_COMPILE_IL2CPP_OPTIONS
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)][Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)][Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
     public static class PoolArray<T> {
 
@@ -205,6 +207,8 @@
 		
         public static BufferArray<T> Spawn(int length) {
 
+	        //return new BufferArray<T>(new T[length], length);
+	        
 	        //UnityEngine.Debug.Log("Spawn request: " + length);
 	        var buffer = new BufferArray<T>(PoolArray<T>.Claim(length), length);
             System.Array.Clear(buffer.arr, 0, length);
@@ -215,10 +219,23 @@
 
         public static void Recycle(ref BufferArray<T> buffer) {
 
+	        //buffer = new BufferArray<T>(null, 0);
+	        //return;
+	        
 	        var arr = buffer.arr;
 	        PoolArray<T>.Release(ref arr);
 	        buffer = new BufferArray<T>(null, 0);
 
+        }
+
+        public static void Recycle(BufferArray<T> buffer) {
+
+	        //buffer = new BufferArray<T>(null, 0);
+	        //return;
+	        
+	        var arr = buffer.arr;
+	        PoolArray<T>.Release(ref arr);
+	        
         }
 
         public static void Recycle(ref T[] buffer) {

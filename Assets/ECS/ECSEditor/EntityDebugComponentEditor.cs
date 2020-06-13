@@ -14,17 +14,22 @@
             var target = this.target as EntityDebugComponent;
             if (target.world != null && target.world.isActive == true) {
 
-                if (EntityDebugComponentEditor.worldEditors.TryGetValue(target.world, out var worldEditor) == false) {
+                var currentEntity = GUILayoutExt.DrawEntitySelection(target.world, in target.entity, checkAlive: true);
+                if (currentEntity != Entity.Empty) {
 
-                    worldEditor = new WorldsViewerEditor.WorldEditor();
-                    worldEditor.world = target.world;
-                    EntityDebugComponentEditor.worldEditors.Add(target.world, worldEditor);
+                    if (EntityDebugComponentEditor.worldEditors.TryGetValue(target.world, out var worldEditor) == false) {
+
+                        worldEditor = new WorldsViewerEditor.WorldEditor();
+                        worldEditor.world = target.world;
+                        EntityDebugComponentEditor.worldEditors.Add(target.world, worldEditor);
+
+                    }
+
+                    WorldsViewerEditor.DrawEntity(target.entity, worldEditor, worldEditor.GetEntitiesStorage(), worldEditor.GetStructComponentsStorage(), worldEditor.GetComponentsStorage(), worldEditor.GetModules());
+                    this.Repaint();
 
                 }
-
-                WorldsViewerEditor.DrawEntity(target.entity, worldEditor, worldEditor.GetEntitiesStorage(), worldEditor.GetStructComponentsStorage(), worldEditor.GetComponentsStorage(), worldEditor.GetModules());
-                this.Repaint();
-
+                
             } else {
 
                 if (Worlds.currentWorld == null) {

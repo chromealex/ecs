@@ -27,6 +27,10 @@ namespace ME.ECS {
         public static void Init(in Entity entity) {
             
             ComponentsInitializerWorld.onEntity.Invoke(entity);
+            
+            TransformComponentsInitializer.Init(in entity);
+            NameComponentsInitializer.Init(in entity);
+            CameraComponentsInitializer.Init(in entity);
             PhysicsComponentsInitializer.Init(in entity);
             
         }

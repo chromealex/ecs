@@ -5,9 +5,9 @@ namespace ME.ECS {
     public static class Worlds {
 
         public static World currentWorld;
+        public static State currentState;
+        
         public static readonly List<World> registeredWorlds = new List<World>();
-
-        public static IStateBase currentState;
         private static Dictionary<int, World> cache = new Dictionary<int, World>(1);
 
         internal static bool isInDeInitialization;
@@ -47,6 +47,13 @@ namespace ME.ECS {
             
             if (Worlds.registeredWorlds != null) Worlds.registeredWorlds.Remove(world);
             if (Worlds.cache != null) Worlds.cache.Remove(world.id);
+
+            if (world == Worlds.currentWorld) {
+
+                Worlds.currentWorld = null;
+                Worlds.currentState = null;
+
+            }
             
         }
 

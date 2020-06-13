@@ -6,26 +6,36 @@ namespace ME.ECS {
 
     using FieldType = UInt64;
 
-    public struct BitMask : IEquatable<BitMask> {
+    public readonly struct BitMask : IEquatable<BitMask> {
 
-        public static readonly BitMask None = new BitMask(new int[0]);
+        public static readonly BitMask None = new BitMask();
         
         private const int FIELD_COUNT = 4;
         private const int BITS_PER_FIELD = 8 * sizeof(FieldType);
         public const int MAX_BIT_INDEX = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD - 1;
         //public const int BitSize = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD;
         
-        private FieldType field0;
-        private FieldType field1;
-        private FieldType field2;
-        private FieldType field3;
+        private readonly FieldType field0;
+        private readonly FieldType field1;
+        private readonly FieldType field2;
+        private readonly FieldType field3;
 
-        #if ECS_COMPILE_IL2CPP_OPTIONS
-        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-        #endif
+        public BitMask(in FieldType field0, in FieldType field1, in FieldType field2, in FieldType field3) {
+            
+            this.field0 = field0;
+            this.field1 = field1;
+            this.field2 = field2;
+            this.field3 = field3;
+
+        }
+
         public int Count {
+            #if ECS_COMPILE_IL2CPP_OPTIONS
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+             Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+             Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+            #endif
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 var count = 0;
                 for (int i = 0; i < BitMask.MAX_BIT_INDEX; ++i) {
@@ -35,31 +45,16 @@ namespace ME.ECS {
             }
         }
 
-        #if ECS_COMPILE_IL2CPP_OPTIONS
-        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-        #endif
         public int BitsCount {
+            #if ECS_COMPILE_IL2CPP_OPTIONS
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+             Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+             Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+            #endif
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return BitMask.MAX_BIT_INDEX;
             }
-        }
-
-        public BitMask(int[] bits) {
-            
-            this.field0 = 0;
-            this.field1 = 0;
-            this.field2 = 0;
-            this.field3 = 0;
-
-            for (var i = 0; i < bits.Length; ++i) {
-                
-                ref var bit = ref bits[i];
-                this.AddBit(in bit);
-
-            }
-            
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -95,12 +90,15 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void AddBits(in BitMask bits) {
+        public BitMask AddBits(in BitMask bits) {
 
-            this.field0 |= bits.field0;
-            this.field1 |= bits.field1;
-            this.field2 |= bits.field2;
-            this.field3 |= bits.field3;
+            var mask = new BitMask(
+                this.field0 | bits.field0,
+                this.field1 | bits.field1,
+                this.field2 | bits.field2,
+                this.field3 | bits.field3
+                );
+            return mask;
 
         }
 
@@ -110,36 +108,41 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void AddBit(in int bit) {
+        public BitMask AddBit(in int bit) {
             
+            #if UNITY_EDITOR
             if (bit < 0 || bit > BitMask.MAX_BIT_INDEX) {
                 throw new Exception($"Attempted to set bit #{bit}, but the maximum is {BitMask.MAX_BIT_INDEX}");
             }
+            #endif
 
+            BitMask outMask;
             var dataIndex = bit / BitMask.BITS_PER_FIELD;
             var bitIndex = bit % BitMask.BITS_PER_FIELD;
             var mask = (FieldType)1 << bitIndex;
             switch (dataIndex) {
                 case 0:
-                    this.field0 |= mask;
+                    outMask = new BitMask(this.field0 | mask, in this.field1, in this.field2, in this.field3);
                     break;
 
                 case 1:
-                    this.field1 |= mask;
+                    outMask = new BitMask(in this.field0, this.field1 | mask, in this.field2, in this.field3);
                     break;
 
                 case 2:
-                    this.field2 |= mask;
+                    outMask = new BitMask(in this.field0, in this.field1, this.field2 | mask, in this.field3);
                     break;
 
                 case 3:
-                    this.field3 |= mask;
+                    outMask = new BitMask(in this.field0, in this.field1, in this.field2, this.field3 | mask);
                     break;
 
                 default:
                     throw new Exception($"Nonexistent field: {dataIndex}");
             }
-            
+
+            return outMask;
+
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -148,36 +151,39 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void SubtractBit(in int bit) {
+        public BitMask SubtractBit(in int bit) {
             
             if (bit < 0 || bit > BitMask.MAX_BIT_INDEX) {
                 throw new Exception($"Attempted to set bit #{bit}, but the maximum is {BitMask.MAX_BIT_INDEX}");
             }
 
+            BitMask outMask;
             var dataIndex = bit / BitMask.BITS_PER_FIELD;
             var bitIndex = bit % BitMask.BITS_PER_FIELD;
             var mask = (FieldType)1 << bitIndex;
             switch (dataIndex) {
                 case 0:
-                    this.field0 &= ~mask;
+                    outMask = new BitMask(this.field0 & ~mask, in this.field1, in this.field2, in this.field3);
                     break;
 
                 case 1:
-                    this.field1 &= ~mask;
+                    outMask = new BitMask(in this.field0, this.field1 & ~mask, in this.field2, in this.field3);
                     break;
 
                 case 2:
-                    this.field2 &= ~mask;
+                    outMask = new BitMask(in this.field0, in this.field1, this.field2 & ~mask, in this.field3);
                     break;
 
                 case 3:
-                    this.field3 &= ~mask;
+                    outMask = new BitMask(in this.field0, in this.field1, in this.field2, this.field3 & ~mask);
                     break;
-
+                
                 default:
                     throw new Exception($"Nonexistent field: {dataIndex}");
             }
-            
+
+            return outMask;
+
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -291,56 +297,7 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static BitMask operator &(BitMask mask1, BitMask mask2) {
-            
-            var newBitMask = new BitMask();
-            newBitMask.field0 = mask1.field0 & mask2.field0;
-            newBitMask.field1 = mask1.field1 & mask2.field1;
-            newBitMask.field2 = mask1.field2 & mask2.field2;
-            newBitMask.field3 = mask1.field3 & mask2.field3;
-            return newBitMask;
-            
-        }
-
-        #if ECS_COMPILE_IL2CPP_OPTIONS
-        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-        #endif
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static BitMask operator |(BitMask mask1, BitMask mask2) {
-            
-            var newBitMask = new BitMask();
-            newBitMask.field0 = mask1.field0 | mask2.field0;
-            newBitMask.field1 = mask1.field1 | mask2.field1;
-            newBitMask.field2 = mask1.field2 | mask2.field2;
-            newBitMask.field3 = mask1.field3 | mask2.field3;
-            return newBitMask;
-            
-        }
-
-        #if ECS_COMPILE_IL2CPP_OPTIONS
-        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-        #endif
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static BitMask operator ~(BitMask mask) {
-            var newBitMask = new BitMask();
-            newBitMask.field0 = ~mask.field0;
-            newBitMask.field1 = ~mask.field1;
-            newBitMask.field2 = ~mask.field2;
-            newBitMask.field3 = ~mask.field3;
-            return newBitMask;
-        }
-
-        #if ECS_COMPILE_IL2CPP_OPTIONS
-        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-        #endif
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(BitMask mask) {
+        public bool Has(in BitMask mask) {
             
             if ((this.field0 & mask.field0) != mask.field0 ||
                 (this.field1 & mask.field1) != mask.field1 ||
@@ -358,7 +315,7 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool HasNot(BitMask mask) {
+        public bool HasNot(in BitMask mask) {
             
             if ((this.field0 & mask.field0) != 0 ||
                 (this.field1 & mask.field1) != 0 ||

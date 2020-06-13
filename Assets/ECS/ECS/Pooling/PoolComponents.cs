@@ -232,7 +232,7 @@ namespace ME.ECS {
 
 	    }
 
-	    public static void Recycle<TComponent>(List<TComponent> list) where TComponent : class, IComponentBase {
+	    public static void Recycle<TComponent>(IList<TComponent> list) where TComponent : class, IComponentBase {
 
 		    for (int i = 0; i < list.Count; ++i) {
 			    

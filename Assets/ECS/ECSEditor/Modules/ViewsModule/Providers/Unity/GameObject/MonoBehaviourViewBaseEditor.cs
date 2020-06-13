@@ -11,7 +11,7 @@ namespace ME.ECSEditor {
 
         public override void OnInspectorGUI() {
             
-            this.DrawInspectorGUI(drawDefaultInspector: true);
+            this.DrawInspectorGUI(((MonoBehaviourView)this.target).entity, drawDefaultInspector: true);
             
         }
 

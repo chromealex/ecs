@@ -220,7 +220,7 @@ namespace ME.ECS.Collections {
             
         }
 
-        public void CopyFrom(HashSetCopyable<T> other) {
+        /*public void CopyFrom(HashSetCopyable<T> other) {
             
             ArrayUtils.Copy(other.m_buckets, ref this.m_buckets);
             ArrayUtils.Copy(other.m_slots, ref this.m_slots);
@@ -230,73 +230,15 @@ namespace ME.ECS.Collections {
             this.m_comparer = other.m_comparer;
             this.m_version = other.m_version;
             
-            /*
-            this.Clear();
-            foreach (var item in other) {
-
-                this.Add(item);
-
-            }*/
-            
-            
-            /*if (this.m_comparer == null) {
-                this.m_comparer = EqualityComparer<T>.Default;
-            }
- 
-            this.m_comparer = source.m_comparer;
-            m_lastIndex = 0;
-            m_count = 0;
-            m_freeList = -1;
-            m_version = 0;
-            
-            int count = source.m_count;
-            if (count == 0) {
-                // As well as short-circuiting on the rest of the work done,
-                // this avoids errors from trying to access otherAsHashSet.m_buckets
-                // or otherAsHashSet.m_slots when they aren't initialized.
-                this.Clear();
-                return;
-            }
- 
-            int capacity = source.m_buckets.Length;
-            int threshold = HashHelpers.ExpandPrime(count + 1);
- 
-            if (threshold >= capacity) {
-                
-                ArrayUtils.Copy(source.m_buckets, ref this.m_buckets);
-                ArrayUtils.Copy(source.m_slots, ref this.m_slots);
-                //m_buckets = (int[])source.m_buckets.Clone();
-                //m_slots = (Slot[])source.m_slots.Clone();
- 
-                m_lastIndex = source.m_lastIndex;
-                m_freeList = source.m_freeList;
-            }
-            else {
-                int lastIndex = source.m_lastIndex;
-                Slot[] slots = source.m_slots;
-                Initialize(count);
-                int index = 0;
-                for (int i = 0; i < lastIndex; ++i)
-                {
-                    int hashCode = slots[i].hashCode;
-                    if (hashCode >= 0)
-                    {
-                        AddValue(index, hashCode, slots[i].value);
-                        ++index;
-                    }
-                }
-                m_lastIndex = index;
-            }
-            m_count = count;*/
-        }
+        }*/
         
-        /*public void CopyFrom(HashSetCopyable<T> other) {
+        public void CopyFrom(HashSetCopyable<T> other) {
 
-            if (this.m_buckets != null) {
+            if (this.m_buckets.arr != null) {
                 PoolArray<int>.Recycle(ref this.m_buckets);
             }
 
-            if (other.m_buckets != null) {
+            if (other.m_buckets.arr != null) {
 
                 this.m_buckets = PoolArray<int>.Spawn(other.m_buckets.Length);
                 for (var i = 0; i < this.m_buckets.Length; ++i) {
@@ -305,11 +247,11 @@ namespace ME.ECS.Collections {
 
             }
 
-            if (this.m_slots != null) {
+            if (this.m_slots.arr != null) {
                 PoolArray<Slot>.Recycle(ref this.m_slots);
             }
 
-            if (other.m_slots != null) {
+            if (other.m_slots.arr != null) {
 
                 this.m_slots = PoolArray<Slot>.Spawn(other.m_slots.Length);
                 for (var i = 0; i < this.m_slots.Length; ++i) {
@@ -324,7 +266,7 @@ namespace ME.ECS.Collections {
             this.m_comparer = other.m_comparer;
             this.m_version = other.m_version;
 
-        }*/
+        }
         #endregion
 
         #region ICollection<T> methods

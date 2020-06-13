@@ -13,12 +13,12 @@
 ** 
 ===========================================================*/
 namespace ME.ECS.Collections {
-
     using System;
     using System.Security.Permissions;
     using System.Diagnostics;
+    using System.Collections;
     using System.Collections.Generic;
-
+ 
     // The SortedDictionary class implements a generic sorted list of keys 
     // and values. Entries in a sorted list are sorted by their keys and 
     // are accessible both by key and by index. The keys of a sorted dictionary
@@ -60,82 +60,30 @@ namespace ME.ECS.Collections {
     // be specified.
     // 
     [DebuggerDisplay("Count = {Count}")]
-    #if !FEATURE_NETCORE
+#if !FEATURE_NETCORE
     [Serializable()]
-    #endif
+#endif
     [System.Runtime.InteropServices.ComVisible(false)]
-    public class SortedList<TKey, TValue> :
-        IDictionary<TKey, TValue>, System.Collections.IDictionary, IReadOnlyDictionary<TKey, TValue>, IPoolableRecycle, IPoolableSpawn {
-
-        private BufferArray<TKey> keys;
-        private BufferArray<TValue> values;
-        private HashSetCopyable<TKey> keysContains;
-        //private HashSet<TKey> keysContains;
+    public class SortedList<TKey, TValue> : 
+        IDictionary<TKey, TValue>, System.Collections.IDictionary, IReadOnlyDictionary<TKey, TValue>
+    {
+        private TKey[] keys;
+        private TValue[] values;
         private int _size;
         private int version;
         private IComparer<TKey> comparer;
         private KeyList keyList;
         private ValueList valueList;
-        #if !FEATURE_NETCORE
+#if !FEATURE_NETCORE
         [NonSerialized]
-        #endif
-        private Object _syncRoot;
-
-        private static BufferArray<TKey> emptyKeys = new BufferArray<TKey>(new TKey[0], 0);
-        private static BufferArray<TValue> emptyValues = new BufferArray<TValue>(new TValue[0], 0);
-
+#endif
+        private Object _syncRoot;        
+ 
+        static TKey[] emptyKeys = new TKey[0]; 
+        static TValue[] emptyValues = new TValue[0]; 
+ 
         private const int _defaultCapacity = 4;
-
-        public void OnRecycle() {
-            
-            PoolArray<TKey>.Recycle(ref this.keys);
-            PoolArray<TValue>.Recycle(ref this.values);
-            PoolHashSetCopyable<TKey>.Recycle(ref this.keysContains);
-            //PoolHashSet<TKey>.Recycle(ref this.keysContains);
-            this._size = default;
-            this.version = default;
-            this.comparer = default;
-            this.keyList = default;
-            this.valueList = default;
-            this._syncRoot = default;
-
-        }
-
-        public void OnSpawn() {
-            
-            this._size = default;
-            this.version = default;
-            this.keyList = default;
-            this.valueList = default;
-            this._syncRoot = default;
-            
-            this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
-            //this.keysContains = PoolHashSet<TKey>.Spawn();
-            this.keys = SortedList<TKey, TValue>.emptyKeys;
-            this.values = SortedList<TKey, TValue>.emptyValues;
-            this._size = 0;
-            this.comparer = Comparer<TKey>.Default;
-            
-        }
-
-        public void CopyFrom(SortedList<TKey, TValue> other) {
-            
-            ArrayUtils.Copy(other.keys, ref this.keys);
-            ArrayUtils.Copy(other.values, ref this.values);
-            //if (this.keysContains == null) this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
-            //this.keysContains = new HashSetCopyable<TKey>(other.keysContains);
-            //if (this.keysContains == null) this.keysContains = PoolHashSet<TKey>.Spawn();
-            //this.keysContains = new HashSet<TKey>(other.keysContains);
-            this.keysContains.CopyFrom(other.keysContains);
-            this._size = other._size;
-            this.version = other.version;
-            this.comparer = other.comparer;
-            this.keyList = new KeyList(this);
-            this.valueList = new ValueList(this);
-            this._syncRoot = other._syncRoot;
-
-        }
-        
+    
         // Constructs a new sorted list. The sorted list is initially empty and has
         // a capacity of zero. Upon adding the first element to the sorted list the
         // capacity is increased to _defaultCapacity, and then increased in multiples of two as
@@ -143,14 +91,12 @@ namespace ME.ECS.Collections {
         // IComparable interface, which must be implemented by the keys of
         // all entries added to the sorted list.
         public SortedList() {
-            this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
-            //this.keysContains = PoolHashSet<TKey>.Spawn();
-            this.keys = SortedList<TKey, TValue>.emptyKeys;
-            this.values = SortedList<TKey, TValue>.emptyValues;
-            this._size = 0;
-            this.comparer = Comparer<TKey>.Default;
+            keys = emptyKeys;
+            values = emptyValues;
+            _size = 0;
+            comparer = Comparer<TKey>.Default; 
         }
-
+    
         // Constructs a new sorted list. The sorted list is initially empty and has
         // a capacity of zero. Upon adding the first element to the sorted list the
         // capacity is increased to 16, and then increased in multiples of two as
@@ -159,13 +105,11 @@ namespace ME.ECS.Collections {
         // all entries added to the sorted list.
         //
         public SortedList(int capacity) {
-            this.keysContains = PoolHashSetCopyable<TKey>.Spawn();
-            //this.keysContains = PoolHashSet<TKey>.Spawn();
-            this.keys = PoolArray<TKey>.Spawn(capacity);
-            this.values = PoolArray<TValue>.Spawn(capacity);
-            this.comparer = Comparer<TKey>.Default;
+            keys = new TKey[capacity];
+            values = new TValue[capacity];
+            comparer = Comparer<TKey>.Default;
         }
-
+    
         // Constructs a new sorted list with a given IComparer
         // implementation. The sorted list is initially empty and has a capacity of
         // zero. Upon adding the first element to the sorted list the capacity is
@@ -176,13 +120,13 @@ namespace ME.ECS.Collections {
         // interface, which in that case must be implemented by the keys of all
         // entries added to the sorted list.
         // 
-        public SortedList(IComparer<TKey> comparer)
+        public SortedList(IComparer<TKey> comparer) 
             : this() {
             if (comparer != null) {
                 this.comparer = comparer;
-            }
+            }                
         }
-
+    
         // Constructs a new sorted dictionary with a given IComparer
         // implementation and a given initial capacity. The sorted list is
         // initially empty, but will have room for the given number of elements
@@ -192,54 +136,69 @@ namespace ME.ECS.Collections {
         // the IComparable interface, which in that case must be implemented
         // by the keys of all entries added to the sorted list.
         // 
-        public SortedList(int capacity, IComparer<TKey> comparer)
+        public SortedList(int capacity, IComparer<TKey> comparer) 
             : this(comparer) {
-            this.Capacity = capacity;
+            Capacity = capacity;
         }
-
-        public SortedList(SortedList<TKey, TValue> dictionary)
-            : this(dictionary, null) { }
-
-        public SortedList(SortedList<TKey, TValue> dictionary, IComparer<TKey> comparer)
-            : this(dictionary != null ? dictionary.Count : 0, comparer) {
-
-            dictionary.Keys.CopyTo(this.keys, 0);
-            dictionary.Values.CopyTo(this.values, 0);
-            Array.Sort<TKey, TValue>(this.keys.arr, this.values.arr, comparer);
-            this._size = dictionary.Count;
+    
+        // Constructs a new sorted list containing a copy of the entries in the
+        // given dictionary. The elements of the sorted list are ordered according
+        // to the IComparable interface, which must be implemented by the
+        // keys of all entries in the the given dictionary as well as keys
+        // subsequently added to the sorted list.
+        // 
+        public SortedList(IDictionary<TKey, TValue> dictionary) 
+            : this(dictionary, null) {
         }
-
+        
+        // Constructs a new sorted list containing a copy of the entries in the
+        // given dictionary. The elements of the sorted list are ordered according
+        // to the given IComparer implementation. If comparer is
+        // null, the elements are compared to each other using the
+        // IComparable interface, which in that case must be implemented
+        // by the keys of all entries in the the given dictionary as well as keys
+        // subsequently added to the sorted list.
+        // 
+        public SortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer) 
+            : this((dictionary != null ? dictionary.Count : 0), comparer) {
+            
+            dictionary.Keys.CopyTo(keys, 0);
+            dictionary.Values.CopyTo(values, 0);
+            Array.Sort<TKey, TValue>(keys, values, comparer);
+            _size = dictionary.Count;            
+        }
+        
         // Adds an entry with the given key and value to this sorted list. An
         // ArgumentException is thrown if the key is already present in the sorted list.
         // 
         public void Add(TKey key, TValue value) {
-            var i = Array.BinarySearch<TKey>(this.keys.arr, 0, this._size, key, this.comparer);
-            this.Insert(~i, key, value);
+            int i = Array.BinarySearch<TKey>(keys, 0, _size, key, comparer);
+            if (i >= 0)
+                throw new Exception("Adding duplicate");
+            Insert(~i, key, value);
         }
-
+        
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> keyValuePair) {
-            this.Add(keyValuePair.Key, keyValuePair.Value);
+            Add(keyValuePair.Key, keyValuePair.Value);
         }
-
+ 
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> keyValuePair) {
-            var index = this.IndexOfKey(keyValuePair.Key);
-            if (index >= 0 && EqualityComparer<TValue>.Default.Equals(this.values[index], keyValuePair.Value)) {
+            int index = IndexOfKey(keyValuePair.Key);
+            if( index >= 0 && EqualityComparer<TValue>.Default.Equals(values[index], keyValuePair.Value)) {
                 return true;
             }
-
             return false;
         }
-
+ 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> keyValuePair) {
-            var index = this.IndexOfKey(keyValuePair.Key);
-            if (index >= 0 && EqualityComparer<TValue>.Default.Equals(this.values[index], keyValuePair.Value)) {
-                this.RemoveAt(index);
+            int index = IndexOfKey(keyValuePair.Key);
+            if( index >= 0 && EqualityComparer<TValue>.Default.Equals(values[index], keyValuePair.Value)) {
+                RemoveAt(index);
                 return true;
             }
-
             return false;
         }
-
+ 
         // Returns the capacity of this sorted list. The capacity of a sorted list
         // represents the allocated length of the internal arrays used to store the
         // keys and values of the list, and thus also indicates the maximum number
@@ -248,175 +207,174 @@ namespace ME.ECS.Collections {
         // 
         public int Capacity {
             get {
-                return this.keys.Length;
+                return keys.Length;
             }
             set {
-                if (value != this.keys.Length) {
-
+                if (value != keys.Length) {
                     if (value > 0) {
-                        var newKeys = PoolArray<TKey>.Spawn(value);//new TKey[value];
-                        var newValues = PoolArray<TValue>.Spawn(value);//new TValue[value];
-                        if (this._size > 0) {
-                            Array.Copy(this.keys.arr, 0, newKeys.arr, 0, this._size);
-                            Array.Copy(this.values.arr, 0, newValues.arr, 0, this._size);
+                        TKey[] newKeys = new TKey[value];
+                        TValue[] newValues = new TValue[value];
+                        if (_size > 0) {
+                            Array.Copy(keys, 0, newKeys, 0, _size);
+                            Array.Copy(values, 0, newValues, 0, _size);
                         }
-
-                        this.keys = newKeys;
-                        this.values = newValues;
-                    } else {
-                        this.keys = SortedList<TKey, TValue>.emptyKeys;
-                        this.values = SortedList<TKey, TValue>.emptyValues;
+                        keys = newKeys;
+                        values = newValues;
                     }
-                }
+                    else {
+                        keys = emptyKeys;
+                        values = emptyValues;
+                    }
+               }
             }
-        }
-
+         }
+ 
         public IComparer<TKey> Comparer {
             get {
-                return this.comparer;
+                return comparer;
+             }
+        }
+    
+        void System.Collections.IDictionary.Add(Object key, Object value) {
+            try {
+                TKey tempKey = (TKey)key;
+ 
+                try {
+                    Add(tempKey, (TValue)value);
+                }
+                catch (InvalidCastException) {    
+                }
+            }
+            catch (InvalidCastException) { 
             }
         }
-
-        void System.Collections.IDictionary.Add(Object key, Object value) {
-
-            var tempKey = (TKey)key;
-            this.Add(tempKey, (TValue)value);
-
-        }
-
+ 
         // Returns the number of entries in this sorted list.
         // 
         public int Count {
             get {
-                return this._size;
+                return _size;
             }
         }
-
+    
         // Returns a collection representing the keys of this sorted list. This
         // method returns the same object as GetKeyList, but typed as an
         // ICollection instead of an IList.
         // 
-        public KeyList Keys {
+        public IList<TKey> Keys {
             get {
-                return new KeyList(this);
+                return GetKeyListHelper();
             }
         }
-
-        ICollection<TKey> IDictionary<TKey, TValue>.Keys {
+    
+        ICollection<TKey> IDictionary<TKey,TValue>.Keys {
             get {
-                throw new AllocationException();
+                return GetKeyListHelper();
             }
         }
-
+ 
         System.Collections.ICollection System.Collections.IDictionary.Keys {
             get {
-                throw new AllocationException();
+                return GetKeyListHelper();
             }
         }
-
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys {
+ 
+        IEnumerable<TKey> IReadOnlyDictionary<TKey,TValue>.Keys {
             get {
-                throw new AllocationException();
+                return GetKeyListHelper();
             }
         }
-
+ 
         // Returns a collection representing the values of this sorted list. This
         // method returns the same object as GetValueList, but typed as an
         // ICollection instead of an IList.
         // 
-        public ValueList Values {
+        public IList<TValue> Values {
             get {
-                return new ValueList(this);
+                return GetValueListHelper();
             }
         }
-
-        ICollection<TValue> IDictionary<TKey, TValue>.Values {
+ 
+        ICollection<TValue> IDictionary<TKey,TValue>.Values {
             get {
-                throw new AllocationException();
+                return GetValueListHelper();
             }
         }
-
+    
         System.Collections.ICollection System.Collections.IDictionary.Values {
             get {
-                throw new AllocationException();
+                return GetValueListHelper();
             }
         }
-
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values {
+ 
+        IEnumerable<TValue> IReadOnlyDictionary<TKey,TValue>.Values {
             get {
-                throw new AllocationException();
+                return GetValueListHelper();
             }
         }
-
+ 
         private KeyList GetKeyListHelper() {
-            return new KeyList(this);
+            if (keyList == null)
+                keyList = new KeyList(this);
+            return keyList;
         }
-
+    
         private ValueList GetValueListHelper() {
-            return new ValueList(this);
+            if (valueList == null)
+                valueList = new ValueList(this);
+            return valueList;
         }
-
+ 
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly {
-            get {
-                return false;
-            }
+            get { return false; }
         }
-
+ 
         bool System.Collections.IDictionary.IsReadOnly {
-            get {
-                return false;
-            }
+            get { return false; }
         }
-
+ 
         bool System.Collections.IDictionary.IsFixedSize {
-            get {
-                return false;
-            }
+            get { return false; }
         }
-
+ 
         bool System.Collections.ICollection.IsSynchronized {
-            get {
-                return false;
-            }
+            get { return false; }
         }
-
+    
         // Synchronization root for this object.
         Object System.Collections.ICollection.SyncRoot {
-            get {
-                if (this._syncRoot == null) {
-                    System.Threading.Interlocked.CompareExchange(ref this._syncRoot, new Object(), null);
+            get { 
+                if( _syncRoot == null) {
+                    System.Threading.Interlocked.CompareExchange(ref _syncRoot, new Object(), null);    
                 }
-
-                return this._syncRoot;
+                return _syncRoot; 
             }
         }
-
+    
         // Removes all entries from this sorted list.
         public void Clear() {
             // clear does not change the capacity
-            this.version++;
+            version++;
             // Don't need to doc this but we clear the elements so that the gc can reclaim the references.
-            this.keysContains.Clear();
-            Array.Clear(this.keys.arr, 0, this._size);
-            Array.Clear(this.values.arr, 0, this._size);
-            this._size = 0;
+            Array.Clear(keys, 0, _size); 
+            Array.Clear(values, 0, _size); 
+            _size = 0;
         }
-
-
+    
+    
         bool System.Collections.IDictionary.Contains(Object key) {
-            if (SortedList<TKey, TValue>.IsCompatibleKey(key)) {
-                return this.ContainsKey((TKey)key);
+            if( IsCompatibleKey(key)) {
+                return ContainsKey((TKey) key);
             }
-
             return false;
         }
-
+ 
         // Checks if this sorted list contains an entry with the given key.
         // 
         public bool ContainsKey(TKey key) {
-            return this.keysContains.Contains(key); //this.IndexOfKey(key) >= 0;
+            return IndexOfKey(key) >= 0;
         }
-
+    
         // Checks if this sorted list contains an entry with the given value. The
         // values of the entries of the sorted list are compared to the given value
         // using the Object.Equals method. This method performs a linear
@@ -424,143 +382,135 @@ namespace ME.ECS.Collections {
         // method.
         // 
         public bool ContainsValue(TValue value) {
-            return this.IndexOfValue(value) >= 0;
+            return IndexOfValue(value) >= 0;
         }
-
-        // Copies the values in this SortedList to an array.
-        public void CopyTo(TValue[] array, int arrayIndex) {
-            for (var i = 0; i < this.Count; i++) {
-                array[arrayIndex + i] = this.values[i];
-            }
-        }
-
+    
         // Copies the values in this SortedList to an array.
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) {
-            for (var i = 0; i < this.Count; i++) {
-                var entry = new KeyValuePair<TKey, TValue>(this.keys[i], this.values[i]);
+            for (int i = 0; i < Count; i++) {
+                KeyValuePair<TKey, TValue> entry = new KeyValuePair<TKey, TValue>(keys[i],values[i]);
                 array[arrayIndex + i] = entry;
             }
         }
-
+ 
         void System.Collections.ICollection.CopyTo(Array array, int arrayIndex) {
-
-            var keyValuePairArray = array as KeyValuePair<TKey, TValue>[];
+            KeyValuePair<TKey, TValue>[] keyValuePairArray = array as KeyValuePair<TKey, TValue>[];
             if (keyValuePairArray != null) {
-                for (var i = 0; i < this.Count; i++) {
-                    keyValuePairArray[i + arrayIndex] = new KeyValuePair<TKey, TValue>(this.keys[i], this.values[i]);
+                for (int i = 0; i < Count; i++) {
+                    keyValuePairArray[i + arrayIndex] = new KeyValuePair<TKey, TValue>(keys[i],values[i]);
+                }                
+            }
+            else {
+                object[] objects = array as object[];
+                try {            
+                    for (int i = 0; i < Count; i++) {
+                        objects[i + arrayIndex] = new KeyValuePair<TKey, TValue>(keys[i],values[i]);
+                    }                                
                 }
-            } else {
-                var objects = array as object[];
-
-                for (var i = 0; i < this.Count; i++) {
-                    objects[i + arrayIndex] = new KeyValuePair<TKey, TValue>(this.keys[i], this.values[i]);
+                catch(ArrayTypeMismatchException) {
                 }
-
+ 
             }
         }
-
+        
         private const int MaxArrayLength = 0X7FEFFFFF;
-
+ 
         // Ensures that the capacity of this sorted list is at least the given
         // minimum value. If the currect capacity of the list is less than
         // min, the capacity is increased to twice the current capacity or
         // to min, whichever is larger.
         private void EnsureCapacity(int min) {
-            var newCapacity = this.keys.Length == 0 ? SortedList<TKey, TValue>._defaultCapacity : this.keys.Length * 2;
+            int newCapacity = keys.Length == 0? _defaultCapacity: keys.Length * 2;
             // Allow the list to grow to maximum possible capacity (~2G elements) before encountering overflow.
             // Note that this check works even when _items.Length overflowed thanks to the (uint) cast
-            if ((uint)newCapacity > SortedList<TKey, TValue>.MaxArrayLength) {
-                newCapacity = SortedList<TKey, TValue>.MaxArrayLength;
-            }
-
-            if (newCapacity < min) {
-                newCapacity = min;
-            }
-
-            this.Capacity = newCapacity;
+            if ((uint)newCapacity > MaxArrayLength) newCapacity = MaxArrayLength;
+            if (newCapacity < min) newCapacity = min;
+            Capacity = newCapacity;
         }
-
+        
         // Returns the value of the entry at the given index.
         // 
         private TValue GetByIndex(int index) {
-            return this.values[index];
+            return values[index];
         }
-
-        public Enumerator GetEnumerator() {
-            return new Enumerator(this, Enumerator.KeyValuePair);
+    
+ 
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() {
+            //return new Enumerator(this, Enumerator.KeyValuePair);
+            throw new AllocationException();
         }
         
-        /*public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() {
-            throw new AllocationException();
+        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+        {
             //return new Enumerator(this, Enumerator.KeyValuePair);
-        }*/
-
-        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() {
             throw new AllocationException();
-            //return new Enumerator(this, Enumerator.KeyValuePair);
         }
-
+ 
         System.Collections.IDictionaryEnumerator System.Collections.IDictionary.GetEnumerator() {
-            throw new AllocationException();
             //return new Enumerator(this, Enumerator.DictEntry);
-
-        }
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
             throw new AllocationException();
-            //return new Enumerator(this, Enumerator.KeyValuePair);
         }
-
-
+ 
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+            //return new Enumerator(this, Enumerator.KeyValuePair);
+            throw new AllocationException();
+        }
+    
+ 
         // Returns the key of the entry at the given index.
         // 
         private TKey GetKey(int index) {
-            return this.keys[index];
+            return keys[index];
         }
-
-
+ 
+        
         // Returns the value associated with the given key. If an entry with the
         // given key is not found, the returned value is null.
         // 
         public TValue this[TKey key] {
             get {
-                var i = this.IndexOfKey(key);
-                if (i >= 0) {
-                    return this.values[i];
-                }
-
+                int i = IndexOfKey(key);
+                if (i >= 0)
+                    return values[i];
+ 
                 return default(TValue);
             }
             set {
-                var i = Array.BinarySearch<TKey>(this.keys.arr, 0, this._size, key, this.comparer);
+                int i = Array.BinarySearch<TKey>(keys, 0, _size, key, comparer);
                 if (i >= 0) {
-                    this.values[i] = value;
-                    this.version++;
+                    values[i] = value;
+                    version++;
                     return;
                 }
-
-                this.Insert(~i, key, value);
+                Insert(~i, key, value);
             }
         }
-
+ 
         Object System.Collections.IDictionary.this[Object key] {
             get {
-                if (SortedList<TKey, TValue>.IsCompatibleKey(key)) {
-                    var i = this.IndexOfKey((TKey)key);
+                if( IsCompatibleKey(key)) {
+                    int i = IndexOfKey((TKey)key);
                     if (i >= 0) {
-                        return this.values[i];
+                        return values[i];
                     }
                 }
-
+ 
                 return null;
             }
             set {
-
-                var tempKey = (TKey)key;
-                this[tempKey] = (TValue)value;
+                try {
+                    TKey tempKey = (TKey)key;
+                    try {
+                        this[tempKey] = (TValue)value; 
+                    }
+                    catch (InvalidCastException) {    
+                    }
+                }
+                catch (InvalidCastException) { 
+                }           
             }
         }
-
+    
         // Returns the index of the entry with a given key in this sorted list. The
         // key is located through a binary search, and thus the average execution
         // time of this method is proportional to Log2(size), where
@@ -569,10 +519,10 @@ namespace ME.ECS.Collections {
         // key value.
         // 
         public int IndexOfKey(TKey key) {
-            var ret = Array.BinarySearch<TKey>(this.keys.arr, 0, this._size, key, this.comparer);
-            return ret >= 0 ? ret : -1;
+            int ret = Array.BinarySearch<TKey>(keys, 0, _size, key, comparer);
+            return ret >=0 ? ret : -1;
         }
-
+    
         // Returns the index of the first occurrence of an entry with a given value
         // in this sorted list. The entry is located through a linear search, and
         // thus the average execution time of this method is proportional to the
@@ -580,73 +530,64 @@ namespace ME.ECS.Collections {
         // given value using the Object.Equals method.
         // 
         public int IndexOfValue(TValue value) {
-            return Array.IndexOf(this.values.arr, value, 0, this._size);
+            return Array.IndexOf(values, value, 0, _size);
         }
-
+    
         // Inserts an entry with a given key and value at a given index.
         private void Insert(int index, TKey key, TValue value) {
-            if (this._size == this.keys.Length) {
-                this.EnsureCapacity(this._size + 1);
+            if (_size == keys.Length) EnsureCapacity(_size + 1);
+            if (index < _size) {
+                Array.Copy(keys, index, keys, index + 1, _size - index);
+                Array.Copy(values, index, values, index + 1, _size - index);
             }
-
-            if (index < this._size) {
-                Array.Copy(this.keys.arr, index, this.keys.arr, index + 1, this._size - index);
-                Array.Copy(this.values.arr, index, this.values.arr, index + 1, this._size - index);
-            }
-
-            this.keysContains.Add(key);
-            this.keys[index] = key;
-            this.values[index] = value;
-            this._size++;
-            this.version++;
+            keys[index] = key;
+            values[index] = value;
+            _size++;
+            version++;
         }
-
+ 
         public bool TryGetValue(TKey key, out TValue value) {
-            var i = this.IndexOfKey(key);
+            int i = IndexOfKey(key);
             if (i >= 0) {
-                value = this.values[i];
+                value =values[i]; 
                 return true;
             }
-
+ 
             value = default(TValue);
             return false;
         }
-
+        
         // Removes the entry at the given index. The size of the sorted list is
         // decreased by one.
         // 
         public void RemoveAt(int index) {
-            this._size--;
-            if (index < this._size) {
-                Array.Copy(this.keys.arr, index + 1, this.keys.arr, index, this._size - index);
-                Array.Copy(this.values.arr, index + 1, this.values.arr, index, this._size - index);
+            _size--;
+            if (index < _size) {
+                Array.Copy(keys, index + 1, keys, index, _size - index);
+                Array.Copy(values, index + 1, values, index, _size - index);
             }
-
-            this.keys[this._size] = default(TKey);
-            this.values[this._size] = default(TValue);
-            this.version++;
+            keys[_size] = default(TKey);
+            values[_size] = default(TValue);
+            version++;
         }
-
+    
         // Removes an entry from this sorted list. If an entry with the specified
         // key exists in the sorted list, it is removed. An ArgumentException is
         // thrown if the key is null.
         // 
         public bool Remove(TKey key) {
-            this.keysContains.Remove(key);
-            var i = this.IndexOfKey(key);
-            if (i >= 0) {
-                this.RemoveAt(i);
-            }
-
+            int i = IndexOfKey(key);
+            if (i >= 0) 
+                RemoveAt(i);
             return i >= 0;
         }
-
+ 
         void System.Collections.IDictionary.Remove(Object key) {
-            if (SortedList<TKey, TValue>.IsCompatibleKey(key)) {
-                this.Remove((TKey)key);
+            if( IsCompatibleKey(key)) {
+                Remove((TKey) key);
             }
         }
-
+            
         // Sets the capacity of this sorted list to the size of the sorted list.
         // This method can be used to minimize a sorted list's memory overhead once
         // it is known that no new elements will be added to the sorted list. To
@@ -657,386 +598,380 @@ namespace ME.ECS.Collections {
         // SortedList.TrimExcess();
         // 
         public void TrimExcess() {
-            var threshold = (int)((double)this.keys.Length * 0.9);
-            if (this._size < threshold) {
-                this.Capacity = this._size;
+            int threshold = (int)(((double)keys.Length) * 0.9);             
+            if( _size < threshold ) {
+                Capacity = _size;                
             }
         }
-
+ 
         private static bool IsCompatibleKey(object key) {
-            return key is TKey;
+            return (key is TKey); 
         }
-
-
+ 
+ 
         /// <include file='doc\SortedList.uex' path='docs/doc[@for="SortedListEnumerator"]/*' />
-        #if !FEATURE_NETCORE
+#if !FEATURE_NETCORE
         [Serializable()]
-        #endif
-        public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, System.Collections.IDictionaryEnumerator {
-
+#endif
+        private struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, System.Collections.IDictionaryEnumerator
+        {
             private SortedList<TKey, TValue> _sortedList;
             private TKey key;
             private TValue value;
             private int index;
             private int version;
-            private int getEnumeratorRetType; // What should Enumerator.Current return?
-
+            private int getEnumeratorRetType;  // What should Enumerator.Current return?
+ 
             internal const int KeyValuePair = 1;
             internal const int DictEntry = 2;
-
+            
             internal Enumerator(SortedList<TKey, TValue> sortedList, int getEnumeratorRetType) {
                 this._sortedList = sortedList;
                 this.index = 0;
-                this.version = this._sortedList.version;
+                version = _sortedList.version;
                 this.getEnumeratorRetType = getEnumeratorRetType;
-                this.key = default(TKey);
-                this.value = default(TValue);
+                key = default(TKey);
+                value = default(TValue);
             }
-
-            public void Dispose() {
-                this.index = 0;
-                this.key = default(TKey);
-                this.value = default(TValue);
+    
+            public void Dispose()
+            {
+                index = 0;
+                key = default(TKey);
+                value = default(TValue);
             }
-
-
+ 
+ 
             Object System.Collections.IDictionaryEnumerator.Key {
                 get {
-                    return this.key;
+                    return key;
                 }
             }
-
+ 
             public bool MoveNext() {
-                if ((uint)this.index < (uint)this._sortedList.Count) {
-                    this.key = this._sortedList.keys[this.index];
-                    this.value = this._sortedList.values[this.index];
-                    this.index++;
+                if ( (uint)index < (uint)_sortedList.Count ) {   
+                    key = _sortedList.keys[index];
+                    value = _sortedList.values[index];
+                    index++;
                     return true;
                 }
-
-                this.index = this._sortedList.Count + 1;
-                this.key = default(TKey);
-                this.value = default(TValue);
-                return false;
+ 
+                index = _sortedList.Count + 1;
+                key = default(TKey);
+                value = default(TValue);
+                return false;                                                        
             }
-
-            System.Collections.DictionaryEntry System.Collections.IDictionaryEnumerator.Entry {
+    
+            DictionaryEntry System.Collections.IDictionaryEnumerator.Entry {
                 get {
-                    throw new AllocationException();
+                    return new DictionaryEntry(key, value);
                 }
             }
-
+    
             public KeyValuePair<TKey, TValue> Current {
-                get {
-                    return new KeyValuePair<TKey, TValue>(this.key, this.value);
+                get {                    
+                    return new KeyValuePair<TKey, TValue>(key, value);
                 }
             }
-
+ 
             Object System.Collections.IEnumerator.Current {
-                get {
-                    throw new AllocationException();
+                get {                    
+                    throw new AllocationException();               
                 }
             }
-
+                
             Object System.Collections.IDictionaryEnumerator.Value {
                 get {
                     throw new AllocationException();
                 }
             }
-
+ 
             void System.Collections.IEnumerator.Reset() {
-                this.index = 0;
-                this.key = default(TKey);
-                this.value = default(TValue);
+                index = 0;
+                key = default(TKey);
+                value = default(TValue);
             }
-
         }
-
-        #if !FEATURE_NETCORE
+ 
+#if !FEATURE_NETCORE
         [Serializable()]
-        #endif
-        private sealed class SortedListKeyEnumerator : IEnumerator<TKey>, System.Collections.IEnumerator {
-
+#endif
+        private sealed class SortedListKeyEnumerator : IEnumerator<TKey>, System.Collections.IEnumerator
+        {
             private SortedList<TKey, TValue> _sortedList;
             private int index;
             private int version;
             private TKey currentKey;
-
+            
             internal SortedListKeyEnumerator(SortedList<TKey, TValue> sortedList) {
-                this._sortedList = sortedList;
-                this.version = sortedList.version;
+                _sortedList = sortedList;
+                version = sortedList.version;
             }
-
+ 
             public void Dispose() {
-                this.index = 0;
-                this.currentKey = default(TKey);
+                index = 0;                
+                currentKey = default(TKey);
             }
-
+ 
             public bool MoveNext() {
-                if ((uint)this.index < (uint)this._sortedList.Count) {
-                    this.currentKey = this._sortedList.keys[this.index];
-                    this.index++;
-                    return true;
+                if ( (uint)index < (uint)_sortedList.Count) {
+                    currentKey = _sortedList.keys[index];
+                    index++;
+                    return true;                    
                 }
-
-                this.index = this._sortedList.Count + 1;
-                this.currentKey = default(TKey);
-                return false;
+                
+                index = _sortedList.Count + 1;                    
+                currentKey = default(TKey);
+                return false;                    
             }
-
+            
             public TKey Current {
                 get {
-                    return this.currentKey;
+                    return currentKey;
                 }
             }
-
+ 
             Object System.Collections.IEnumerator.Current {
                 get {
                     throw new AllocationException();
                 }
             }
-
+            
             void System.Collections.IEnumerator.Reset() {
-                this.index = 0;
-                this.currentKey = default(TKey);
+                index = 0;
+                currentKey = default(TKey);
             }
-
         }
-
-        #if !FEATURE_NETCORE
+ 
+#if !FEATURE_NETCORE
         [Serializable()]
-        #endif
-        private sealed class SortedListValueEnumerator : IEnumerator<TValue>, System.Collections.IEnumerator {
-
+#endif
+        private sealed class SortedListValueEnumerator : IEnumerator<TValue>, System.Collections.IEnumerator
+        {
             private SortedList<TKey, TValue> _sortedList;
             private int index;
             private int version;
             private TValue currentValue;
-
+            
             internal SortedListValueEnumerator(SortedList<TKey, TValue> sortedList) {
-                this._sortedList = sortedList;
-                this.version = sortedList.version;
+                _sortedList = sortedList;
+                version = sortedList.version;
             }
-
+ 
             public void Dispose() {
-                this.index = 0;
-                this.currentValue = default(TValue);
+                index = 0;
+                currentValue = default(TValue);
             }
-
+ 
             public bool MoveNext() {
-                if ((uint)this.index < (uint)this._sortedList.Count) {
-                    this.currentValue = this._sortedList.values[this.index];
-                    this.index++;
+                if ( (uint)index < (uint)_sortedList.Count) {
+                    currentValue = _sortedList.values[index];
+                    index++;
                     return true;
                 }
-
-                this.index = this._sortedList.Count + 1;
-                this.currentValue = default(TValue);
-                return false;
+ 
+                index = _sortedList.Count + 1;
+                currentValue = default(TValue);
+                return false;                                    
             }
-
+            
             public TValue Current {
-                get {
-                    return this.currentValue;
+                get {                    
+                    return currentValue;
                 }
             }
-
+ 
             Object System.Collections.IEnumerator.Current {
-                get {
-                    return this.currentValue;
+                get {                    
+                    throw new AllocationException();
                 }
             }
-
+            
             void System.Collections.IEnumerator.Reset() {
-                this.index = 0;
-                this.currentValue = default(TValue);
+                index = 0;
+                currentValue = default(TValue);
             }
-
         }
-
+ 
         [DebuggerDisplay("Count = {Count}")]
-        #if !FEATURE_NETCORE
+#if !FEATURE_NETCORE
         [Serializable()]
-        #endif
-        public struct KeyList : IList<TKey>, System.Collections.ICollection {
-
+#endif
+        private sealed class KeyList : IList<TKey>, System.Collections.ICollection
+        {
             private SortedList<TKey, TValue> _dict;
-
+    
             internal KeyList(SortedList<TKey, TValue> dictionary) {
                 this._dict = dictionary;
             }
-
-            public int Count {
-                get {
-                    return this._dict._size;
-                }
+    
+            public int Count { 
+                get { return _dict._size; }
             }
-
+    
             public bool IsReadOnly {
-                get {
-                    return true;
-                }
+                get { return true; }
             }
-
+ 
             bool System.Collections.ICollection.IsSynchronized {
-                get {
-                    return false;
-                }
+                get { return false; }
             }
-
+    
             Object System.Collections.ICollection.SyncRoot {
-                get {
-                    return ((System.Collections.ICollection)this._dict).SyncRoot;
-                }
+                get { return ((ICollection)_dict).SyncRoot; }
             }
-
-            public void Add(TKey key) { }
-
-            public void Clear() { }
-
+    
+            public void Add(TKey key) {
+                
+            }
+    
+            public void Clear() {
+                
+            }
+    
             public bool Contains(TKey key) {
-                return this._dict.ContainsKey(key);
+                return _dict.ContainsKey(key);
             }
-
-            public void CopyTo(BufferArray<TKey> array, int arrayIndex) {
-                // defer error checking to Array.Copy
-                Array.Copy(this._dict.keys.arr, 0, array.arr, arrayIndex, this._dict.Count);
-            }
-
+ 
             public void CopyTo(TKey[] array, int arrayIndex) {
                 // defer error checking to Array.Copy
-                Array.Copy(this._dict.keys.arr, 0, array, arrayIndex, this._dict.Count);
+                Array.Copy(_dict.keys, 0, array, arrayIndex, _dict.Count);
             }
-
+ 
             void System.Collections.ICollection.CopyTo(Array array, int arrayIndex) {
-                // defer error checking to Array.Copy
-                Array.Copy(this._dict.keys.arr, 0, array, arrayIndex, this._dict.Count);
+                try {    
+                    // defer error checking to Array.Copy
+                    Array.Copy(_dict.keys, 0, array, arrayIndex, _dict.Count);
+                }
+                catch(ArrayTypeMismatchException){
+                }
             }
-
-            public void Insert(int index, TKey value) { }
-
+    
+            public void Insert(int index, TKey value) {
+                
+            }
+    
             public TKey this[int index] {
                 get {
-                    return this._dict.GetKey(index);
+                    return _dict.GetKey(index);
                 }
-                set { }
+                set {
+                    
+                }
             }
-
+    
             public IEnumerator<TKey> GetEnumerator() {
-                throw new AllocationException();
+                return new SortedListKeyEnumerator(_dict);
             }
-
+    
             System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
-                throw new AllocationException();
+                return new SortedListKeyEnumerator(_dict);
             }
-
+ 
             public int IndexOf(TKey key) {
-                var i = Array.BinarySearch<TKey>(this._dict.keys.arr, 0, this._dict.Count, key, this._dict.comparer);
-                if (i >= 0) {
-                    return i;
-                }
-
+                int i = Array.BinarySearch<TKey>(_dict.keys, 0,
+                                          _dict.Count, key, _dict.comparer);
+                if (i >= 0) return i;
                 return -1;
             }
-
+    
             public bool Remove(TKey key) {
-
                 return false;
             }
-
-            public void RemoveAt(int index) { }
-
+    
+            public void RemoveAt(int index) {
+                
+            }
         }
-
+    
         [DebuggerDisplay("Count = {Count}")]
-        #if !FEATURE_NETCORE
+#if !FEATURE_NETCORE
         [Serializable()]
-        #endif
-        public struct ValueList : IList<TValue>, System.Collections.ICollection {
-
+#endif
+        private sealed class ValueList : IList<TValue>, System.Collections.ICollection
+        {
             private SortedList<TKey, TValue> _dict;
-
+    
             internal ValueList(SortedList<TKey, TValue> dictionary) {
                 this._dict = dictionary;
             }
-
-            public int Count {
-                get {
-                    return this._dict._size;
-                }
+    
+            public int Count { 
+                get { return _dict._size; }
             }
-
+    
             public bool IsReadOnly {
-                get {
-                    return true;
-                }
+                get { return true; }
             }
-
+ 
             bool System.Collections.ICollection.IsSynchronized {
-                get {
-                    return false;
-                }
+                get { return false; }
             }
-
+    
             Object System.Collections.ICollection.SyncRoot {
-                get {
-                    return ((System.Collections.ICollection)this._dict).SyncRoot;
-                }
+                get { return ((ICollection)_dict).SyncRoot; }
             }
-
-            public void Add(TValue key) { }
-
-            public void Clear() { }
-
+    
+            public void Add(TValue key) {
+                
+            }
+    
+            public void Clear() {
+                
+            }
+    
             public bool Contains(TValue value) {
-                return this._dict.ContainsValue(value);
+                return _dict.ContainsValue(value);
             }
-
-            public void CopyTo(BufferArray<TValue> array, int arrayIndex) {
-                // defer error checking to Array.Copy
-                Array.Copy(this._dict.values.arr, 0, array.arr, arrayIndex, this._dict.Count);
-            }
-
+ 
             public void CopyTo(TValue[] array, int arrayIndex) {
                 // defer error checking to Array.Copy
-                Array.Copy(this._dict.values.arr, 0, array, arrayIndex, this._dict.Count);
+                Array.Copy(_dict.values, 0, array, arrayIndex, _dict.Count);
             }
-
+ 
             void System.Collections.ICollection.CopyTo(Array array, int arrayIndex) {
-                // defer error checking to Array.Copy
-                Array.Copy(this._dict.values.arr, 0, array, arrayIndex, this._dict.Count);
+                try {
+                    // defer error checking to Array.Copy
+                    Array.Copy(_dict.values, 0, array, arrayIndex, _dict.Count);
+                }
+                catch(ArrayTypeMismatchException){
+                    
+                }
             }
-
-            public void Insert(int index, TValue value) { }
-
+    
+            public void Insert(int index, TValue value) {
+                
+            }
+    
             public TValue this[int index] {
                 get {
-                    return this._dict.GetByIndex(index);
+                    return _dict.GetByIndex(index);
                 }
-                set { }
+                set {
+                    
+                }
             }
-
+ 
             public IEnumerator<TValue> GetEnumerator() {
-                throw new AllocationException();
+                return new SortedListValueEnumerator(_dict);
             }
-
+    
             System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
-                throw new AllocationException();
+                return new SortedListValueEnumerator(_dict);
             }
-
+ 
             public int IndexOf(TValue value) {
-                return Array.IndexOf(this._dict.values.arr, value, 0, this._dict.Count);
+                return Array.IndexOf(_dict.values, value, 0, _dict.Count);
             }
-
+    
             public bool Remove(TValue value) {
-
                 return false;
             }
-
-            public void RemoveAt(int index) { }
-
-        }
-
+    
+            public void RemoveAt(int index) {
+                
+            }
+            
+        }        
     }
-
 }

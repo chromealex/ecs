@@ -14,8 +14,8 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void SetPosition2D(this in Entity child, in UnityEngine.Vector2 position) {
 
-            var container = child.GetData<Container>();
-            if (container.entity != Entity.Empty) {
+            var container = child.GetData<Container>(createIfNotExists: false);
+            if (container.entity.IsEmpty() == false) {
 
                 var containerRotation = UnityEngine.Quaternion.Euler(0f, 0f, container.entity.GetRotation2D());
                 var containerPosition = container.entity.GetPosition2D();
@@ -32,8 +32,8 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void SetRotation2D(this in Entity child, in float rotation) {
 
-            var container = Worlds.currentWorld.GetData<Container>(in child);
-            if (container.entity != Entity.Empty) {
+            var container = Worlds.currentWorld.GetData<Container>(in child, createIfNotExists: false);
+            if (container.entity.IsEmpty() == false) {
 
                 var containerRotation = UnityEngine.Quaternion.Euler(0f, 0f, container.entity.GetRotation2D());
                 var containerRotationInverse = UnityEngine.Quaternion.Inverse(containerRotation);
@@ -58,12 +58,12 @@
         public static UnityEngine.Vector2 GetPosition2D(this in Entity child) {
 
             var position = Worlds.currentWorld.GetData<Position>(in child).ToVector3();
-            var current = Worlds.currentWorld.GetData<Container>(in child).entity;
-            while (current != Entity.Empty) {
+            var current = Worlds.currentWorld.GetData<Container>(in child, createIfNotExists: false).entity;
+            while (current.IsEmpty() == false) {
 
                 position = Worlds.currentWorld.GetData<Rotation>(in current).ToQuaternion() * position;
                 position += Worlds.currentWorld.GetData<Position>(in current).ToVector3();
-                current = Worlds.currentWorld.GetData<Container>(in current).entity;
+                current = Worlds.currentWorld.GetData<Container>(in current, createIfNotExists: false).entity;
 
             }
             
@@ -96,11 +96,11 @@
         public static float GetRotation2D(this in Entity child) {
 
             var worldRot = Worlds.currentWorld.GetData<Rotation2D>(in child).ToQuaternion2D();//child.GetLocalRotation2D();
-            var current = Worlds.currentWorld.GetData<Container>(in child).entity;
-            while (current != Entity.Empty) {
+            var current = Worlds.currentWorld.GetData<Container>(in child, createIfNotExists: false).entity;
+            while (current.IsEmpty() == false) {
                 
                 worldRot = Worlds.currentWorld.GetData<Rotation2D>(in current).ToQuaternion2D() * worldRot;
-                current = Worlds.currentWorld.GetData<Container>(in current).entity;
+                current = Worlds.currentWorld.GetData<Container>(in current, createIfNotExists: false).entity;
                 
             }
  

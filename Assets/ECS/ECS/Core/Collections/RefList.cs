@@ -224,7 +224,6 @@ namespace ME.ECS.Collections {
 
             if (this.IsFree(index) == false) {
 
-                this.arr[index] = default;
                 this.freePrepared.Add(index);
                 --this.count;
 
@@ -263,7 +262,7 @@ namespace ME.ECS.Collections {
 
         public void CopyFrom(RefList<T> other) {
 
-            ArrayUtils.Copy(other.arr, ref this.arr);
+            ArrayUtils.Copy(in other.arr, ref this.arr);
             
             if (this.freePrepared != null) PoolHashSetCopyable<int>.Recycle(ref this.freePrepared);
             this.freePrepared = PoolHashSetCopyable<int>.Spawn(other.freePrepared.Count);

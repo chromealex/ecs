@@ -11,6 +11,14 @@ namespace ME.ECS {
 
         }
     
+        public static void Init(in Entity entity) {
+
+            entity.ValidateData<ME.ECS.Transform.Position2D>();
+            entity.ValidateData<ME.ECS.Transform.Rotation2D>();
+            entity.ValidateData<ME.ECS.Transform.Scale2D>();
+
+        }
+
     }
 
 }

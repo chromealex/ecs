@@ -11,6 +11,10 @@ public class YourFeature : Feature {
 
         this.AddSystem<YourNewSystem>(); // The same as this.world.AddSystem<YourNewSystem>();
 
+        var group = new SystemGroup(); // Add new system group
+        group.AddSystem<YourSystemInGroup1>();
+        group.AddSystem<YourSystemInGroup2>();
+
     }
 
     ...

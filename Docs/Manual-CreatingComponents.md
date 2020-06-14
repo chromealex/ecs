@@ -25,6 +25,39 @@ public class MyComponent : IComponentCopyable {
 }
 ```
 
+In systems where you need to use components you could use these methods:
+```csharp
+void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
+    
+    // Add new component or get if this type exists.
+    // Note that you can add these types more than once.
+    var component = entity.GetOrAddComponent<MyComponent>();
+    if (component.someArray == null) component.someArray = PoolArray<int>.Spawn(10);
+    component.someArray[...] = ...;
+
+    // Add components (more than once)
+    entity.AddComponent<ClassComponent1>();
+    entity.AddComponent<ClassComponent1>();
+    entity.AddComponent<ClassComponent1>();
+    
+    // Existance check
+    if (entity.HasComponent<ClassComponent1>() == true) {
+    	// exists
+    }
+    
+    // No allocation here
+    var components = entity.ForEachComponent<ClassComponent1>();
+    
+    entity.RemoveComponents<ClassComponent1>();
+    
+    // An example how to use common types to use foreach
+    entity.AddComponent<ClassComponent2, ICommonInterface>();
+    entity.AddComponent<ClassComponent2, ICommonInterface>();
+    var components = entity.ForEachComponent<ICommonInterface>();
+    
+}
+```
+
 ### Struct Components
 
 In struct components you don't have any methods and all copies make automatically. But here are some limitations about managed arrays. If you store managed array here, only pointer will be copied, so if you have static array with some data you can use managed arrays here, but if you change data by your logic in these arrays, you shouldn't store any managed data here. In some cases you can use **StackArray** to allocate struct array, but there are some limitations.
@@ -39,21 +72,19 @@ public struct MyStructComponent : IStructComponent {
 In systems where you need to use components you could use these methods:
 ```csharp
 void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
-        
-    // Struct components usage example
+      
+    // Set data
+    entity.SetData(new MyStructComponent() {
+    	someData = 123
+    });
+
+    // Change data
     ref var data = ref entity.GetData<MyStructComponent>();
     ++data.someData;
     
-    // Struct components set example with lifetime
-    // By default lifetime value is ComponentLifetime.Infinite
-    entity.SetData(new YourStructComponent());
-    entity.SetData(new YourStructComponentWithLifetime(), ComponentLifetime.PlayNextTick);
+    // Remove data
+    entity.RemoveData<MyStructComponent>();
     
-    // Class components usage example
-    var component = entity.GetOrAddComponent<MyComponent>();
-    if (component.someArray == null) component.someArray = PoolArray<int>.Spawn(10);
-    component.someArray[...] = ...;
-
 }
 ```
 

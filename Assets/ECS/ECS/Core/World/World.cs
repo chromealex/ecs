@@ -168,6 +168,7 @@ namespace ME.ECS {
         internal State currentState;
         private uint seed;
         private int cpf; // CPF = Calculations per frame
+        internal int entitiesCapacity;
 
         /// <summary>
         /// Returns last frame CPF
@@ -232,6 +233,7 @@ namespace ME.ECS {
             this.checkpointCollector = default;
             this.tickTime = default;
             this.timeSinceStart = default;
+            this.entitiesCapacity = default;
             
             this.features = PoolList<IFeatureBase>.Spawn(World.FEATURES_CAPACITY);
             //this.systems = PoolList<ISystemBase>.Spawn(World.SYSTEMS_CAPACITY);
@@ -681,6 +683,8 @@ namespace ME.ECS {
             ArrayUtils.Resize(filterRef.id - 1, ref dic);
             dic[filterRef.id - 1] = true;
 
+            if (this.entitiesCapacity > 0) filterRef.SetEntityCapacity(this.entitiesCapacity);
+            
             if (this.ForEachEntity(out var allEntities) == true) {
 
                 for (int j = allEntities.FromIndex, jCount = allEntities.SizeCount; j < jCount; ++j) {
@@ -910,6 +914,25 @@ namespace ME.ECS {
             
         }
 
+        public void SetEntityCapacityInFilters(int capacity) {
+
+            ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
+            ref var dic = ref FiltersDirectCache.dic[this.id];
+            if (dic.arr != null) {
+
+                for (int i = 0; i < dic.Length; ++i) {
+
+                    if (dic[i] == false) continue;
+                    var filterId = i + 1;
+                    var filter = this.GetFilter(filterId);
+                    filter.SetEntityCapacity(capacity);
+
+                }
+
+            }
+
+        }
+        
         public void CreateEntityInFilters(Entity entity) {
 
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
@@ -1076,6 +1099,14 @@ namespace ME.ECS {
             return ref ent;
 
         }
+
+        public void SetEntitiesCapacity(int capacity) {
+
+            this.entitiesCapacity = capacity;
+            this.SetEntityCapacityPlugins(capacity);
+            this.SetEntityCapacityInFilters(capacity);
+            
+        }
         
         public Entity AddEntity(string name = null) {
 
@@ -1085,7 +1116,6 @@ namespace ME.ECS {
             var entity = new Entity(nextIndex, (ushort)(ent.version + 1));
             entitiesList.Add(entity);
 
-            //this.AddToFilters<TEntity>(data.entity); // Why we need to add empty entity into filters?
             this.CreateEntityPlugins(entity);
             this.CreateEntityInFilters(entity);
             this.UpdateFilters(entity);
@@ -1812,7 +1842,6 @@ namespace ME.ECS {
 
                                         if (this.settings.useJobsForSystems == true && sysFilter.jobs == true) {
 
-                                            //sysFilter.filter.SetForEachMode(true);
                                             var arrEntities = sysFilter.filter.GetArray();
                                             using (var arr = new Unity.Collections.NativeArray<Entity>(arrEntities.arr, Unity.Collections.Allocator.TempJob)) {
 
@@ -1826,13 +1855,12 @@ namespace ME.ECS {
                                                 jobHandle.Complete();
 
                                             }
-                                            //sysFilter.filter.SetForEachMode(false);
 
                                         } else {
 
                                             if (sysFilter is ISystemFilter sysFilterContext) {
 
-                                                foreach (var entity in sysFilter.filter) {
+                                                foreach (ref var entity in sysFilter.filter) {
 
                                                     if (entity.version > 0) sysFilterContext.AdvanceTick(in entity, in fixedDeltaTime);
 
@@ -2046,6 +2074,31 @@ namespace ME.ECS {
         partial void EndRestoreEntitiesPlugin7();
         partial void EndRestoreEntitiesPlugin8();
         partial void EndRestoreEntitiesPlugin9();
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void SetEntityCapacityPlugins(in int capacity) {
+            
+            this.SetEntityCapacityPlugin1(capacity);
+            this.SetEntityCapacityPlugin2(capacity);
+            this.SetEntityCapacityPlugin3(capacity);
+            this.SetEntityCapacityPlugin4(capacity);
+            this.SetEntityCapacityPlugin5(capacity);
+            this.SetEntityCapacityPlugin6(capacity);
+            this.SetEntityCapacityPlugin7(capacity);
+            this.SetEntityCapacityPlugin8(capacity);
+            this.SetEntityCapacityPlugin9(capacity);
+
+        }
+
+        partial void SetEntityCapacityPlugin1(int capacity);
+        partial void SetEntityCapacityPlugin2(int capacity);
+        partial void SetEntityCapacityPlugin3(int capacity);
+        partial void SetEntityCapacityPlugin4(int capacity);
+        partial void SetEntityCapacityPlugin5(int capacity);
+        partial void SetEntityCapacityPlugin6(int capacity);
+        partial void SetEntityCapacityPlugin7(int capacity);
+        partial void SetEntityCapacityPlugin8(int capacity);
+        partial void SetEntityCapacityPlugin9(int capacity);
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private void CreateEntityPlugins(in Entity entity) {

@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace ME.ECS.Collections {
     
     using System.Collections.Generic;
@@ -27,6 +29,7 @@ namespace ME.ECS.Collections {
         private int size;
         private int capacity;
         private int fromIndex;
+        private QueueCopyable<int> freePeek;
         private HashSetCopyable<int> free;
         private HashSetCopyable<int> freePrepared;
         private int initCapacity;
@@ -55,6 +58,8 @@ namespace ME.ECS.Collections {
             this.size = 0;
             this.capacity = -1;
             this.fromIndex = 0;
+            if (this.freePeek == null) this.freePeek = PoolQueueCopyable<int>.Spawn(capacity);
+            this.freePeek.Clear();
             if (this.free == null) this.free = PoolHashSetCopyable<int>.Spawn(capacity);
             this.free.Clear();
             if (this.freePrepared == null) this.freePrepared = PoolHashSetCopyable<int>.Spawn(capacity);
@@ -66,6 +71,7 @@ namespace ME.ECS.Collections {
         void IPoolableRecycle.OnRecycle() {
             
             PoolArray<T>.Recycle(ref this.arr);
+            PoolQueueCopyable<int>.Recycle(ref this.freePeek);
             PoolHashSetCopyable<int>.Recycle(ref this.free);
             PoolHashSetCopyable<int>.Recycle(ref this.freePrepared);
             
@@ -127,8 +133,13 @@ namespace ME.ECS.Collections {
         public void Clear() {
 
             for (int i = 0; i < this.size; ++i) {
-                
-                if (this.free.Contains(i) == false) this.free.Add(i);
+
+                if (this.free.Contains(i) == false) {
+                    
+                    this.free.Add(i);
+                    this.freePeek.Enqueue(i);
+                    
+                }
                 
             }
 
@@ -143,12 +154,8 @@ namespace ME.ECS.Collections {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private int PeekFree() {
-            
-            var ienum = this.free.GetEnumerator();
-            ienum.MoveNext();
-            var peek = ienum.Current;
-            ienum.Dispose();
-            return peek;
+
+            return this.freePeek.Peek();
 
         }
 
@@ -175,12 +182,14 @@ namespace ME.ECS.Collections {
             if (this.free.Count > 0) {
                 
                 nextIndex = this.PeekFree();
+                this.freePeek.Dequeue();
                 this.free.Remove(nextIndex);
                 
             } else {
                 
                 this.Resize_INTERNAL(this.size + 1);
                 nextIndex = this.PeekFree();
+                this.freePeek.Dequeue();
                 this.free.Remove(nextIndex);
 
             }
@@ -198,6 +207,7 @@ namespace ME.ECS.Collections {
             foreach (var item in this.freePrepared) {
 
                 this.free.Add(item);
+                this.freePeek.Enqueue(item);
 
             }
             
@@ -268,6 +278,10 @@ namespace ME.ECS.Collections {
             this.freePrepared = PoolHashSetCopyable<int>.Spawn(other.freePrepared.Count);
             this.freePrepared.CopyFrom(other.freePrepared);
 
+            if (this.freePeek != null) PoolQueueCopyable<int>.Recycle(ref this.freePeek);
+            this.freePeek = PoolQueueCopyable<int>.Spawn(other.freePeek.Count);
+            this.freePeek.CopyFrom(other.freePeek);
+
             if (this.free != null) PoolHashSetCopyable<int>.Recycle(ref this.free);
             this.free = PoolHashSetCopyable<int>.Spawn(other.free.Count);
             this.free.CopyFrom(other.free);
@@ -302,6 +316,7 @@ namespace ME.ECS.Collections {
                 for (int i = oldCapacity; i < this.capacity; ++i) {
 
                     this.free.Add(i);
+                    this.freePeek.Enqueue(i);
                     
                 }
 

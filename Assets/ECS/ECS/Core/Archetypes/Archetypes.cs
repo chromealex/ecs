@@ -43,6 +43,14 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void Validate(in int capacity) {
+
+            ArrayUtils.Resize(capacity, ref this.types);
+            ArrayUtils.Resize(capacity, ref this.prevTypes);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Validate(in Entity entity) {
 
             var id = entity.id;
@@ -91,8 +99,8 @@ namespace ME.ECS {
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
-            this.prevTypes.arr[id] = this.Get(entity);
-            this.types.arr[id] = this.types.arr[id].Add<T>();
+            this.prevTypes.arr[id] = this.Get(in entity);
+            this.types.arr[id].Add<T>();
 
         }
 
@@ -102,8 +110,8 @@ namespace ME.ECS {
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
-            this.prevTypes.arr[id] = this.Get(entity);
-            this.types.arr[id] = this.types.arr[id].Subtract<T>();
+            this.prevTypes.arr[id] = this.Get(in entity);
+            this.types.arr[id].Subtract<T>();
 
         }
         
@@ -114,7 +122,7 @@ namespace ME.ECS {
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
             this.prevTypes.arr[id].Subtract<T>(); 
-            this.types.arr[id] = this.types.arr[id].Subtract<T>();
+            this.types.arr[id].Subtract<T>();
 
         }
 
@@ -124,7 +132,7 @@ namespace ME.ECS {
             ArrayUtils.Copy(in this.types, ref this.prevTypes);
             for (int i = 0; i < this.types.Length; ++i) {
 
-                this.types.arr[i] = this.types.arr[i].Subtract<T>();
+                this.types.arr[i].Subtract<T>();
 
             }
 
@@ -136,16 +144,16 @@ namespace ME.ECS {
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
-            this.prevTypes.arr[id] = this.Get(entity);
+            this.prevTypes.arr[id] = this.Get(in entity);
             this.types.arr[id] = new Archetype();
             
         }
 
     }
 
-    public readonly struct Archetype : System.IEquatable<Archetype> {
+    public struct Archetype : System.IEquatable<Archetype> {
 
-        internal readonly BitMask value;
+        internal BitMask value;
         
         public Archetype(in BitMask value) {
 
@@ -245,11 +253,10 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Archetype Add(in Archetype archetype) {
+        public void Add(in Archetype archetype) {
 
-            var mask = this.value.AddBits(in archetype.value);
-            return new Archetype(in mask);
-
+            this.value.AddBits(in archetype.value);
+            
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -258,12 +265,11 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Archetype Add<T>() {
+        public void Add<T>() {
 
             if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
-            var mask = this.value.AddBit(in ComponentType<T>.index);
-            return new Archetype(in mask);
-
+            this.value.AddBit(in ComponentType<T>.index);
+            
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -272,12 +278,11 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Archetype Subtract<T>() {
+        public void Subtract<T>() {
 
             if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
-            var mask = this.value.SubtractBit(in ComponentType<T>.index);
-            return new Archetype(in mask);
-
+            this.value.SubtractBit(in ComponentType<T>.index);
+            
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS

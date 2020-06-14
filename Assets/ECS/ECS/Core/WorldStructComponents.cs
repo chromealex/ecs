@@ -50,6 +50,9 @@ namespace ME.ECS {
         public abstract void CopyFrom(StructRegistryBase other);
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public abstract void Validate(in int capacity);
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public abstract void Validate(in Entity entity);
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -104,6 +107,20 @@ namespace ME.ECS {
             
         }
         
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public override void Validate(in int capacity) {
+
+            if (ArrayUtils.WillResize(in capacity, ref this.components) == true) {
+
+                ArrayUtils.Resize(in capacity, ref this.components);
+                ArrayUtils.Resize(in capacity, ref this.componentsStates);
+                
+            }
+
+            this.world.currentState.storage.archetypes.Validate(in capacity);
+            
+        }
+
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override void Validate(in Entity entity) {
 
@@ -410,12 +427,29 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
+        public void SetEntityCapacity(int capacity) {
+
+            // Update all known structs
+            for (int i = 0, length = this.list.Length; i < length; ++i) {
+
+                var item = this.list.arr[i];
+                if (item != null) item.Validate(capacity);
+
+            }
+
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
         public void OnEntityCreate(in Entity entity) {
 
             // Update all known structs
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
-                var item = this.list[i];
+                var item = this.list.arr[i];
                 if (item != null) item.Validate(in entity);
 
             }
@@ -431,7 +465,7 @@ namespace ME.ECS {
             
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
-                var item = this.list[i];
+                var item = this.list.arr[i];
                 if (item != null) {
 
                     item.Remove(in entity, clearAll: true);
@@ -451,7 +485,7 @@ namespace ME.ECS {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list.arr[code];
             reg.Validate(in entity);
 
         }
@@ -482,12 +516,12 @@ namespace ME.ECS {
                 
             }
             
-            if (this.list[code] == null) {
+            if (this.list.arr[code] == null) {
 
                 var instance = (StructRegistryBase)PoolRegistries.Spawn(typeof(StructRegistryBase));
                 if (instance == null) instance = PoolClass<StructComponents<TComponent>>.Spawn();//new StructComponents<TComponent>();
                 instance.world = Worlds.currentWorld;
-                this.list[code] = instance;
+                this.list.arr[code] = instance;
 
             }
 
@@ -502,7 +536,7 @@ namespace ME.ECS {
         public bool HasBit(in Entity entity, in int bit) {
 
             if (bit < 0 || bit >= this.list.Length) return false;
-            var reg = this.list[bit];
+            var reg = this.list.arr[bit];
             if (reg == null) return false;
             return reg.Has(in entity);
             
@@ -526,7 +560,7 @@ namespace ME.ECS {
 
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list.arr[code];
             return reg.Has(in entity);
             
         }
@@ -549,7 +583,7 @@ namespace ME.ECS {
 
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list.arr[code];
             return ref reg.Get(in entity);
             
         }
@@ -572,7 +606,7 @@ namespace ME.ECS {
 
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list.arr[code];
             if (reg.Set(in entity, data) == true) {
             
                 ++this.count;
@@ -602,7 +636,7 @@ namespace ME.ECS {
 
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
             //this.Validate<TComponent>(in code);
-            var reg = (StructComponents<TComponent>)this.list[code];
+            var reg = (StructComponents<TComponent>)this.list.arr[code];
             if (reg.Remove(in entity) == true) {
 
                 --this.count;
@@ -626,11 +660,11 @@ namespace ME.ECS {
             
             for (int i = 0; i < this.list.Length; ++i) {
                 
-                if (this.list[i] != null) {
+                if (this.list.arr[i] != null) {
                     
-                    this.list[i].OnRecycle();
-                    PoolRegistries.Recycle(this.list[i]);
-                    this.list[i] = null;
+                    this.list.arr[i].OnRecycle();
+                    PoolRegistries.Recycle(this.list.arr[i]);
+                    this.list.arr[i] = null;
 
                 }
                 
@@ -698,9 +732,9 @@ namespace ME.ECS {
             this.list = PoolArray<StructRegistryBase>.Spawn(other.list.Length);
             for (int i = 0; i < other.list.Length; ++i) {
 
-                if (other.list[i] != null) {
+                if (other.list.arr[i] != null) {
 
-                    var type = other.list[i].GetType();
+                    var type = other.list.arr[i].GetType();
                     var comp = (StructRegistryBase)PoolRegistries.Spawn(type);
                     if (comp == null) {
                         
@@ -708,8 +742,8 @@ namespace ME.ECS {
                         
                     }
 
-                    this.list[i] = comp;
-                    this.list[i].CopyFrom(other.list[i]);
+                    this.list.arr[i] = comp;
+                    this.list.arr[i].CopyFrom(other.list.arr[i]);
 
                 }
 
@@ -737,6 +771,12 @@ namespace ME.ECS {
         }
 
         partial void OnRecycleStructComponents() {
+
+        }
+
+        partial void SetEntityCapacityPlugin1(int capacity) {
+
+            this.currentState.structComponents.SetEntityCapacity(capacity);
 
         }
 

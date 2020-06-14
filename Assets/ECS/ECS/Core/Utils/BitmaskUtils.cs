@@ -6,7 +6,7 @@ namespace ME.ECS {
 
     using FieldType = UInt64;
 
-    public readonly struct BitMask : IEquatable<BitMask> {
+    public struct BitMask : IEquatable<BitMask> {
 
         public static readonly BitMask None = new BitMask();
         
@@ -15,10 +15,10 @@ namespace ME.ECS {
         public const int MAX_BIT_INDEX = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD - 1;
         //public const int BitSize = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD;
         
-        private readonly FieldType field0;
-        private readonly FieldType field1;
-        private readonly FieldType field2;
-        private readonly FieldType field3;
+        private FieldType field0;
+        private FieldType field1;
+        private FieldType field2;
+        private FieldType field3;
 
         public BitMask(in FieldType field0, in FieldType field1, in FieldType field2, in FieldType field3) {
             
@@ -108,7 +108,7 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public BitMask AddBit(in int bit) {
+        public void AddBit(in int bit) {
             
             #if UNITY_EDITOR
             if (bit < 0 || bit > BitMask.MAX_BIT_INDEX) {
@@ -116,32 +116,29 @@ namespace ME.ECS {
             }
             #endif
 
-            BitMask outMask;
             var dataIndex = bit / BitMask.BITS_PER_FIELD;
             var bitIndex = bit % BitMask.BITS_PER_FIELD;
             var mask = (FieldType)1 << bitIndex;
             switch (dataIndex) {
                 case 0:
-                    outMask = new BitMask(this.field0 | mask, in this.field1, in this.field2, in this.field3);
+                    this.field0 |= mask;
                     break;
 
                 case 1:
-                    outMask = new BitMask(in this.field0, this.field1 | mask, in this.field2, in this.field3);
+                    this.field1 |= mask;
                     break;
 
                 case 2:
-                    outMask = new BitMask(in this.field0, in this.field1, this.field2 | mask, in this.field3);
+                    this.field2 |= mask;
                     break;
 
                 case 3:
-                    outMask = new BitMask(in this.field0, in this.field1, in this.field2, this.field3 | mask);
+                    this.field3 |= mask;
                     break;
 
                 default:
                     throw new Exception($"Nonexistent field: {dataIndex}");
             }
-
-            return outMask;
 
         }
 
@@ -151,38 +148,35 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public BitMask SubtractBit(in int bit) {
+        public void SubtractBit(in int bit) {
             
             if (bit < 0 || bit > BitMask.MAX_BIT_INDEX) {
                 throw new Exception($"Attempted to set bit #{bit}, but the maximum is {BitMask.MAX_BIT_INDEX}");
             }
 
-            BitMask outMask;
             var dataIndex = bit / BitMask.BITS_PER_FIELD;
             var bitIndex = bit % BitMask.BITS_PER_FIELD;
             var mask = (FieldType)1 << bitIndex;
             switch (dataIndex) {
                 case 0:
-                    outMask = new BitMask(this.field0 & ~mask, in this.field1, in this.field2, in this.field3);
+                    this.field0 &= ~mask;
                     break;
 
                 case 1:
-                    outMask = new BitMask(in this.field0, this.field1 & ~mask, in this.field2, in this.field3);
+                    this.field1 &= ~mask;
                     break;
 
                 case 2:
-                    outMask = new BitMask(in this.field0, in this.field1, this.field2 & ~mask, in this.field3);
+                    this.field2 &= ~mask;
                     break;
 
                 case 3:
-                    outMask = new BitMask(in this.field0, in this.field1, in this.field2, this.field3 & ~mask);
+                    this.field3 &= ~mask;
                     break;
                 
                 default:
                     throw new Exception($"Nonexistent field: {dataIndex}");
             }
-
-            return outMask;
 
         }
 

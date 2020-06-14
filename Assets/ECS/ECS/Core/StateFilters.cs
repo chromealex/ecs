@@ -43,7 +43,7 @@ namespace ME.ECS {
 
         public void RegisterInAllArchetype(in Archetype archetype) {
 
-            this.allFiltersArchetype = this.allFiltersArchetype.Add(in archetype);
+            this.allFiltersArchetype.Add(in archetype);
 
         }
         
@@ -287,16 +287,28 @@ namespace ME.ECS {
             return this.setEnumerator.MoveNext();
             
         }
- 
+
         #if ECS_COMPILE_IL2CPP_OPTIONS
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        public Entity Current {
+        Entity IEnumerator<Entity>.Current {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return this.setEnumerator.Current;
+            }
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        public ref Entity Current {
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get {
+                return ref this.setEnumerator.Current;
             }
         }
  
@@ -368,6 +380,15 @@ namespace ME.ECS {
             
         }
 
+        public void SetEntityCapacity(int capacity) {
+            
+            ArrayUtils.Resize(capacity, ref this.requests);
+            ArrayUtils.Resize(capacity, ref this.requestsRemoveEntity);
+            ArrayUtils.Resize(capacity, ref this.data);
+            ArrayUtils.Resize(capacity, ref this.dataContains);
+
+        }
+        
         public void OnEntityCreate(in Entity entity) {
 
             ArrayUtils.Resize(entity.id, ref this.requests);
@@ -1084,7 +1105,7 @@ namespace ME.ECS {
 
             //var node = new ComponentExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
-            this.archetypeContains = this.archetypeContains.Add<TComponent>();
+            this.archetypeContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWith<TComponent>();
             #endif
@@ -1096,7 +1117,7 @@ namespace ME.ECS {
 
             //var node = new ComponentNotExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
-            this.archetypeNotContains = this.archetypeNotContains.Add<TComponent>();
+            this.archetypeNotContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWithout<TComponent>();
             #endif
@@ -1108,7 +1129,7 @@ namespace ME.ECS {
 
             //var node = new ComponentStructExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
-            this.archetypeContains = this.archetypeContains.Add<TComponent>();
+            this.archetypeContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWith<TComponent>();
             #endif
@@ -1120,7 +1141,7 @@ namespace ME.ECS {
 
             //var node = new ComponentStructNotExistsFilterNode<TComponent>();
             //this.tempNodes.Add(node);
-            this.archetypeNotContains = this.archetypeNotContains.Add<TComponent>();
+            this.archetypeNotContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWithout<TComponent>();
             #endif

@@ -7,6 +7,8 @@ namespace ME.ECS {
     
             structComponentsContainer.Validate<ME.ECS.Features.PhysicsDeterministic.Components.PhysicsRigidbody>();
             structComponentsContainer.Validate<ME.ECS.Features.PhysicsDeterministic.Components.PhysicsOnCollisionEnter>();
+            structComponentsContainer.Validate<ME.ECS.Features.PhysicsDeterministic.Components.PhysicsOnCollisionExit>();
+            structComponentsContainer.Validate<ME.ECS.Features.PhysicsDeterministic.Components.PhysicsOnCollisionStay>();
 
         }
 

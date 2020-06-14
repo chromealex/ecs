@@ -998,6 +998,21 @@ namespace ME.ECS.Collections {
 
         }
 
+        public T GetFirst() {
+
+            var index = 0;
+            while (index < this.m_lastIndex) {
+                if (this.m_slots[index].hashCode >= 0) {
+                    return this.m_slots[index].value;
+                }
+
+                ++index;
+            }
+            
+            throw new System.Data.NoNullAllowedException();
+            
+        }
+        
         public ref T Get(int index) {
 
             while (index < this.m_lastIndex) {

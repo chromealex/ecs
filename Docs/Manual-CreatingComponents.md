@@ -40,6 +40,11 @@ void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
     ref var data = ref entity.GetData<MyStructComponent>();
     ++data.someData;
     
+    // Struct components set example with lifetime
+    // By default lifetime value is ComponentLifetime.Infinite
+    entity.SetData(new YourStructComponent());
+    entity.SetData(new YourStructComponentWithLifetime(), ComponentLifetime.PlayNextTick);
+    
     // Class components usage example
     var component = entity.GetOrAddComponent<MyComponent>();
     if (component.someArray == null) component.someArray = PoolArray<int>.Spawn(10);

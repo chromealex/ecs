@@ -31,13 +31,6 @@
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool HasDataBit(this Entity entity, in int bit) {
-            
-            return Worlds.currentWorld.HasDataBit(entity, bit);
-            
-        }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static ref TComponent GetData<TComponent>(this in Entity entity, bool createIfNotExists = true) where TComponent : struct, IStructComponent {
             
             return ref Worlds.currentWorld.GetData<TComponent>(in entity, createIfNotExists);
@@ -105,11 +98,29 @@
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static TComponent AddComponent<TComponent, TComponentType>(this Entity entity)
+            where TComponentType : class, IComponent where TComponent : class, TComponentType, IComponent, new()
+        {
+        
+            return Worlds.currentWorld.AddComponent<TComponent, TComponentType>(entity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void RemoveComponents<TComponent>(this Entity entity)
             where TComponent : class, IComponent
         {
         
             Worlds.currentWorld.RemoveComponents<TComponent>(entity);
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static System.Collections.Generic.List<IComponent> ForEachComponent<TComponent>(this Entity entity)
+            where TComponent : class, IComponent
+        {
+        
+            return Worlds.currentWorld.ForEachComponent<TComponent>(entity);
             
         }
 

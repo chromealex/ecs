@@ -44,6 +44,7 @@ namespace ME.ECS {
         public abstract void SetObject(Entity entity, IStructComponent data);
         public abstract void RemoveObject(Entity entity);
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public abstract void UseLifetimeStep(World world, in byte step);
         
         public abstract void CopyFrom(StructRegistryBase other);
@@ -939,6 +940,8 @@ namespace ME.ECS {
             if (lifetime == ComponentLifetime.NotifyAllModules ||
                 lifetime == ComponentLifetime.NotifyAllSystems) {
 
+                if (entity.HasData<TComponent>() == true) return;
+                
                 var task = PoolClass<StructComponentsContainer.NextFrameTask<TComponent>>.Spawn();
                 task.world = this;
                 task.entity = entity;

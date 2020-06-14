@@ -51,7 +51,7 @@ void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
     entity.RemoveComponents<ClassComponent1>();
     
     // An example how to use common types to use foreach
-    entity.AddComponent<ClassComponent2, ICommonInterface>();
+    entity.AddComponent<ClassComponent1, ICommonInterface>();
     entity.AddComponent<ClassComponent2, ICommonInterface>();
     var components = entity.ForEachComponent<ICommonInterface>();
     

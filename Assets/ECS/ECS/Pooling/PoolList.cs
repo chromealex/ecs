@@ -8,6 +8,36 @@
 	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
 	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
 	#endif
+	public static class PoolCCList<TValue> {
+
+		private static PoolInternalBase pool = new PoolInternalBase(() => new CCList<TValue>(), (x) => ((CCList<TValue>)x).ClearNoCC());
+
+		public static CCList<TValue> Spawn() {
+
+			return (CCList<TValue>)PoolCCList<TValue>.pool.Spawn();
+		    
+		}
+
+		public static void Recycle(ref CCList<TValue> dic) {
+
+			PoolCCList<TValue>.pool.Recycle(dic);
+			dic = null;
+
+		}
+
+		public static void Recycle(CCList<TValue> dic) {
+
+			PoolCCList<TValue>.pool.Recycle(dic);
+
+		}
+
+	}
+
+	#if ECS_COMPILE_IL2CPP_OPTIONS
+	[Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+	 Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+	#endif
 	public static class PoolStack<TValue> {
 
 		private static PoolInternalBase pool = new PoolInternalBase(() => new Stack<TValue>(), (x) => ((Stack<TValue>)x).Clear());

@@ -28,10 +28,44 @@
         private int index;
         private int fuzzyCount;
         private int count;
-        private readonly T[][] array;
+        internal readonly T[][] array;
 
         public CCList() {
             this.array = new T[32][];
+        }
+
+        public void ClearNoCC() {
+
+            for (int i = 0; i < this.array.Length; ++i) {
+
+                ArrayUtils.Clear(this.array[i]);
+                
+            }
+
+            this.index = 0;
+            this.count = 0;
+            this.fuzzyCount = 0;
+
+        }
+
+        public void InitialCopyOf(CCList<T> other) {
+
+            for (int i = 0; i < other.array.Length; ++i) {
+
+                if (this.array[i] == null && other.array[i] != null) {
+                    
+                    this.array[i] = PoolArray<T>.Claim(other.array[i].Length);
+                    
+                }
+                
+                ArrayUtils.Clear(this.array[i]);
+                
+            }
+            
+            this.index = other.index;
+            this.count = other.count;
+            this.fuzzyCount = other.fuzzyCount;
+
         }
 
         public override T this[int index] {
@@ -52,20 +86,7 @@
                 
             }
             set {
-                
-                if (index >= this.count) {
-                    
-                    
-                    
-                }
-
-                var arrayIndex = CCList<T>.GetArrayIndex(index + 1);
-                if (arrayIndex > 0) {
-                    index -= ((1 << arrayIndex) - 1);
-                }
-
-                this.array[arrayIndex][index] = value;
-                
+                throw new NotSupportedException();
             }
         }
 
@@ -86,7 +107,7 @@
 
             if (this.array[arrayIndex] == null) {
                 var arrayLength = CCList<T>.sizes[arrayIndex];
-                Interlocked.CompareExchange(ref this.array[arrayIndex], new T[arrayLength], null);
+                Interlocked.CompareExchange(ref this.array[arrayIndex], PoolArray<T>.Claim(arrayLength), null);
             }
 
             this.array[arrayIndex][adjustedIndex] = element;

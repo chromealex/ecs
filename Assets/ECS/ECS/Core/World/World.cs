@@ -1895,7 +1895,7 @@ namespace ME.ECS {
                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint("RemoveComponentsOnce", WorldStep.None);
                 #endif*/
 
-                this.UseLifetimeStep(ComponentLifetime.EndOfTick);
+                this.UseLifetimeStep(ComponentLifetime.NotifyAllSystemsBelow);
 
             }
             
@@ -1919,7 +1919,7 @@ namespace ME.ECS {
             this.currentStep &= ~WorldStep.PluginsLogicSimulate;
             ////////////////
 
-            this.UseLifetimeStep(ComponentLifetime.EndOfFrame);
+            this.UseLifetimeStep(ComponentLifetime.NotifyAllModulesBelow);
 
         }
 

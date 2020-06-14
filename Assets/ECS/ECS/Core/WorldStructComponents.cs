@@ -9,11 +9,11 @@ namespace ME.ECS {
 
         Infinite = 0,
         
-        EndOfTick = 1,
-        PlayNextTick = 2,
+        NotifyAllSystemsBelow = 1,
+        NotifyAllSystems = 2,
         
-        EndOfFrame = 3,
-        PlayNextFrame = 4,
+        NotifyAllModulesBelow = 3,
+        NotifyAllModules = 4,
 
     }
 
@@ -325,6 +325,53 @@ namespace ME.ECS {
     #endif*/
     public struct StructComponentsContainer : IStructComponentsContainer {
 
+        internal interface ITask {
+
+            void Execute();
+            void Recycle();
+            ITask Clone();
+
+        }
+
+        internal class NextFrameTask<TComponent> : ITask where TComponent : struct, IStructComponent {
+
+            public Entity entity;
+            public TComponent data;
+            public World world;
+            public ComponentLifetime lifetime;
+            
+            public void Execute() {
+
+                this.world.SetData(in this.entity, in this.data, this.lifetime);
+
+            }
+
+            public void Recycle() {
+
+                this.world = null;
+                this.data = default;
+                this.entity = default;
+                this.lifetime = default;
+                PoolClass<NextFrameTask<TComponent>>.Recycle(this);
+                
+            }
+
+            public ITask Clone() {
+
+                var copy = PoolClass<NextFrameTask<TComponent>>.Spawn();
+                copy.data = this.data;
+                copy.entity = this.entity;
+                copy.world = this.world;
+                copy.lifetime = this.lifetime;
+                return copy;
+
+            }
+
+        }
+        
+        internal CCList<ITask> nextFrameTasks;
+        internal CCList<ITask> nextTickTasks;
+
         internal BufferArray<StructRegistryBase> list;
         internal int count;
         private bool isCreated;
@@ -336,6 +383,9 @@ namespace ME.ECS {
         }
 
         public void Initialize(bool freeze) {
+            
+            this.nextFrameTasks = PoolCCList<ITask>.Spawn();
+            this.nextTickTasks = PoolCCList<ITask>.Spawn();
             
             ArrayUtils.Resize(100, ref this.list);
             this.isCreated = true;
@@ -569,6 +619,9 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         public void OnRecycle() {
+
+            PoolCCList<ITask>.Recycle(ref this.nextFrameTasks);
+            PoolCCList<ITask>.Recycle(ref this.nextTickTasks);
             
             for (int i = 0; i < this.list.Length; ++i) {
                 
@@ -600,6 +653,46 @@ namespace ME.ECS {
             
             this.count = other.count;
             this.isCreated = other.isCreated;
+
+            this.nextFrameTasks = PoolCCList<ITask>.Spawn();
+            this.nextFrameTasks.InitialCopyOf(other.nextFrameTasks);
+            for (int i = 0; i < other.nextFrameTasks.array.Length; ++i) {
+
+                if (other.nextFrameTasks.array[i] == null) continue;
+                
+                for (int j = 0; j < other.nextFrameTasks.array[i].Length; ++j) {
+
+                    var item = other.nextFrameTasks.array[i][j];
+                    if (item == null) {
+                        this.nextFrameTasks.array[i][j] = null;
+                        continue;
+                    }
+                    var copy = item.Clone();
+                    this.nextFrameTasks.array[i][j] = copy;
+
+                }
+                
+            }
+
+            this.nextTickTasks = PoolCCList<ITask>.Spawn();
+            this.nextTickTasks.InitialCopyOf(other.nextTickTasks);
+            for (int i = 0; i < other.nextTickTasks.array.Length; ++i) {
+
+                if (other.nextTickTasks.array[i] == null) continue;
+
+                for (int j = 0; j < other.nextTickTasks.array[i].Length; ++j) {
+
+                    var item = other.nextTickTasks.array[i][j];
+                    if (item == null) {
+                        this.nextTickTasks.array[i][j] = null;
+                        continue;
+                    }
+                    var copy = item.Clone();
+                    this.nextTickTasks.array[i][j] = copy;
+
+                }
+                
+            }
             
             this.list = PoolArray<StructRegistryBase>.Spawn(other.list.Length);
             for (int i = 0; i < other.list.Length; ++i) {
@@ -622,39 +715,6 @@ namespace ME.ECS {
             }
 
         }
-
-    }
-
-    public partial interface IWorldBase {
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        bool HasDataBit(in Entity entity, in int bit);
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        bool HasData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        ref TComponent GetData<TComponent>(in Entity entity, bool createIfNotExists = true) where TComponent : struct, IStructComponent;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void SetData<TComponent>(in Entity entity, in TComponent data) where TComponent : struct, IStructComponent;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void SetData<TComponent>(in Entity entity, in TComponent data, bool updateFilters) where TComponent : struct, IStructComponent;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void RemoveData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent;
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        bool HasSharedData<TComponent>() where TComponent : struct, IStructComponent;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        ref TComponent GetSharedData<TComponent>() where TComponent : struct, IStructComponent;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void SetSharedData<TComponent>(in TComponent data) where TComponent : struct, IStructComponent;
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void RemoveSharedData<TComponent>() where TComponent : struct, IStructComponent;
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        void ValidateData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent;
-
-        ref StructComponentsContainer GetStructComponents();
-        
-        void Register(ref StructComponentsContainer componentsContainer, bool freeze, bool restore);
 
     }
 
@@ -837,49 +897,19 @@ namespace ME.ECS {
 
         }
 
-        private interface ITask {
-
-            void Execute();
-            void Recycle();
-
-        }
-        private class NextFrameTask<TComponent> : ITask where TComponent : struct, IStructComponent {
-
-            public Entity entity;
-            public TComponent data;
-            public World world;
-            public ComponentLifetime lifetime;
-            
-            public void Execute() {
-
-                this.world.SetData(in this.entity, in this.data, this.lifetime);
-
-            }
-
-            public void Recycle() {
-
-                this.world = null;
-                this.data = default;
-                this.entity = default;
-                PoolClass<NextFrameTask<TComponent>>.Recycle(this);
-                
-            }
-
-        }
-
         public void PlayTasksForFrame() {
 
-            if (this.nextFrameTasks.Length > 0) {
+            if (this.currentState.structComponents.nextFrameTasks.Count > 0) {
 
-                for (int i = 0; i < this.nextFrameTasks.Length; ++i) {
+                for (int i = 0; i < this.currentState.structComponents.nextFrameTasks.Count; ++i) {
 
-                    ref var task = ref this.nextFrameTasks[i];
+                    var task = this.currentState.structComponents.nextFrameTasks[i];
                     task.Execute();
                     task.Recycle();
 
                 }
 
-                PoolArray<ITask>.Recycle(ref this.nextFrameTasks);
+                this.currentState.structComponents.nextFrameTasks.ClearNoCC();
 
             }
             
@@ -887,50 +917,44 @@ namespace ME.ECS {
 
         public void PlayTasksForTick() {
             
-            if (this.nextTickTasks.Length > 0) {
+            if (this.currentState.structComponents.nextTickTasks.Count > 0) {
 
-                for (int i = 0; i < this.nextTickTasks.Length; ++i) {
+                for (int i = 0; i < this.currentState.structComponents.nextTickTasks.Count; ++i) {
 
-                    ref var task = ref this.nextTickTasks[i];
+                    var task = this.currentState.structComponents.nextTickTasks[i];
                     task.Execute();
                     task.Recycle();
 
                 }
 
-                PoolArray<ITask>.Recycle(ref this.nextTickTasks);
+                this.currentState.structComponents.nextTickTasks.ClearNoCC();
 
             }
             
         }
         
-        private BufferArray<ITask> nextFrameTasks;
-        private BufferArray<ITask> nextTickTasks;
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetData<TComponent>(in Entity entity, in TComponent data, in ComponentLifetime lifetime) where TComponent : struct, IStructComponent {
 
-            if (lifetime == ComponentLifetime.PlayNextFrame ||
-                lifetime == ComponentLifetime.PlayNextTick) {
+            if (lifetime == ComponentLifetime.NotifyAllModules ||
+                lifetime == ComponentLifetime.NotifyAllSystems) {
 
-                var task = PoolClass<NextFrameTask<TComponent>>.Spawn();
+                var task = PoolClass<StructComponentsContainer.NextFrameTask<TComponent>>.Spawn();
                 task.world = this;
                 task.entity = entity;
                 task.data = data;
 
-                if (lifetime == ComponentLifetime.PlayNextFrame) {
+                if (lifetime == ComponentLifetime.NotifyAllModules) {
 
-                    task.lifetime = ComponentLifetime.EndOfFrame;
+                    task.lifetime = ComponentLifetime.NotifyAllModulesBelow;
+
+                    this.currentState.structComponents.nextFrameTasks.Add(task);
                     
-                    var idx = this.nextFrameTasks.Length;
-                    ArrayUtils.Resize(in idx, ref this.nextFrameTasks);
-                    this.nextFrameTasks[idx] = task;
-
-                } else if (lifetime == ComponentLifetime.PlayNextTick) {
+                } else if (lifetime == ComponentLifetime.NotifyAllSystems) {
                     
-                    task.lifetime = ComponentLifetime.EndOfTick;
+                    task.lifetime = ComponentLifetime.NotifyAllSystemsBelow;
 
-                    var idx = this.nextTickTasks.Length;
-                    ArrayUtils.Resize(in idx, ref this.nextTickTasks);
-                    this.nextTickTasks[idx] = task;
+                    this.currentState.structComponents.nextTickTasks.Add(task);
 
                 }
 

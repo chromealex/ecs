@@ -17,6 +17,20 @@ namespace ME.ECS {
     public static class ArrayUtils {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void Clear(System.Array arr) {
+
+            if (arr != null) System.Array.Clear(arr, 0, arr.Length);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void Clear<T>(BufferArray<T> arr) {
+
+            if (arr.arr != null) System.Array.Clear(arr.arr, 0, arr.Length);
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Recycle<T, TCopy>(ref System.Collections.Generic.List<T> item, TCopy copy) where TCopy : IArrayElementCopy<T> {
 
             if (item != null) {

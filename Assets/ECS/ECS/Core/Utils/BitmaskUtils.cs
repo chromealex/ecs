@@ -90,15 +90,12 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public BitMask AddBits(in BitMask bits) {
+        public void AddBits(in BitMask bits) {
 
-            var mask = new BitMask(
-                this.field0 | bits.field0,
-                this.field1 | bits.field1,
-                this.field2 | bits.field2,
-                this.field3 | bits.field3
-                );
-            return mask;
+            this.field0 |= bits.field0;
+            this.field1 |= bits.field1;
+            this.field2 |= bits.field2;
+            this.field3 |= bits.field3;
 
         }
 
@@ -142,6 +139,21 @@ namespace ME.ECS {
 
         }
 
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void Clear() {
+
+            this.field0 = 0;
+            this.field1 = 0;
+            this.field2 = 0;
+            this.field3 = 0;
+
+        }
+        
         #if ECS_COMPILE_IL2CPP_OPTIONS
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -283,6 +295,68 @@ namespace ME.ECS {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(BitMask mask1, BitMask mask2) {
             return !mask1.Equals(mask2);
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsEmpty() {
+            
+            return this.field0 == 0 && this.field1 == 0 && this.field2 == 0 && this.field3 == 0;
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static BitMask operator &(BitMask mask1, BitMask mask2) {
+            
+            var newBitMask = new BitMask();
+            newBitMask.field0 = mask1.field0 & mask2.field0;
+            newBitMask.field1 = mask1.field1 & mask2.field1;
+            newBitMask.field2 = mask1.field2 & mask2.field2;
+            newBitMask.field3 = mask1.field3 & mask2.field3;
+            return newBitMask;
+            
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static BitMask operator |(BitMask mask1, BitMask mask2) {
+            
+            var newBitMask = new BitMask();
+            newBitMask.field0 = mask1.field0 | mask2.field0;
+            newBitMask.field1 = mask1.field1 | mask2.field1;
+            newBitMask.field2 = mask1.field2 | mask2.field2;
+            newBitMask.field3 = mask1.field3 | mask2.field3;
+            return newBitMask;
+            
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static BitMask operator ~(BitMask mask) {
+            
+            var newBitMask = new BitMask();
+            newBitMask.field0 = ~mask.field0;
+            newBitMask.field1 = ~mask.field1;
+            newBitMask.field2 = ~mask.field2;
+            newBitMask.field3 = ~mask.field3;
+            return newBitMask;
+            
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS

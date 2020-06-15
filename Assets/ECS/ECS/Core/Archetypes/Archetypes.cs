@@ -85,11 +85,11 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void Has<T>(in Entity entity) {
+        public bool Has<T>(in Entity entity) {
 
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
-            this.types.arr[id].Has<T>();
+            return this.types.arr[id].Has<T>();
 
         }
 
@@ -145,8 +145,8 @@ namespace ME.ECS {
             //ArrayUtils.Resize(id, ref this.types);
             //ArrayUtils.Resize(id, ref this.prevTypes);
             this.prevTypes.arr[id] = this.Get(in entity);
-            this.types.arr[id] = new Archetype();
-            
+            this.types.arr[id].Clear();
+
         }
 
     }
@@ -193,7 +193,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsEmpty() {
 
-            return this.value == BitMask.None;
+            return this.value.IsEmpty();
 
         }
 
@@ -283,6 +283,18 @@ namespace ME.ECS {
             if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
             this.value.SubtractBit(in ComponentType<T>.index);
             
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void Clear() {
+
+            this.value.Clear();
+
         }
 
         #if ECS_COMPILE_IL2CPP_OPTIONS

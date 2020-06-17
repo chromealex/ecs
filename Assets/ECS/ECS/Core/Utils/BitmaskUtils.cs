@@ -6,10 +6,13 @@ namespace ME.ECS {
 
     using FieldType = UInt64;
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct BitMask : IEquatable<BitMask> {
 
-        public static readonly BitMask None = new BitMask();
-        
         private const int FIELD_COUNT = 4;
         private const int BITS_PER_FIELD = 8 * sizeof(FieldType);
         public const int MAX_BIT_INDEX = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD - 1;
@@ -315,8 +318,8 @@ namespace ME.ECS {
         #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitMask operator &(BitMask mask1, BitMask mask2) {
-            
-            var newBitMask = new BitMask();
+
+            BitMask newBitMask;
             newBitMask.field0 = mask1.field0 & mask2.field0;
             newBitMask.field1 = mask1.field1 & mask2.field1;
             newBitMask.field2 = mask1.field2 & mask2.field2;
@@ -332,8 +335,8 @@ namespace ME.ECS {
         #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitMask operator |(BitMask mask1, BitMask mask2) {
-            
-            var newBitMask = new BitMask();
+
+            BitMask newBitMask;
             newBitMask.field0 = mask1.field0 | mask2.field0;
             newBitMask.field1 = mask1.field1 | mask2.field1;
             newBitMask.field2 = mask1.field2 | mask2.field2;
@@ -350,7 +353,7 @@ namespace ME.ECS {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitMask operator ~(BitMask mask) {
             
-            var newBitMask = new BitMask();
+            BitMask newBitMask;
             newBitMask.field0 = ~mask.field0;
             newBitMask.field1 = ~mask.field1;
             newBitMask.field2 = ~mask.field2;

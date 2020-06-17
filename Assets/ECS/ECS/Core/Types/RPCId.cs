@@ -9,6 +9,11 @@
     using TType = System.Int32;
     using TName = RPCId;
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct RPCId : IComparable, IConvertible, IFormattable, IComparable<TName>, IEquatable<TName>, ISerializable {

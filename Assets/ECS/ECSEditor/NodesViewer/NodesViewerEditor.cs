@@ -1009,7 +1009,7 @@ namespace ME.ECSEditor {
             Node systemsLogicContainer = pluginsLogicContainer;
             for (int i = 0; i < systems.Length; ++i) {
 
-                var group = systems[i];
+                var group = systems.arr[i];
                 if (group.systems.Length == 0) continue;
                 systemsLogicContainer = graph.AddNode(systemsLogicContainer, new SystemsLogicContainer(group.name, this.CreateSubGraph<SystemLogicNode>(group.systems, "AdvanceTick", WorldStep.LogicTick)), group.systems.arr);
 
@@ -1020,7 +1020,7 @@ namespace ME.ECSEditor {
             Node systemsVisualContainer = pluginsLogicSimulateContainer;
             for (int i = 0; i < systems.Length; ++i) {
 
-                var group = systems[i];
+                var group = systems.arr[i];
                 if (group.systems.Length == 0) continue;
                 systemsVisualContainer = graph.AddNode(systemsVisualContainer, new SystemsVisualContainer(group.name, this.CreateSubGraph<SystemVisualNode>(group.systems, "Update", WorldStep.VisualTick)), group.systems.arr);
 

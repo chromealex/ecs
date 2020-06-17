@@ -137,7 +137,7 @@ namespace ME.ECS {
 
             for (int i = 0; i < fromArr.Length; ++i) {
 
-                copy.Copy(fromArr[i], ref arr[i]);
+                copy.Copy(fromArr.arr[i], ref arr.arr[i]);
 
             }
             

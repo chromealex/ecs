@@ -11,7 +11,7 @@
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class StatesHistoryModule : ME.ECS.StatesHistory.StatesHistoryModule<TState> {
+    public sealed class StatesHistoryModule : ME.ECS.StatesHistory.StatesHistoryModule<TState> {
 
         protected override uint GetQueueCapacity() {
 

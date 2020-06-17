@@ -156,6 +156,11 @@ namespace ME.ECS.Collections {
  
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix", Justification = "by design name choice")]
     [DebuggerDisplay("Count = {Count}")]
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
 #if !FEATURE_NETCORE
     [Serializable]
     public class SortedSetCopyable<T> : ISet<T>, ICollection<T>, ICollection, ISerializable, IDeserializationCallback, IReadOnlyCollection<T>, IPoolableRecycle {

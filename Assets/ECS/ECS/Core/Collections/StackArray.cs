@@ -12,6 +12,11 @@ namespace ME.ECS.Collections {
 
     }
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     [System.Serializable]
     public readonly struct BufferArray<T> : System.IEquatable<BufferArray<T>>, IBufferArray {
 
@@ -101,7 +106,7 @@ namespace ME.ECS.Collections {
             T IEnumerator<T>.Current {
                 [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
                 get {
-                    return this.bufferArray[this.index];
+                    return this.bufferArray.arr[this.index];
                 }
             }
             
@@ -113,7 +118,7 @@ namespace ME.ECS.Collections {
             public ref T Current {
                 [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
                 get {
-                    return ref this.bufferArray[this.index];
+                    return ref this.bufferArray.arr[this.index];
                 }
             }
 
@@ -179,12 +184,12 @@ namespace ME.ECS.Collections {
 
         }
 
-        public ref T this[int index] {
+        /*public ref T this[int index] {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return ref this.arr[index];
             }
-        }
+        }*/
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(BufferArray<T> e1, BufferArray<T> e2) {
@@ -225,7 +230,7 @@ namespace ME.ECS.Collections {
 
             var content = string.Empty;
             for (int i = 0; i < this.Length; ++i) {
-                content += "[" + i + "] " + this[i] + "\n";
+                content += "[" + i + "] " + this.arr[i] + "\n";
             } 
             return "BufferArray<>[" + this.Length + "]:\n" + content;
             

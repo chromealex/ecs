@@ -3,10 +3,15 @@ namespace ME.ECS.Collections {
     using System;
     using System.Collections.Generic;
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     // A simple Queue of generic objects.  Internally it is implemented as a 
     // circular buffer, so Enqueue can be O(n).  Dequeue is O(1).
     [System.Runtime.InteropServices.ComVisible(false)]
-    public class QueueCopyable<T> :
+    public sealed class QueueCopyable<T> :
         IPoolableSpawn,
         IPoolableRecycle,
         System.Collections.ICollection,
@@ -141,7 +146,7 @@ namespace ME.ECS.Collections {
                 this.SetCapacity(newcapacity);
             }
 
-            this.array[this.tail] = item;
+            this.array.arr[this.tail] = item;
             this.tail = (this.tail + 1) % this.array.Length;
             this.size++;
             this.version++;
@@ -162,8 +167,8 @@ namespace ME.ECS.Collections {
         }
 
         public T Dequeue() {
-            var removed = this.array[this.head];
-            this.array[this.head] = default(T);
+            var removed = this.array.arr[this.head];
+            this.array.arr[this.head] = default(T);
             this.head = (this.head + 1) % this.array.Length;
             this.size--;
             this.version++;
@@ -171,7 +176,7 @@ namespace ME.ECS.Collections {
         }
 
         public T Peek() {
-            return this.array[this.head];
+            return this.array.arr[this.head];
         }
 
         public bool Contains(T item) {
@@ -180,7 +185,7 @@ namespace ME.ECS.Collections {
 
             var c = EqualityComparer<T>.Default;
             while (count-- > 0) {
-                if (c.Equals(this.array[index], item)) {
+                if (c.Equals(this.array.arr[index], item)) {
                     return true;
                 }
 
@@ -191,7 +196,7 @@ namespace ME.ECS.Collections {
         }
 
         internal T GetElement(int i) {
-            return this.array[(this.head + i) % this.array.Length];
+            return this.array.arr[(this.head + i) % this.array.Length];
         }
 
         private void SetCapacity(int capacity) {

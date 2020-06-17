@@ -46,7 +46,7 @@ namespace ME.ECSEditor {
 
                 for (int i = 0; i < data.Length; ++i) {
 
-                    var views = data[i];
+                    var views = data.arr[i];
                     renderersCount += views.Length;
 
                 }

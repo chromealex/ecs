@@ -60,7 +60,7 @@ namespace Unity.IL2CPP.CompilerServices
     ///         return tmp.ToString();
     ///     }
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
     public class Il2CppSetOptionAttribute : Attribute
     {
         public Option Option { get; private set; }

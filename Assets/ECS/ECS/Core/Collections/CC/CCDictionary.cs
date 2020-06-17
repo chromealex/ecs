@@ -75,7 +75,12 @@ namespace ME.ECS.Collections {
 #endif
     [ComVisible(false)]
     [DebuggerDisplay("Count = {Count}")]
-    public class CCDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyDictionary<TKey, TValue> where TValue : IComparable<TValue>
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed class CCDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyDictionary<TKey, TValue> where TValue : IComparable<TValue>
     {
         internal const int MaxArrayLength = 0X7FEFFFFF;
         /// <summary>
@@ -2178,7 +2183,7 @@ namespace ME.ECS.Collections {
                     Node current = m_tables.m_buckets[i];
                     while (current != null)
                     {
-                        values[k++] = current.m_value;
+                        values.arr[k++] = current.m_value;
                         current = current.m_next;
                     }
                 }

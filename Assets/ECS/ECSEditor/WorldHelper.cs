@@ -16,7 +16,7 @@ namespace ME.ECSEditor {
 
         }
 
-        public static ME.ECS.IComponentsBase GetComponentsStorage(World world) {
+        public static ME.ECS.Components GetComponentsStorage(World world) {
 
             return world.currentState.components;
             

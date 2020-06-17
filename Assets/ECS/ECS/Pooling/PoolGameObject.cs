@@ -4,6 +4,11 @@ using UnityEngine;
 
 namespace ME.ECS.Views {
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class PoolGameObject<T> where T : Component, IViewBase {
 
         private Dictionary<ViewId, Stack<T>> prefabToInstances = new Dictionary<ViewId, Stack<T>>();

@@ -11,7 +11,7 @@ namespace ME.ECS {
 
 	    private static Dictionary<int, PoolInternalBase> pool = new Dictionary<int, PoolInternalBase>();
 	    
-	    public static T Spawn<T>() where T : Filter, new() {
+	    public static T Spawn<T>() where T : class, new() {
 
 		    var key = WorldUtilities.GetKey<T>();
 		    PoolInternalBase pool;
@@ -55,14 +55,14 @@ namespace ME.ECS {
 
 	    }
 
-	    public static void Recycle<T>(ref T system) where T : Filter {
+	    public static void Recycle<T>(ref T system) where T : class {
 
 		    PoolFilters.Recycle(system);
-		    system = null;
+		    system = default;
 
 	    }
 
-	    public static void Recycle<T>(T system) where T : Filter {
+	    public static void Recycle<T>(T system) where T : class {
 
 		    var key = WorldUtilities.GetKey<T>();
 		    PoolInternalBase pool;

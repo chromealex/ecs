@@ -140,7 +140,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public partial class World : WorldBase, IWorld, IPoolableSpawn, IPoolableRecycle {
+    public sealed partial class World : WorldBase, IWorld, IPoolableSpawn, IPoolableRecycle {
 
         private const int FEATURES_CAPACITY = 100;
         private const int SYSTEMS_CAPACITY = 100;
@@ -182,7 +182,7 @@ namespace ME.ECS {
         
         internal void UpdateGroup(SystemGroup group) {
 
-            this.systemGroups[group.worldIndex] = group;
+            this.systemGroups.arr[group.worldIndex] = group;
 
         }
         
@@ -190,23 +190,11 @@ namespace ME.ECS {
 
             var index = this.systemGroups.Length;
             ArrayUtils.Resize(in index, ref this.systemGroups, resizeWithOffset: false);
-            this.systemGroups[index] = group;
+            this.systemGroups.arr[index] = group;
             return index;
 
         }
         
-        public void SetCurrentSystemContextFiltersUsed(BufferArray<bool> currentSystemContextFiltersUsed) {
-
-            this.currentSystemContextFiltersUsed = currentSystemContextFiltersUsed;
-
-        }
-
-        public BufferArray<bool> GetCurrentSystemContextFiltersUsed() {
-
-            return this.currentSystemContextFiltersUsed;
-
-        }
-
         #if WORLD_THREAD_CHECK
         public void SetWorldThread(System.Threading.Thread thread) {
 
@@ -288,13 +276,13 @@ namespace ME.ECS {
             this.OnRecycleComponents();
             this.OnRecycleStructComponents();
             
-            PoolArray<bool>.Recycle(ref FiltersDirectCache.dic[this.id]);
+            PoolArray<bool>.Recycle(ref FiltersDirectCache.dic.arr[this.id]);
             
             PoolList<IFeatureBase>.Recycle(ref this.features);
 
             for (int i = 0; i < this.systemGroups.Length; ++i) {
 
-                this.systemGroups[i].Deconstruct();
+                this.systemGroups.arr[i].Deconstruct();
 
             }
             
@@ -368,7 +356,7 @@ namespace ME.ECS {
 
             for (int i = 0; i < this.systemGroups.Length; ++i) {
 
-                if (this.systemGroups[i].SetSystemState(system, state) == true) {
+                if (this.systemGroups.arr[i].SetSystemState(system, state) == true) {
 
                     return;
 
@@ -382,7 +370,7 @@ namespace ME.ECS {
 
             for (int i = 0; i < this.systemGroups.Length; ++i) {
 
-                if (this.systemGroups[i].GetSystemState(system, out var state) == true) {
+                if (this.systemGroups.arr[i].GetSystemState(system, out var state) == true) {
 
                     return state;
 
@@ -625,9 +613,9 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Filter GetFilter(int id) {
+        public Filter GetFilter(in int id) {
 
-            return (Filter)this.currentState.filters.filters[id - 1]; //.Get(id);
+            return this.currentState.filters.filters.arr[id - 1];
 
         }
 
@@ -646,10 +634,10 @@ namespace ME.ECS {
         public bool HasFilter(Filter filterRef) {
             
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null) {
             
-                return dic[filterRef.id - 1] == true;
+                return dic.arr[filterRef.id - 1] == true;
 
             }
 
@@ -661,10 +649,10 @@ namespace ME.ECS {
 
             var idx = id - 1;
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null && idx >= 0 && idx < dic.Length) {
             
-                return dic[idx] == true;
+                return dic.arr[idx] == true;
 
             }
 
@@ -679,9 +667,9 @@ namespace ME.ECS {
             ArrayUtils.Resize(filterRef.id, ref this.currentSystemContextFiltersUsed);
 
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             ArrayUtils.Resize(filterRef.id - 1, ref dic);
-            dic[filterRef.id - 1] = true;
+            dic.arr[filterRef.id - 1] = true;
 
             if (this.entitiesCapacity > 0) filterRef.SetEntityCapacity(this.entitiesCapacity);
             
@@ -721,17 +709,17 @@ namespace ME.ECS {
                 //this.filtersStorage = filtersRef;
                 
                 ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-                ref var dic = ref FiltersDirectCache.dic[this.id];
+                ref var dic = ref FiltersDirectCache.dic.arr[this.id];
                 if (dic.arr != null) {
                     
                     System.Array.Clear(dic.arr, 0, dic.Length);
                     for (int i = 0; i < filtersRef.filters.Length; ++i) {
 
-                        var filterRef = filtersRef.filters[i];
+                        var filterRef = filtersRef.filters.arr[i];
                         if (filterRef != null) {
                         
                             ArrayUtils.Resize(filterRef.id - 1, ref dic);
-                            dic[filterRef.id - 1] = true;
+                            dic.arr[filterRef.id - 1] = true;
 
                         }
 
@@ -908,7 +896,7 @@ namespace ME.ECS {
             var filters = this.currentState.filters.GetData();
             for (int i = 0; i < filters.Length; ++i) {
                 
-                filters[i].Update();
+                filters.arr[i].Update();
                 
             }
             
@@ -917,14 +905,14 @@ namespace ME.ECS {
         public void SetEntityCapacityInFilters(int capacity) {
 
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
-                    if (dic[i] == false) continue;
+                    if (dic.arr[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = this.GetFilter(filterId);
+                    var filter = this.GetFilter(in filterId);
                     filter.SetEntityCapacity(capacity);
 
                 }
@@ -936,14 +924,14 @@ namespace ME.ECS {
         public void CreateEntityInFilters(Entity entity) {
 
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
-                    if (dic[i] == false) continue;
+                    if (dic.arr[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = this.GetFilter(filterId);
+                    var filter = this.GetFilter(in filterId);
                     filter.OnEntityCreate(entity);
 
                 }
@@ -955,17 +943,17 @@ namespace ME.ECS {
         public void UpdateFiltersOnFilterCreate(Entity entity) {
 
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
-                    if (dic[i] == false) continue;
+                    if (dic.arr[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = this.GetFilter(filterId);
-                    filter.OnEntityCreate(entity);
-                    if (filter.IsForEntity(entity) == false) continue;
-                    filter.OnUpdate(entity);
+                    var filter = this.GetFilter(in filterId);
+                    filter.OnEntityCreate(in entity);
+                    if (filter.IsForEntity(in entity.id) == false) continue;
+                    filter.OnUpdate(in entity);
 
                 }
 
@@ -976,16 +964,16 @@ namespace ME.ECS {
         public void UpdateFilters(Entity entity) {
 
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
-                    if (dic[i] == false) continue;
+                    if (dic.arr[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = this.GetFilter(filterId);
-                    if (filter.IsForEntity(entity) == false) continue;
-                    filter.OnUpdate(entity);
+                    var filter = this.GetFilter(in filterId);
+                    if (filter.IsForEntity(in entity.id) == false) continue;
+                    filter.OnUpdate(in entity);
 
                 }
 
@@ -996,16 +984,16 @@ namespace ME.ECS {
         public void AddComponentToFilter(Entity entity) {
             
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
-                    if (dic[i] == false) continue;
+                    if (dic.arr[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = this.GetFilter(filterId);
-                    if (filter.IsForEntity(entity) == false) continue;
-                    filter.OnAddComponent(entity);
+                    var filter = this.GetFilter(in filterId);
+                    if (filter.IsForEntity(in entity.id) == false) continue;
+                    filter.OnAddComponent(in entity);
 
                 }
 
@@ -1016,16 +1004,16 @@ namespace ME.ECS {
         public void RemoveComponentFromFilter(in Entity entity) {
             
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
-                    if (dic[i] == false) continue;
+                    if (dic.arr[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = this.GetFilter(filterId);
-                    if (filter.IsForEntity(entity) == false) continue;
-                    filter.OnRemoveComponent(entity);
+                    var filter = this.GetFilter(in filterId);
+                    if (filter.IsForEntity(in entity.id) == false) continue;
+                    filter.OnRemoveComponent(in entity);
 
                 }
 
@@ -1037,17 +1025,17 @@ namespace ME.ECS {
         public void RemoveFromFilters_INTERNAL(Entity entity) {
             
             ArrayUtils.Resize(this.id, ref FiltersDirectCache.dic);
-            ref var dic = ref FiltersDirectCache.dic[this.id];
+            ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             if (dic.arr != null) {
 
                 for (int i = 0; i < dic.Length; ++i) {
 
-                    if (dic[i] == false) continue;
+                    if (dic.arr[i] == false) continue;
                     var filterId = i + 1;
-                    var filter = this.GetFilter(filterId);
-                    filter.OnEntityDestroy(entity);
-                    if (filter.IsForEntity(entity) == false) continue;
-                    filter.OnRemoveEntity(entity);
+                    var filter = this.GetFilter(in filterId);
+                    filter.OnEntityDestroy(in entity);
+                    if (filter.IsForEntity(in entity.id) == false) continue;
+                    filter.OnRemoveEntity(in entity);
 
                 }
 
@@ -1077,10 +1065,10 @@ namespace ME.ECS {
 
         }
 
-        public bool IsAlive(in Entity entity) {
+        public bool IsAlive(in int entityId, in ushort version) {
             
             ref var entitiesList = ref this.currentState.storage.GetData();
-            if (entitiesList[entity.id].version == entity.version && entitiesList.IsFree(entity.id) == false) {
+            if (entitiesList[entityId].version == version && entitiesList.IsFree(entityId) == false) {
 
                 return true;
 
@@ -1094,7 +1082,7 @@ namespace ME.ECS {
             
             ref var entitiesList = ref this.currentState.storage.GetData();
             ref var ent = ref entitiesList[id];
-            if (this.IsAlive(in ent) == false) return ref Entity.Empty;
+            if (this.IsAlive(in ent.id, in ent.version) == false) return ref Entity.Empty;
             
             return ref ent;
 
@@ -1397,7 +1385,7 @@ namespace ME.ECS {
 
             for (int i = 0; i < this.systemGroups.Length; ++i) {
 
-                if (this.systemGroups[i].HasSystem<TSystem>() == true) {
+                if (this.systemGroups.arr[i].HasSystem<TSystem>() == true) {
 
                     return true;
 
@@ -1418,7 +1406,7 @@ namespace ME.ECS {
 
             for (int i = 0, count = this.systemGroups.Length; i < count; ++i) {
 
-                var system = this.systemGroups[i].GetSystem<TSystem>();
+                var system = this.systemGroups.arr[i].GetSystem<TSystem>();
                 if (system != null) return system;
 
             }
@@ -1552,12 +1540,12 @@ namespace ME.ECS {
 
                 for (int i = 0, count = this.systemGroups.Length; i < count; ++i) {
 
-                    ref var group = ref this.systemGroups[i];
+                    ref var group = ref this.systemGroups.arr[i];
                     for (int j = 0; j < group.systems.Length; ++j) {
 
                         if (group.IsSystemActive(j) == true) {
 
-                            ref var system = ref group.systems[j];
+                            ref var system = ref group.systems.arr[j];
                             
                             #if CHECKPOINT_COLLECTOR
                             if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(system, WorldStep.VisualTick);
@@ -1792,12 +1780,12 @@ namespace ME.ECS {
 
                     for (int i = 0, count = this.systemGroups.Length; i < count; ++i) {
 
-                        ref var group = ref this.systemGroups[i];
+                        ref var group = ref this.systemGroups.arr[i];
                         for (int j = 0; j < group.systems.Length; ++j) {
 
                             if (group.IsSystemActive(j) == true) {
 
-                                ref var system = ref group.systems[j];
+                                ref var system = ref group.systems.arr[j];
                                 
                                 #if CHECKPOINT_COLLECTOR
                                 if (this.checkpointCollector != null) this.checkpointCollector.Checkpoint(system, WorldStep.LogicTick);
@@ -1880,12 +1868,11 @@ namespace ME.ECS {
 
                                 this.currentSystemContext = null;
 
-                                var usedFilters = this.currentSystemContextFiltersUsed;
-                                for (int f = 1, cnt = usedFilters.Length; f < cnt; ++f) {
+                                for (int f = 1, cnt = this.currentSystemContextFiltersUsed.Length; f < cnt; ++f) {
 
-                                    if (usedFilters[f] == true) {
+                                    if (this.currentSystemContextFiltersUsed.arr[f] == true) {
 
-                                        var filter = this.GetFilter(f);
+                                        var filter = this.GetFilter(in f);
                                         filter.ApplyAllRequests();
 
                                     }

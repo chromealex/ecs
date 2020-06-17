@@ -14,7 +14,7 @@
             var target = this.target as EntityDebugComponent;
             if (target.world != null && target.world.isActive == true) {
 
-                var currentEntity = GUILayoutExt.DrawEntitySelection(target.world, in target.entity, checkAlive: true);
+                var currentEntity = GUILayoutExt.DrawEntitySelection(target.world, in target.entity, checkAlive: true, drawSelectButton: false);
                 if (currentEntity != Entity.Empty) {
 
                     if (EntityDebugComponentEditor.worldEditors.TryGetValue(target.world, out var worldEditor) == false) {

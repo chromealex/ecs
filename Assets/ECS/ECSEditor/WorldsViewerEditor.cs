@@ -366,7 +366,7 @@ namespace ME.ECSEditor {
 
             }
 
-            public ME.ECS.IComponentsBase GetComponentsStorage() {
+            public ME.ECS.Components GetComponentsStorage() {
 
                 return WorldHelper.GetComponentsStorage(this.world);
 
@@ -770,7 +770,7 @@ namespace ME.ECSEditor {
                                     var registries = componentsStructStorage.GetAllRegistries();
                                     for (int k = 0; k < registries.Length; ++k) {
 
-                                        var registry = registries[k];
+                                        var registry = registries.arr[k];
                                         if (registry == null) continue;
                                         
                                         var component = registry.GetObject(entity);
@@ -878,7 +878,7 @@ namespace ME.ECSEditor {
             #endregion
         }
         
-        public static void DrawEntity(Entity entityData, WorldEditor world, IStorage storage, IStructComponentsContainer componentsStructStorage, IComponentsBase componentsStorage, IList<IModuleBase> modules) {
+        public static void DrawEntity(Entity entityData, WorldEditor world, IStorage storage, IStructComponentsContainer componentsStructStorage, Components componentsStorage, IList<IModuleBase> modules) {
             
             const float padding = 8f;
 
@@ -939,7 +939,7 @@ namespace ME.ECSEditor {
                         var sortedRegistries = new SortedDictionary<int, IStructRegistryBase>(new DuplicateKeyComparer<int>());
                         for (int i = 0; i < registries.Length; ++i) {
 
-                            var registry = registries[i];
+                            var registry = registries.arr[i];
                             if (registry == null) {
                                 continue;
                             }
@@ -1051,7 +1051,7 @@ namespace ME.ECSEditor {
                             var filters = world.GetFilters();
                             for (int i = 0; i < filters.filters.Length; ++i) {
 
-                                var filter = filters.filters[i];
+                                var filter = filters.filters.arr[i];
                                 if (filter == null) continue;
                                 
                                 if (filter.Contains(entityData) == true) {
@@ -1130,7 +1130,7 @@ namespace ME.ECSEditor {
 
                                         if (k == entityData.id) {
 
-                                            var listViews = allViews[k];
+                                            var listViews = allViews.arr[k];
                                             if (listViews.isNotEmpty == false) continue;
 
                                             for (var j = 0; j < listViews.Length; ++j) {
@@ -1261,14 +1261,14 @@ namespace ME.ECSEditor {
 
                                         for (int i = 0; i < systems.Length; ++i) {
 
-                                            var group = systems[i];
+                                            var group = systems.arr[i];
                                             var foldoutObj = group.systems;
                                             var groupState = worldEditor.IsFoldOutCustom(foldoutObj);
                                             GUILayoutExt.FoldOut(ref groupState, group.name + " (" + group.length.ToString() + ")", () => {
                                                 
                                                 for (int j = 0; j < group.systems.Length; ++j) {
 
-                                                    var system = group.systems[j];
+                                                    var system = group.systems.arr[j];
 
                                                     GUILayout.BeginHorizontal();
                                                     {
@@ -1484,7 +1484,7 @@ namespace ME.ECSEditor {
                                 var filtersCount = 0;
                                 var filtersArr = filters.GetData();
                                 for (int f = 0; f < filtersArr.Length; ++f) {
-                                    if (filtersArr[f] != null) ++filtersCount;
+                                    if (filtersArr.arr[f] != null) ++filtersCount;
                                 }
                                 GUILayoutExt.FoldOut(ref worldEditor.foldoutFilters, "Filters (" + filtersCount.ToString() + ")", () => {
                                     
@@ -1493,7 +1493,7 @@ namespace ME.ECSEditor {
                                         GUILayout.BeginVertical();
                                         for (int f = 0; f < filtersArr.Length; ++f) {
 
-                                            var filter = filtersArr[f];
+                                            var filter = filtersArr.arr[f];
                                             if (filter == null) continue;
 
                                             WorldsViewerEditor.DrawFilter(filters, filter);
@@ -1562,7 +1562,7 @@ namespace ME.ECSEditor {
                                     AssetDatabase.OpenAsset(AssetDatabase.LoadAssetAtPath<MonoScript>(file), line);
 
                                 }
-                                GUILayoutExt.DataLabel(string.Format("<b>{0}</b>", names[i]));
+                                GUILayoutExt.DataLabel(string.Format("<b>{0}</b>", names.arr[i]));
                             }
                             GUILayout.EndHorizontal();
                             

@@ -9,6 +9,11 @@ namespace ME.ECS {
     using TType = System.UInt32;
     using TName = ViewId;
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct ViewId : IComparable, IConvertible, IFormattable, IComparable<TName>, IEquatable<TName>, ISerializable {

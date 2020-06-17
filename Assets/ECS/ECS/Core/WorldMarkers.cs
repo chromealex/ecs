@@ -5,15 +5,6 @@ namespace ME.ECS {
 
     using Collections;
     
-    public partial interface IWorldBase {
-
-        bool AddMarker<TMarker>(TMarker marker) where TMarker : struct, IMarker;
-        bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker;
-        bool HasMarker<TMarker>() where TMarker : struct, IMarker;
-        bool RemoveMarker<TMarker>() where TMarker : struct, IMarker;
-
-    }
-    
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -46,7 +37,7 @@ namespace ME.ECS {
 
             foreach (var item in this.allExistMarkers) {
 
-                item[this.id] = false;
+                item.arr[this.id] = false;
                 
             }
 
@@ -72,15 +63,15 @@ namespace ME.ECS {
 
             }
 
-            if (exists[this.id] == true) {
+            if (exists.arr[this.id] == true) {
 
-                cache[this.id] = markerData;
+                cache.arr[this.id] = markerData;
                 return false;
 
             }
 
-            exists[this.id] = true;
-            cache[this.id] = markerData;
+            exists.arr[this.id] = true;
+            cache.arr[this.id] = markerData;
 
             return true;
 
@@ -89,10 +80,10 @@ namespace ME.ECS {
         public bool GetMarker<TMarker>(out TMarker marker) where TMarker : struct, IMarker {
             
             ref var exists = ref World.MarkersDirectCache<TMarker>.exists;
-            if (this.id >= 0 && this.id < exists.Length && exists[this.id] == true) {
+            if (this.id >= 0 && this.id < exists.Length && exists.arr[this.id] == true) {
 
                 ref var cache = ref World.MarkersDirectCache<TMarker>.data;
-                marker = cache[this.id];
+                marker = cache.arr[this.id];
                 return true;
 
             }
@@ -105,18 +96,18 @@ namespace ME.ECS {
         public bool HasMarker<TMarker>() where TMarker : struct, IMarker {
             
             ref var exists = ref World.MarkersDirectCache<TMarker>.exists;
-            return this.id >= 0 && this.id < exists.Length && exists[this.id] == true;
+            return this.id >= 0 && this.id < exists.Length && exists.arr[this.id] == true;
 
         }
 
         public bool RemoveMarker<TMarker>() where TMarker : struct, IMarker {
             
             ref var exists = ref World.MarkersDirectCache<TMarker>.exists;
-            if (this.id >= 0 && this.id < exists.Length && exists[this.id] == true) {
+            if (this.id >= 0 && this.id < exists.Length && exists.arr[this.id] == true) {
 
                 ref var cache = ref World.MarkersDirectCache<TMarker>.data;
-                cache[this.id] = default;
-                exists[this.id] = false;
+                cache.arr[this.id] = default;
+                exists.arr[this.id] = false;
                 return true;
 
             }

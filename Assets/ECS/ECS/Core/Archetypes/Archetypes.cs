@@ -67,6 +67,20 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ref Archetype GetPrevious(in int entityId) {
+
+            return ref this.prevTypes.arr[entityId];
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ref Archetype Get(in int entityId) {
+
+            return ref this.types.arr[entityId];
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref Archetype GetPrevious(in Entity entity) {
 
             var id = entity.id;

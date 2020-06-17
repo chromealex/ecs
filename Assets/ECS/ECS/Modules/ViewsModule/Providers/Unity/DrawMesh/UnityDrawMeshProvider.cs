@@ -4,12 +4,22 @@ namespace ME.ECS {
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial struct WorldViewsSettings {
 
         public bool unityDrawMeshProviderDisableJobs;
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial struct WorldDebugViewsSettings {
 
     }
@@ -21,7 +31,12 @@ namespace ME.ECS {
 
     }
 
-    public partial class World {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(DrawMeshViewSourceBase prefab) {
@@ -53,6 +68,11 @@ namespace ME.ECS.Views {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial class ViewsModule {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -86,6 +106,11 @@ namespace ME.ECS.Views.Providers {
     using Unity.Jobs;
     using Collections;
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct DrawMeshData {
 
         public UnityEngine.Vector3 position;
@@ -135,17 +160,17 @@ namespace ME.ECS.Views.Providers {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref DrawMeshData GetRootData() {
             
-            return ref this.items[0].drawMeshData;
+            return ref this.items.arr[0].drawMeshData;
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetRootData(ref DrawMeshData data) {
             
-            this.items[0].drawMeshData = data;
+            this.items.arr[0].drawMeshData = data;
             for (int i = 1; i < this.items.Length; ++i) {
 
-                ref var item = ref this.items[i];
+                ref var item = ref this.items.arr[i];
                 item.drawMeshData.position = data.position + item.itemData.localPosition;
                 item.drawMeshData.rotation = data.rotation + item.itemData.localRotation;
                 item.drawMeshData.scale = UnityEngine.Vector3.Scale(data.scale, item.itemData.localScale);
@@ -170,7 +195,7 @@ namespace ME.ECS.Views.Providers {
                 itemData.localRotation = (i == 0 ? rootRotation : tr.rotation.eulerAngles - rootRotation);
                 itemData.localScale = (i == 0 ? rootScale : UnityEngine.Vector3.Scale(tr.lossyScale, new UnityEngine.Vector3(1f / rootScale.x, 1f / rootScale.y, 1f / rootScale.z)));
                 item.itemData = itemData;
-                this.items[i] = item;
+                this.items.arr[i] = item;
 
             }
 
@@ -298,7 +323,7 @@ namespace ME.ECS.Views.Providers {
             particleViewBase.items = PoolArray<DrawMeshViewBase.Item>.Spawn(prefabSource.items.Length);
             for (int i = 0; i < particleViewBase.items.Length; ++i) {
 
-                particleViewBase.items[i] = prefabSource.items[i];
+                particleViewBase.items.arr[i] = prefabSource.items.arr[i];
 
             }
             particleViewBase.DoCopyFrom(prefabSource);
@@ -306,7 +331,7 @@ namespace ME.ECS.Views.Providers {
             long key;
             for (int i = 0; i < prefabSource.items.Length; ++i) {
 
-                ref var source = ref prefabSource.items[i];
+                ref var source = ref prefabSource.items.arr[i];
                 key = source.itemData.GetKey();
                 DrawMeshSystemItem psItem;
                 if (this.psItems.TryGetValue(key, out psItem) == false) {
@@ -316,7 +341,7 @@ namespace ME.ECS.Views.Providers {
                     
                 }
 
-                particleViewBase.items[i].itemData = psItem;
+                particleViewBase.items.arr[i].itemData = psItem;
 
             }
             
@@ -329,7 +354,7 @@ namespace ME.ECS.Views.Providers {
             var view = (DrawMeshViewBase)instance;
             for (int i = 0; i < view.items.Length; ++i) {
 
-                view.items[i].drawMeshData.scale = UnityEngine.Vector3.zero;
+                view.items.arr[i].drawMeshData.scale = UnityEngine.Vector3.zero;
 
             }
 
@@ -356,7 +381,7 @@ namespace ME.ECS.Views.Providers {
             
             public void Execute(int index) {
 
-                var list = UnityDrawMeshProvider.currentList[index];
+                var list = UnityDrawMeshProvider.currentList.arr[index];
                 if (list.mainView == null) return;
                 
                 for (int i = 0, count = list.Length; i < count; ++i) {
@@ -392,7 +417,7 @@ namespace ME.ECS.Views.Providers {
 
                 for (int j = 0; j < list.Length; ++j) {
 
-                    var item = list[j];
+                    var item = list.arr[j];
                     for (int i = 0, count = item.Length; i < count; ++i) {
 
                         var instance = item[i] as DrawMeshViewBase;
@@ -421,14 +446,14 @@ namespace ME.ECS.Views.Providers {
                 var material = psItem.material;
                 for (var id = 0; id < list.Length; ++id) {
                     
-                    var itemsList = list[id];
+                    var itemsList = list.arr[id];
                     var count = itemsList.Length;
                     for (int i = 0; i < count; ++i) {
 
                         var view = (DrawMeshViewBase)itemsList[i];
                         for (int j = 0; j < view.items.Length; ++j) {
 
-                            ref var element = ref view.items[j];
+                            ref var element = ref view.items.arr[j];
                             if (element.itemData.GetMesh() == mesh && element.itemData.material == material) {
 
                                 if (k >= this.maxMatrices) {
@@ -438,7 +463,7 @@ namespace ME.ECS.Views.Providers {
 
                                 }
 
-                                this.matrices[k++] = element.drawMeshData.matrix;
+                                this.matrices.arr[k++] = element.drawMeshData.matrix;
 
                             }
 
@@ -455,6 +480,11 @@ namespace ME.ECS.Views.Providers {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct UnityDrawMeshProviderInitializer : IViewsProviderInitializer {
 
         int System.IComparable<IViewsProviderInitializerBase>.CompareTo(IViewsProviderInitializerBase other) { return 0; }

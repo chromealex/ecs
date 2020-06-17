@@ -16,7 +16,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class FiltersStorage : IPoolableRecycle {
+    public sealed class FiltersStorage : IPoolableRecycle {
 
         internal BufferArray<Filter> filters;
         private bool freeze;
@@ -54,8 +54,8 @@ namespace ME.ECS {
             
             for (int i = 0, count = this.filters.Length; i < count; ++i) {
                 
-                if (this.filters[i] == null) continue;
-                this.filters[i].Recycle();
+                if (this.filters.arr[i] == null) continue;
+                this.filters.arr[i].Recycle();
 
             }
 
@@ -84,7 +84,7 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref Filter Get(in int id) {
 
-            return ref this.filters[id - 1];
+            return ref this.filters.arr[id - 1];
 
         }
 
@@ -92,7 +92,7 @@ namespace ME.ECS {
 
             for (int i = 0; i < this.filters.Length; ++i) {
 
-                var filter = this.filters[i];
+                ref var filter = ref this.filters.arr[i];
                 if (filter != null) {
 
                     if (filter.GetHashCode() == hashCode) {
@@ -113,7 +113,7 @@ namespace ME.ECS {
             
             for (int i = 0; i < this.filters.Length; ++i) {
 
-                var filter = this.filters[i];
+                ref var filter = ref this.filters.arr[i];
                 if (filter != null) {
 
                     if (filter.GetHashCode() == other.GetHashCode() && filter.IsEquals(other) == true) {
@@ -133,7 +133,7 @@ namespace ME.ECS {
         public void Register(Filter filter) {
 
             ArrayUtils.Resize(filter.id - 1, ref this.filters);
-            this.filters[filter.id - 1] = filter;
+            this.filters.arr[filter.id - 1] = filter;
             
         }
 
@@ -185,27 +185,27 @@ namespace ME.ECS {
 
                 for (int i = 0, count = other.filters.Length; i < count; ++i) {
 
-                    if (other.filters[i] == null && this.filters[i] == null) {
+                    if (other.filters.arr[i] == null && this.filters.arr[i] == null) {
                         
                         continue;
                         
                     }
 
-                    if (other.filters[i] == null && this.filters[i] != null) {
+                    if (other.filters.arr[i] == null && this.filters.arr[i] != null) {
 
-                        this.filters[i].Recycle();
-                        this.filters[i] = null;
+                        this.filters.arr[i].Recycle();
+                        this.filters.arr[i] = null;
                         continue;
                         
                     }
 
-                    if (i >= this.filters.Length || this.filters[i] == null) {
+                    if (i >= this.filters.Length || this.filters.arr[i] == null) {
 
-                        this.Register(other.filters[i].Clone());
+                        this.Register(other.filters.arr[i].Clone());
 
                     } else {
 
-                        this.filters[i].CopyFrom(other.filters[i]);
+                        this.filters.arr[i].CopyFrom(other.filters.arr[i]);
 
                     }
 
@@ -216,27 +216,27 @@ namespace ME.ECS {
                 // Filters storage is not in a freeze mode, so it is an active state filters
                 for (int i = 0, count = other.filters.Length; i < count; ++i) {
 
-                    if (other.filters[i] == null && this.filters[i] == null) {
+                    if (other.filters.arr[i] == null && this.filters.arr[i] == null) {
                         
                         continue;
                         
                     }
 
-                    if (other.filters[i] == null && this.filters[i] != null) {
+                    if (other.filters.arr[i] == null && this.filters.arr[i] != null) {
 
-                        this.filters[i].Recycle();
-                        this.filters[i] = null;
+                        this.filters.arr[i].Recycle();
+                        this.filters.arr[i] = null;
                         continue;
                         
                     }
 
-                    if (i >= this.filters.Length || this.filters[i] == null && other.filters[i] != null) {
+                    if (i >= this.filters.Length || this.filters.arr[i] == null && other.filters.arr[i] != null) {
 
-                        this.Register(other.filters[i].Clone());
+                        this.Register(other.filters.arr[i].Clone());
 
                     } else {
 
-                        this.filters[i].CopyFrom(other.filters[i]);
+                        this.filters.arr[i].CopyFrom(other.filters.arr[i]);
 
                     }
 
@@ -248,6 +248,11 @@ namespace ME.ECS {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct FilterEnumerator : IEnumerator<Entity> {
             
         private readonly Filter set;
@@ -328,7 +333,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Filter : IPoolableSpawn, IPoolableRecycle, IEnumerable<Entity> {
+    public sealed class Filter : IPoolableSpawn, IPoolableRecycle, IEnumerable<Entity> {
 
         private const int REQUESTS_CAPACITY = 4;
         private const int NODES_CAPACITY = 4;
@@ -338,7 +343,7 @@ namespace ME.ECS {
 
         public string name {
             get {
-                return this.aliases[0];
+                return this.aliases.arr[0];
             }
         }
 
@@ -350,8 +355,8 @@ namespace ME.ECS {
         private BufferArray<bool> dataContains;
         private BufferArray<Entity> data;
         private bool forEachMode;
-        private BufferArray<Entity> requests;
-        private BufferArray<Entity> requestsRemoveEntity;
+        private CCList<Entity> requests;
+        private CCList<Entity> requestsRemoveEntity;
         private int min;
         private int max;
         
@@ -382,8 +387,8 @@ namespace ME.ECS {
 
         public void SetEntityCapacity(int capacity) {
             
-            ArrayUtils.Resize(capacity, ref this.requests);
-            ArrayUtils.Resize(capacity, ref this.requestsRemoveEntity);
+            //ArrayUtils.Resize(capacity, ref this.requests);
+            //ArrayUtils.Resize(capacity, ref this.requestsRemoveEntity);
             ArrayUtils.Resize(capacity, ref this.data);
             ArrayUtils.Resize(capacity, ref this.dataContains);
 
@@ -391,8 +396,8 @@ namespace ME.ECS {
         
         public void OnEntityCreate(in Entity entity) {
 
-            ArrayUtils.Resize(entity.id, ref this.requests);
-            ArrayUtils.Resize(entity.id, ref this.requestsRemoveEntity);
+            //ArrayUtils.Resize(entity.id, ref this.requests);
+            //ArrayUtils.Resize(entity.id, ref this.requestsRemoveEntity);
             ArrayUtils.Resize(entity.id, ref this.data);
             ArrayUtils.Resize(entity.id, ref this.dataContains);
 
@@ -400,8 +405,8 @@ namespace ME.ECS {
 
         public void OnEntityDestroy(in Entity entity) {
 
-            ArrayUtils.Resize(entity.id, ref this.requests);
-            ArrayUtils.Resize(entity.id, ref this.requestsRemoveEntity);
+            //ArrayUtils.Resize(entity.id, ref this.requests);
+            //ArrayUtils.Resize(entity.id, ref this.requestsRemoveEntity);
             ArrayUtils.Resize(entity.id, ref this.data);
             ArrayUtils.Resize(entity.id, ref this.dataContains);
             
@@ -444,20 +449,20 @@ namespace ME.ECS {
             
             var idx = (this.aliases.arr != null ? this.aliases.Length : 0);
             ArrayUtils.Resize(idx, ref this.aliases, resizeWithOffset: false);
-            this.aliases[idx] = name;
+            this.aliases.arr[idx] = name;
 
         }
 
         #if UNITY_EDITOR
         public string GetEditorStackTraceFilename(int index) {
 
-            return this.editorStackTraceFile[index];
+            return this.editorStackTraceFile.arr[index];
 
         }
 
         public int GetEditorStackTraceLineNumber(int index) {
 
-            return this.editorStackTraceLineNumber[index];
+            return this.editorStackTraceLineNumber.arr[index];
 
         }
 
@@ -471,7 +476,7 @@ namespace ME.ECS {
             
             var idx = (this.editorTypes.arr != null ? this.editorTypes.Length : 0);
             ArrayUtils.Resize(idx, ref this.editorTypes, resizeWithOffset: false);
-            this.editorTypes[idx] = "W<" + typeof(TComponent).Name + ">";
+            this.editorTypes.arr[idx] = "W<" + typeof(TComponent).Name + ">";
             
         }
 
@@ -479,7 +484,7 @@ namespace ME.ECS {
 
             var idx = (this.editorTypes.arr != null ? this.editorTypes.Length : 0);
             ArrayUtils.Resize(idx, ref this.editorTypes, resizeWithOffset: false);
-            this.editorTypes[idx] = "WO<" + typeof(TComponent).Name + ">";
+            this.editorTypes.arr[idx] = "WO<" + typeof(TComponent).Name + ">";
 
         }
 
@@ -501,11 +506,11 @@ namespace ME.ECS {
             
             var idx = (this.editorStackTraceFile.arr != null ? this.editorStackTraceFile.Length : 0);
             ArrayUtils.Resize(idx, ref this.editorStackTraceFile, resizeWithOffset: false);
-            this.editorStackTraceFile[idx] = file;
+            this.editorStackTraceFile.arr[idx] = file;
             
             idx = (this.editorStackTraceLineNumber.arr != null ? this.editorStackTraceLineNumber.Length : 0);
             ArrayUtils.Resize(idx, ref this.editorStackTraceLineNumber, resizeWithOffset: false);
-            this.editorStackTraceLineNumber[idx] = lineNumber;
+            this.editorStackTraceLineNumber.arr[idx] = lineNumber;
 
         }
         #endif
@@ -515,8 +520,8 @@ namespace ME.ECS {
 
             var data = PoolArray<Entity>.Spawn(this.dataCount);
             for (int i = 0, k = 0; i < this.data.Length; ++i) {
-                if (this.data[i].version > 0) {
-                    data[k++] = this.data[i];
+                if (this.data.arr[i].version > 0) {
+                    data.arr[k++] = this.data.arr[i];
                 }
             }
             return data;
@@ -525,11 +530,14 @@ namespace ME.ECS {
 
         void IPoolableSpawn.OnSpawn() {
 
-            this.requests = PoolArray<Entity>.Spawn(Filter.REQUESTS_CAPACITY);
-            this.requestsRemoveEntity = PoolArray<Entity>.Spawn(Filter.REQUESTS_CAPACITY);
+            //this.requests = PoolArray<Entity>.Spawn(Filter.REQUESTS_CAPACITY);
+            //this.requestsRemoveEntity = PoolArray<Entity>.Spawn(Filter.REQUESTS_CAPACITY);
+            this.requests = PoolCCList<Entity>.Spawn();
+            this.requestsRemoveEntity = PoolCCList<Entity>.Spawn();
             this.nodes = PoolArray<IFilterNode>.Spawn(Filter.NODES_CAPACITY);
             this.data = PoolArray<Entity>.Spawn(Filter.ENTITIES_CAPACITY);
             this.dataContains = PoolArray<bool>.Spawn(Filter.ENTITIES_CAPACITY);
+            this.dataCount = 0;
 
             this.id = default;
             if (this.aliases.arr != null) PoolArray<string>.Recycle(ref this.aliases);
@@ -553,12 +561,15 @@ namespace ME.ECS {
             PoolArray<bool>.Recycle(ref this.dataContains);
             PoolArray<Entity>.Recycle(ref this.data);
             PoolArray<IFilterNode>.Recycle(ref this.nodes);
-            PoolArray<Entity>.Recycle(ref this.requestsRemoveEntity);
-            PoolArray<Entity>.Recycle(ref this.requests);
+            //PoolArray<Entity>.Recycle(ref this.requestsRemoveEntity);
+            //PoolArray<Entity>.Recycle(ref this.requests);
+            PoolCCList<Entity>.Recycle(ref this.requestsRemoveEntity);
+            PoolCCList<Entity>.Recycle(ref this.requests);
 
             this.min = int.MaxValue;
             this.max = int.MinValue;
 
+            this.dataCount = 0;
             this.archetypeContains = default;
             this.archetypeNotContains = default;
             this.nodesCount = default;
@@ -574,12 +585,12 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool IsForEntity(in Entity entity) {
+        public bool IsForEntity(in int entityId) {
 
-            ref var previousArchetype = ref this.world.currentState.storage.archetypes.GetPrevious(in entity);
+            ref var previousArchetype = ref this.world.currentState.storage.archetypes.GetPrevious(in entityId);
             if (previousArchetype.ContainsAll(in this.archetypeContains) == true && previousArchetype.NotContains(in this.archetypeNotContains) == true) return true;
             
-            ref var currentArchetype = ref this.world.currentState.storage.archetypes.Get(in entity);
+            ref var currentArchetype = ref this.world.currentState.storage.archetypes.Get(in entityId);
             if (currentArchetype.ContainsAll(in this.archetypeContains) == true && currentArchetype.NotContains(in this.archetypeNotContains) == true) return true;
 
             return false;
@@ -625,30 +636,31 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void ApplyAllRequests() {
 
-            var internalFilter = this;
             {
                 
-                var requests = internalFilter.GetRequests();
-                for (int i = 0; i < requests.Length; ++i) {
+                var requests = this.GetRequests();
+                for (int i = 0, cnt = requests.Count; i < cnt; ++i) {
                     
-                    internalFilter.OnUpdate(requests[i]);
+                    this.OnUpdateForced_INTERNAL(requests[i]);
 
                 }
-                //this.requests = requests.Dispose();
-                System.Array.Clear(requests.arr, 0, requests.Length);
+                
+                //System.Array.Clear(requests.arr, 0, requests.Length);
+                requests.ClearNoCC();
 
             }
 
             {
                 
-                var requests = internalFilter.GetRequestsRemoveEntity();
-                for (int i = 0; i < requests.Length; ++i) {
+                var requests = this.GetRequestsRemoveEntity();
+                for (int i = 0, cnt = requests.Count; i < cnt; ++i) {
                     
-                    internalFilter.Remove_INTERNAL(requests[i]);
+                    this.Remove_INTERNAL(requests[i]);
 
                 }
-                //this.requestsRemoveEntity = requests.Dispose();
-                System.Array.Clear(requests.arr, 0, requests.Length);
+                
+                //System.Array.Clear(requests.arr, 0, requests.Length);
+                requests.ClearNoCC();
                 
             }
 
@@ -686,13 +698,15 @@ namespace ME.ECS {
 
         }
 
-        public BufferArray<Entity> GetRequests() {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public CCList<Entity> GetRequests() {
 
             return this.requests;
 
         }
 
-        public BufferArray<Entity> GetRequestsRemoveEntity() {
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public CCList<Entity> GetRequestsRemoveEntity() {
 
             return this.requestsRemoveEntity;
 
@@ -714,9 +728,9 @@ namespace ME.ECS {
         }*/
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool Contains(Entity entity) {
+        public bool Contains(in Entity entity) {
 
-            return this.world.GetFilter(this.id).Contains_INTERNAL(entity.id);
+            return this.world.GetFilter(this.id).Contains_INTERNAL(in entity.id);
 
         }
 
@@ -724,7 +738,7 @@ namespace ME.ECS {
         private bool Contains_INTERNAL(in int entityId) {
 
             if (entityId >= this.dataContains.Length) return false;
-            return this.dataContains[entityId];
+            return this.dataContains.arr[entityId];
 
         }
 
@@ -748,18 +762,21 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool OnUpdate(in Entity entity) {
 
             return this.OnUpdate_INTERNAL(in entity);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool OnAddComponent(in Entity entity) {
 
             return this.OnUpdate_INTERNAL(in entity);
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool OnRemoveComponent(in Entity entity) {
 
             return this.OnUpdate_INTERNAL(in entity);
@@ -767,23 +784,39 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private bool OnUpdateForced_INTERNAL(in Entity entity) {
+            
+            if (entity.version == Entity.VERSION_ZERO) return false;
+
+            var isExists = this.Contains_INTERNAL(in entity.id);
+            if (isExists == true) {
+
+                return this.CheckRemove(in entity);
+
+            } else {
+
+                return this.CheckAdd(in entity);
+
+            }
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private bool OnUpdate_INTERNAL(in Entity entity) {
 
-            if (entity.version == 0) return false;
+            if (entity.version == Entity.VERSION_ZERO) return false;
             
             if (this.world.currentSystemContext != null) {
                 
-                this.world.GetCurrentSystemContextFiltersUsed()[this.id] = true;
-                //this.requests.TryAdd(entity.version, entity);
-                this.requests[entity.id] = entity;
+                this.world.currentSystemContextFiltersUsed.arr[this.id] = true;
+                this.requests.Add(entity);
                 return false;
 
             }
 
             if (this.forEachMode == true) {
 
-                //this.requests.TryAdd(entity.version, entity);
-                this.requests[entity.id] = entity;
+                this.requests.Add(entity);
                 return false;
 
             }
@@ -803,13 +836,13 @@ namespace ME.ECS {
 
         public bool OnRemoveEntity(in Entity entity) {
 
-            if (entity.version == 0) return false;
+            if (entity.version == Entity.VERSION_ZERO) return false;
 
             if (this.world.currentSystemContext != null) {
 
-                this.world.GetCurrentSystemContextFiltersUsed()[this.id] = true;
+                this.world.currentSystemContextFiltersUsed.arr[this.id] = true;
                 //this.requestsRemoveEntity.TryAdd(entity.version, entity);
-                this.requestsRemoveEntity[entity.id] = entity;
+                this.requestsRemoveEntity.Add(entity);
                 return false;
 
             }
@@ -817,7 +850,7 @@ namespace ME.ECS {
             if (this.forEachMode == true) {
 
                 //this.requestsRemoveEntity.TryAdd(entity.version, entity);
-                this.requestsRemoveEntity[entity.id] = entity;
+                this.requestsRemoveEntity.Add(entity);
                 return false;
 
             }
@@ -831,12 +864,12 @@ namespace ME.ECS {
 
             var idx = entity.id;
             //ArrayUtils.Resize(entity.id, ref this.dataContains);
-            ref var res = ref this.dataContains[idx];
+            ref var res = ref this.dataContains.arr[idx];
             if (res == false) {
 
                 res = true;
                 //this.data.Add(entity.id, entity);
-                this.data[idx] = entity;
+                this.data.arr[idx] = entity;
                 ++this.dataCount;
                 this.UpdateMinMaxAdd(idx);
 
@@ -849,12 +882,12 @@ namespace ME.ECS {
 
             var idx = entity.id;
             //if (idx < 0 || idx >= this.dataContains.Length) return false;
-            ref var res = ref this.dataContains[idx];
+            ref var res = ref this.dataContains.arr[idx];
             if (res == true) {
 
                 res = false;
                 //this.data.Remove(entity.id);
-                this.data[idx] = default;
+                this.data.arr[idx] = default;
                 --this.dataCount;
                 this.UpdateMinMaxRemove(idx);
                 return true;
@@ -889,7 +922,7 @@ namespace ME.ECS {
                 // Update new min (find next index)
                 for (int i = idx; i < this.data.Length; ++i) {
 
-                    if (this.dataContains[i] == true) {
+                    if (this.dataContains.arr[i] == true) {
 
                         this.min = i;
                         break;
@@ -903,7 +936,7 @@ namespace ME.ECS {
                 // Update new max (find prev index)
                 for (int i = idx; i >= 0; --i) {
 
-                    if (this.dataContains[i] == true) {
+                    if (this.dataContains.arr[i] == true) {
 
                         this.max = i;
                         break;
@@ -937,16 +970,7 @@ namespace ME.ECS {
         private bool CheckAdd(in Entity entity) {
 
             // If entity doesn't exist in cache - try to add if entity's archetype fit with contains & notContains
-            ref var entArchetype = ref this.world.currentState.storage.archetypes.Get(in entity);
-            /*if (System.Array.IndexOf(this.aliases.arr, "Filter-UnitSpawnSystem") >= 0) {
-
-                UnityEngine.Debug.Log(entArchetype);
-                UnityEngine.Debug.Log(this.archetypeContains);
-                UnityEngine.Debug.Log(this.archetypeNotContains);
-                UnityEngine.Debug.Log(entArchetype.ContainsAll(this.archetypeContains));
-                UnityEngine.Debug.Log(entArchetype.NotContains(this.archetypeNotContains));
-
-            }*/
+            ref var entArchetype = ref this.world.currentState.storage.archetypes.Get(in entity.id);
             if (entArchetype.ContainsAll(in this.archetypeContains) == false) return false;
             if (entArchetype.NotContains(in this.archetypeNotContains) == false) return false;
 
@@ -954,7 +978,7 @@ namespace ME.ECS {
 
                 for (int i = 0; i < this.nodesCount; ++i) {
 
-                    if (this.nodes[i].Execute(entity) == false) {
+                    if (this.nodes.arr[i].Execute(entity) == false) {
 
                         return false;
 
@@ -974,16 +998,17 @@ namespace ME.ECS {
         private bool CheckRemove(in Entity entity) {
 
             // If entity already exists in cache - try to remove if entity's archetype doesn't fit with contains & notContains
-            ref var entArchetype = ref this.world.currentState.storage.archetypes.Get(in entity);
+            ref var entArchetype = ref this.world.currentState.storage.archetypes.Get(in entity.id);
             var allContains = entArchetype.ContainsAll(in this.archetypeContains);
             var allNotContains = entArchetype.NotContains(in this.archetypeNotContains);
-            
+            if (allContains == true && allNotContains == true) return false;
+
             if (this.nodesCount > 0) {
 
                 var isFail = false;
                 for (int i = 0; i < this.nodesCount; ++i) {
 
-                    if (this.nodes[i].Execute(entity) == false) {
+                    if (this.nodes.arr[i].Execute(entity) == false) {
 
                         isFail = true;
                         break;
@@ -995,8 +1020,6 @@ namespace ME.ECS {
                 if (isFail == false) return false;
 
             }
-            
-            if (allContains == true && allNotContains == true) return false;
             
             return this.Remove_INTERNAL(in entity);
 
@@ -1023,7 +1046,7 @@ namespace ME.ECS {
             var hashCode = this.GetType().GetHashCode() ^ this.archetypeContains.GetHashCode() ^ this.archetypeNotContains.GetHashCode();
             for (int i = 0; i < this.nodesCount; ++i) {
 
-                hashCode ^= this.nodes[i].GetType().GetHashCode();
+                hashCode ^= this.nodes.arr[i].GetType().GetHashCode();
 
             }
             
@@ -1059,7 +1082,7 @@ namespace ME.ECS {
                     filter = existsFilter;
                     filter.AddAlias(this.name);
                     #if UNITY_EDITOR
-                    filter.OnEditorFilterAddStackTrace(this.editorStackTraceFile[0], this.editorStackTraceLineNumber[0]);
+                    filter.OnEditorFilterAddStackTrace(this.editorStackTraceFile.arr[0], this.editorStackTraceLineNumber.arr[0]);
                     #endif
                     this.Recycle();
                     return existsFilter;

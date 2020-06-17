@@ -16,7 +16,12 @@
 
     }
 
-    public partial class World {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(NoViewBase prefab) {
@@ -150,7 +155,7 @@ namespace ME.ECS.Views.Providers {
             
             public void Execute(int index) {
 
-                var list = NoViewProvider.currentList[index];
+                var list = NoViewProvider.currentList.arr[index];
                 if (list.mainView == null) return;
                 
                 for (int i = 0, count = list.Length; i < count; ++i) {
@@ -183,7 +188,7 @@ namespace ME.ECS.Views.Providers {
 
                 for (int j = 0; j < list.Length; ++j) {
 
-                    var item = list[j];
+                    var item = list.arr[j];
                     for (int i = 0, count = item.Length; i < count; ++i) {
 
                         var instance = item[i] as NoView;
@@ -201,6 +206,11 @@ namespace ME.ECS.Views.Providers {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct NoViewProviderInitializer : IViewsProviderInitializer {
 
         int System.IComparable<IViewsProviderInitializerBase>.CompareTo(IViewsProviderInitializerBase other) { return 0; }

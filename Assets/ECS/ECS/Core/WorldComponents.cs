@@ -2,43 +2,12 @@
 
 namespace ME.ECS {
 
-    public partial interface IWorldBase {
-
-        #region Regular Components
-        TComponent AddOrGetComponent<TComponent>(Entity entity) where TComponent : class, IComponent, new();
-        TComponent AddComponent<TComponent>(Entity entity) where TComponent : class, IComponent, new();
-        TComponent AddComponent<TComponent>(Entity entity, TComponent data) where TComponent : class, IComponent;
-
-        TComponent AddComponent<TComponent, TComponentType>(Entity entity) where TComponentType : class, IComponent
-                                                                                    where TComponent : class, TComponentType, IComponent, new();
-        TComponent GetComponent<TComponent>(Entity entity) where TComponent : class, IComponent;
-        List<IComponent> ForEachComponent<TComponent>(Entity entity) where TComponent : class, IComponent;
-        bool HasComponent<TComponent>(Entity entity) where TComponent : class, IComponent;
-        void RemoveComponents<TComponent>(Entity entity) where TComponent : class, IComponent;
-        void RemoveComponents(Entity entity);
-        void RemoveComponents<TComponent>() where TComponent : class, IComponent;
-        void RemoveComponentsPredicate<TComponent, TComponentPredicate>(Entity entity, TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent>;
-        #endregion
-        
-        #region Shared Components
-        TComponent AddOrGetComponentShared<TComponent>() where TComponent : class, IComponent, new();
-        TComponent AddComponentShared<TComponent>() where TComponent : class, IComponent, new();
-        TComponent AddComponentShared<TComponent>(TComponent data) where TComponent : class, IComponent;
-        TComponent GetComponentShared<TComponent>() where TComponent : class, IComponent;
-        List<IComponent> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent;
-        bool HasComponentShared<TComponent>() where TComponent : class, IComponent;
-        void RemoveComponentsShared<TComponent>() where TComponent : class, IComponent;
-        void RemoveComponentsSharedPredicate<TComponent, TComponentPredicate>(TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent>;
-        #endregion
-        
-    }
-
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public partial class World : IWorld, IPoolableSpawn, IPoolableRecycle {
+    public sealed partial class World : IPoolableSpawn, IPoolableRecycle {
 
         private Entity sharedEntity;
         private bool sharedEntityInitialized;

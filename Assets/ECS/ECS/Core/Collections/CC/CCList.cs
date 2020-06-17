@@ -3,6 +3,11 @@
     using System;
     using System.Threading;
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public sealed class CCList<T> : ThreadSafeList<T> {
 
         private static readonly int[] sizes;
@@ -35,17 +40,18 @@
         }
 
         public void ClearNoCC() {
-
-            for (int i = 0; i < this.array.Length; ++i) {
-
+            
+            // do we really need to clean it up?
+            /*for (int i = 0; i < this.array.Length; ++i) {
+                
                 ArrayUtils.Clear(this.array[i]);
                 
-            }
-
+            }*/
+            
             this.index = 0;
             this.count = 0;
             this.fuzzyCount = 0;
-
+            
         }
 
         public void InitialCopyOf(CCList<T> other) {

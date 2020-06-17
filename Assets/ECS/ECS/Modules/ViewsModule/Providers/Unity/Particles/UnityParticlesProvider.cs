@@ -4,12 +4,22 @@ namespace ME.ECS {
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial struct WorldViewsSettings {
 
         public bool unityParticlesProviderDisableJobs;
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial struct WorldDebugViewsSettings {
 
         public bool unityParticlesProviderShowOnScene;
@@ -23,7 +33,12 @@ namespace ME.ECS {
 
     }
 
-    public partial class World {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(ParticleViewSourceBase prefab) {
@@ -55,6 +70,11 @@ namespace ME.ECS.Views {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial class ViewsModule {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -122,17 +142,17 @@ namespace ME.ECS.Views.Providers {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref UnityEngine.ParticleSystem.Particle GetRootData() {
 
-            return ref this.items[0].particleData;
+            return ref this.items.arr[0].particleData;
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetRootData(ref UnityEngine.ParticleSystem.Particle data) {
 
-            this.items[0].particleData = data;
+            this.items.arr[0].particleData = data;
             for (int i = 1; i < this.items.Length; ++i) {
 
-                ref var item = ref this.items[i];
+                ref var item = ref this.items.arr[i];
                 item.particleData.position = data.position + item.itemData.localPosition;
                 item.particleData.rotation3D = data.rotation3D + item.itemData.localRotation;
                 item.particleData.startSize3D = UnityEngine.Vector3.Scale(data.startSize3D, item.itemData.localScale);
@@ -212,7 +232,7 @@ namespace ME.ECS.Views.Providers {
 
             for (int i = 0; i < this.items.Length; ++i) {
 
-                this.items[i].itemData.SimulateParticles(time, seed);
+                this.items.arr[i].itemData.SimulateParticles(time, seed);
 
             }
 
@@ -222,7 +242,7 @@ namespace ME.ECS.Views.Providers {
             
             for (int i = 0; i < this.items.Length; ++i) {
 
-                this.items[i].itemData.UpdateParticlesSimulation(deltaTime);
+                this.items.arr[i].itemData.UpdateParticlesSimulation(deltaTime);
 
             }
             
@@ -488,7 +508,7 @@ namespace ME.ECS.Views.Providers {
             particleViewBase.items = PoolArray<ParticleViewBase.Item>.Spawn(prefabSource.items.Length);
             for (int i = 0; i < particleViewBase.items.Length; ++i) {
 
-                particleViewBase.items[i] = prefabSource.items[i];
+                particleViewBase.items.arr[i] = prefabSource.items.arr[i];
 
             }
             
@@ -500,7 +520,7 @@ namespace ME.ECS.Views.Providers {
             for (int i = 0; i < prefabSource.items.Length; ++i) {
 
                 maxParticleCount = 0;
-                ref var source = ref prefabSource.items[i];
+                ref var source = ref prefabSource.items.arr[i];
                 key = source.itemData.GetKey();
                 ParticleSystemItem psItem;
                 if (this.psItems.TryGetValue(key, out psItem) == false) {
@@ -592,7 +612,7 @@ namespace ME.ECS.Views.Providers {
                 psItem.r = 0;
                 if (psItem.ps.particleCount > maxParticleCount) maxParticleCount = psItem.ps.particleCount;
 
-                particleViewBase.items[i].itemData = psItem;
+                particleViewBase.items.arr[i].itemData = psItem;
 
             }
             
@@ -607,7 +627,7 @@ namespace ME.ECS.Views.Providers {
             var view = (ParticleViewBase)instance;
             for (int i = 0; i < view.items.Length; ++i) {
 
-                view.items[i].particleData.startSize = 0f;
+                view.items.arr[i].particleData.startSize = 0f;
 
             }
 
@@ -641,7 +661,7 @@ namespace ME.ECS.Views.Providers {
             
             public void Execute(int index) {
 
-                var list = UnityParticlesProvider.currentList[index];
+                var list = UnityParticlesProvider.currentList.arr[index];
                 if (list.mainView == null) return;
                 
                 for (int i = 0, count = list.Length; i < count; ++i) {
@@ -678,7 +698,7 @@ namespace ME.ECS.Views.Providers {
 
                 for (int j = 0, cnt = list.Length; j < cnt; ++j) {
 
-                    var item = list[j];
+                    var item = list.arr[j];
                     for (int i = 0, count = item.Length; i < count; ++i) {
 
                         var instance = item[i] as ParticleViewBase;
@@ -711,7 +731,7 @@ namespace ME.ECS.Views.Providers {
                 //ps.GetParticles(this.particles, this.maxParticles);
                 for (var id = 0; id < list.Length; ++id) {
                     
-                    var itemsList = list[id];
+                    var itemsList = list.arr[id];
                     if (itemsList.mainView == null) continue;
                     
                     var count = itemsList.Length;
@@ -722,7 +742,7 @@ namespace ME.ECS.Views.Providers {
 
                         for (int j = 0; j < view.items.Length; ++j) {
 
-                            ref var element = ref view.items[j];
+                            ref var element = ref view.items.arr[j];
                             if (element.itemData.ps == ps) {
 
                                 if (element.itemData.lifetime > 0f) {
@@ -741,19 +761,19 @@ namespace ME.ECS.Views.Providers {
                                     element.particleData.remainingLifetime = element.itemData.lifetime;
                                     element.particleData.startLifetime = element.itemData.startLifetime;
                                     element.particleData.startSize = 1f;
-                                    this.particles[k] = element.particleData;
+                                    this.particles.arr[k] = element.particleData;
 
                                     // Just trigger sub system
                                     if (element.itemData.r == 1) {
 
                                         if (element.itemData.simulation == true) {
 
-                                            this.particles[k].remainingLifetime = element.itemData.lifetime / element.itemData.startLifetime;
-                                            this.mainParticleSystem.TriggerSubEmitter(element.itemData.subEmitterIdxInheritedLifetime, ref this.particles[k]);
+                                            this.particles.arr[k].remainingLifetime = element.itemData.lifetime / element.itemData.startLifetime;
+                                            this.mainParticleSystem.TriggerSubEmitter(element.itemData.subEmitterIdxInheritedLifetime, ref this.particles.arr[k]);
 
                                         } else {
 
-                                            this.mainParticleSystem.TriggerSubEmitter(element.itemData.subEmitterIdx, ref this.particles[k]);
+                                            this.mainParticleSystem.TriggerSubEmitter(element.itemData.subEmitterIdx, ref this.particles.arr[k]);
 
                                         }
 
@@ -775,7 +795,7 @@ namespace ME.ECS.Views.Providers {
                                     element.particleData.startLifetime = float.MaxValue;
                                     #endif
 
-                                    this.particlesStatic[staticK] = element.particleData;
+                                    this.particlesStatic.arr[staticK] = element.particleData;
                                     ++staticK;
 
                                 }
@@ -797,6 +817,11 @@ namespace ME.ECS.Views.Providers {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct UnityParticlesProviderInitializer : IViewsProviderInitializer {
 
         int System.IComparable<IViewsProviderInitializerBase>.CompareTo(IViewsProviderInitializerBase other) { return 0; }

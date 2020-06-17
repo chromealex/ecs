@@ -56,7 +56,7 @@ namespace ME.ECSEditor {
 
 	    }
 
-	    public static Entity DrawEntitySelection(World world, in Entity entity, bool checkAlive) {
+	    public static Entity DrawEntitySelection(World world, in Entity entity, bool checkAlive, bool drawSelectButton = true) {
 		    
 		    ref var currentEntity = ref world.GetEntityById(in entity.id);
 		    if (checkAlive == true && entity.IsAlive() == false) {
@@ -74,7 +74,7 @@ namespace ME.ECSEditor {
 
 		    }
 
-		    if (currentEntity.version > 0) {
+		    if (drawSelectButton == true && currentEntity.version > 0) {
 
 			    UnityEngine.GUILayout.BeginHorizontal();
 			    UnityEngine.GUILayout.FlexibleSpace();
@@ -234,7 +234,7 @@ namespace ME.ECSEditor {
 		                var registries = componentsStructStorage.GetAllRegistries();
 		                for (int i = 0; i < registries.Length; ++i) {
 		                
-			                var registry = registries[i];
+			                var registry = registries.arr[i];
 			                if (registry == null) continue;
 			                if (registry.HasType(addType) == true) {
 

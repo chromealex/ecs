@@ -71,7 +71,7 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class StructComponents<TComponent> : StructRegistryBase where TComponent : struct, IStructComponent {
+    public sealed class StructComponents<TComponent> : StructRegistryBase where TComponent : struct, IStructComponent {
 
         internal BufferArray<TComponent> components;
         internal BufferArray<byte> componentsStates;
@@ -93,9 +93,10 @@ namespace ME.ECS {
                 
                 if (state - 1 == step) {
                     
-                    state = 0;
-                    
                     ref var entity = ref world.GetEntityById(in i);
+                    if (entity.version == 0) return;
+                    
+                    state = 0;
                     this.components.arr[i] = default;
                     if (world.currentState.filters.HasInFilters<TComponent>() == true) world.currentState.storage.archetypes.Remove<TComponent>(in entity);
                     --world.currentState.structComponents.count;
@@ -336,11 +337,11 @@ namespace ME.ECS {
 
     }
     
-    /*#if ECS_COMPILE_IL2CPP_OPTIONS
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-    #endif*/
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct StructComponentsContainer : IStructComponentsContainer {
 
         internal interface ITask {
@@ -796,7 +797,7 @@ namespace ME.ECS {
 
             if (componentsContainer.IsCreated() == false) {
 
-                componentsContainer = new StructComponentsContainer(); //PoolClass<StructComponentsContainer>.Spawn();
+                //componentsContainer = new StructComponentsContainer();
                 componentsContainer.Initialize(freeze);
 
             }
@@ -894,6 +895,43 @@ namespace ME.ECS {
             
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public ref byte SetData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
+            
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldStateCheck();
+                
+            }
+            #endif
+
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+            
+            // Inline all manually
+            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
+            var reg = (StructComponents<TComponent>)r;
+            reg.components.arr[entity.id] = default;
+            ref var state = ref reg.componentsStates.arr[entity.id];
+            if (state == 0) {
+
+                state = 1;
+                if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
+                ++this.currentState.structComponents.count;
+                this.AddComponentToFilter(entity);
+
+            }
+
+            return ref state;
+
+        }
+
         /// <summary>
         /// Lifetime default is Infinite
         /// </summary>
@@ -975,12 +1013,50 @@ namespace ME.ECS {
         }
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void SetData<TComponent>(in Entity entity, in ComponentLifetime lifetime) where TComponent : struct, IStructComponent {
+
+            if (lifetime == ComponentLifetime.NotifyAllModules ||
+                lifetime == ComponentLifetime.NotifyAllSystems) {
+
+                if (this.HasData<TComponent>(in entity) == true) return;
+                
+                var task = PoolClass<StructComponentsContainer.NextFrameTask<TComponent>>.Spawn();
+                task.world = this;
+                task.entity = entity;
+                task.data = default;
+
+                if (lifetime == ComponentLifetime.NotifyAllModules) {
+
+                    task.lifetime = ComponentLifetime.NotifyAllModulesBelow;
+
+                    this.currentState.structComponents.nextFrameTasks.Add(task);
+                    
+                } else if (lifetime == ComponentLifetime.NotifyAllSystems) {
+                    
+                    task.lifetime = ComponentLifetime.NotifyAllSystemsBelow;
+
+                    this.currentState.structComponents.nextTickTasks.Add(task);
+
+                }
+
+            } else {
+
+                ref var state = ref this.SetData<TComponent>(in entity);
+
+                if (lifetime == ComponentLifetime.Infinite) return;
+                state = (byte)(lifetime + 1);
+
+            }
+
+        }
+        
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetData<TComponent>(in Entity entity, in TComponent data, in ComponentLifetime lifetime) where TComponent : struct, IStructComponent {
 
             if (lifetime == ComponentLifetime.NotifyAllModules ||
                 lifetime == ComponentLifetime.NotifyAllSystems) {
 
-                if (entity.HasData<TComponent>() == true) return;
+                if (this.HasData<TComponent>(in entity) == true) return;
                 
                 var task = PoolClass<StructComponentsContainer.NextFrameTask<TComponent>>.Spawn();
                 task.world = this;

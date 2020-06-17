@@ -11,7 +11,7 @@
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class NetworkModule : ME.ECS.Network.NetworkModule<TState> {
+    public sealed class NetworkModule : ME.ECS.Network.NetworkModule<TState> {
 
         protected override int GetRPCOrder() {
 

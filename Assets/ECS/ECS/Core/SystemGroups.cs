@@ -3,6 +3,11 @@
     using ME.ECS.Collections;
     using System.Collections.Generic;
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct SystemGroup {
 
         public string name;
@@ -30,13 +35,13 @@
             
             for (int i = 0; i < this.systems.Count; ++i) {
                 
-                this.systems[i].OnDeconstruct();
-                if (this.systems[i] is ISystemFilter systemFilter) {
+                this.systems.arr[i].OnDeconstruct();
+                if (this.systems.arr[i] is ISystemFilter systemFilter) {
 
                     systemFilter.filter = null;
 
                 }
-                PoolSystems.Recycle(this.systems[i]);
+                PoolSystems.Recycle(this.systems.arr[i]);
 
             }
             PoolArray<ISystemBase>.Recycle(ref this.systems);
@@ -49,7 +54,7 @@
             var index = this.systems.IndexOf(system);
             if (index >= 0) {
 
-                this.statesSystems[index] = state;
+                this.statesSystems.arr[index] = state;
                 return true;
 
             }
@@ -63,7 +68,7 @@
             var index = this.systems.IndexOf(system);
             if (index >= 0) {
 
-                state = this.statesSystems[index];
+                state = this.statesSystems.arr[index];
                 return true;
 
             }
@@ -79,11 +84,11 @@
             var step = this.world.currentStep;
             if ((step & WorldStep.LogicTick) != 0) {
 
-                return (this.statesSystems[index] & ModuleState.LogicInactive) == 0;
+                return (this.statesSystems.arr[index] & ModuleState.LogicInactive) == 0;
 
             } else if ((step & WorldStep.VisualTick) != 0) {
 
-                return (this.statesSystems[index] & ModuleState.VisualInactive) == 0;
+                return (this.statesSystems.arr[index] & ModuleState.VisualInactive) == 0;
 
             }
 
@@ -106,7 +111,7 @@
 
             for (int i = 0, count = this.systems.Length; i < count; ++i) {
 
-                if (this.systems[i] is TSystem) return true;
+                if (this.systems.arr[i] is TSystem) return true;
 
             }
 
@@ -172,8 +177,8 @@
             ArrayUtils.Resize(in k, ref this.statesSystems, resizeWithOffset: false);
             ++this.length;
             
-            this.systems[k] = instance;
-            this.statesSystems[k] = ModuleState.AllActive;
+            this.systems.arr[k] = instance;
+            this.statesSystems.arr[k] = ModuleState.AllActive;
             instance.OnConstruct();
 
             if (instance is ISystemFilter systemFilter) {
@@ -236,7 +241,7 @@
 
             for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
-                var system = this.systems[i];
+                var system = this.systems.arr[i];
                 if (system is TSystem tSystem) {
 
                     return tSystem;
@@ -263,7 +268,7 @@
 
             for (int i = 0, count = this.systems.Count; i < count; ++i) {
 
-                var system = this.systems[i];
+                var system = this.systems.arr[i];
                 if (system is TSystem tSystem) {
 
                     PoolSystems.Recycle(tSystem);

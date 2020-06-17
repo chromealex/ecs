@@ -4,12 +4,22 @@ namespace ME.ECS {
     using ME.ECS.Views;
     using ME.ECS.Views.Providers;
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial struct WorldViewsSettings {
 
         public bool unityGameObjectProviderDisableJobs;
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial struct WorldDebugViewsSettings {
 
         public bool unityGameObjectProviderShowOnScene;
@@ -25,7 +35,12 @@ namespace ME.ECS {
 
     }
     
-    public partial class World {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ViewId RegisterViewSource(UnityEngine.GameObject prefab) {
@@ -90,6 +105,11 @@ namespace ME.ECS.Views {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public partial class ViewsModule {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -188,6 +208,11 @@ namespace ME.ECS.Views.Providers {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public abstract class PhysicsView : MonoBehaviourView {
         
         new public UnityEngine.Rigidbody rigidbody;
@@ -352,7 +377,7 @@ namespace ME.ECS.Views.Providers {
                     var k = 0;
                     for (int i = 0, length = list.Length; i < length; ++i) {
 
-                        var item = list[i];
+                        var item = list.arr[i];
                         if (item.isNotEmpty == false) continue;
 
                         for (int j = 0, count = item.Length; j < count; ++j) {
@@ -366,7 +391,7 @@ namespace ME.ECS.Views.Providers {
                                 if (k >= this.tempList.Count) {
 
                                     this.tempList.Add(view);
-                                    this.currentTransforms[k] = view.transform;
+                                    this.currentTransforms.arr[k] = view.transform;
                                     isNew = true;
 
                                 }
@@ -378,7 +403,7 @@ namespace ME.ECS.Views.Providers {
                                     tempItem.entity != view.entity) {
 
                                     this.tempList[k] = view;
-                                    this.currentTransforms[k] = view.transform;
+                                    this.currentTransforms.arr[k] = view.transform;
                                     changed = true;
 
                                 }
@@ -424,6 +449,11 @@ namespace ME.ECS.Views.Providers {
 
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct UnityGameObjectProviderInitializer : IViewsProviderInitializer {
 
         int System.IComparable<IViewsProviderInitializerBase>.CompareTo(IViewsProviderInitializerBase other) { return 0; }

@@ -26,6 +26,11 @@ namespace ME.ECS {
 
     }
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public static partial class EntityExtensions {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -44,7 +49,12 @@ namespace ME.ECS {
 
     }
 
-    public partial class World {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed partial class World {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         partial void DestroyEntityPlugin2(Entity entity) {
@@ -226,6 +236,11 @@ namespace ME.ECS.Views {
     }
     #endif
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public readonly struct ViewInfo : System.IEquatable<ViewInfo> {
 
         public readonly Entity entity;
@@ -275,7 +290,12 @@ namespace ME.ECS.Views {
     /// <summary>
     /// Private component class to describe Views
     /// </summary>
-    public class ViewComponent : IComponentCopyable, IViewComponent {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed class ViewComponent : IComponentCopyable, IViewComponent {
 
         public ViewInfo viewInfo;
         public uint seed;
@@ -305,7 +325,12 @@ namespace ME.ECS.Views {
 
     public interface IViewComponentRequest<TState> : IComponentCopyable where TState : IStateBase {}
 
-    public class DestroyViewComponentRequest<TState> : IViewComponentRequest<TState> where TState : IStateBase {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed class DestroyViewComponentRequest<TState> : IViewComponentRequest<TState> where TState : IStateBase {
 
         public ViewInfo viewInfo;
         public IView viewInstance;
@@ -327,7 +352,12 @@ namespace ME.ECS.Views {
 
     }
 
-    public class CreateViewComponentRequest<TState> : IViewComponentRequest<TState> where TState : IStateBase {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed class CreateViewComponentRequest<TState> : IViewComponentRequest<TState> where TState : IStateBase {
 
         public ViewInfo viewInfo;
         public uint seed;
@@ -352,6 +382,11 @@ namespace ME.ECS.Views {
     /// <summary>
     /// Private predicate to filter components
     /// </summary>
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct RemoveComponentViewPredicate : IComponentPredicate<ViewComponent> {
 
         public int entityId;
@@ -373,6 +408,11 @@ namespace ME.ECS.Views {
         
     }
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public struct Views {
 
         public IView mainView;
@@ -553,7 +593,7 @@ namespace ME.ECS.Views {
 
             for (int i = 0; i < this.list.Length; ++i) {
 
-                var views = this.list[i];
+                var views = this.list.arr[i];
                 if (views.otherViews != null) PoolList<IView>.Recycle(views.otherViews);
                 
             }
@@ -699,7 +739,7 @@ namespace ME.ECS.Views {
 
             if (entity.id >= this.list.Length) return;
             
-            var views = this.list[entity.id];
+            var views = this.list.arr[entity.id];
             if (views.mainView == null) return;
 
             this.DestroyView(ref views.mainView);
@@ -801,7 +841,7 @@ namespace ME.ECS.Views {
             var id = instance.entity.id;
             ArrayUtils.Resize(in id, ref this.list);
 
-            this.list[id].Add(instance);
+            this.list.arr[id].Add(instance);
             
             var viewInfo = new ViewInfo(instance.entity, instance.prefabSourceId, instance.creationTick);
             this.rendering.Add(viewInfo);
@@ -818,7 +858,7 @@ namespace ME.ECS.Views {
             var id = instance.entity.id;
             if (id < this.list.Length) {
 
-                this.list[id].Remove(instance);
+                this.list.arr[id].Remove(instance);
 
             }
 
@@ -911,7 +951,7 @@ namespace ME.ECS.Views {
 
             for (var id = this.list.Length - 1; id >= 0; --id) {
                 
-                ref var views = ref this.list[id];
+                ref var views = ref this.list.arr[id];
                 if (views.mainView == null) continue;
                 
                 if (aliveEntities.Contains(id) == false) {
@@ -987,7 +1027,7 @@ namespace ME.ECS.Views {
             
             for (var id = 0; id < this.list.Length; ++id) {
                 
-                ref var list = ref this.list[id];
+                ref var list = ref this.list.arr[id];
                 if (list.mainView == null) continue;
                 
                 for (int i = 0, count = list.Length; i < count; ++i) {
@@ -1009,7 +1049,7 @@ namespace ME.ECS.Views {
 
             for (var id = 0; id < this.list.Length; ++id) {
                 
-                ref var list = ref this.list[id];
+                ref var list = ref this.list.arr[id];
                 if (list.mainView == null) continue;
                 
                 for (int i = 0, count = list.Length; i < count; ++i) {

@@ -21,7 +21,12 @@ namespace ME.ECS.Collections {
 
     }
 
-    public class RefList<T> : IRefList, IPoolableRecycle, IPoolableSpawn {
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
+    public sealed class RefList<T> : IRefList, IPoolableRecycle, IPoolableSpawn {
         
         private BufferArray<T> arr;
         // TODO: Add int[] next array which determine next index in arr (useful for enumeration)
@@ -108,25 +113,25 @@ namespace ME.ECS.Collections {
         public ref T this[int index] {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
-                return ref this.arr[index];
+                return ref this.arr.arr[index];
             }
         }
 
         public TData Get<TData>(int index) {
 
-            return (TData)(object)this.arr[index];
+            return (TData)(object)this.arr.arr[index];
 
         }
 
         public void Set<TData>(int index, TData data) {
 
-            this.arr[index] = (T)(object)data;
+            this.arr.arr[index] = (T)(object)data;
 
         }
 
         public void SetData(int index, T data) {
 
-            this.arr[index] = data;
+            this.arr.arr[index] = data;
 
         }
 
@@ -194,7 +199,7 @@ namespace ME.ECS.Collections {
 
             }
             
-            this.arr[nextIndex] = data;
+            this.arr.arr[nextIndex] = data;
             this.UpdateFromTo(nextIndex);
             ++this.count;
             

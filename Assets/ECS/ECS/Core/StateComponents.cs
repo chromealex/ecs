@@ -5,37 +5,12 @@ namespace ME.ECS {
 
     using Collections;
     
-    public interface IComponentsBase {
-
-        IList<IComponentBase> GetData(int entityId);
-        
-    }
-
-    public interface IComponents : IComponentsBase, IPoolableRecycle {
-
-        int Count { get; }
-
-        int RemoveAll(int entityId);
-        int RemoveAll<TComponent>(int entityId) where TComponent : class, IComponent;
-        int RemoveAll<TComponent>() where TComponent : class, IComponent;
-
-        int RemoveAllPredicate<TComponent, TComponentPredicate>(int entityId, TComponentPredicate predicate) where TComponent : class, IComponent where TComponentPredicate : IComponentPredicate<TComponent>;
-
-        void Add<TComponent>(int entityId, TComponent data) where TComponent : class, IComponent;
-        bool Contains<TComponent>(int entityId) where TComponent : class, IComponent;
-        List<IComponent> ForEach<TComponent>(int entityId) where TComponent : class, IComponent;
-        TComponent GetFirst<TComponent>(int entityId) where TComponent : class, IComponent;
-
-        void CopyFrom(Components other);
-
-    }
-
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public class Components : IComponents {
+    public sealed class Components : IPoolableRecycle {
 
         private static class ComponentType<TComponent> {
 
@@ -79,7 +54,7 @@ namespace ME.ECS {
                 var count = 0;
                 for (int i = 0; i < this.buckets.Length; ++i) {
 
-                    if (this.buckets[i].components.arr != null) count += this.buckets[i].components.Length;
+                    if (this.buckets.arr[i].components.arr != null) count += this.buckets.arr[i].components.Length;
 
                 }
 
@@ -95,10 +70,10 @@ namespace ME.ECS {
             var typeId = Components.GetTypeId<TComponent>();
             if (typeId < 0 || typeId >= this.buckets.Length) return count;
 
-            ref var bucket = ref this.buckets[typeId];
+            ref var bucket = ref this.buckets.arr[typeId];
             if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length) return count;
 
-            ref var list = ref bucket.components[entityId];
+            ref var list = ref bucket.components.arr[entityId];
             if (list == null) return count;
             
             for (int i = list.Count - 1; i >= 0; --i) {
@@ -134,12 +109,12 @@ namespace ME.ECS {
             var count = 0;
             for (int j = 0; j < this.buckets.Length; ++j) {
 
-                ref var bucket = ref this.buckets[j];
+                ref var bucket = ref this.buckets.arr[j];
                 if (bucket.components.arr == null) continue;
                 
                 for (int k = 0; k < bucket.components.Length; ++k) {
 
-                    var list = bucket.components[k];
+                    var list = bucket.components.arr[k];
                     if (list == null) continue;
 
                     for (int i = list.Count - 1; i >= 0; --i) {
@@ -169,10 +144,10 @@ namespace ME.ECS {
             var typeId = Components.GetTypeId<TComponent>();
             if (typeId < 0 || typeId >= this.buckets.Length) return count;
 
-            ref var bucket = ref this.buckets[typeId];
+            ref var bucket = ref this.buckets.arr[typeId];
             if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length) return count;
 
-            var list = bucket.components[entityId];
+            var list = bucket.components.arr[entityId];
             if (list == null) return 0;
                     
             for (int i = list.Count - 1; i >= 0; --i) {
@@ -193,10 +168,10 @@ namespace ME.ECS {
             var count = 0;
             for (int i = 0; i < this.buckets.Length; ++i) {
 
-                ref var bucket = ref this.buckets[i];
+                ref var bucket = ref this.buckets.arr[i];
                 if (bucket.components.arr != null && entityId >= 0 && entityId < bucket.components.Length) {
 
-                    ref var list = ref bucket.components[entityId];
+                    ref var list = ref bucket.components.arr[entityId];
                     if (list == null) return 0;
                     
                     count += list.Count;
@@ -229,11 +204,11 @@ namespace ME.ECS {
             var typeId = Components.GetTypeId<TComponent>();
             ArrayUtils.Resize(typeId, ref this.buckets);
             
-            ref var bucket = ref this.buckets[typeId];
+            ref var bucket = ref this.buckets.arr[typeId];
             ArrayUtils.Resize(entityId, ref bucket.components);
 
-            if (bucket.components[entityId] == null) bucket.components[entityId] = PoolList<IComponent>.Spawn(1);
-            bucket.components[entityId].Add(data);
+            if (bucket.components.arr[entityId] == null) bucket.components.arr[entityId] = PoolList<IComponent>.Spawn(1);
+            bucket.components.arr[entityId].Add(data);
 
         }
         
@@ -242,10 +217,10 @@ namespace ME.ECS {
             var typeId = Components.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.buckets.Length) {
 
-                ref var bucket = ref this.buckets[typeId];
-                if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) return null;
+                ref var bucket = ref this.buckets.arr[typeId];
+                if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components.arr[entityId] == null) return null;
                 
-                var list = bucket.components[entityId];
+                var list = bucket.components.arr[entityId];
                 if (list.Count > 0) return list[0] as TComponent;
 
             }
@@ -265,10 +240,10 @@ namespace ME.ECS {
             var typeId = Components.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.buckets.Length) {
 
-                ref var bucket = ref this.buckets[typeId];
-                if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) return null;
+                ref var bucket = ref this.buckets.arr[typeId];
+                if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components.arr[entityId] == null) return null;
                 
-                return bucket.components[entityId];
+                return bucket.components.arr[entityId];
                 
             }
 
@@ -281,10 +256,10 @@ namespace ME.ECS {
             var typeId = Components.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.buckets.Length) {
 
-                ref var bucket = ref this.buckets[typeId];
-                if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) return false;
+                ref var bucket = ref this.buckets.arr[typeId];
+                if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components.arr[entityId] == null) return false;
 
-                return bucket.components[entityId].Count > 0;
+                return bucket.components.arr[entityId].Count > 0;
 
             }
             
@@ -292,15 +267,15 @@ namespace ME.ECS {
 
         }
 
-        IList<IComponentBase> IComponentsBase.GetData(int entityId) {
+        public IList<IComponentBase> GetData(int entityId) {
 
             var list = new List<IComponentBase>();
             for (int i = 0; i < this.buckets.Length; ++i) {
 
-                var bucket = this.buckets[i];
-                if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components[entityId] == null) continue;
+                var bucket = this.buckets.arr[i];
+                if (bucket.components.arr == null || entityId < 0 || entityId >= bucket.components.Length || bucket.components.arr[entityId] == null) continue;
 
-                list.AddRange(bucket.components[entityId]);
+                list.AddRange(bucket.components.arr[entityId]);
 
             }
 
@@ -315,7 +290,7 @@ namespace ME.ECS {
             
             for (int i = 0; i < this.buckets.Length; ++i) {
 
-                ref var bucket = ref this.buckets[i];
+                ref var bucket = ref this.buckets.arr[i];
                 if (bucket.components.arr != null) {
 
                     for (int j = 0; j < bucket.components.Length; ++j) {

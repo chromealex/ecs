@@ -108,6 +108,6 @@ entity.SetData(new YourStructComponent());
 entity.SetData(new YourAnotherStructComponent(), ComponentLifetime.NotifyAllSystemsBelow);
 ```
 
-> Note! If you set **not Infinite** lifetime and after that set **Infinite** lifetime, Infinite will be ignored. First you need to call **RemoveData** before set another lifetime.
+> Note! If you set **Infinite** lifetime and after that set **non-Infinite** lifetime, **non-Infinite** will be ignored. First you need to call **RemoveData** before set another lifetime.
         
 [![](Footer.png)](/../../#glossary)

@@ -11,29 +11,14 @@ namespace ME.ECSEditor {
         [UnityEditor.MenuItem(AllGenerators.MENU_ITEM, true)]
         public static bool CompileMenuValidate() {
 
-            AOTGenerator.Init();
+            StructComponentsGenerator.Init();
             var isValid = Generator.IsValidToCompile();
-            if (isValid == true) {
-                
-                StructComponentsGenerator.Init();
-                isValid = Generator.IsValidToCompile();
-                if (isValid == true) {
-
-                    return true;
-
-                }
-                
-            }
-
-            return false;
+            return isValid;
 
         }
 
         [UnityEditor.MenuItem(AllGenerators.MENU_ITEM)]
         public static void CompileMenu() {
-
-            AOTGenerator.Init();
-            Generator.Compile();
 
             StructComponentsGenerator.Init();
             Generator.Compile();

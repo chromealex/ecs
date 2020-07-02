@@ -18,8 +18,8 @@ public class YourSystem : ISystemFilter {
     
     bool ISystemFilter.jobs => false; // Do you need jobs?
     int ISystemFilter.jobsBatchCount => 64; // If you have jobs, how it should be batched?
-    IFilter ISystemFilter.filter { get; set; }
-    IFilter ISystemFilter.CreateFilter() {
+    Filter ISystemFilter.filter { get; set; }
+    Filter ISystemFilter.CreateFilter() {
         
 	// Here you should define default system filter
         return Filter.Create("Filter-YourSystem").[...].Push();

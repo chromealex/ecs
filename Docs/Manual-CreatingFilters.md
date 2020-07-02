@@ -5,7 +5,7 @@ By default in **System with Filter** you have already defined filter and have a 
 
 But sometimes you need to create filters manually in constructors like this:
 ```csharp
-IFilter filter;
+Filter filter;
 
 void ISystemBase.OnConstruct() {
 

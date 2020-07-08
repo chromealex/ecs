@@ -18,7 +18,7 @@ namespace #NAMESPACE# {
     #endif
     public sealed class #PROJECTNAME#Initializer : InitializerBase {
 
-        private World<TState> world;
+        private World world;
 
         public void Update() {
 

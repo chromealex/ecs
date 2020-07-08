@@ -660,55 +660,55 @@ namespace ME.ECS.Network {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1>(object instance, RPCId rpcId, T1 p1) /*where T1 : struct*/ {
 
-            var arr = PoolArray<object>.Spawn(1);
-            arr.arr[0] = p1;
-            this.CallRPC(instance, rpcId, true, arr.arr);
+            var arr = new object[1];
+            arr[0] = p1;
+            this.CallRPC(instance, rpcId, true, arr);
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1, T2>(object instance, RPCId rpcId, T1 p1, T2 p2) /*where T1 : struct where T2 : struct*/ {
 
-            var arr = PoolArray<object>.Spawn(2);
-            arr.arr[0] = p1;
-            arr.arr[1] = p2;
-            this.CallRPC(instance, rpcId, true, arr.arr);
+            var arr = new object[2];
+            arr[0] = p1;
+            arr[1] = p2;
+            this.CallRPC(instance, rpcId, true, arr);
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1, T2, T3>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3) /*where T1 : struct where T2 : struct where T3 : struct*/ {
 
-            var arr = PoolArray<object>.Spawn(3);
-            arr.arr[0] = p1;
-            arr.arr[1] = p2;
-            arr.arr[2] = p3;
-            this.CallRPC(instance, rpcId, true, arr.arr);
+            var arr = new object[3];
+            arr[0] = p1;
+            arr[1] = p2;
+            arr[2] = p3;
+            this.CallRPC(instance, rpcId, true, arr);
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1, T2, T3, T4>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4) /*where T1 : struct where T2 : struct where T3 : struct where T4 : struct*/ {
 
-            var arr = PoolArray<object>.Spawn(4);
-            arr.arr[0] = p1;
-            arr.arr[1] = p2;
-            arr.arr[2] = p3;
-            arr.arr[3] = p4;
-            this.CallRPC(instance, rpcId, true, arr.arr);
+            var arr = new object[4];
+            arr[0] = p1;
+            arr[1] = p2;
+            arr[2] = p3;
+            arr[3] = p4;
+            this.CallRPC(instance, rpcId, true, arr);
             
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void RPC<T1, T2, T3, T4, T5>(object instance, RPCId rpcId, T1 p1, T2 p2, T3 p3, T4 p4, T5 p5) /*where T1 : struct where T2 : struct where T3 : struct where T4 : struct where T5 : struct*/ {
 
-            var arr = PoolArray<object>.Spawn(5);
-            arr.arr[0] = p1;
-            arr.arr[1] = p2;
-            arr.arr[2] = p3;
-            arr.arr[3] = p4;
-            arr.arr[4] = p5;
-            this.CallRPC(instance, rpcId, true, arr.arr);
+            var arr = new object[5];
+            arr[0] = p1;
+            arr[1] = p2;
+            arr[2] = p3;
+            arr[3] = p4;
+            arr[4] = p5;
+            this.CallRPC(instance, rpcId, true, arr);
             
         }
 

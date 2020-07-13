@@ -186,6 +186,7 @@ namespace ME.ECS.Views {
         void DoInitialize();
         void DoDeInitialize();
         void ApplyState(float deltaTime, bool immediately);
+        void ApplyPhysicsState(float deltaTime);
         
         void UpdateParticlesSimulation(float deltaTime);
         void SimulateParticles(float time, uint seed);
@@ -1032,7 +1033,7 @@ namespace ME.ECS.Views {
                 
                 for (int i = 0, count = list.Length; i < count; ++i) {
 
-                    var instance = list[i] as ME.ECS.Views.Providers.MonoBehaviourView;
+                    var instance = list[i];
                     if (instance != null) instance.ApplyPhysicsState(deltaTime);
                     
                 }

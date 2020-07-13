@@ -656,7 +656,34 @@ namespace ME.ECS {
         #endif
         public void OnRecycle() {
 
+            for (int i = 0; i < this.nextFrameTasks.array.Length; ++i) {
+
+                if (this.nextFrameTasks.array[i] == null) continue;
+                
+                for (int j = 0; j < this.nextFrameTasks.array[i].Length; ++j) {
+                    
+                    if (this.nextFrameTasks.array[i][j] == null) continue;
+
+                    this.nextFrameTasks.array[i][j].Recycle();
+                    
+                }
+                
+            }
             PoolCCList<ITask>.Recycle(ref this.nextFrameTasks);
+            
+            for (int i = 0; i < this.nextTickTasks.array.Length; ++i) {
+
+                if (this.nextTickTasks.array[i] == null) continue;
+                
+                for (int j = 0; j < this.nextTickTasks.array[i].Length; ++j) {
+                    
+                    if (this.nextTickTasks.array[i][j] == null) continue;
+                    
+                    this.nextTickTasks.array[i][j].Recycle();
+                    
+                }
+                
+            }
             PoolCCList<ITask>.Recycle(ref this.nextTickTasks);
             
             for (int i = 0; i < this.list.Length; ++i) {
@@ -694,15 +721,23 @@ namespace ME.ECS {
             this.nextFrameTasks.InitialCopyOf(other.nextFrameTasks);
             for (int i = 0; i < other.nextFrameTasks.array.Length; ++i) {
 
-                if (other.nextFrameTasks.array[i] == null) continue;
+                if (other.nextFrameTasks.array[i] == null) {
+                    
+                    this.nextFrameTasks.array[i] = null;
+                    continue;
+                    
+                }
                 
                 for (int j = 0; j < other.nextFrameTasks.array[i].Length; ++j) {
 
                     var item = other.nextFrameTasks.array[i][j];
                     if (item == null) {
+                        
                         this.nextFrameTasks.array[i][j] = null;
                         continue;
+                        
                     }
+                    
                     var copy = item.Clone();
                     this.nextFrameTasks.array[i][j] = copy;
 
@@ -714,15 +749,23 @@ namespace ME.ECS {
             this.nextTickTasks.InitialCopyOf(other.nextTickTasks);
             for (int i = 0; i < other.nextTickTasks.array.Length; ++i) {
 
-                if (other.nextTickTasks.array[i] == null) continue;
+                if (other.nextTickTasks.array[i] == null) {
+
+                    this.nextTickTasks.array[i] = null;
+                    continue;
+                    
+                }
 
                 for (int j = 0; j < other.nextTickTasks.array[i].Length; ++j) {
 
                     var item = other.nextTickTasks.array[i][j];
                     if (item == null) {
+                        
                         this.nextTickTasks.array[i][j] = null;
                         continue;
+                        
                     }
+                    
                     var copy = item.Clone();
                     this.nextTickTasks.array[i][j] = copy;
 
@@ -1015,6 +1058,22 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetData<TComponent>(in Entity entity, in ComponentLifetime lifetime) where TComponent : struct, IStructComponent {
 
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldStateCheck();
+                
+            }
+            #endif
+
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
             if (lifetime == ComponentLifetime.NotifyAllModules ||
                 lifetime == ComponentLifetime.NotifyAllSystems) {
 
@@ -1052,6 +1111,22 @@ namespace ME.ECS {
         
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void SetData<TComponent>(in Entity entity, in TComponent data, in ComponentLifetime lifetime) where TComponent : struct, IStructComponent {
+
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldStateCheck();
+                
+            }
+            #endif
+
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
 
             if (lifetime == ComponentLifetime.NotifyAllModules ||
                 lifetime == ComponentLifetime.NotifyAllSystems) {

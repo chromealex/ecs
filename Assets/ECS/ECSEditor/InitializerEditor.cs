@@ -159,6 +159,7 @@ namespace ME.ECSEditor {
         }
 
         public Entity entity;
+        private float drawWidth;
         
         //private GUIStyle addButtonStyleSaved;
         private System.Collections.Generic.Dictionary<System.Type, IDebugViewGUIEditor<InitializerBase>> viewsDebugEditors;
@@ -353,6 +354,7 @@ namespace ME.ECSEditor {
             EditorGUILayout.Space();
             
             EditorGUI.BeginDisabledGroup(EditorApplication.isPlaying == true || EditorApplication.isPaused == true);
+            this.drawWidth = GUILayoutUtility.GetLastRect().width;
             this.list.DoLayoutList();
             EditorGUI.EndDisabledGroup();
 
@@ -541,7 +543,16 @@ namespace ME.ECSEditor {
             var height = InitializerEditor.ONE_LINE_HEIGHT;
 
             if (featureData.feature != null) { // Draw systems
+                
+                var editorComment = featureData.feature.editorComment;
+                if (string.IsNullOrEmpty(editorComment) == false) {
 
+                    var style = EditorStyles.label;
+                    var content = new GUIContent(editorComment);
+                    height += style.CalcHeight(content, this.drawWidth);
+                    
+                }
+                
                 var count = this.GetSystemsCount(featureData.feature);
                 if (count > 0) {
 
@@ -659,10 +670,24 @@ namespace ME.ECSEditor {
 
             }
 
-            if (featureData.feature != null) { // Draw systems
+            if (featureData.feature != null) { // Draw feature
 
                 rect.x += rectCheckBox.width + 14f;
 
+                var editorComment = featureData.feature.editorComment;
+                if (string.IsNullOrEmpty(editorComment) == false) {
+
+                    var style = EditorStyles.label;
+                    var content = new GUIContent(editorComment);
+                    var newRect = new Rect(rect);
+                    newRect.height = style.CalcHeight(content, rect.width);
+                    newRect.width = rect.width;
+                    newRect.y += InitializerEditor.ONE_LINE_HEIGHT;
+                    GUI.Label(newRect, content, style);
+                    rect.y += newRect.height;
+
+                }
+                
                 var count = this.GetSystemsCount(featureData.feature);
                 if (count > 0) {
 

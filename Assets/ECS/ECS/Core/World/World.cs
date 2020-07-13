@@ -1262,8 +1262,8 @@ namespace ME.ECS {
 
                     instance.world = null;
                     PoolModules.Recycle(ref instance);
-                    throw new System.Exception("Couldn't add new module `" + instanceValidate + "`(" + nameof(TModule) + ") because of CouldBeAdded() returns false.");
-                    //return false;
+                    //throw new System.Exception("Couldn't add new module `" + instanceValidate + "`(" + nameof(TModule) + ") because of CouldBeAdded() returns false.");
+                    return false;
                     
                 }
 

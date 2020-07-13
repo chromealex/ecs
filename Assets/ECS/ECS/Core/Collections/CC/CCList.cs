@@ -8,7 +8,7 @@
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public sealed class CCList<T> : ThreadSafeList<T> {
+    public sealed class CCList<T> : ThreadSafeList<T>, IPoolableRecycle {
 
         private static readonly int[] sizes;
         private static readonly int[] counts;
@@ -42,11 +42,11 @@
         public void ClearNoCC() {
             
             // do we really need to clean it up?
-            /*for (int i = 0; i < this.array.Length; ++i) {
+            for (int i = 0; i < this.array.Length; ++i) {
                 
                 ArrayUtils.Clear(this.array[i]);
                 
-            }*/
+            }
             
             this.index = 0;
             this.count = 0;
@@ -54,13 +54,36 @@
             
         }
 
+        public void OnRecycle() {
+            
+            for (int i = 0; i < this.array.Length; ++i) {
+
+                if (this.array[i] != null) {
+                    
+                    PoolArray<T>.Release(ref this.array[i]);
+                    
+                }
+                
+            }
+
+            this.index = 0;
+            this.count = 0;
+            this.fuzzyCount = 0;
+
+        }
+        
         public void InitialCopyOf(CCList<T> other) {
 
             for (int i = 0; i < other.array.Length; ++i) {
 
-                if (this.array[i] == null && other.array[i] != null) {
+                if (other.array[i] != null) {
                     
+                    if (this.array[i] != null) PoolArray<T>.Release(ref this.array[i]);
                     this.array[i] = PoolArray<T>.Claim(other.array[i].Length);
+                    
+                } else {
+                    
+                    PoolArray<T>.Release(ref this.array[i]);
                     
                 }
                 

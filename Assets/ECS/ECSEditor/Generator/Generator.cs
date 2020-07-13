@@ -61,7 +61,7 @@ namespace ME.ECSEditor {
 
                 if (delete == true) {
 
-                    var fullDir = asmNamePath + "/" + Generator.FILE_NAME;
+                    var fullDir = asmNamePath + System.IO.Path.PathSeparator.ToString() + Generator.FILE_NAME;
                     if (System.IO.File.Exists(fullDir) == true) {
 
                         AssetDatabase.DeleteAsset(fullDir);
@@ -160,7 +160,7 @@ namespace ME.ECSEditor {
                 var asmNamePath = System.IO.Path.GetDirectoryName(asmPath);
                 if (System.IO.Directory.Exists(asmNamePath) == false) continue;
 
-                var splitted = asmNamePath.Split('/');
+                var splitted = asmNamePath.Split(System.IO.Path.PathSeparator);
                 var asmName = splitted[splitted.Length - 1];
 
                 var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();

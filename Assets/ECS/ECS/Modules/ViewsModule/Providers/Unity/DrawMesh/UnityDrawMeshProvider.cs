@@ -241,6 +241,7 @@ namespace ME.ECS.Views.Providers {
         public virtual void OnInitialize() { }
         public virtual void OnDeInitialize() { }
         public virtual void ApplyState(float deltaTime, bool immediately) { }
+        public virtual void ApplyPhysicsState(float deltaTime) { }
 
         public sealed override void DoCopyFrom(DrawMeshViewBase source) {
 

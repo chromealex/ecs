@@ -99,6 +99,7 @@ namespace ME.ECS.Views.Providers {
         public virtual void OnDeInitialize() { }
         public virtual void ApplyStateJob(float deltaTime, bool immediately) { }
         public virtual void ApplyState(float deltaTime, bool immediately) { }
+        public virtual void ApplyPhysicsState(float deltaTime) { }
 
     }
     

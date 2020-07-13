@@ -431,7 +431,7 @@ namespace ME.ECS.Views.Providers {
 
                 }
 
-                if (UnityGameObjectProvider.resultCount > 0) {
+                if (UnityGameObjectProvider.resultCount > 0 && this.currentTransformArray.isCreated == true) {
 
                     var job = new Job() {
                         deltaTime = deltaTime,

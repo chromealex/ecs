@@ -62,6 +62,9 @@ namespace ME.ECS {
 
     public abstract class FeatureBase : UnityEngine.ScriptableObject, IFeatureBase {
 
+        [UnityEngine.TextAreaAttribute]
+        public string editorComment;
+
         public World world { get; set; }
         public SystemGroup systemGroup;
 

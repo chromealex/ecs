@@ -232,7 +232,7 @@ public class PhotonReceiver : Photon.Pun.MonoBehaviourPunCallbacks {
         if (Photon.Pun.PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("t") == true) {
 
             // Set current time since start from master client
-            var world = (ME.ECS.IWorldBase)ME.ECS.Worlds<TState>.currentWorld;
+            var world = ME.ECS.Worlds.currentWorld;
             var serverTime = Photon.Pun.PhotonNetwork.Time;
             var gameStartTime = serverTime - (double)Photon.Pun.PhotonNetwork.CurrentRoom.CustomProperties["t"];
 

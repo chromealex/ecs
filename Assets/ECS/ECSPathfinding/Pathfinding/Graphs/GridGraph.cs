@@ -52,7 +52,6 @@ namespace ME.ECS.Pathfinding {
 
         }
         
-        [Header("Grid")]
         public Vector3Int size = new Vector3Int(100, 100, 100);
         public float nodeSize = 1f;
         
@@ -60,14 +59,12 @@ namespace ME.ECS.Pathfinding {
         public float diagonalCostFactor = 0.9f;
         public ConnectionsType connectionsType = ConnectionsType.All;
 
-        [Header("Agent")]
         public float agentHeight;
         
         public LayerMask checkMask;
         public LayerMask collisionMask;
         public float collisionCheckRadius;
 
-        [Header("Editor")]
         public DrawMode drawMode;
         public bool drawNonwalkableNodes;
         public bool drawConnections;

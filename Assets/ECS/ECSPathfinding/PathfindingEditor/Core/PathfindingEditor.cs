@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEditor;
 
@@ -18,46 +19,119 @@ namespace ME.ECS.Pathfinding.Editor {
         }
         
         private Dictionary<System.Type, IGraphGUIEditor<Graph>> graphEditors;
+        private UnityEditorInternal.ReorderableList.Defaults styleDefaults;
         
         public override void OnInspectorGUI() {
 
             ME.ECSEditor.GUILayoutExt.CollectEditors<IGraphGUIEditor<Graph>, GraphCustomEditorAttribute>(ref this.graphEditors, System.Reflection.Assembly.GetExecutingAssembly());
             
             var target = (Pathfinding)this.target;
-            
-            for (int i = 0; i < target.graphs.Length; ++i) {
 
-                var graph = target.graphs[i];
-                graph.index = i;
+            if (this.styleDefaults == null) {
                 
-                if (this.graphEditors.TryGetValue(graph.GetType(), out var editor) == true) {
+                this.styleDefaults = new UnityEditorInternal.ReorderableList.Defaults();
+                
+            }
 
-                    editor.target = graph;
+            {
+                GUILayout.Label(string.Empty, this.styleDefaults.headerBackground, GUILayout.ExpandWidth(true));
+                var rect = GUILayoutUtility.GetLastRect();
+                rect.x += 4f;
+                GUI.Label(rect, "Graphs");
+            }
+
+            GUILayout.BeginVertical(this.styleDefaults.boxBackground);
+            {
+
+                for (int i = 0; i < target.graphs.Length; ++i) {
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Width(60f);
+                    GUILayout.BeginVertical();
                     
-                    var state = ((GraphEditor)editor).foldout;
-                    ME.ECSEditor.GUILayoutExt.FoldOut(ref state, graph.graphName, () => {
+                    var graph = target.graphs[i];
+                    graph.index = i;
 
-                        EditorGUI.BeginChangeCheck();
-                        editor.OnDrawGUI();
-                        if (EditorGUI.EndChangeCheck() == true) {
+                    if (this.graphEditors.TryGetValue(graph.GetType(), out var editor) == true) {
 
-                            EditorUtility.SetDirty(graph);
-                            EditorUtility.SetDirty(this.target);
-                            SceneView.RepaintAll();
+                        editor.target = graph;
 
-                        }
+                        var state = ((GraphEditor)editor).foldout;
+                        ME.ECSEditor.GUILayoutExt.FoldOut(ref state, graph.graphName, () => {
 
-                    });
-                    ((GraphEditor)editor).foldout = state;
+                            EditorGUI.BeginChangeCheck();
+                            editor.OnDrawGUI();
+                            if (EditorGUI.EndChangeCheck() == true) {
 
-                } else {
-                        
-                    GUILayout.Label("No editor found for " + graph.GetType());
-                        
+                                EditorUtility.SetDirty(graph);
+                                EditorUtility.SetDirty(this.target);
+                                SceneView.RepaintAll();
+
+                            }
+
+                        }, onHeader: (rect) => {
+
+                            var menu = new GenericMenu();
+                            menu.AddItem(new GUIContent("Remove"), false, () => {
+
+                                //Undo.RecordObject(target, "Remove Graph");
+                                var graphs = target.graphs.ToList();
+                                graphs.Remove(graph);
+                                target.graphs = graphs.ToArray();
+                                GameObject.DestroyImmediate(graph.gameObject);
+
+                            });
+                            menu.DropDown(rect);
+
+                        });
+                        ((GraphEditor)editor).foldout = state;
+
+                    } else {
+
+                        GUILayout.Label("No editor found for " + graph.GetType());
+
+                    }
+                    GUILayout.EndVertical();
+                    GUILayout.EndHorizontal();
+
                 }
 
             }
+            GUILayout.EndVertical();
 
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.FlexibleSpace();
+                GUILayout.BeginHorizontal(this.styleDefaults.footerBackground);
+                var rect = GUILayoutUtility.GetRect(50f, 16f);
+                if (GUI.Button(rect, this.styleDefaults.iconToolbarPlusMore, this.styleDefaults.preButton) == true) {
+                    
+                    var menu = new GenericMenu();
+                    foreach (var graph in this.graphEditors) {
+
+                        var g = graph;
+                        if (g.Key.IsAbstract == true) continue;
+                        menu.AddItem(new GUIContent(graph.Key.Name), false, () => {
+                            
+                            var go = new GameObject("Graph", g.Key);
+                            go.transform.SetParent(target.transform);
+                            var comp = (Graph)go.GetComponent(g.Key);
+                            var graphs = target.graphs.ToList();
+                            graphs.Add(comp);
+                            target.graphs = graphs.ToArray();
+
+                        });
+
+                    }
+                    menu.DropDown(rect);
+                    
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndHorizontal();
+
+            ME.ECSEditor.GUILayoutExt.Separator();
+            
             { // Editor
 
                 var state = this.editorFoldout;
@@ -77,6 +151,8 @@ namespace ME.ECS.Pathfinding.Editor {
 
             }
             
+            ME.ECSEditor.GUILayoutExt.Separator();
+
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Build All", GUILayout.Width(200f), GUILayout.Height(24f)) == true) {

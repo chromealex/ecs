@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ME.ECS.Pathfinding {
     
-    public class GraphModifier : GraphModifierBase {
+    public class GraphStaticModifier : GraphModifierBase {
     
         new public int tag;
         public int penaltyDelta;

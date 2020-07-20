@@ -942,7 +942,7 @@ namespace ME.ECSEditor {
 
         private static int foldOutLevel;
 
-        public static void FoldOut(ref bool state, string content, System.Action onContent, GUIStyle style = null) {
+        public static void FoldOut(ref bool state, string content, System.Action onContent, GUIStyle style = null, System.Action<Rect> onHeader = null) {
 
             if (style == null) {
 
@@ -966,7 +966,7 @@ namespace ME.ECSEditor {
             }
 
             ++GUILayoutExt.foldOutLevel;
-            state = GUILayoutExt.BeginFoldoutHeaderGroup(state, new GUIContent(content), style);
+            state = GUILayoutExt.BeginFoldoutHeaderGroup(state, new GUIContent(content), style, menuAction: onHeader);
             if (state == true) {
 
 	            GUILayout.BeginHorizontal();
@@ -1003,7 +1003,7 @@ namespace ME.ECSEditor {
             GUIStyle style = null,
             System.Action<Rect> menuAction = null,
             GUIStyle menuIcon = null) {
-            if (EditorGUIUtility.hierarchyMode) position.xMin -= (float)(EditorStyles.inspectorDefaultMargins.padding.left - EditorStyles.inspectorDefaultMargins.padding.right);
+            //if (EditorGUIUtility.hierarchyMode) position.xMin -= (float)(EditorStyles.inspectorDefaultMargins.padding.left - EditorStyles.inspectorDefaultMargins.padding.right);
             if (style == null) style = EditorStyles.foldoutHeader;
             Rect position1 = new Rect() {
                 x = (float)((double)position.xMax - (double)style.padding.right - 16.0),

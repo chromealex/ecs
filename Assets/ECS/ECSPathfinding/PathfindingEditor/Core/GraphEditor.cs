@@ -5,6 +5,21 @@ using UnityEditor;
 
 namespace ME.ECS.Pathfinding.Editor {
 
+    [CustomEditor(typeof(Graph), editorForChildClasses: true)]
+    public class UnityGraphEditor : UnityEditor.Editor {
+
+        public override void OnInspectorGUI() {
+            
+            ME.ECSEditor.GUILayoutExt.Box(4f, 4f, () => {
+                
+                GUILayout.Label("This class is a part of Pathfinding component. To change values use Pathfinding component.");
+                
+            });
+            
+        }
+
+    }
+
     public interface IGraphGUIEditor<T> : ME.ECSEditor.IGUIEditor<T> {
     }
 

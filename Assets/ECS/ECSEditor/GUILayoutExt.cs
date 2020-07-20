@@ -31,6 +31,29 @@ namespace ME.ECSEditor {
 
     public static class GUILayoutExt {
 
+	    public static void DrawGradient(float height, Color from, Color to, string labelFrom, string labelTo) {
+	        
+		    var tex = new Texture2D(2, 1, TextureFormat.RGBA32, false);
+		    tex.filterMode = FilterMode.Bilinear;
+		    tex.wrapMode = TextureWrapMode.Clamp;
+		    tex.SetPixel(0, 0, from);
+		    tex.SetPixel(1, 0, to);
+		    tex.Apply();
+		    
+		    Rect rect = EditorGUILayout.GetControlRect(false, height);
+		    rect.height = height;
+		    EditorGUI.DrawTextureTransparent(rect, tex, ScaleMode.StretchToFill);
+		    
+		    GUILayout.BeginHorizontal();
+		    {
+			    GUILayout.Label(labelFrom);
+			    GUILayout.FlexibleSpace();
+			    GUILayout.Label(labelTo);
+		    }
+		    GUILayout.EndHorizontal();
+		    
+	    }
+
 	    public static void ProgressBar(float value, float max, bool drawLabel = false) {
 		    
 		    GUILayoutExt.ProgressBar(value, max, new Color(0f, 0f, 0f, 0.3f), new Color32(104, 148, 192, 255), drawLabel);
@@ -276,13 +299,13 @@ namespace ME.ECSEditor {
  
         }
         
-        public static void CollectEditors<TEditor, TAttribute>(ref System.Collections.Generic.Dictionary<System.Type, TEditor> dic) where TEditor : IGUIEditorBase where TAttribute : CustomEditorAttribute {
+        public static void CollectEditors<TEditor, TAttribute>(ref System.Collections.Generic.Dictionary<System.Type, TEditor> dic, System.Reflection.Assembly searchAssembly = null) where TEditor : IGUIEditorBase where TAttribute : CustomEditorAttribute {
 
             if (dic == null) {
 
                 dic = new System.Collections.Generic.Dictionary<System.Type, TEditor>();
                 
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var assembly = (searchAssembly == null ? System.Reflection.Assembly.GetExecutingAssembly() : searchAssembly);
                 var types = assembly.GetTypes();
                 foreach (var type in types) {
 
@@ -294,7 +317,11 @@ namespace ME.ECSEditor {
                             if (typeof(TEditor).IsAssignableFrom(type) == true) {
                             
                                 var editor = (TEditor)System.Activator.CreateInstance(type);
-                                if (dic.ContainsKey(attr.type) == false) dic.Add(attr.type, editor);
+                                if (dic.ContainsKey(attr.type) == false) {
+	                                
+	                                dic.Add(attr.type, editor);
+	                                
+                                }
 
                             }
 
@@ -326,6 +353,34 @@ namespace ME.ECSEditor {
             EditorGUILayout.Space();
 
             return isLocalDirty;
+
+        }
+
+        public static LayerMask DrawLayerMaskField(string label, LayerMask layerMask) {
+
+	        System.Collections.Generic.List<string> layers = new System.Collections.Generic.List<string>();
+	        System.Collections.Generic.List<int> layerNumbers = new System.Collections.Generic.List<int>();
+
+	        for (int i = 0; i < 32; i++) {
+		        string layerName = LayerMask.LayerToName(i);
+		        if (layerName != "") {
+			        layers.Add(layerName);
+			        layerNumbers.Add(i);
+		        }
+	        }
+	        int maskWithoutEmpty = 0;
+	        for (int i = 0; i < layerNumbers.Count; i++) {
+		        if (((1 << layerNumbers[i]) & layerMask.value) > 0)
+			        maskWithoutEmpty |= (1 << i);
+	        }
+	        maskWithoutEmpty = EditorGUILayout.MaskField( label, maskWithoutEmpty, layers.ToArray());
+	        int mask = 0;
+	        for (int i = 0; i < layerNumbers.Count; i++) {
+		        if ((maskWithoutEmpty & (1 << i)) > 0)
+			        mask |= (1 << layerNumbers[i]);
+	        }
+	        layerMask.value = mask;
+	        return layerMask;
 
         }
         
@@ -914,7 +969,14 @@ namespace ME.ECSEditor {
             state = GUILayoutExt.BeginFoldoutHeaderGroup(state, new GUIContent(content), style);
             if (state == true) {
 
-                onContent.Invoke();
+	            GUILayout.BeginHorizontal();
+	            {
+		            GUILayout.Space(10f);
+		            GUILayout.BeginVertical();
+		            onContent.Invoke();
+		            GUILayout.EndVertical();
+	            }
+	            GUILayout.EndHorizontal();
 
             }
 

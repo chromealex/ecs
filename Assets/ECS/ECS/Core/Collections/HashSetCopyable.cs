@@ -120,7 +120,7 @@ namespace ME.ECS.Collections {
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public sealed class HashSetCopyable<T> : ICollection<T>, IReadOnlyCollection<T>, IPoolableRecycle, IPoolableSpawn {
+    public sealed class HashSetCopyable<T> : ICollection<T>, IPoolableRecycle, IPoolableSpawn {
 
         // store lower 31 bits of hash code
         private const int Lower31BitMask = 0x7FFFFFFF;

@@ -144,7 +144,7 @@ namespace ME.ECSEditor {
 
         public void OnEnable() {
 
-            if (this.target is Component) {
+            if (this.targets.Length > 0 && this.target is Component) {
 
                 ((Component)this.target).transform.hideFlags = HideFlags.HideInInspector;
 

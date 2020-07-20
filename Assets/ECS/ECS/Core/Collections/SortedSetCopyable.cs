@@ -163,9 +163,9 @@ namespace ME.ECS.Collections {
     #endif
 #if !FEATURE_NETCORE
     [Serializable]
-    public class SortedSetCopyable<T> : ISet<T>, ICollection<T>, ICollection, ISerializable, IDeserializationCallback, IReadOnlyCollection<T>, IPoolableRecycle {
+    public class SortedSetCopyable<T> : ISet<T>, ICollection<T>, ICollection, ISerializable, IDeserializationCallback, IPoolableRecycle {
 #else
-    public class SortedSetCopyable<T> : ISet<T>, ICollection<T>, ICollection, IReadOnlyCollection<T> {
+    public class SortedSetCopyable<T> : ISet<T>, ICollection<T>, ICollection {
 #endif //!FEATURE_NETCORE
         #region local variables/constants
         Node root;

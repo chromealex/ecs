@@ -187,12 +187,26 @@ namespace ME.ECS {
             
         }
 
-        public static void GetOrientation(out int orientation, Vector2 from, Vector2 to) {
+        public static int GetOrientation(Vector2 dir) {
+
+            MathUtils.GetOrientation(out var d, dir);
+            return d;
+
+        }
+
+        public static int GetOrientation(Vector2 from, Vector2 to) {
+
+            MathUtils.GetOrientation(out var d, to - from);
+            return d;
+
+        }
+        
+        public static void GetOrientation(out int orientation, Vector2 dir) {
 
             const float step = 360f / 8f;
             const float stepHalf = step * 0.5f;
 
-            var ang = System.Math.Atan2(to.y - from.y, to.x - from.x) * Mathf.Rad2Deg + stepHalf;
+            var ang = System.Math.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + stepHalf;
             if (ang < 0f) ang = 360f + ang;
             if (ang > 360f) ang -= 360f;
 

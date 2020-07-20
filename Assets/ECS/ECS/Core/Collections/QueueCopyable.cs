@@ -14,8 +14,7 @@ namespace ME.ECS.Collections {
     public sealed class QueueCopyable<T> :
         IPoolableSpawn,
         IPoolableRecycle,
-        System.Collections.ICollection,
-        IReadOnlyCollection<T> where T : struct {
+        System.Collections.ICollection where T : struct {
 
         private BufferArray<T> array;
         private int head; // First valid element in the queue
@@ -154,11 +153,6 @@ namespace ME.ECS.Collections {
 
         public Enumerator GetEnumerator() {
             return new Enumerator(this);
-        }
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() {
-            throw new AllocationException();
-            //return new Enumerator(this);
         }
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {

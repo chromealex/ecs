@@ -65,7 +65,9 @@ namespace #NAMESPACE# {
         }
 
         public void OnDestroy() {
-
+            
+            if (this.world == null || this.world.isActive == false) return;
+            
             this.DeInitializeFeatures(this.world);
             // Release world
             WorldUtilities.ReleaseWorld<TState>(ref this.world);

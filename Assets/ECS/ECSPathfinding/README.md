@@ -30,7 +30,7 @@ var active = ME.ECS.Pathfinding.Pathfinding.active;
 
 // Set up path constrains
 var constraint = ME.ECS.Pathfinding.Constraint.Default;
-constraint.checkWalkability = true; // we going to check node's walkability (default value is true)
+constraint.checkWalkability = true; // we are going to check node's walkability (default value is true)
 constraint.walkable = true; // we are interested in walkable nodes only (default value is true)
 
 constraint.checkArea = true;

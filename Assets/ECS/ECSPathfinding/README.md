@@ -30,8 +30,15 @@ var active = ME.ECS.Pathfinding.Pathfinding.active;
 
 // Set up path constrains
 var constraint = ME.ECS.Pathfinding.Constraint.Default;
+constraint.checkWalkability = true; (default value is true)
+constraint.walkable = true; // we are interested in walkable nodes only (default value is true)
+
+constraint.checkArea = true;
+constraint.areaMask = -1; // we are going to move on any area (area is the block bordered with unwalkable nodes)
+
 constraint.checkTags = true;
 constraint.tagsMask = -1; // we are going to move through any tags (by default this value is -1, so you can set checkTags = false)
+
 constraint.agentSize = new UnityEngine.Vector3(agentSizeX, agentSizeY, agentSizeZ);
 constraint.graphMask = (1 << 0); // we are going to find path on the first graph only (by default this value is -1 (any), so you can leave it -1)
 

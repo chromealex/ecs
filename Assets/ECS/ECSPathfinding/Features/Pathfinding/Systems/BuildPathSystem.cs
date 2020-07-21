@@ -44,7 +44,6 @@ namespace ME.ECS.ECSPathfinding.Features.Pathfinding.Systems {
 
             }
             
-            entity.RemoveData<PathIndex>();
             entity.RemoveComponents<Path>();
 
             var request = entity.GetData<CalculatePath>();
@@ -68,9 +67,9 @@ namespace ME.ECS.ECSPathfinding.Features.Pathfinding.Systems {
                 }
 
                 var unitPath = entity.AddComponent<Path>();
+                unitPath.result = path.result;
                 unitPath.path = ME.ECS.Collections.BufferArray<UnityEngine.Vector3>.From(vPath);
                 unitPath.nodes = ME.ECS.Collections.BufferArray<ME.ECS.Pathfinding.Node>.From(path.nodesModified);
-                entity.SetData(new PathIndex() { value = 0 });
 
                 entity.SetData(new IsPathBuilt(), ComponentLifetime.NotifyAllSystems);
                 

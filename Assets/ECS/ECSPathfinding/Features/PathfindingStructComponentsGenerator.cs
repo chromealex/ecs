@@ -7,7 +7,6 @@ namespace ME.ECS {
     
             structComponentsContainer.Validate<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.CalculatePath>();
             structComponentsContainer.Validate<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.IsPathfinding>();
-            structComponentsContainer.Validate<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.PathIndex>();
             structComponentsContainer.Validate<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.BuildAllGraphs>();
             structComponentsContainer.Validate<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.HasPathfindingInstance>();
             structComponentsContainer.Validate<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.IsPathBuilt>();
@@ -18,7 +17,6 @@ namespace ME.ECS {
 
             entity.ValidateData<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.CalculatePath>();
             entity.ValidateData<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.IsPathfinding>();
-            entity.ValidateData<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.PathIndex>();
             entity.ValidateData<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.BuildAllGraphs>();
             entity.ValidateData<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.HasPathfindingInstance>();
             entity.ValidateData<ME.ECS.ECSPathfinding.Features.Pathfinding.Components.IsPathBuilt>();

@@ -65,7 +65,8 @@ namespace ME.ECS.ECSPathfinding.Features.Pathfinding.Components {
         void IPoolableRecycle.OnRecycle() {
 
             this.pathfinding.Recycle();
-            
+            this.pathfinding = null;
+
         }
 
     }

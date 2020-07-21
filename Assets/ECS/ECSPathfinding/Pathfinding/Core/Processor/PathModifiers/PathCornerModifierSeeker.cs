@@ -28,9 +28,10 @@ namespace ME.ECS.Pathfinding {
                 var node = nodes[i];
                 var next = nodes[i + 1];
                 var dir = 0;
-                for (int j = 0; j < node.connections.Length; ++j) {
+                var connections = node.GetConnections();
+                for (int j = 0; j < connections.Length; ++j) {
 
-                    if (node.connections[j].index == next.index) {
+                    if (connections[j].index == next.index) {
 
                         dir = j;
                         break;

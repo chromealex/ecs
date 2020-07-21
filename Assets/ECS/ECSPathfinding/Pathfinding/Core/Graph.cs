@@ -13,23 +13,109 @@ namespace ME.ECS.Pathfinding {
 
     }
     
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public abstract class Graph : MonoBehaviour {
 
+        public Pathfinding pathfinding;
+        
         public int index;
         public string graphName;
         
         public Vector3 graphCenter;
 
         public BuildingState buildingState;
-        public Node[] nodes;
+        public List<Node> nodes;
         public List<Pathfinding.ModificatorItem> modifiers = new List<Pathfinding.ModificatorItem>();
 
         public float minPenalty { get; private set; }
         public float maxPenalty { get; private set; }
 
+        public abstract void Recycle();
+        
+        public void CopyFrom(Graph other) {
+
+            this.pathfinding = other.pathfinding;
+            this.index = other.index;
+            this.graphName = other.graphName;
+            this.graphCenter = other.graphCenter;
+            this.buildingState = other.buildingState;
+            this.minPenalty = other.minPenalty;
+            this.maxPenalty = other.maxPenalty;
+            
+            this.OnCopyFrom(other);
+            
+        }
+
+        public abstract void OnCopyFrom(Graph other);
+        
+        public virtual void AddNode<T>() where T : Node, new() {
+
+            var node = PoolClass<T>.Spawn();
+            node.graph = this;
+            node.index = this.nodes.Count;
+            this.nodes.Add(node);
+            
+        }
+
+        public virtual void RemoveNode(ref Node node, bool bruteForceConnections = false) {
+
+            if (bruteForceConnections == true) {
+                
+                // Brute force all connections from all nodes and remove them to this node
+                for (int i = 0; i < this.nodes.Count; ++i) {
+
+                    var connections = this.nodes[i].GetConnections();
+                    for (int j = 0; j < connections.Length; ++j) {
+
+                        var connection = connections[j];
+                        if (connection.index == node.index) {
+
+                            connections[j] = Node.Connection.NoConnection;
+
+                        }
+                        
+                    }
+                    
+                }
+                
+            } else {
+
+                // Remove all connections to this node from neighbours only
+                var connections = node.GetConnections();
+                for (int i = 0; i < connections.Length; ++i) {
+
+                    var connection = connections[i];
+                    if (connection.index >= 0) {
+
+                        var connectedTo = this.nodes[connection.index].GetConnections();
+                        for (int j = 0; j < connectedTo.Length; ++j) {
+
+                            if (connectedTo[j].index == node.index) {
+
+                                connectedTo[j] = Node.Connection.NoConnection;
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+            // Remove node from list
+            this.nodes.RemoveAt(node.index);
+            
+        }
+
         public T GetNodeByIndex<T>(int index) where T : Node {
 
-            if (index < 0 || index >= this.nodes.Length) return null;
+            if (index < 0 || index >= this.nodes.Count) return null;
 
             return (T)this.nodes[index];
 
@@ -69,6 +155,28 @@ namespace ME.ECS.Pathfinding {
 
             }
             
+        }
+
+        protected void FloodFillAreas(Node node, int area) {
+
+            var connections = node.GetConnections();
+            for (int j = 0; j < connections.Length; ++j) {
+                
+                var connection = connections[j];
+                if (connection.index >= 0) {
+
+                    var nb = this.nodes[connection.index];
+                    if (nb.area == 0 && nb.walkable == true) {
+
+                        nb.area = area;
+                        this.FloodFillAreas(nb, area);
+
+                    }
+
+                }
+
+            }
+
         }
 
         protected Color GetSColor() {
@@ -113,8 +221,10 @@ namespace ME.ECS.Pathfinding {
 
         public void DoBuild() {
 
+            var pathfinding = this.pathfinding;
+            
             System.Diagnostics.Stopwatch sw = null;
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) sw = System.Diagnostics.Stopwatch.StartNew();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) sw = System.Diagnostics.Stopwatch.StartNew();
             
             this.buildingState = BuildingState.Building;
             
@@ -122,24 +232,24 @@ namespace ME.ECS.Pathfinding {
             this.maxPenalty = float.MinValue;
 
             System.Diagnostics.Stopwatch swBuildNodes = null;
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swBuildNodes = System.Diagnostics.Stopwatch.StartNew();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swBuildNodes = System.Diagnostics.Stopwatch.StartNew();
 
             this.Validate();
             this.BuildNodes();
 
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swBuildNodes.Stop();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swBuildNodes.Stop();
 
             System.Diagnostics.Stopwatch swBeforeConnections = null;
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swBeforeConnections = System.Diagnostics.Stopwatch.StartNew();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swBeforeConnections = System.Diagnostics.Stopwatch.StartNew();
 
             this.RunModifiersBeforeConnections();
             
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swBeforeConnections.Stop();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swBeforeConnections.Stop();
             
             System.Diagnostics.Stopwatch swBuildConnections = null;
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swBuildConnections = System.Diagnostics.Stopwatch.StartNew();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swBuildConnections = System.Diagnostics.Stopwatch.StartNew();
 
-            for (var i = 0; i < this.nodes.Length; ++i) {
+            for (var i = 0; i < this.nodes.Count; ++i) {
 
                 var p = this.nodes[i].penalty;
                 if (p < this.minPenalty) this.minPenalty = p;
@@ -149,27 +259,27 @@ namespace ME.ECS.Pathfinding {
 
             this.BuildConnections();
             
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swBuildConnections.Stop();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swBuildConnections.Stop();
 
             System.Diagnostics.Stopwatch swAfterConnections = null;
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swAfterConnections = System.Diagnostics.Stopwatch.StartNew();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swAfterConnections = System.Diagnostics.Stopwatch.StartNew();
 
             this.RunModifiersAfterConnections();
             
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swAfterConnections.Stop();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swAfterConnections.Stop();
 
             System.Diagnostics.Stopwatch swBuildAreas = null;
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swBuildAreas = System.Diagnostics.Stopwatch.StartNew();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swBuildAreas = System.Diagnostics.Stopwatch.StartNew();
 
             this.BuildAreas();
             
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) swBuildAreas.Stop();
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) swBuildAreas.Stop();
 
             this.buildingState = BuildingState.Built;
             
-            if (Pathfinding.active.HasLogLevel(LogLevel.GraphBuild) == true) {
+            if (pathfinding.HasLogLevel(LogLevel.GraphBuild) == true) {
 
-                Logger.Log(string.Format("Graph built {0} nodes in {1}ms:\nBuild Nodes: {2}ms\nBefore Connections: {3}ms\nBuild Connections: {4}ms\nAfter Connections: {5}ms\nBuild Areas: {6}ms", this.nodes.Length, sw.ElapsedMilliseconds, swBuildNodes.ElapsedMilliseconds, swBeforeConnections.ElapsedMilliseconds, swBuildConnections.ElapsedMilliseconds, swAfterConnections.ElapsedMilliseconds, swBuildAreas.ElapsedMilliseconds));
+                Logger.Log(string.Format("Graph built {0} nodes in {1}ms:\nBuild Nodes: {2}ms\nBefore Connections: {3}ms\nBuild Connections: {4}ms\nAfter Connections: {5}ms\nBuild Areas: {6}ms", this.nodes.Count, sw.ElapsedMilliseconds, swBuildNodes.ElapsedMilliseconds, swBeforeConnections.ElapsedMilliseconds, swBuildConnections.ElapsedMilliseconds, swAfterConnections.ElapsedMilliseconds, swBuildAreas.ElapsedMilliseconds));
 
             }
             
@@ -181,7 +291,30 @@ namespace ME.ECS.Pathfinding {
         protected abstract void RunModifiersBeforeConnections();
         protected abstract void BuildConnections();
         protected abstract void RunModifiersAfterConnections();
-        public abstract void BuildAreas();
+
+        public virtual void BuildAreas() {
+            
+            var area = 0;
+            for (int i = 0; i < this.nodes.Count; ++i) {
+
+                this.nodes[i].area = 0;
+
+            }
+
+            for (int i = 0; i < this.nodes.Count; ++i) {
+
+                var node = this.nodes[i];
+                if (node.walkable == true && node.area == 0) {
+
+                    var currentArea = ++area;
+                    node.area = currentArea;
+                    this.FloodFillAreas(node, currentArea);
+                    
+                }
+
+            }
+
+        }
 
         public void DoDrawGizmos() {
 

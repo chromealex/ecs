@@ -23,7 +23,19 @@ namespace ME.ECS {
             ComponentsInitializerWorld.onEntity = onEntity;
 
         }
-        
+
+        public static void Register(System.Action<Entity> onEntity) {
+
+            ComponentsInitializerWorld.onEntity += onEntity;
+
+        }
+
+        public static void UnRegister(System.Action<Entity> onEntity) {
+
+            ComponentsInitializerWorld.onEntity -= onEntity;
+
+        }
+
         public static void Init(in Entity entity) {
             
             ComponentsInitializerWorld.onEntity.Invoke(entity);

@@ -7,7 +7,7 @@ namespace ME.ECS.Pathfinding {
 
     public class PathfindingProcessor {
         
-        public Path Run<TMod>(Vector3 from, Vector3 to, Constraint constraint, Graph graph, TMod pathModifier, int threadIndex = 0) where TMod : IPathModifier {
+        public Path Run<TMod>(Pathfinding pathfinding, Vector3 from, Vector3 to, Constraint constraint, Graph graph, TMod pathModifier, int threadIndex = 0) where TMod : IPathModifier {
 
             if (threadIndex < 0 || threadIndex > Pathfinding.THREADS_COUNT) threadIndex = 0;
 
@@ -26,7 +26,7 @@ namespace ME.ECS.Pathfinding {
             
             var visited = PoolList<Node>.Spawn(10);
             System.Diagnostics.Stopwatch swPath = null;
-            if (Pathfinding.active.HasLogLevel(LogLevel.Path) == true) swPath = System.Diagnostics.Stopwatch.StartNew();
+            if (pathfinding.HasLogLevel(LogLevel.Path) == true) swPath = System.Diagnostics.Stopwatch.StartNew();
             var nodesPath = this.AstarSearch(graph, visited, startNode, endNode, constraint, threadIndex);
 
             var statVisited = visited.Count;
@@ -58,20 +58,20 @@ namespace ME.ECS.Pathfinding {
             PoolList<Node>.Recycle(ref visited);
 
             System.Diagnostics.Stopwatch swModifier = null;
-            if (Pathfinding.active.HasLogLevel(LogLevel.PathMods) == true) swModifier = System.Diagnostics.Stopwatch.StartNew();
+            if (pathfinding.HasLogLevel(LogLevel.PathMods) == true) swModifier = System.Diagnostics.Stopwatch.StartNew();
             if (path.result == PathCompleteState.Complete) {
 
                 path = pathModifier.Run(path, constraint);
 
             }
             
-            if (Pathfinding.active.HasLogLevel(LogLevel.Path) == true) {
+            if (pathfinding.HasLogLevel(LogLevel.Path) == true) {
                 
                 Logger.Log(string.Format("Path result {0}, built in {1}ms. Path length: {2} (visited: {3})\nThread Index: {4}", path.result, swPath.ElapsedMilliseconds, statLength, statVisited, threadIndex));
                 
             }
 
-            if (Pathfinding.active.HasLogLevel(LogLevel.PathMods) == true) {
+            if (pathfinding.HasLogLevel(LogLevel.PathMods) == true) {
 
                 Logger.Log(string.Format("Path Mods: {0}ms", swModifier.ElapsedMilliseconds));
 
@@ -104,7 +104,7 @@ namespace ME.ECS.Pathfinding {
                     
                 }
 
-                var neighbors = node.connections;
+                var neighbors = node.GetConnections();
                 foreach(var conn in neighbors) {
                     
                     if (conn.index < 0) continue;

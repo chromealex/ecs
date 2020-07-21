@@ -11,6 +11,8 @@ namespace ME.ECS.Pathfinding {
         [System.Serializable]
         public struct Connection {
 
+            public static Connection NoConnection => new Connection() { index = -1 };
+            
             public int index;
             public float cost;
 
@@ -24,12 +26,30 @@ namespace ME.ECS.Pathfinding {
         public int area;
         public int tag;
 
-        public readonly Connection[] connections = new Connection[6 + 4 + 4 + 4];
-
         internal readonly Node[] parent = new Node[Pathfinding.THREADS_COUNT];
         internal readonly float[] startToCurNodeLen = new float[Pathfinding.THREADS_COUNT];
         internal readonly bool[] isOpened = new bool[Pathfinding.THREADS_COUNT];
         internal readonly bool[] isClosed = new bool[Pathfinding.THREADS_COUNT];
+
+        public Node() {}
+
+        public virtual void CopyFrom(Node other) {
+
+            this.graph = other.graph;
+            this.index = other.index;
+            this.worldPosition = other.worldPosition;
+            this.penalty = other.penalty;
+            this.walkable = other.walkable;
+            this.area = other.area;
+            this.tag = other.tag;
+
+        }
+        
+        public virtual Connection[] GetConnections() {
+
+            return null;
+
+        }
         
         internal virtual void Reset(int threadIndex) {
 

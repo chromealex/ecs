@@ -655,7 +655,15 @@ namespace ME.ECSEditor {
 					            EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
 					            GUILayoutExt.PropertyField(world, "Element [" + i.ToString() + "]", fieldInfo, arrValue.GetType(), ref arrValue, typeCheckOnly: false);
 					            EditorGUI.EndDisabledGroup();
-					            array.SetValue(arrValue, i);
+					            if (arrValue.GetType() != array.GetType()) {
+						            
+						            GUILayout.Label("Type wrong " + arrValue.GetType() + " :: " + array.GetType());
+						            
+					            } else {
+
+						            array.SetValue(arrValue, i);
+
+					            }
 
 				            }
 			            

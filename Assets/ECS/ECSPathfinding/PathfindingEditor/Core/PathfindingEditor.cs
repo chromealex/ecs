@@ -43,7 +43,7 @@ namespace ME.ECS.Pathfinding.Editor {
             GUILayout.BeginVertical(this.styleDefaults.boxBackground);
             {
 
-                for (int i = 0; i < target.graphs.Length; ++i) {
+                for (int i = 0; i < target.graphs.Count; ++i) {
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Width(60f);
@@ -75,10 +75,10 @@ namespace ME.ECS.Pathfinding.Editor {
                             menu.AddItem(new GUIContent("Remove"), false, () => {
 
                                 //Undo.RecordObject(target, "Remove Graph");
-                                var graphs = target.graphs.ToList();
-                                graphs.Remove(graph);
-                                target.graphs = graphs.ToArray();
+                                target.graphs.Remove(graph);
                                 GameObject.DestroyImmediate(graph.gameObject);
+                                SceneView.RepaintAll();
+                                EditorUtility.SetDirty(this.target);
 
                             });
                             menu.DropDown(rect);
@@ -116,10 +116,11 @@ namespace ME.ECS.Pathfinding.Editor {
                             var go = new GameObject("Graph", g.Key);
                             go.transform.SetParent(target.transform);
                             var comp = (Graph)go.GetComponent(g.Key);
-                            var graphs = target.graphs.ToList();
-                            graphs.Add(comp);
-                            target.graphs = graphs.ToArray();
-
+                            comp.pathfinding = target;
+                            target.graphs.Add(comp);
+                            SceneView.RepaintAll();
+                            EditorUtility.SetDirty(this.target);
+                            
                         });
 
                     }

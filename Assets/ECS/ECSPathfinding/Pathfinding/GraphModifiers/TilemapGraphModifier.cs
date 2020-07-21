@@ -40,7 +40,7 @@ namespace ME.ECS.Pathfinding {
 
                         var worldPos = this.tilemap.CellToWorld(pos);
                         var result = PoolList<Node>.Spawn(1);
-                        Pathfinding.active.GetNodesInBounds(result, new Bounds(worldPos + new Vector3(this.tilemap.cellSize.x, 0f, this.tilemap.cellSize.z) * 0.5f, this.tilemap.cellSize));
+                        graph.GetNodesInBounds(result, new Bounds(worldPos + new Vector3(this.tilemap.cellSize.x, 0f, this.tilemap.cellSize.z) * 0.5f, this.tilemap.cellSize));
                         foreach (var node in result) {
 
                             if (visited.Contains(node) == false) {
@@ -85,7 +85,7 @@ namespace ME.ECS.Pathfinding {
                     if (item.requiredTile == tile) {
 
                         var worldPos = this.tilemap.CellToWorld(pos);
-                        var node = Pathfinding.active.GetNearest(this.GetPosition(worldPos));
+                        var node = graph.GetNearest(this.GetPosition(worldPos));
                         if (visited.Contains(node) == false) {
 
                             visited.Add(node);

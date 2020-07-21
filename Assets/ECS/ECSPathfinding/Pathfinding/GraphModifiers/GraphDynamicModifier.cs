@@ -7,6 +7,8 @@ namespace ME.ECS.Pathfinding {
     [ExecuteInEditMode]
     public class GraphDynamicModifier : MonoBehaviour {
 
+        public Pathfinding pathfinding;
+        
         public bool modifyWalkability;
         public bool walkable;
         public Bounds bounds;
@@ -18,23 +20,19 @@ namespace ME.ECS.Pathfinding {
 
         public void OnEnable() {
 
-            if (Pathfinding.active == null) return;
-
-            Pathfinding.active.RegisterDynamic(this);
+            this.pathfinding.RegisterDynamic(this);
 
         }
 
         public void OnDisable() {
             
-            if (Pathfinding.active == null) return;
-
-            Pathfinding.active.UnRegisterDynamic(this);
+            this.pathfinding.UnRegisterDynamic(this);
             
         }
 
         public bool Apply() {
 
-            if (Pathfinding.active == null) return false;
+            if (this.pathfinding == null) return false;
 
             if (this.prevPosition != this.transform.position ||
                 this.prevBounds != this.bounds ||
@@ -58,18 +56,18 @@ namespace ME.ECS.Pathfinding {
         
         public void ApplyForced(bool disabled = false) {
             
-            if (Pathfinding.active == null) return;
+            if (this.pathfinding == null) return;
 
             var prevBounds = this.prevBounds;
             prevBounds.center += this.prevPosition;
             var prevNodes = PoolList<Node>.Spawn(10);
-            Pathfinding.active.GetNodesInBounds(prevNodes, prevBounds);
+            this.pathfinding.GetNodesInBounds(prevNodes, prevBounds);
             foreach (var node in prevNodes) {
 
                 if (this.prevModifyWalkability == true) {
                     
                     node.walkable = true;
-                    Pathfinding.active.BuildNodePhysics(node);
+                    this.pathfinding.BuildNodePhysics(node);
 
                 }
 
@@ -80,13 +78,13 @@ namespace ME.ECS.Pathfinding {
                 var bounds = this.bounds;
                 bounds.center += this.transform.position;
                 var nodes = PoolList<Node>.Spawn(10);
-                Pathfinding.active.GetNodesInBounds(nodes, bounds);
+                this.pathfinding.GetNodesInBounds(nodes, bounds);
                 foreach (var node in nodes) {
 
                     if (this.modifyWalkability == true) {
 
                         node.walkable = this.walkable;
-                        Pathfinding.active.BuildNodePhysics(node);
+                        this.pathfinding.BuildNodePhysics(node);
 
                     }
 

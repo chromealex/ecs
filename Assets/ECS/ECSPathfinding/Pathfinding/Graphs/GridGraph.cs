@@ -5,6 +5,11 @@ using UnityEngine;
 
 namespace ME.ECS.Pathfinding {
 
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class GridGraph : Graph {
         
         public enum Direction : byte {
@@ -70,6 +75,56 @@ namespace ME.ECS.Pathfinding {
         public bool drawConnections;
         public bool drawConnectionsToUnwalkable;
         
+        private struct CopyNode : IArrayElementCopy<Node> {
+
+            public void Copy(Node from, ref Node to) {
+
+                to.CopyFrom(from);
+
+            }
+
+            public void Recycle(Node item) {
+
+                var g = (GridNode)item;
+                PoolClass<GridNode>.Recycle(ref g);
+                
+            }
+
+        }
+
+        public override void Recycle() {
+            
+            PoolClass<GridGraph>.Recycle(this);
+
+        }
+
+        public override void OnCopyFrom(Graph other) {
+            
+            var gg = (GridGraph)other;
+            this.size = gg.size;
+            this.nodeSize = gg.nodeSize;
+            this.initialPenalty = gg.initialPenalty;
+            this.diagonalCostFactor = gg.diagonalCostFactor;
+            this.connectionsType = gg.connectionsType;
+            this.agentHeight = gg.agentHeight;
+            this.checkMask = gg.checkMask;
+            this.collisionMask = gg.collisionMask;
+            this.collisionCheckRadius = gg.collisionCheckRadius;
+            
+            ArrayUtils.Copy(other.nodes, ref this.nodes, new CopyNode());
+            
+        }
+
+        public override void RemoveNode(ref Node node, bool bruteForceConnections = false) {
+
+            base.RemoveNode(ref node, bruteForceConnections);
+            
+            var g = (GridNode)node;
+            PoolClass<GridNode>.Recycle(ref g);
+            node = null;
+
+        }
+
         public bool HasConnectionByDirection(int sourceIndex, Direction direction, bool walkableOnly = true) {
             
             var node = this.GetNodeByIndex<GridNode>(sourceIndex);
@@ -93,11 +148,7 @@ namespace ME.ECS.Pathfinding {
 
         public void ResetConnections(int sourceIndex) {
             
-            var connection = new Node.Connection() {
-                index = -1,
-                cost = 0f
-            };
-            
+            var connection = Node.Connection.NoConnection;
             var node = this.GetNodeByIndex<GridNode>(sourceIndex);
             for (int i = 0; i < node.connections.Length; ++i) {
 
@@ -109,10 +160,7 @@ namespace ME.ECS.Pathfinding {
         
         public void SetupConnectionByDirection(int sourceIndex, Direction direction) {
 
-            var connection = new Node.Connection() {
-                index = -1,
-                cost = 0f
-            };
+            var connection = Node.Connection.NoConnection;
             var node = this.GetNodeByIndex<GridNode>(sourceIndex);
             var target = GridGraphUtilities.GetIndexByDirection(this, sourceIndex, direction);
             if (target >= 0) {
@@ -147,7 +195,7 @@ namespace ME.ECS.Pathfinding {
             var y = (int)((clamped.y + this.agentHeight * this.size.y * 0.5f) / this.agentHeight);
             var z = (int)((clamped.z + this.nodeSize * this.size.z * 0.5f) / this.nodeSize);
 
-            for (int idx = 0; idx < this.nodes.Length; ++idx) {
+            for (int idx = 0; idx < this.nodes.Count; ++idx) {
 
                 var p = ME.ECS.MathUtils.GetSpiralPointByIndex(new Vector2Int(x, z), idx);
                 var i = GridGraphUtilities.GetIndexByPosition(this, new Vector3Int(p.x, y, p.y));
@@ -158,27 +206,6 @@ namespace ME.ECS.Pathfinding {
             }
 
             return default;
-
-        }
-
-        private void FloodFillAreas(Node node, int area) {
-            
-            for (int j = 0; j < node.connections.Length; ++j) {
-                        
-                var connection = node.connections[j];
-                if (connection.index >= 0) {
-
-                    var nb = this.nodes[connection.index];
-                    if (nb.area == 0 && nb.walkable == true) {
-
-                        nb.area = area;
-                        this.FloodFillAreas(nb, area);
-
-                    }
-
-                }
-
-            }
 
         }
 
@@ -232,7 +259,7 @@ namespace ME.ECS.Pathfinding {
                 var nodeColorWalkableWorld = new Color(0.2f, 0.5f, 1f, 0.6f);
                 var nodeBorderColorUnwalkable = new Color(1f, 0.2f, 0.2f, 0.4f);
                 var nodeColorUnwalkable = new Color(1f, 0.2f, 0.2f, 0.4f);
-                for (int j = 0; j < this.nodes.Length; ++j) {
+                for (int j = 0; j < this.nodes.Count; ++j) {
 
                     var node = (GridNode)this.nodes[j];
                     var x = node.position.z;
@@ -327,42 +354,16 @@ namespace ME.ECS.Pathfinding {
 
         }
 
-        public override void BuildAreas() {
-            
-            var area = 0;
-            for (int i = 0; i < this.nodes.Length; ++i) {
-
-                this.nodes[i].area = 0;
-
-            }
-
-            for (int i = 0; i < this.nodes.Length; ++i) {
-
-                var node = this.nodes[i];
-                if (node.walkable == true && node.area == 0) {
-
-                    var currentArea = ++area;
-                    node.area = currentArea;
-                    this.FloodFillAreas(node, currentArea);
-                    
-                }
-
-            }
-
-        }
-        
         protected override void BuildConnections() {
-            
-            var noConnection = new Node.Connection() {
-                cost = 0f,
-                index = -1,
-            };
-            for (var i = 0; i < this.nodes.Length; ++i) {
+
+            var noConnection = Node.Connection.NoConnection;
+            for (var i = 0; i < this.nodes.Count; ++i) {
 
                 //if (i != this.size.x && i != 0 && i != this.nodes.Length - 1 && i != this.size.x - 1 && i != (50 + this.size.x * this.size.z) && i != (150 + this.size.x * this.size.z * 2) &&
                 //    i != this.size.z * this.size.x) continue;
                 
                 var node = this.nodes[i];
+                var connections = node.GetConnections();
                 this.ResetConnections(node.index);
 
                 if (this.connectionsType != ConnectionsType.DirectionalOnly) {
@@ -376,7 +377,7 @@ namespace ME.ECS.Pathfinding {
 
                 } else {
 
-                    node.connections[0] = node.connections[1] = node.connections[2] = node.connections[3] = node.connections[4] = node.connections[5] = noConnection;
+                    connections[0] = connections[1] = connections[2] = connections[3] = connections[4] = connections[5] = noConnection;
 
                 }
 
@@ -568,7 +569,7 @@ namespace ME.ECS.Pathfinding {
 
         protected override void BuildNodes() {
             
-            var nodes = new Node[this.size.x * this.size.y * this.size.z];
+            var nodes = new List<Node>(this.size.x * this.size.y * this.size.z);
             this.nodes = nodes;
 
             var center = this.graphCenter - new Vector3(this.size.x * this.nodeSize * 0.5f, this.size.y * this.agentHeight * 0.5f, this.size.z * this.nodeSize * 0.5f);
@@ -583,14 +584,14 @@ namespace ME.ECS.Pathfinding {
                         var nodePosition = new Vector3(x * this.nodeSize + this.nodeSize * 0.5f, y * this.agentHeight + this.agentHeight * 0.5f, z * this.nodeSize + this.nodeSize * 0.5f);
                         var worldPos = center + nodePosition;
 
-                        var node = new GridNode();
+                        var node = PoolClass<GridNode>.Spawn();
                         node.graph = this;
                         node.index = i;
                         node.position = new Vector3Int(z, y, x);
                         node.walkable = true;
                         node.worldPosition = worldPos;
                         node.penalty = this.initialPenalty;
-                        this.nodes[i] = node;
+                        this.nodes.Add(node);
                         
                         this.BuildNodePhysics(node);
 
@@ -788,6 +789,28 @@ namespace ME.ECS.Pathfinding {
     public class GridNode : Node {
 
         public Vector3Int position;
+
+        public readonly Connection[] connections = new Connection[6 + 4 + 4 + 4];
+
+        public override Connection[] GetConnections() {
+
+            return this.connections;
+
+        }
+
+        public override void CopyFrom(Node other) {
+            
+            base.CopyFrom(other);
+
+            var g = (GridNode)other;
+            this.position = g.position;
+            for (int i = 0; i < this.connections.Length; ++i) {
+
+                this.connections[i] = g.connections[i];
+
+            }
+
+        }
 
     }
     

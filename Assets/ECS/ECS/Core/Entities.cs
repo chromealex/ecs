@@ -251,7 +251,7 @@
     public readonly struct Entity : System.IEquatable<Entity>, System.IComparable<Entity> {
 
         public const ushort VERSION_ZERO = 0;
-        public static Entity Empty = new Entity(0, 0);
+        public static Entity Empty = new Entity(0, Entity.VERSION_ZERO);
         
         public readonly int id;
         public readonly ushort version;
@@ -264,7 +264,7 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsEmpty() {
 
-            return this.version == 0;
+            return this.version == Entity.VERSION_ZERO;
 
         }
 

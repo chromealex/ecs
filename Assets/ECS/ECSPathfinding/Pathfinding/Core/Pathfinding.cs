@@ -5,6 +5,11 @@ using UnityEngine;
 namespace ME.ECS.Pathfinding {
 
     [ExecuteInEditMode]
+    #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+    #endif
     public class Pathfinding : MonoBehaviour {
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -22,38 +27,38 @@ namespace ME.ECS.Pathfinding {
 
         public const int THREADS_COUNT = 8;
 
-        private static Pathfinding _active;
-        public static Pathfinding active {
-            get {
-                
-                #if UNITY_EDITOR
-                if (Pathfinding._active == null && Application.isPlaying == false) {
-
-                    Pathfinding._active = Object.FindObjectOfType<Pathfinding>();
-
-                }
-                #endif
-
-                return Pathfinding._active;
-            }
-            private set {
-                Pathfinding._active = value;
-            }
-        }
-
         public PathfindingProcessor processor = new PathfindingProcessor();
-        public Graph[] graphs;
+        public List<Graph> graphs;
 
         public LogLevel logLevel;
         
         private HashSet<GraphDynamicModifier> dynamicModifiers = new HashSet<GraphDynamicModifier>();
 
-        public void Awake() {
+        private struct CopyGraph : IArrayElementCopy<Graph> {
 
-            Pathfinding.active = this;
+            public void Copy(Graph @from, ref Graph to) {
+                
+                to.CopyFrom(from);
+                
+            }
+
+            public void Recycle(Graph item) {
+
+                item.Recycle();
+                
+            }
 
         }
+        
+        public void CopyFrom(Pathfinding other) {
 
+            this.processor = other.processor;
+            this.logLevel = other.logLevel;
+
+            ArrayUtils.Copy(other.graphs, ref this.graphs, new CopyGraph());
+            
+        }
+        
         public bool HasLogLevel(LogLevel level) {
 
             return (this.logLevel & level) != 0;
@@ -90,7 +95,7 @@ namespace ME.ECS.Pathfinding {
             
         }
 
-        public void Update() {
+        public void AdvanceTick(float deltaTime) {
 
             var anyUpdated = false;
             foreach (var mod in this.dynamicModifiers) {
@@ -119,7 +124,7 @@ namespace ME.ECS.Pathfinding {
             if (this.graphs != null) {
 
                 float dist = float.MaxValue;
-                for (int i = 0; i < this.graphs.Length; ++i) {
+                for (int i = 0; i < this.graphs.Count; ++i) {
 
                     var node = this.graphs[i].GetNearest(worldPosition, constraint);
                     if (node == null) continue;
@@ -169,7 +174,7 @@ namespace ME.ECS.Pathfinding {
 
         public Path CalculatePath<TMod>(Vector3 from, Vector3 to, Constraint constraint, Graph graph, TMod pathModifier) where TMod : IPathModifier {
 
-            return this.processor.Run(from, to, constraint, graph, pathModifier);
+            return this.processor.Run(this, from, to, constraint, graph, pathModifier);
 
         }
 
@@ -177,7 +182,7 @@ namespace ME.ECS.Pathfinding {
             
             if (this.graphs != null) {
 
-                for (int i = 0; i < this.graphs.Length; ++i) {
+                for (int i = 0; i < this.graphs.Count; ++i) {
 
                     this.graphs[i].BuildAreas();
 
@@ -197,7 +202,7 @@ namespace ME.ECS.Pathfinding {
             
             if (this.graphs != null) {
 
-                for (int i = 0; i < this.graphs.Length; ++i) {
+                for (int i = 0; i < this.graphs.Count; ++i) {
 
                     this.graphs[i].GetNodesInBounds(result, bounds);
 
@@ -211,7 +216,7 @@ namespace ME.ECS.Pathfinding {
 
             if (this.graphs != null) {
 
-                for (int i = 0; i < this.graphs.Length; ++i) {
+                for (int i = 0; i < this.graphs.Count; ++i) {
 
                     this.graphs[i].DoBuild();
 
@@ -225,7 +230,7 @@ namespace ME.ECS.Pathfinding {
 
             if (this.graphs != null) {
 
-                for (int i = 0; i < this.graphs.Length; ++i) {
+                for (int i = 0; i < this.graphs.Count; ++i) {
 
                     this.graphs[i].DoDrawGizmos();
 

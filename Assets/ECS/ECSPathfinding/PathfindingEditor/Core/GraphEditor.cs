@@ -62,7 +62,7 @@ namespace ME.ECS.Pathfinding.Editor {
                         GUILayout.Label("Current State: " + this.target.buildingState.ToString(), EditorStyles.miniLabel);
                         if (this.target.buildingState == BuildingState.Built) {
 
-                            GUILayout.Label("Nodes count: " + (this.target.nodes != null ? this.target.nodes.Length.ToString() : "-"), EditorStyles.miniLabel);
+                            GUILayout.Label("Nodes count: " + (this.target.nodes != null ? this.target.nodes.Count.ToString() : "-"), EditorStyles.miniLabel);
 
                         }
                     }

@@ -73,5 +73,10 @@ if (path.result == PathCompleteState.Complete) { // Check if path is exists
     path.path // Modified vector path
     path.nodes // Graph nodes path
     
+} else {
+   
+   // Path not found (this means you are trying to search nodes with wrong constrains)
+   // In general all paths are possible because Pathfinding try to search nearest suitable nodes instead of returns NotExist state. But if you pass wrong constrants and no node will suitable for this - so the path couldn't been calculated.
+   
 }
 ```

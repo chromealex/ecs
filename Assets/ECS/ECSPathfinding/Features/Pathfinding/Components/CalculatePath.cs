@@ -43,4 +43,31 @@ namespace ME.ECS.ECSPathfinding.Features.Pathfinding.Components {
 
     }
 
+    public class PathfindingInstance : IComponentCopyable {
+
+        public ME.ECS.Pathfinding.Pathfinding pathfinding;
+        
+        public void CopyFrom(IComponentCopyable other) {
+
+            var _other = (PathfindingInstance)other;
+            if (this.pathfinding == null && _other.pathfinding != null) {
+                
+                this.pathfinding = _other.pathfinding.Clone();
+                
+            } else {
+            
+                this.pathfinding.CopyFrom(_other.pathfinding); 
+
+            }
+            
+        }
+
+        void IPoolableRecycle.OnRecycle() {
+
+            this.pathfinding.Recycle();
+            
+        }
+
+    }
+
 }

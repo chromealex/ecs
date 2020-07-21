@@ -49,6 +49,25 @@ namespace ME.ECS.Pathfinding {
             }
 
         }
+
+        public Pathfinding Clone() {
+
+            var instance = Object.Instantiate(this);
+            for (int i = 0; i < this.graphs.Count; ++i) {
+
+                this.graphs[i].pathfinding = instance;
+
+            }
+            instance.CopyFrom(this);
+            return instance;
+
+        }
+
+        public void Recycle() {
+            
+            Object.Destroy(this.gameObject);
+            
+        }
         
         public void CopyFrom(Pathfinding other) {
 

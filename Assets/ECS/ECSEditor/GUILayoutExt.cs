@@ -655,15 +655,7 @@ namespace ME.ECSEditor {
 					            EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
 					            GUILayoutExt.PropertyField(world, "Element [" + i.ToString() + "]", fieldInfo, arrValue.GetType(), ref arrValue, typeCheckOnly: false);
 					            EditorGUI.EndDisabledGroup();
-					            if (arrValue.GetType() != array.GetType()) {
-						            
-						            GUILayout.Label("Type wrong " + arrValue.GetType() + " :: " + array.GetType());
-						            
-					            } else {
-
-						            array.SetValue(arrValue, i);
-
-					            }
+					            array.SetValue(arrValue, i);
 
 				            }
 			            
@@ -849,24 +841,43 @@ namespace ME.ECSEditor {
 
 	            }
 
+            } else if (type == typeof(string)) {
+
+	            if (typeCheckOnly == false) {
+
+		            var str = value.ToString();
+		            if (str.Contains("\n") == true) {
+
+			            value = EditorGUILayout.TextArea(str);
+
+		            } else {
+
+			            value = EditorGUILayout.TextField(caption, str);
+
+		            }
+
+	            }
+
+	            return false;
+
             } else {
 
-                if (typeCheckOnly == false) {
+	            if (typeCheckOnly == false) {
 
-                    var str = value.ToString();
-                    if (str.Contains("\n") == true) {
+		            var str = value.ToString();
+		            if (str.Contains("\n") == true) {
 
-                        value = EditorGUILayout.TextArea(str);
+			            EditorGUILayout.TextArea(str);
 
-                    } else {
+		            } else {
 
-                        value = EditorGUILayout.TextField(caption, str);
+			            EditorGUILayout.TextField(caption, str);
 
-                    }
+		            }
 
-                }
+	            }
 
-                return false;
+	            return false;
 
             }
 

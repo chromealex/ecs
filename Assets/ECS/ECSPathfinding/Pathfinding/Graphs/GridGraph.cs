@@ -79,6 +79,7 @@ namespace ME.ECS.Pathfinding {
 
             public void Copy(Node from, ref Node to) {
 
+                if (to == null) to = PoolClass<GridNode>.Spawn();
                 to.CopyFrom(from);
 
             }

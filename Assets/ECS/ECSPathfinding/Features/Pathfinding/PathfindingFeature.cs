@@ -37,7 +37,7 @@ namespace ME.ECS.ECSPathfinding.Features {
             
             var entity = new Entity("Pathfinding");
             entity.SetData(new IsPathfinding());
-
+            
             this.AddSystem<SetPathfindingInstanceSystem>();
             this.AddSystem<BuildGraphsSystem>();
             this.AddSystem<BuildPathSystem>();

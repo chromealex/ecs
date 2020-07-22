@@ -173,11 +173,18 @@ namespace ME.ECS.Views {
     
     using ME.ECS.Collections;
 
+    internal interface IViewBaseInternal {
+
+        void Setup(World world, ViewInfo viewInfo);
+
+    }
+
     public interface IViewBase {
         
-        Entity entity { get; set; }
-        ViewId prefabSourceId { get; set; }
-        Tick creationTick { get; set; }
+        World world { get; }
+        Entity entity { get; }
+        ViewId prefabSourceId { get; }
+        Tick creationTick { get; }
 
     }
 
@@ -231,8 +238,6 @@ namespace ME.ECS.Views {
 
     #if UNITY_ENABLED
     public abstract class ViewBase : UnityEngine.MonoBehaviour {
-
-        
 
     }
     #endif
@@ -708,9 +713,8 @@ namespace ME.ECS.Views {
             if (this.registryPrefabToProvider.TryGetValue(viewInfo.prefabSourceId, out provider) == true) {
 
                 var instance = provider.Spawn(this.GetViewSource(viewInfo.prefabSourceId), viewInfo.prefabSourceId);
-                instance.entity = viewInfo.entity;
-                instance.prefabSourceId = viewInfo.prefabSourceId;
-                instance.creationTick = viewInfo.creationTick;
+                var instanceInternal = (IViewBaseInternal)instance;
+                instanceInternal.Setup(this.world, viewInfo);
                 this.Register(instance);
 
                 return instance;

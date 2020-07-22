@@ -138,6 +138,20 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool IsComponentAsTag<TComponent>() where TComponent : struct, IStructComponent {
+
+            return ComponentTypes<TComponent>.isTag;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void SetComponentAsTag<TComponent>() where TComponent : struct, IStructComponent {
+
+            ComponentTypes<TComponent>.isTag = true;
+
+        }
+
     }
 
 }

@@ -192,10 +192,13 @@ namespace ME.ECSEditor {
 
                 foreach (var entityType in listEntities) {
 
+                    var hasFields = (entityType.GetFields(System.Reflection.BindingFlags.Default | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public).Length > 0);
+                    
                     var resItem = itemStr;
                     resItem = resItem.Replace("#PROJECTNAME#", asmName);
                     resItem = resItem.Replace("#STATENAME#", asmName + "State");
                     resItem = resItem.Replace("#TYPENAME#", entityType.FullName);
+                    resItem = resItem.Replace("#ISTAG#", hasFields == true ? "false" : "true");
 
                     output += resItem;
 
@@ -205,6 +208,7 @@ namespace ME.ECSEditor {
                         resItem2 = resItem2.Replace("#PROJECTNAME#", asmName);
                         resItem2 = resItem2.Replace("#STATENAME#", asmName + "State");
                         resItem2 = resItem2.Replace("#TYPENAME#", entityType.FullName);
+                        resItem2 = resItem2.Replace("#ISTAG#", hasFields == true ? "false" : "true");
 
                         output2 += resItem2;
 

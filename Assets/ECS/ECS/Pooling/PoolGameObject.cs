@@ -58,7 +58,8 @@ namespace ME.ECS.Views {
 
             }
 
-            instance.prefabSourceId = key;
+            var instanceInternal = (IViewBaseInternal)instance;
+            instanceInternal.Setup(instance.world, new ViewInfo(instance.entity, key, instance.creationTick));
             instance.gameObject.SetActive(true);
             return instance;
 

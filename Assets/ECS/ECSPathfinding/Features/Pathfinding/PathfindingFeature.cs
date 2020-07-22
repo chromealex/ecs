@@ -1,5 +1,5 @@
 ﻿
-namespace ME.ECS.ECSPathfinding.Features {
+namespace ME.ECS.Pathfinding.Features {
 
     using ME.ECS.Pathfinding;
     using Pathfinding.Components; using Pathfinding.Modules; using Pathfinding.Systems; using Pathfinding.Markers;

@@ -13,9 +13,9 @@ namespace ME.ECSEditor {
         private const string DIRECTORY_CONTAINS = "/Components/";
         private static readonly System.Type SEARCH_TYPE = typeof(ME.ECS.IStructComponent);
         private const string CONTENT_ITEM = @"
-            structComponentsContainer.Validate<#TYPENAME#>();";
+            structComponentsContainer.Validate<#TYPENAME#>(#ISTAG#);";
         private const string CONTENT_ITEM2 = @"
-            entity.ValidateData<#TYPENAME#>();";
+            entity.ValidateData<#TYPENAME#>(#ISTAG#);";
         private const bool AUTO_COMPILE_DEFAULT = true;
 
         public static void Init() {

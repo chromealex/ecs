@@ -255,13 +255,23 @@ namespace ME.ECS.Views.Providers {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public abstract class MonoBehaviourView : MonoBehaviourViewBase, IView {
+    public abstract class MonoBehaviourView : MonoBehaviourViewBase, IView, IViewBaseInternal {
 
         int System.IComparable<IView>.CompareTo(IView other) { return 0; }
 
-        public Entity entity { get; set; }
-        public ViewId prefabSourceId { get; set; }
-        public Tick creationTick { get; set; }
+        public World world { get; private set; }
+        public Entity entity { get; private set; }
+        public ViewId prefabSourceId { get; private set; }
+        public Tick creationTick { get; private set; }
+
+        void IViewBaseInternal.Setup(World world, ViewInfo viewInfo) {
+
+            this.world = world;
+            this.entity = viewInfo.entity;
+            this.prefabSourceId = viewInfo.prefabSourceId;
+            this.creationTick = viewInfo.creationTick;
+
+        }
 
         void IView.DoInitialize() {
             

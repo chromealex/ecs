@@ -1,5 +1,5 @@
 ﻿
-namespace ME.ECS.ECSPathfinding.Features.Pathfinding.Components {
+namespace ME.ECS.Pathfinding.Features.Pathfinding.Components {
 
     public struct IsPathfinding : IStructComponent {}
     public struct BuildAllGraphs : IStructComponent {}

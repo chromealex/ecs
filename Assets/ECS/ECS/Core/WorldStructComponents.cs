@@ -73,11 +73,14 @@ namespace ME.ECS {
     #endif
     public sealed class StructComponents<TComponent> : StructRegistryBase where TComponent : struct, IStructComponent {
 
+        internal bool isTag;
         internal BufferArray<TComponent> components;
         internal BufferArray<byte> componentsStates;
+        internal TComponent emptyComponent;
 
         public override void OnRecycle() {
-            
+
+            this.isTag = default;
             PoolArray<TComponent>.Recycle(ref this.components);
             PoolArray<byte>.Recycle(ref this.componentsStates);
             
@@ -97,7 +100,7 @@ namespace ME.ECS {
                     if (entity.version == 0) return;
                     
                     state = 0;
-                    this.components.arr[i] = default;
+                    if (this.isTag == false) this.components.arr[i] = default;
                     if (world.currentState.filters.HasInFilters<TComponent>() == true) world.currentState.storage.archetypes.Remove<TComponent>(in entity);
                     --world.currentState.structComponents.count;
                     world.RemoveComponentFromFilter(in entity);
@@ -111,9 +114,9 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override void Validate(in int capacity) {
 
-            if (ArrayUtils.WillResize(in capacity, ref this.components) == true) {
+            if (ArrayUtils.WillResize(in capacity, ref this.componentsStates) == true) {
 
-                ArrayUtils.Resize(in capacity, ref this.components);
+                if (this.isTag == false) ArrayUtils.Resize(in capacity, ref this.components);
                 ArrayUtils.Resize(in capacity, ref this.componentsStates);
                 
             }
@@ -126,9 +129,9 @@ namespace ME.ECS {
         public override void Validate(in Entity entity) {
 
             var index = entity.id;
-            if (ArrayUtils.WillResize(in index, ref this.components) == true) {
+            if (ArrayUtils.WillResize(in index, ref this.componentsStates) == true) {
 
-                ArrayUtils.Resize(in index, ref this.components);
+                if (this.isTag == false) ArrayUtils.Resize(in index, ref this.components);
                 ArrayUtils.Resize(in index, ref this.componentsStates);
 
             }
@@ -139,7 +142,7 @@ namespace ME.ECS {
 
         public override bool HasType(System.Type type) {
 
-            return this.components.arr.GetType().GetElementType() == type;
+            return typeof(TComponent) == type;
 
         }
         
@@ -156,9 +159,21 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
-            var bucket = this.components.arr[index];
             var bucketState = this.componentsStates.arr[index];
-            if (bucketState > 0) return bucket;
+            if (bucketState > 0) {
+
+                if (this.isTag == false) {
+
+                    var bucket = this.components.arr[index];
+                    return bucket;
+
+                } else {
+
+                    return this.emptyComponent;
+
+                }
+
+            }
 
             return null;
 
@@ -177,9 +192,13 @@ namespace ME.ECS {
             //var bucketId = this.GetBucketId(in entity.id, out var index);
             var index = entity.id;
             //this.CheckResize(in index);
-            ref var bucket = ref this.components.arr[index];
+            if (this.isTag == false) {
+            
+                ref var bucket = ref this.components.arr[index];
+                bucket = (TComponent)data;
+
+            }
             ref var bucketState = ref this.componentsStates.arr[index];
-            bucket = (TComponent)data;
             if (bucketState == 0) {
 
                 bucketState = 1;
@@ -206,8 +225,7 @@ namespace ME.ECS {
             ref var bucketState = ref this.componentsStates.arr[index];
             if (bucketState > 0) {
             
-                ref var bucket = ref this.components.arr[index];
-                bucket = default;
+                if (this.isTag == false) this.components.arr[index] = default;
                 bucketState = 0;
             
                 this.world.currentState.storage.archetypes.Remove<TComponent>(in entity);
@@ -233,8 +251,46 @@ namespace ME.ECS {
             return this.componentsStates.arr[entity.id] > 0;
             
         }
-
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public override bool Remove(in Entity entity, bool clearAll = false) {
+
+            #if WORLD_EXCEPTIONS
+            if (entity.version == 0) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+
+            //var bucketId = this.GetBucketId(in entity.id, out var index);
+            var index = entity.id;
+            //this.CheckResize(in index);
+            ref var bucketState = ref this.componentsStates.arr[index];
+            if (bucketState > 0) {
+            
+                if (this.isTag == false) this.components.arr[index] = default;
+                bucketState = 0;
+            
+                if (clearAll == true) {
+                    
+                    this.world.currentState.storage.archetypes.RemoveAll<TComponent>(in entity);
+                    
+                } else {
+
+                    this.world.currentState.storage.archetypes.Remove<TComponent>(in entity);
+
+                }
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        /*[System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public ref TComponent Get(in Entity entity) {
 
             #if WORLD_EXCEPTIONS
@@ -281,49 +337,12 @@ namespace ME.ECS {
             return false;
 
         }
-
-        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public override bool Remove(in Entity entity, bool clearAll = false) {
-
-            #if WORLD_EXCEPTIONS
-            if (entity.version == 0) {
-                
-                EmptyEntityException.Throw();
-                
-            }
-            #endif
-
-            //var bucketId = this.GetBucketId(in entity.id, out var index);
-            var index = entity.id;
-            //this.CheckResize(in index);
-            ref var bucketState = ref this.componentsStates.arr[index];
-            if (bucketState > 0) {
-            
-                ref var bucket = ref this.components.arr[index];
-                bucket = default;
-                bucketState = 0;
-            
-                if (clearAll == true) {
-                    
-                    this.world.currentState.storage.archetypes.RemoveAll<TComponent>(in entity);
-                    
-                } else {
-
-                    this.world.currentState.storage.archetypes.Remove<TComponent>(in entity);
-
-                }
-
-                return true;
-
-            }
-
-            return false;
-
-        }
+*/
 
         public override void CopyFrom(StructRegistryBase other) {
 
             var _other = (StructComponents<TComponent>)other;
+            this.isTag = _other.isTag;
             ArrayUtils.Copy(in _other.components, ref this.components);
             ArrayUtils.Copy(in _other.componentsStates, ref this.componentsStates);
 
@@ -482,10 +501,10 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        public void Validate<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
+        public void Validate<TComponent>(in Entity entity, bool isTag = false) where TComponent : struct, IStructComponent {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
-            this.Validate<TComponent>(in code);
+            this.Validate<TComponent>(in code, isTag);
             var reg = (StructComponents<TComponent>)this.list.arr[code];
             reg.Validate(in entity);
 
@@ -496,10 +515,11 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
-        public void Validate<TComponent>() where TComponent : struct, IStructComponent {
+        public void Validate<TComponent>(bool isTag = false) where TComponent : struct, IStructComponent {
             
             var code = WorldUtilities.GetComponentTypeId<TComponent>();
-            this.Validate<TComponent>(in code);
+            if (isTag == true) WorldUtilities.SetComponentAsTag<TComponent>();
+            this.Validate<TComponent>(in code, isTag);
             
         }
 
@@ -509,7 +529,7 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void Validate<TComponent>(in int code) where TComponent : struct, IStructComponent {
+        private void Validate<TComponent>(in int code, bool isTag) where TComponent : struct, IStructComponent {
 
             if (ArrayUtils.WillResize(code, ref this.list) == true) {
 
@@ -520,7 +540,13 @@ namespace ME.ECS {
             if (this.list.arr[code] == null) {
 
                 var instance = (StructRegistryBase)PoolRegistries.Spawn(typeof(StructRegistryBase));
-                if (instance == null) instance = PoolClass<StructComponents<TComponent>>.Spawn();//new StructComponents<TComponent>();
+                if (instance == null) {
+                    
+                    var newInstance = (StructComponents<TComponent>)System.Activator.CreateInstance(typeof(StructComponents<TComponent>));
+                    newInstance.isTag = isTag;
+                    instance = newInstance;
+
+                }
                 instance.world = Worlds.currentWorld;
                 this.list.arr[code] = instance;
 
@@ -543,7 +569,7 @@ namespace ME.ECS {
             
         }
 
-        #if ECS_COMPILE_IL2CPP_OPTIONS
+        /*#if ECS_COMPILE_IL2CPP_OPTIONS
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
@@ -647,7 +673,7 @@ namespace ME.ECS {
 
             return false;
 
-        }
+        }*/
 
         #if ECS_COMPILE_IL2CPP_OPTIONS
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
@@ -882,9 +908,9 @@ namespace ME.ECS {
 
         }
 
-        public void ValidateData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
+        public void ValidateData<TComponent>(in Entity entity, bool isTag = false) where TComponent : struct, IStructComponent {
 
-            this.currentState.structComponents.Validate<TComponent>(in entity);
+            this.currentState.structComponents.Validate<TComponent>(in entity, isTag);
             if (this.currentState.filters.HasInFilters<TComponent>() == true && this.HasData<TComponent>(in entity) == true) {
                 
                 this.currentState.storage.archetypes.Set<TComponent>(in entity);
@@ -934,6 +960,7 @@ namespace ME.ECS {
                 
             }
 
+            if (reg.isTag == true) return ref reg.emptyComponent;
             return ref reg.components.arr[entity.id];
             
         }
@@ -960,7 +987,7 @@ namespace ME.ECS {
             // Inline all manually
             ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
-            reg.components.arr[entity.id] = default;
+            if (reg.isTag == false) reg.components.arr[entity.id] = default;
             ref var state = ref reg.componentsStates.arr[entity.id];
             if (state == 0) {
 
@@ -1004,7 +1031,7 @@ namespace ME.ECS {
             // Inline all manually
             ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
-            reg.components.arr[entity.id] = data;
+            if (reg.isTag == false) reg.components.arr[entity.id] = data;
             ref var state = ref reg.componentsStates.arr[entity.id];
             if (state == 0) {
 
@@ -1202,7 +1229,7 @@ namespace ME.ECS {
             if (state > 0) {
                 
                 state = 0;
-                reg.components.arr[entity.id] = default;
+                if (reg.isTag == false) reg.components.arr[entity.id] = default;
                 if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Remove<TComponent>(in entity);
                 --this.currentState.structComponents.count;
                 this.RemoveComponentFromFilter(in entity);

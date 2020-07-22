@@ -1,5 +1,5 @@
 ﻿
-namespace ME.ECS.ECSPathfinding.Features.Pathfinding.Systems {
+namespace ME.ECS.Pathfinding.Features.Pathfinding.Systems {
 
     #pragma warning disable
     using Components; using Modules; using Systems; using Markers;

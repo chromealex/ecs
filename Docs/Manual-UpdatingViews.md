@@ -25,7 +25,7 @@ public class ApplyYourViewStateParticle : ParticleView<ApplyYourViewStateParticl
     }
 
     // By default ApplyStateJob will be called from a job
-    // If jobs are turned off for this provider or globaly, it will be called inside the main thread.
+    // If jobs are turned off for this provider or globally, it will be called inside the main thread.
     public override void ApplyStateJob(float deltaTime, bool immediately) {
 
         // Getting root data
@@ -71,7 +71,7 @@ public class ApplyYourViewStateParticle : MonoBehaviourView {
     }
 
     // By default ApplyStateJob will be called from a job
-    // If jobs are turned off for this provider or globaly, this method would be skipped.
+    // If jobs are turned off for this provider or globally, this method would be skipped.
     public override void ApplyStateJob(UnityEngine.Jobs.TransformAccess transform, float deltaTime, bool immediately) {
 
         transform.position = this.entity.GetPosition();
@@ -107,7 +107,7 @@ public class ApplyYourViewStateDrawMesh : DrawMeshView<ApplyYourViewStateDrawMes
     }
 
     // By default ApplyStateJob will be called from a job
-    // If jobs are turned off for this provider or globaly, it will be called inside the main thread.
+    // If jobs are turned off for this provider or globally, it will be called inside the main thread.
     public override void ApplyStateJob(float deltaTime, bool immediately) {
 
         // Getting root data

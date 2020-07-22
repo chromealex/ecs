@@ -34,6 +34,18 @@ namespace ME.ECS.Pathfinding {
         public float minPenalty { get; private set; }
         public float maxPenalty { get; private set; }
 
+        public virtual void OnRecycle() {
+
+            this.pathfinding = null;
+            this.index = default;
+            this.graphName = default;
+            this.graphCenter = default;
+            this.buildingState = default;
+            this.minPenalty = default;
+            this.maxPenalty = default;
+            
+        }
+
         public abstract void Recycle();
         
         public void CopyFrom(Graph other) {
@@ -52,13 +64,15 @@ namespace ME.ECS.Pathfinding {
 
         public abstract void OnCopyFrom(Graph other);
         
-        public virtual void AddNode<T>() where T : Node, new() {
+        public virtual T AddNode<T>() where T : Node, new() {
 
             var node = PoolClass<T>.Spawn();
             node.graph = this;
             node.index = this.nodes.Count;
             this.nodes.Add(node);
-            
+
+            return node;
+
         }
 
         public virtual void RemoveNode(ref Node node, bool bruteForceConnections = false) {

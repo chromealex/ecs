@@ -10,14 +10,14 @@ namespace ME.ECS.Pathfinding.Features.Pathfinding.Systems {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public sealed class BuildGraphsSystem : ISystemFilter {
+    public sealed class PathfindingUpdateSystem : ISystemFilter {
 
         private PathfindingFeature pathfindingFeature;
         
         public World world { get; set; }
 
         void ISystemBase.OnConstruct() {
-            
+
             this.pathfindingFeature = this.world.GetFeature<PathfindingFeature>();
 
         }
@@ -29,20 +29,17 @@ namespace ME.ECS.Pathfinding.Features.Pathfinding.Systems {
         Filter ISystemFilter.filter { get; set; }
         Filter ISystemFilter.CreateFilter() {
             
-            return Filter.Create("Filter-BuildGraphsSystem")
+            return Filter.Create("Filter-PathfindingUpdateSystem")
                          .WithStructComponent<IsPathfinding>()
                          .WithStructComponent<HasPathfindingInstance>()
-                         .WithStructComponent<BuildAllGraphs>()
                          .Push();
             
         }
 
         void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
             
-            entity.GetComponent<PathfindingInstance>().pathfinding.BuildAll();
-
-            entity.RemoveData<BuildAllGraphs>();
-
+            entity.GetComponent<PathfindingInstance>().pathfinding.AdvanceTick(deltaTime);
+            
         }
     
     }

@@ -47,12 +47,18 @@ namespace ME.ECS.Pathfinding.Features.Pathfinding.Components {
         public void CopyFrom(IComponentCopyable other) {
 
             var _other = (PathfindingInstance)other;
+            if (this.pathfinding == null && _other.pathfinding == null) {
+
+                return;
+
+            }
+            
             if (this.pathfinding == null && _other.pathfinding != null) {
                 
                 this.pathfinding = _other.pathfinding.Clone();
                 
             } else {
-            
+
                 this.pathfinding.CopyFrom(_other.pathfinding); 
 
             }
@@ -61,7 +67,7 @@ namespace ME.ECS.Pathfinding.Features.Pathfinding.Components {
 
         void IPoolableRecycle.OnRecycle() {
 
-            this.pathfinding.Recycle();
+            if (this.pathfinding != null) this.pathfinding.Recycle();
             this.pathfinding = null;
 
         }

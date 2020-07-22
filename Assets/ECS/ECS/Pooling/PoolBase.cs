@@ -264,6 +264,7 @@ namespace ME.ECS {
 	    protected CCStack<object> cache = new CCStack<object>(usePool: true);
 	    protected System.Func<object> constructor;
 	    protected System.Action<object> desctructor;
+	    protected System.Type poolType;
 	    protected int poolAllocated;
 	    protected int poolDeallocated;
 	    protected int poolNewAllocated;
@@ -292,33 +293,73 @@ namespace ME.ECS {
 	    }
 
 	    #if UNITY_EDITOR
-	    [UnityEditor.MenuItem("ME.ECS/Debug Pools")]
+	    [UnityEditor.MenuItem("ME.ECS/Debug/Pools Info")]
 	    public static void Debug() {
 		    
 		    UnityEngine.Debug.Log("Allocated: " + PoolInternalBase.allocated + ", Deallocated: " + PoolInternalBase.deallocated + ", Used: " + PoolInternalBase.used + ", cached: " + (PoolInternalBase.deallocated - PoolInternalBase.allocated) + ", new: " + PoolInternalBase.newAllocated);
 
-		    PoolInternalBase max = null;
-		    int maxCount = 0;
+		    PoolInternalBase maxCached = null;
+		    PoolInternalBase maxAlloc = null;
+		    int maxCountCache = 0;
+		    int maxCountAlloc = 0;
 		    for (int i = 0; i < PoolInternalBase.list.Count; ++i) {
 
 			    var item = PoolInternalBase.list[i];
-			    if (maxCount < item.cache.Count) {
+			    if (maxCountCache < item.cache.Count) {
 
-				    maxCount = item.cache.Count;
-				    max = item;
+				    maxCountCache = item.cache.Count;
+				    maxCached = item;
+
+			    }
+			    
+			    if (maxCountAlloc < item.poolAllocated) {
+
+				    maxCountAlloc = item.poolAllocated;
+				    maxAlloc = item;
 
 			    }
 
 		    }
 
-		    if (max != null) {
+		    if (maxCached != null) {
 			    
-			    UnityEngine.Debug.Log("Max type: " + max.cache.First().GetType() + ", Pool: " + max);
+			    UnityEngine.Debug.Log("Max cache type: " + maxCached.poolType + ", Pool:\n" + maxCached);
 			    
 		    }
-		    
+
+		    if (maxAlloc != null) {
+			    
+			    UnityEngine.Debug.Log("Max alloc type: " + maxAlloc.poolType + ", Pool:\n" + maxAlloc);
+			    
+		    }
+
+	    }
+	    
+	    [UnityEditor.MenuItem("ME.ECS/Debug/Pools Reset Stats")]
+	    public static void DebugReset() {
+
+		    for (int i = 0; i < PoolInternalBase.list.Count; ++i) {
+
+			    PoolInternalBase.list[i].ResetStat();
+
+		    }
+
+		    PoolInternalBase.allocated = 0;
+		    PoolInternalBase.deallocated = 0;
+		    PoolInternalBase.used = 0;
+		    PoolInternalBase.newAllocated = 0;
+
 	    }
 	    #endif
+
+	    public void ResetStat() {
+
+		    this.poolAllocated = 0;
+		    this.poolDeallocated = 0;
+		    this.poolUsed = 0;
+		    this.poolNewAllocated = 0;
+
+	    }
 
 	    public override string ToString() {
 		    
@@ -395,6 +436,14 @@ namespace ME.ECS {
 
 		    ++this.poolAllocated;
 		    ++PoolInternalBase.allocated;
+
+		    #if UNITY_EDITOR
+		    if (item != null) {
+			    
+			    this.poolType = item.GetType();
+			    
+		    }
+		    #endif
 		    
 		    return item;
 
@@ -403,6 +452,14 @@ namespace ME.ECS {
 	    [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	    public virtual void Recycle(object instance) {
 		    
+		    #if UNITY_EDITOR
+		    if (instance != null) {
+			    
+			    this.poolType = instance.GetType();
+			    
+		    }
+		    #endif
+
 		    ++this.poolDeallocated;
 		    ++PoolInternalBase.deallocated;
 

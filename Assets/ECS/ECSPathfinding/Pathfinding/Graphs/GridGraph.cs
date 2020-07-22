@@ -93,9 +93,37 @@ namespace ME.ECS.Pathfinding {
 
         }
 
+        public override void OnRecycle() {
+
+            this.size = default;
+            this.nodeSize = default;
+            this.initialPenalty = default;
+            this.diagonalCostFactor = default;
+            this.connectionsType = default;
+            this.agentHeight = default;
+            this.checkMask = default;
+            this.collisionMask = default;
+            this.collisionCheckRadius = default;
+
+            if (this.nodes != null) {
+
+                Debug.Log("Recycle: " + this.nodes.Count);
+                for (int i = 0; i < this.nodes.Count; ++i) {
+
+                    var node = (GridNode)this.nodes[i];
+                    PoolClass<GridNode>.Recycle(ref node);
+
+                }
+
+                this.nodes.Clear();
+
+            }
+
+        }
+
         public override void Recycle() {
             
-            PoolClass<GridGraph>.Recycle(this);
+            this.OnRecycle();
 
         }
 

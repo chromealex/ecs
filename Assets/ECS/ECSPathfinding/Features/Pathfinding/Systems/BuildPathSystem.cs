@@ -37,7 +37,7 @@ namespace ME.ECS.Pathfinding.Features.Pathfinding.Systems {
 
         void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
             
-            var active = this.pathfindingFeature.GetInstance();
+            var active = this.pathfindingFeature.GetEntity().GetComponent<PathfindingInstance>().pathfinding;
             if (active == null) {
 
                 return;

@@ -16,17 +16,24 @@ namespace ME.ECS.Pathfinding.Features {
     #endif
     public sealed class PathfindingFeature : Feature {
 
-        private ME.ECS.Pathfinding.Pathfinding pathfinding;
+        private ME.ECS.Pathfinding.Pathfinding pathfindingInstance;
+        private Entity pathfindingEntity;
         
         internal ME.ECS.Pathfinding.Pathfinding GetInstance() {
 
-            return this.pathfinding;
+            return this.pathfindingInstance;
+
+        }
+
+        internal Entity GetEntity() {
+
+            return this.pathfindingEntity;
 
         }
         
         public void SetInstance(ME.ECS.Pathfinding.Pathfinding pathfinding) {
 
-            this.pathfinding = pathfinding;
+            this.pathfindingInstance = pathfinding;
             
         }
         
@@ -37,10 +44,12 @@ namespace ME.ECS.Pathfinding.Features {
             
             var entity = new Entity("Pathfinding");
             entity.SetData(new IsPathfinding());
+            this.pathfindingEntity = entity;
             
             this.AddSystem<SetPathfindingInstanceSystem>();
             this.AddSystem<BuildGraphsSystem>();
             this.AddSystem<BuildPathSystem>();
+            this.AddSystem<PathfindingUpdateSystem>();
 
         }
 
@@ -52,31 +61,31 @@ namespace ME.ECS.Pathfinding.Features {
 
         public void GetNodesInBounds(System.Collections.Generic.List<Node> output, UnityEngine.Bounds bounds) {
          
-            this.pathfinding.GetNodesInBounds(output, bounds);
+            this.pathfindingEntity.GetComponent<PathfindingInstance>().pathfinding.GetNodesInBounds(output, bounds);
             
         }
 
         public bool BuildNodePhysics(Node node) {
 
-            return this.pathfinding.BuildNodePhysics(node);
+            return this.pathfindingEntity.GetComponent<PathfindingInstance>().pathfinding.BuildNodePhysics(node);
 
         }
         
         public T GetGraphByIndex<T>(int index) where T : Graph {
 
-            return this.pathfinding.graphs[index] as T;
+            return this.pathfindingEntity.GetComponent<PathfindingInstance>().pathfinding.graphs[index] as T;
 
         }
         
         public Node GetNearest(UnityEngine.Vector3 worldPosition) {
 
-            return this.pathfinding.GetNearest(worldPosition, Constraint.Default);
+            return this.pathfindingEntity.GetComponent<PathfindingInstance>().pathfinding.GetNearest(worldPosition, Constraint.Default);
 
         }
 
         public Node GetNearest(UnityEngine.Vector3 worldPosition, Constraint constraint) {
             
-            return this.pathfinding.GetNearest(worldPosition, constraint);
+            return this.pathfindingEntity.GetComponent<PathfindingInstance>().pathfinding.GetNearest(worldPosition, constraint);
             
         }
 

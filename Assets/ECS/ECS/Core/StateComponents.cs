@@ -320,11 +320,17 @@ namespace ME.ECS {
             public void Copy(IComponent from, ref IComponent to) {
                 
                 var type = from.GetType();
-                var comp = (IComponent)PoolComponents.Spawn(type);
+                
+                var comp = to;
                 if (comp == null) {
 
-                    comp = (IComponent)System.Activator.CreateInstance(type);
-                    PoolInternalBase.CallOnSpawn(comp);
+                    comp = (IComponent)PoolComponents.Spawn(type);
+                    if (comp == null) {
+
+                        comp = (IComponent)System.Activator.CreateInstance(type);
+                        PoolInternalBase.CallOnSpawn(comp);
+
+                    }
 
                 }
 
@@ -335,7 +341,7 @@ namespace ME.ECS {
 
             public void Recycle(IComponent item) {
                 
-                PoolComponents.Recycle(item, item.GetType());
+                if (item != null) PoolComponents.Recycle(item, item.GetType());
                 
             }
 
@@ -392,16 +398,16 @@ namespace ME.ECS {
 
             for (int i = 0; i < other.buckets.Length; ++i) {
 
-                if (other.buckets[i].components.Length != this.buckets[i].components.Length) {
+                if (other.buckets.arr[i].components.Length != this.buckets.arr[i].components.Length) {
                     
                     UnityEngine.Debug.LogError("Copy test failure");
                     
                 }
                 
-                for (int j = 0; j < other.buckets[i].components.Length; ++j) {
+                for (int j = 0; j < other.buckets.arr[i].components.Length; ++j) {
 
-                    var c = other.buckets[i].components[j];
-                    var c2 = this.buckets[i].components[j];
+                    var c = other.buckets.arr[i].components.arr[j];
+                    var c2 = this.buckets.arr[i].components.arr[j];
                     if (c != null) {
 
                         if (c2 == null) {

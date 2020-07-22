@@ -42,7 +42,7 @@ namespace ME.ECS.Pathfinding.Features.Pathfinding.Systems {
             if (instance != null) {
 
                 var pInstance = entity.AddComponent<PathfindingInstance>();
-                pInstance.pathfinding = instance;
+                pInstance.pathfinding = instance.Clone();
 
                 entity.SetData(new HasPathfindingInstance());
                 entity.SetData(new BuildAllGraphs());

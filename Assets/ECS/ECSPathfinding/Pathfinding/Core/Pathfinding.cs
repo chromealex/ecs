@@ -64,9 +64,23 @@ namespace ME.ECS.Pathfinding {
         }
 
         public void Recycle() {
+
+            if (this != null && this.gameObject != null) {
+                
+                Object.Destroy(this.gameObject);
+                
+            }
             
-            if (this != null && this.gameObject != null) Object.Destroy(this.gameObject);
+        }
+
+        private void OnRecycle() {
             
+            for (int i = 0; i < this.graphs.Count; ++i) {
+
+                this.graphs[i].Recycle();
+
+            }
+
         }
         
         public void CopyFrom(Pathfinding other) {

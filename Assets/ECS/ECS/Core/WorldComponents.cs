@@ -81,6 +81,14 @@ namespace ME.ECS {
             }
             #endif
 
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                WrongThreadException.Throw("AddComponent");
+
+            }
+            #endif
+
             this.currentState.components.Add(entity.id, data);
             this.currentState.storage.archetypes.Set<TComponent>(in entity);
             this.AddComponentToFilter(entity);
@@ -128,6 +136,14 @@ namespace ME.ECS {
             }
             #endif
 
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                WrongThreadException.Throw("RemoveComponentsPredicate");
+                
+            }
+            #endif
+
             if (this.currentState.components.RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
                 
                 this.RemoveComponentFromFilter(in entity);
@@ -146,6 +162,14 @@ namespace ME.ECS {
             if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
 
                 OutOfStateException.ThrowWorldStateCheck();
+
+            }
+            #endif
+
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                WrongThreadException.Throw("RemoveComponents");
 
             }
             #endif
@@ -173,6 +197,14 @@ namespace ME.ECS {
             }
             #endif
 
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                WrongThreadException.Throw("RemoveComponents");
+
+            }
+            #endif
+
             if (this.currentState.components.RemoveAll<TComponent>(entity.id) > 0) {
                 
                 this.currentState.storage.archetypes.Remove<TComponent>(in entity);
@@ -193,6 +225,14 @@ namespace ME.ECS {
             if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
 
                 OutOfStateException.ThrowWorldStateCheck();
+
+            }
+            #endif
+
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                WrongThreadException.Throw("RemoveComponents");
 
             }
             #endif

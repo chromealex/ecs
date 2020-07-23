@@ -329,62 +329,6 @@ namespace ME.ECS.Views {
 
     }
 
-    public interface IViewComponentRequest<TState> : IComponentCopyable where TState : IStateBase {}
-
-    #if ECS_COMPILE_IL2CPP_OPTIONS
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-    #endif
-    public sealed class DestroyViewComponentRequest<TState> : IViewComponentRequest<TState> where TState : IStateBase {
-
-        public ViewInfo viewInfo;
-        public IView viewInstance;
-
-        void IPoolableRecycle.OnRecycle() {
-
-            this.viewInfo = default;
-            this.viewInstance = default;
-
-        }
-
-        void IComponentCopyable.CopyFrom(IComponentCopyable other) {
-            
-            var otherView = (DestroyViewComponentRequest<TState>)other;
-            this.viewInfo = otherView.viewInfo;
-            this.viewInstance = otherView.viewInstance;
-
-        }
-
-    }
-
-    #if ECS_COMPILE_IL2CPP_OPTIONS
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-    #endif
-    public sealed class CreateViewComponentRequest<TState> : IViewComponentRequest<TState> where TState : IStateBase {
-
-        public ViewInfo viewInfo;
-        public uint seed;
-
-        void IPoolableRecycle.OnRecycle() {
-
-            this.viewInfo = default;
-            this.seed = default;
-
-        }
-
-        void IComponentCopyable.CopyFrom(IComponentCopyable other) {
-            
-            var otherView = (CreateViewComponentRequest<TState>)other;
-            this.viewInfo = otherView.viewInfo;
-            this.seed = otherView.seed;
-
-        }
-
-    }
-
     /// <summary>
     /// Private predicate to filter components
     /// </summary>
@@ -568,6 +512,8 @@ namespace ME.ECS.Views {
             this.registryPrefabToProvider = PoolDictionary<ViewId, IViewsProvider>.Spawn(ViewsModule.REGISTRY_PROVIDERS_CAPACITY);
             this.registryPrefabToProviderInitializer = PoolDictionary<ViewId, IViewsProviderInitializerBase>.Spawn(ViewsModule.REGISTRY_PROVIDERS_CAPACITY);
 
+            Components.SetTypeInHash<ViewComponent>(false);
+            
         }
 
         void IModuleBase.OnDeconstruct() {

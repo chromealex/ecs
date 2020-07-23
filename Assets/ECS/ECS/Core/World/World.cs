@@ -427,7 +427,7 @@ namespace ME.ECS {
             #if WORLD_THREAD_CHECK
             if (this.worldThread != System.Threading.Thread.CurrentThread) {
                 
-                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disabling WORLD_THREAD_CHECK.");
+                WrongThreadException.Throw("Random", "this could cause sync problems");
 
             }
             #endif
@@ -452,7 +452,7 @@ namespace ME.ECS {
             #if WORLD_THREAD_CHECK
             if (this.worldThread != System.Threading.Thread.CurrentThread) {
                 
-                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disable WORLD_THREAD_CHECK.");
+                WrongThreadException.Throw("Random", "this could cause sync problems");
 
             }
             #endif
@@ -476,7 +476,7 @@ namespace ME.ECS {
             #if WORLD_THREAD_CHECK
             if (this.worldThread != System.Threading.Thread.CurrentThread) {
                 
-                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disable WORLD_THREAD_CHECK.");
+                WrongThreadException.Throw("Random", "this could cause sync problems");
 
             }
             #endif
@@ -500,7 +500,7 @@ namespace ME.ECS {
             #if WORLD_THREAD_CHECK
             if (this.worldThread != System.Threading.Thread.CurrentThread) {
                 
-                throw new WrongThreadException("Can't use Random methods from non-world thread, this could cause sync problems.\nTurn off this check by disable WORLD_THREAD_CHECK.");
+                WrongThreadException.Throw("Random", "this could cause sync problems");
 
             }
             #endif

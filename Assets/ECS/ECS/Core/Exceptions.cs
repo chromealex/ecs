@@ -19,6 +19,12 @@ namespace ME.ECS {
         public WrongThreadException() : base("ME.ECS Exception") { }
         public WrongThreadException(string message) : base(message) { }
 
+        public static void Throw(string methodName, string description = null) {
+
+            throw new WrongThreadException("Can't use " + methodName + " method from non-world thread" + (string.IsNullOrEmpty(description) == true ? string.Empty : ", " + description) + ".\nTurn off this check by disabling WORLD_THREAD_CHECK.");
+
+        }
+        
     }
 
     public class EmptyEntityException : System.Exception {

@@ -15,12 +15,14 @@ namespace ME.ECS {
         private static class ComponentType<TComponent> {
 
             public static int id = -1;
+            public static bool inHash = true;
 
         }
 
         public struct Bucket {
 
             public BufferArray<List<IComponent>> components;
+            public bool includeInHash;
 
         }
 
@@ -47,20 +49,30 @@ namespace ME.ECS {
             
         }
 
-        public int Count {
+        public int GetHash() {
 
-            get {
+            var count = 0;
+            for (int i = 0; i < this.buckets.Length; ++i) {
 
-                var count = 0;
-                for (int i = 0; i < this.buckets.Length; ++i) {
+                ref var bucket = ref this.buckets.arr[i];
+                if (bucket.includeInHash == true) {
 
-                    if (this.buckets.arr[i].components.arr != null) count += this.buckets.arr[i].components.Length;
+                    if (bucket.components.arr != null) {
+
+                        for (int j = 0; j < bucket.components.Length; ++j) {
+
+                            var list = bucket.components.arr[j];
+                            if (list != null) count += list.Count;
+
+                        }
+
+                    }
 
                 }
 
-                return count;
-
             }
+
+            return count;
 
         }
 
@@ -199,17 +211,32 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static bool IsTypeInHash<TComponent>() {
+
+            return ComponentType<TComponent>.inHash;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal static void SetTypeInHash<TComponent>(bool state) {
+
+            ComponentType<TComponent>.inHash = state;
+
+        }
+
         public void Add<TComponent>(int entityId, TComponent data) where TComponent : class, IComponent {
 
             var typeId = Components.GetTypeId<TComponent>();
             ArrayUtils.Resize(typeId, ref this.buckets);
             
             ref var bucket = ref this.buckets.arr[typeId];
+            bucket.includeInHash = Components.IsTypeInHash<TComponent>();
             ArrayUtils.Resize(entityId, ref bucket.components);
 
             if (bucket.components.arr[entityId] == null) bucket.components.arr[entityId] = PoolList<IComponent>.Spawn(1);
             bucket.components.arr[entityId].Add(data);
-
+            
         }
         
         public TComponent GetFirst<TComponent>(int entityId) where TComponent : class, IComponent {

@@ -7,7 +7,7 @@ Entities are containers with ID and Version.
 <br>
 <br>
 
-#### Components (```IComponent```)
+#### Components (```IComponent```, ```IStructComponent```)
 [How to create a component](Manual-CreatingComponents.md)
 
 Components are storing data. In ME.ECS there are 2 component types: IComponent and IStructComponent.

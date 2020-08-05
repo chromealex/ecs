@@ -5,8 +5,8 @@ In ME.ECS there are several places where general logic must be replaced with det
 ### Random
 
 As you know (I hope) all random values must deterministic, so if you need to use some random logic, you can use one of these methods:
-| Method | Replace | | Description |
-| ----- | ----------- |
+| Method | Replace | Description |
+| ------ | ------- | ----------- |
 | float UnityEngine.Random.Range(float, float) | float world.GetRandomRange(float, float) | Returns random float value in range [min, max) |
 | int UnityEngine.Random.Range(int, int) | int world.GetRandomRange(int, int) | Returns random float value in range [min, max) |
 | Unity.Mathematics.Random::NextFloat(float, float) | float world.GetRandomRange(float, float) | Returns random float value in range [min, max) |

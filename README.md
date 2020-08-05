@@ -11,6 +11,7 @@
 | ------ | ----- |
 | [Video Tutorials](Docs/VideoTutorials.md) | Here are some links to youtube channel which shows how to use some features |
 | [Classes](Docs/Manual-Classes.md) | All classes and structures used in ME.ECS |
+| [Classes](Docs/Manual-Deterministic.md) | Deterministic Operations |
 | [Default Modules](Docs/DefaultModules.md) | Describe default modules included in ME.ECS by default |
 | [Create World](Docs/Manual-CreatingWorld.md) | Describe how to create new world and set up your empty project |
 | [Create Feature](Docs/Manual-CreatingFeature.md) | How to create new feature |

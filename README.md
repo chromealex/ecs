@@ -11,6 +11,7 @@
 | ------ | ----- |
 | [Video Tutorials](Docs/VideoTutorials.md) | Here are some links to youtube channel which shows how to use some features |
 | [Classes](Docs/Manual-Classes.md) | All classes and structures used in ME.ECS |
+| [Deterministic Operations](Docs/Manual-Deterministic.md) | Deterministic Operations like Random and GetHashCode in collections |
 | [Default Modules](Docs/DefaultModules.md) | Describe default modules included in ME.ECS by default |
 | [Create World](Docs/Manual-CreatingWorld.md) | Describe how to create new world and set up your empty project |
 | [Create Feature](Docs/Manual-CreatingFeature.md) | How to create new feature |
@@ -30,6 +31,11 @@
 | [Defines](Docs/Defines.md) | Define usage |
 | [Code Generators](Docs/CodeGenerators.md) | Code Generators usage |
 | [Pathfinding Package](Assets/ECS/ECSPathfinding) | Here are Pathfinding Package readme |
+
+## Contact Me
+Telegram: https://t.me/chromealex</br>
+E-Mail: chrome.alex@gmail.com</br>
+Facebook: https://www.facebook.com/chrome.alex</br>
 
 ## How It Works
 ![](Readme/HowItWorks.png?raw=true "How It Works")

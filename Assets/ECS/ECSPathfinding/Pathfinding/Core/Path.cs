@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace ME.ECS.Pathfinding {
 
+    using ME.ECS.Collections;
+    
     public enum PathCompleteState {
 
         NotCalculated = 0,
@@ -17,8 +19,8 @@ namespace ME.ECS.Pathfinding {
 
         public PathCompleteState result;
         public Graph graph;
-        public List<Node> nodes;
-        public List<Node> nodesModified;
+        public ListCopyable<Node> nodes;
+        public ListCopyable<Node> nodesModified;
 
         public void Recycle() {
             

@@ -2,6 +2,8 @@
 
 namespace ME.ECS {
 
+    using ME.ECS.Collections;
+    
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -97,13 +99,37 @@ namespace ME.ECS {
 
         }
 
+        internal void AddComponent<TComponent>(Entity entity, TComponent data, int index) where TComponent : class, IComponent {
+            
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldStateCheck();
+
+            }
+            #endif
+
+            #if WORLD_THREAD_CHECK
+            if (this.worldThread != System.Threading.Thread.CurrentThread) {
+                
+                WrongThreadException.Throw("AddComponent");
+
+            }
+            #endif
+
+            this.currentState.components.Add(entity.id, data);
+            this.currentState.storage.archetypes.Set(in entity, index);
+            this.AddComponentToFilter(entity);
+
+        }
+
         public TComponent GetComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
 
             return this.currentState.components.GetFirst<TComponent>(entity.id);
 
         }
 
-        public List<IComponent> ForEachComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
+        public ListCopyable<IComponent> ForEachComponent<TComponent>(Entity entity) where TComponent : class, IComponent {
 
             return this.currentState.components.ForEach<TComponent>(entity.id);
 
@@ -275,7 +301,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public List<IComponent> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent {
+        public ListCopyable<IComponent> ForEachComponentShared<TComponent>(Entity entity) where TComponent : class, IComponent {
             
             return this.ForEachComponent<TComponent>(this.sharedEntity);
             

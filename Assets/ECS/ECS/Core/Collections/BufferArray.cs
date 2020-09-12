@@ -20,9 +20,73 @@ namespace ME.ECS.Collections {
     [System.Serializable]
     public readonly struct BufferArray<T> : System.IEquatable<BufferArray<T>>, IBufferArray {
 
+        #if UNITY_EDITOR
+        public struct EditorArr {
+
+            public T[] data;
+            public int length;
+            public bool isNotEmpty;
+            
+            public ref T this[int index] {
+                get {
+                    if (this.isNotEmpty == false && index >= this.length) throw new System.IndexOutOfRangeException();
+                    return ref this.data[index];
+                }
+            }
+
+            public override int GetHashCode() {
+                
+                return this.data.GetHashCode();
+                
+            }
+
+            public override bool Equals(object obj) {
+                
+                throw new AllocationException();
+                
+            }
+
+            public static implicit operator T[](EditorArr item) {
+
+                return item.data;
+
+            }
+
+            public static bool operator ==(EditorArr v1, object obj) {
+
+                if (obj is EditorArr arr && arr.data == v1.data) return true;
+                if (v1.data == obj) return true;
+                return false;
+
+            }
+
+            public static bool operator !=(EditorArr v1, object obj) {
+
+                return !(v1 == obj);
+
+            }
+
+            /*
+            public static bool operator ==(EditorArr v1, EditorArr v2) {
+
+                return v1.data == v2.data;
+
+            }
+
+            public static bool operator !=(EditorArr v1, EditorArr v2) {
+
+                return !(v1 == v2);
+
+            }*/
+
+        }
+
+        public readonly EditorArr arr;
+        #else
         public readonly T[] arr;
+        #endif
         public readonly int Length;
-        public readonly bool isEmpty;
+        public readonly bool isNotEmpty;
 
         public int Count {
             get {
@@ -32,7 +96,7 @@ namespace ME.ECS.Collections {
 
         public int IndexOf(T instance) {
 
-            if (this.arr == null) return -1;
+            if (this.isNotEmpty == false) return -1;
             
             return System.Array.IndexOf(this.arr, instance);
 
@@ -148,11 +212,31 @@ namespace ME.ECS.Collections {
             }
         }
 
+        public static BufferArray<T> From(ListCopyable<T> arr) {
+
+            var length = arr.Count;
+            var buffer = PoolArray<T>.Spawn(length);
+            System.Array.Copy(arr.innerArray.arr, buffer.arr, length);
+            
+            return buffer;
+            
+        }
+
         public static BufferArray<T> From(T[] arr) {
 
             var length = arr.Length;
             var buffer = PoolArray<T>.Spawn(length);
             ArrayUtils.Copy(new BufferArray<T>(arr, length), ref buffer);
+            
+            return buffer;
+            
+        }
+
+        public static BufferArray<T> From(BufferArray<T> arr) {
+
+            var length = arr.Length;
+            var buffer = PoolArray<T>.Spawn(length);
+            ArrayUtils.Copy(arr, ref buffer);
             
             return buffer;
             
@@ -169,16 +253,23 @@ namespace ME.ECS.Collections {
         }
 
         internal BufferArray(T[] arr, int length) {
-
-            this.arr = arr;
+            
             this.Length = length;
-            this.isEmpty = (length == 0 || arr == null);
-
+            this.isNotEmpty = (length > 0 && arr != null);
+            
+            #if UNITY_EDITOR
+            this.arr.data = arr;
+            this.arr.length = length;
+            this.arr.isNotEmpty = this.isNotEmpty;
+            #else
+            this.arr = arr;
+            #endif
+            
         }
 
         public BufferArray<T> Dispose() {
 
-            var arr = this.arr;
+            T[] arr = this.arr;
             PoolArray<T>.Recycle(ref arr);
             return new BufferArray<T>(null, 0);
 

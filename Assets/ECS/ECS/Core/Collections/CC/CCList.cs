@@ -125,6 +125,28 @@
             }
         }
 
+        public void RemoveAt(int index) {
+            
+            if (index < 0 || index >= this.count) {
+                    
+                throw new ArgumentOutOfRangeException("index");
+                    
+            }
+            
+            var arrayIndex = CCList<T>.GetArrayIndex(index + 1);
+            if (arrayIndex > 0) {
+                index -= ((1 << arrayIndex) - 1);
+            }
+
+            --this.index;
+            --this.count;
+            --this.fuzzyCount;
+            var arr = this.array[arrayIndex];
+            System.Array.Copy(arr, index + 1, arr, index, arr.Length - 1 - index);
+            arr[arr.Length - 1] = default;
+
+        }
+
         public override void Add(T element) {
             var index = Interlocked.Increment(ref this.index) - 1;
             var adjustedIndex = index;

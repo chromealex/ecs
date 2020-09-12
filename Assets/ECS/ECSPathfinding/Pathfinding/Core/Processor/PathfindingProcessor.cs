@@ -4,6 +4,8 @@ using System.Linq;
 using UnityEngine;
 
 namespace ME.ECS.Pathfinding {
+    
+    using ME.ECS.Collections;
 
     public class PathfindingProcessor {
         
@@ -81,7 +83,7 @@ namespace ME.ECS.Pathfinding {
 
         }
 
-        protected List<Node> AstarSearch(Graph graph, List<Node> visited, Node startNode, Node endNode, Constraint constraint, int threadIndex) {
+        protected ListCopyable<Node> AstarSearch(Graph graph, ListCopyable<Node> visited, Node startNode, Node endNode, Constraint constraint, int threadIndex) {
             
             var openList = PoolQueue<Node>.Spawn(10);
             
@@ -137,7 +139,7 @@ namespace ME.ECS.Pathfinding {
 
         }
         
-        private List<Node> RetracePath(int threadIndex, Node endNode) {
+        private ListCopyable<Node> RetracePath(int threadIndex, Node endNode) {
             
             var path = PoolList<Node>.Spawn(10);
             path.Add(endNode);

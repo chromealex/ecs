@@ -139,7 +139,7 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static UnityEngine.Quaternion ToQuaternion(this in Rotation v) {
             
-            return new UnityEngine.Quaternion() { x = v.x, y = v.y, z = v.z, w = v.w };
+            return new UnityEngine.Quaternion() { x = (float)v.x, y = (float)v.y, z = (float)v.z, w = (float)v.w };
             
         }
 

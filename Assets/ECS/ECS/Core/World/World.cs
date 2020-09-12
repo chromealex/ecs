@@ -101,14 +101,14 @@ namespace ME.ECS {
     public class WorldBase {
         
         internal WorldStep currentStep;
-        internal List<IFeatureBase> features;
+        internal ListCopyable<IFeatureBase> features;
         //internal List<ISystemBase> systems;
-        internal List<IModuleBase> modules;
+        internal ListCopyable<IModuleBase> modules;
         internal BufferArray<SystemGroup> systemGroups;
 
-        internal List<ModuleState> statesFeatures;
+        internal ListCopyable<ModuleState> statesFeatures;
         //internal List<ModuleState> statesSystems;
-        internal List<ModuleState> statesModules;
+        internal ListCopyable<ModuleState> statesModules;
 
         internal ICheckpointCollector checkpointCollector;
         

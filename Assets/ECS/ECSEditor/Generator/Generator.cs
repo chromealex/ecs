@@ -8,6 +8,7 @@ namespace ME.ECSEditor {
         private static string MENU_ITEM_AUTO;
         private static string CONTENT_ITEM;
         private static string CONTENT_ITEM2;
+        private static string CONTENT_ITEM3;
         private static string FILE_NAME;
         private static string TEMPLATE;
         private static System.Type SEARCH_TYPE;
@@ -16,11 +17,12 @@ namespace ME.ECSEditor {
         private static bool AUTO_COMPILE_DEFAULT;
 
         protected static void Set(string MENU_ITEM_AUTO, string CONTENT_ITEM, string FILE_NAME, string TEMPLATE, System.Type SEARCH_TYPE, string PREFS_KEY,
-                                  string DIRECTORY_CONTAINS, bool AUTO_COMPILE_DEFAULT, string CONTENT_ITEM2 = null) {
+                                  string DIRECTORY_CONTAINS, bool AUTO_COMPILE_DEFAULT, string CONTENT_ITEM2 = null, string CONTENT_ITEM3 = null) {
 
             Generator.MENU_ITEM_AUTO = MENU_ITEM_AUTO;
             Generator.CONTENT_ITEM = CONTENT_ITEM;
             Generator.CONTENT_ITEM2 = CONTENT_ITEM2;
+            Generator.CONTENT_ITEM3 = CONTENT_ITEM3;
             Generator.FILE_NAME = FILE_NAME;
             Generator.TEMPLATE = TEMPLATE;
             Generator.SEARCH_TYPE = SEARCH_TYPE;
@@ -147,14 +149,18 @@ namespace ME.ECSEditor {
             
             var itemStr = Generator.CONTENT_ITEM;
             var itemStr2 = Generator.CONTENT_ITEM2;
+            var itemStr3 = Generator.CONTENT_ITEM3;
 
             var listEntities = new List<System.Type>();
+            var listComponents = new List<System.Type>();
             var asms = UnityEditor.AssetDatabase.FindAssets("t:asmdef", new[] { dir });
             foreach (var asm in asms) {
 
                 var output = string.Empty;
                 var output2 = string.Empty;
+                var output3 = string.Empty;
                 listEntities.Clear();
+                listComponents.Clear();
 
                 var asmPath = UnityEditor.AssetDatabase.GUIDToAssetPath(asm);
                 var asmNamePath = System.IO.Path.GetDirectoryName(asmPath);
@@ -166,7 +172,7 @@ namespace ME.ECSEditor {
                 var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
                 foreach (var assembly in assemblies) {
 
-                    if (assembly.GetName().Name == asmName) {
+                    if (assembly.GetName().Name != "ECSAssembly") {
 
                         var allTypes = assembly.GetTypes();
                         foreach (var type in allTypes) {
@@ -174,9 +180,15 @@ namespace ME.ECSEditor {
                             var interfaces = type.GetInterfaces();
                             foreach (var @interface in interfaces) {
 
-                                if (@interface == Generator.SEARCH_TYPE) {
+                                if (@interface.IsAssignableFrom(Generator.SEARCH_TYPE) == true) {
 
-                                    listEntities.Add(type);
+                                    if (listEntities.Contains(type) == false) listEntities.Add(type);
+
+                                }
+
+                                if (@interface.IsAssignableFrom(typeof(ME.ECS.IComponent)) == true) {
+
+                                    if (listComponents.Contains(type) == false) listComponents.Add(type);
 
                                 }
 
@@ -184,7 +196,23 @@ namespace ME.ECSEditor {
 
                         }
 
-                        break;
+                        //break;
+
+                    }
+
+                }
+
+                foreach (var type in listComponents) {
+                    
+                    if (itemStr3 != null) {
+
+                        var resItem3 = itemStr3;
+                        resItem3 = resItem3.Replace("#PROJECTNAME#", asmName);
+                        resItem3 = resItem3.Replace("#STATENAME#", asmName + "State");
+                        resItem3 = resItem3.Replace("#TYPENAME#", type.FullName);
+                        resItem3 = resItem3.Replace("#ISTAG#", "false");
+
+                        output3 += resItem3;
 
                     }
 
@@ -214,9 +242,21 @@ namespace ME.ECSEditor {
 
                     }
 
+                    if (itemStr3 != null) {
+
+                        var resItem3 = itemStr3;
+                        resItem3 = resItem3.Replace("#PROJECTNAME#", asmName);
+                        resItem3 = resItem3.Replace("#STATENAME#", asmName + "State");
+                        resItem3 = resItem3.Replace("#TYPENAME#", entityType.FullName);
+                        resItem3 = resItem3.Replace("#ISTAG#", hasFields == true ? "false" : "true");
+
+                        output3 += resItem3;
+
+                    }
+
                 }
-                
-                ME.ECSEditor.ScriptTemplates.Create(asmNamePath, Generator.FILE_NAME, Generator.TEMPLATE, new Dictionary<string, string>() { { "CONTENT", output }, { "CONTENT2", output2 } }, false);
+
+                ME.ECSEditor.ScriptTemplates.Create(asmNamePath, Generator.FILE_NAME, Generator.TEMPLATE, new Dictionary<string, string>() { { "CONTENT", output }, { "CONTENT2", output2 }, { "CONTENT3", output3 } }, false);
                 
             }
 

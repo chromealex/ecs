@@ -56,7 +56,7 @@ namespace ME.ECSEditor {
 
         }
 
-        public static IList<ME.ECS.IModuleBase> GetModules(World world) {
+        public static ME.ECS.Collections.ListCopyable<ME.ECS.IModuleBase> GetModules(World world) {
 
             return world.modules;
             

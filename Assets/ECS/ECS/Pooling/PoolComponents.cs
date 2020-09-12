@@ -232,6 +232,17 @@ namespace ME.ECS {
 
 	    }
 
+	    public static void Recycle<TComponent>(ME.ECS.Collections.ListCopyable<TComponent> list) where TComponent : class, IComponentBase {
+
+		    for (int i = 0; i < list.Count; ++i) {
+			    
+			    PoolComponents.Recycle(list[i], list[i].GetType());
+			    
+		    }
+		    list.Clear();
+
+	    }
+
 	    public static void Recycle<TComponent>(IList<TComponent> list) where TComponent : class, IComponentBase {
 
 		    for (int i = 0; i < list.Count; ++i) {

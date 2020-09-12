@@ -450,6 +450,19 @@ namespace ME.ECS.Network {
 
         }
 
+        public System.Reflection.MethodInfo GetMethodInfo(RPCId rpcId) {
+            
+            System.Reflection.MethodInfo methodInfo;
+            if (this.registry.TryGetValue(rpcId, out methodInfo) == true) {
+
+                return methodInfo;
+
+            }
+
+            return null;
+
+        }
+        
         private Tick runEventTick;
         void StatesHistory.IEventRunner.RunEvent(StatesHistory.HistoryEvent historyEvent) {
             

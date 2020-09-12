@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace ME.ECS.Pathfinding {
+    
+    using ME.ECS.Collections;
 
     [ExecuteInEditMode]
     #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -231,7 +233,7 @@ namespace ME.ECS.Pathfinding {
             
         }
         
-        public void GetNodesInBounds(List<Node> result, Bounds bounds) {
+        public void GetNodesInBounds(ListCopyable<Node> result, Bounds bounds) {
             
             if (this.graphs != null) {
 

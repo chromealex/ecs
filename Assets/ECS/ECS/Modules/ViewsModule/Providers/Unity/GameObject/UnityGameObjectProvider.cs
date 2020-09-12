@@ -364,19 +364,19 @@ namespace ME.ECS.Views.Providers {
 
         }
 
-        private static System.Collections.Generic.List<MonoBehaviourView> resultList;
+        private static ListCopyable<MonoBehaviourView> resultList;
         private static int resultCount;
         //private Unity.Collections.NativeArray<Unity.Mathematics.float3> burstPositions;
         //private Unity.Collections.NativeArray<Unity.Mathematics.quaternion> burstRotations;
         //private Unity.Collections.NativeArray<Unity.Mathematics.float3> burstScales;
         private BufferArray<UnityEngine.Transform> currentTransforms;
         private TransformAccessArray currentTransformArray;
-        private System.Collections.Generic.List<MonoBehaviourView> tempList;
+        private ListCopyable<MonoBehaviourView> tempList;
         public override void Update(BufferArray<Views> list, float deltaTime, bool hasChanged) {
             
             if (this.world.settings.useJobsForViews == false || this.world.settings.viewsSettings.unityGameObjectProviderDisableJobs == true) return;
             
-            if (list.isEmpty == false) {
+            if (list.isNotEmpty == true) {
 
                 if (hasChanged == true) {
 

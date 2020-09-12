@@ -16,6 +16,8 @@ namespace ME.ECSEditor {
             structComponentsContainer.Validate<#TYPENAME#>(#ISTAG#);";
         private const string CONTENT_ITEM2 = @"
             entity.ValidateData<#TYPENAME#>(#ISTAG#);";
+        private const string CONTENT_ITEM3 = @"
+            WorldUtilities.InitComponentTypeId<#TYPENAME#>(#ISTAG#);";
         private const bool AUTO_COMPILE_DEFAULT = true;
 
         public static void Init() {
@@ -29,7 +31,8 @@ namespace ME.ECSEditor {
                 StructComponentsGenerator.PREFS_KEY,
                 StructComponentsGenerator.DIRECTORY_CONTAINS,
                 StructComponentsGenerator.AUTO_COMPILE_DEFAULT,
-                StructComponentsGenerator.CONTENT_ITEM2);
+                StructComponentsGenerator.CONTENT_ITEM2,
+                StructComponentsGenerator.CONTENT_ITEM3);
             
         }
 

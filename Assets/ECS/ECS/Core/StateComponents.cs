@@ -21,7 +21,7 @@ namespace ME.ECS {
 
         public struct Bucket {
 
-            public BufferArray<List<IComponent>> components;
+            public BufferArray<ListCopyable<IComponent>> components;
             public bool includeInHash;
 
         }
@@ -262,7 +262,7 @@ namespace ME.ECS {
 
         }
 
-        public List<IComponent> ForEach<TComponent>(int entityId) where TComponent : class, IComponent {
+        public ListCopyable<IComponent> ForEach<TComponent>(int entityId) where TComponent : class, IComponent {
             
             var typeId = Components.GetTypeId<TComponent>();
             if (typeId >= 0 && typeId < this.buckets.Length) {
@@ -333,7 +333,7 @@ namespace ME.ECS {
 
                     }
 
-                    PoolArray<List<IComponent>>.Recycle(ref bucket.components);
+                    PoolArray<ListCopyable<IComponent>>.Recycle(ref bucket.components);
 
                 }
 
@@ -374,15 +374,15 @@ namespace ME.ECS {
 
         }
 
-        private struct CopyComponentsList : IArrayElementCopy<List<IComponent>> {
+        private struct CopyComponentsList : IArrayElementCopy<ListCopyable<IComponent>> {
 
-            public void Copy(List<IComponent> from, ref List<IComponent> to) {
+            public void Copy(ListCopyable<IComponent> from, ref ListCopyable<IComponent> to) {
                 
                 ArrayUtils.Copy(from, ref to, new CopyComponent());
                 
             }
             
-            public void Recycle(List<IComponent> item) {
+            public void Recycle(ListCopyable<IComponent> item) {
 
                 ArrayUtils.Recycle(ref item, new CopyComponent());
 

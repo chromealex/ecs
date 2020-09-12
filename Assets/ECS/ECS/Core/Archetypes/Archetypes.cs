@@ -8,28 +8,6 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public static class ComponentTypeCounter {
-
-        public static int counter = 0;
-
-    }
-
-    #if ECS_COMPILE_IL2CPP_OPTIONS
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-    #endif
-    public static class ComponentType<T> {
-
-        public static int index = -1;
-
-    }
-
-    #if ECS_COMPILE_IL2CPP_OPTIONS
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
-     Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-    #endif
     public class ArchetypeEntities : IPoolableRecycle {
 
         private BufferArray<Archetype> prevTypes;
@@ -104,6 +82,17 @@ namespace ME.ECS {
             var id = entity.id;
             //ArrayUtils.Resize(id, ref this.types);
             return this.types.arr[id].Has<T>();
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void Set(in Entity entity, in int index) {
+
+            var id = entity.id;
+            //ArrayUtils.Resize(id, ref this.types);
+            //ArrayUtils.Resize(id, ref this.prevTypes);
+            this.prevTypes.arr[id] = this.Get(in entity);
+            this.types.arr[id].AddBit(in index);
 
         }
 
@@ -243,9 +232,9 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool Has<T>() {
 
-            //if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
-            if (ComponentType<T>.index == -1) return false;
-            return this.value.HasBit(in ComponentType<T>.index);
+            var tId = WorldUtilities.GetComponentTypeId<T>();
+            if (tId == -1) return false;
+            return this.value.HasBit(in tId);
             
         }
 
@@ -281,8 +270,19 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Add<T>() {
 
-            if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
-            this.value.AddBit(in ComponentType<T>.index);
+            this.value.AddBit(WorldUtilities.GetComponentTypeId<T>());
+            
+        }
+
+        #if ECS_COMPILE_IL2CPP_OPTIONS
+        [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
+         Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+        #endif
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public void AddBit(in int bit) {
+
+            this.value.AddBit(in bit);
             
         }
 
@@ -294,8 +294,9 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void Subtract<T>() {
 
-            if (ComponentType<T>.index == -1) ComponentType<T>.index = ++ComponentTypeCounter.counter;
-            this.value.SubtractBit(in ComponentType<T>.index);
+            var tId = WorldUtilities.GetComponentTypeId<T>();
+            if (tId == -1) return;
+            this.value.SubtractBit(in tId);
             
         }
 

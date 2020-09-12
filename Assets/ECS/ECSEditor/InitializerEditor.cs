@@ -18,6 +18,7 @@ namespace ME.ECSEditor {
         private const float ONE_LINE_HEIGHT = 22f;
         
         private UnityEditorInternal.ReorderableList list;
+        private UnityEditorInternal.ReorderableList listCategories;
         private System.Collections.Generic.Dictionary<object, bool> systemFoldouts = new System.Collections.Generic.Dictionary<object, bool>();
         private System.Collections.Generic.Dictionary<object, bool> moduleFoldouts = new System.Collections.Generic.Dictionary<object, bool>();
         private static bool isCompilingManual;
@@ -111,6 +112,13 @@ namespace ME.ECSEditor {
                 return false;
                 #endif
             }, true),
+            new DefineInfo("MESSAGE_PACK_SUPPORT", "MessagePack package support.", () => {
+                #if MESSAGE_PACK_SUPPORT
+                return true;
+                #else
+                return false;
+                #endif
+            }, true)
         };
 
         private bool settingsFoldOut {
@@ -172,16 +180,29 @@ namespace ME.ECSEditor {
             GUILayoutExt.CollectEditors<IJobsViewGUIEditor<InitializerBase>, ViewProviderCustomEditorAttribute>(ref this.viewsJobsEditors);
             
             var target = this.target as InitializerBase;
-            if (target.featuresList == null) target.featuresList = new FeaturesList();
-            if (target.featuresList.features == null) target.featuresList.features = new System.Collections.Generic.List<FeaturesList.FeatureData>();
+            //if (target.featuresList == null) target.featuresList = new FeaturesList();
+            //if (target.featuresList.features == null) target.featuresList.features = new System.Collections.Generic.List<FeaturesList.FeatureData>();
 
-            if (this.list == null) {
+            /*if (this.list == null) {
                 
                 this.list = new UnityEditorInternal.ReorderableList(target.featuresList.features, typeof(FeaturesList.FeatureData), true, true, true, true);
                 this.list.drawElementCallback = this.OnDrawListItem;
                 this.list.drawHeaderCallback = this.OnDrawHeader;
                 this.list.onChangedCallback = this.OnChanged;
                 this.list.elementHeightCallback = this.GetElementHeight;
+                //this.list.onAddDropdownCallback = this.OnAddDropdown;
+
+            }*/
+
+            if (this.listCategories == null) {
+                
+                this.listCategories = new UnityEditorInternal.ReorderableList(target.featuresListCategories.items, typeof(FeaturesListCategory), true, true, true, true);
+                this.listCategories.drawElementCallback = this.OnDrawListCategoryItem;
+                this.listCategories.drawHeaderCallback = this.OnDrawHeader;
+                this.listCategories.onChangedCallback = this.OnChanged;
+                this.listCategories.elementHeightCallback = this.GetElementHeightCategory;
+                this.listCategories.onReorderCallbackWithDetails = this.OnReorderItems;
+                this.listCategories.onRemoveCallback = this.OnRemoveItem;
 
             }
 
@@ -355,8 +376,25 @@ namespace ME.ECSEditor {
             
             EditorGUI.BeginDisabledGroup(EditorApplication.isPlaying == true || EditorApplication.isPaused == true);
             this.drawWidth = GUILayoutUtility.GetLastRect().width;
-            this.list.DoLayoutList();
+            //this.list.DoLayoutList();
+            this.listCategories.DoLayoutList();
             EditorGUI.EndDisabledGroup();
+
+        }
+
+        private void OnRemoveItem(UnityEditorInternal.ReorderableList reorderableList) {
+
+            var idx = this.listCategories.index;
+            this.lists.RemoveAt(idx);
+            this.listCategories.list.RemoveAt(idx);
+
+        }
+
+        private void OnReorderItems(UnityEditorInternal.ReorderableList reorderableList, int oldindex, int newindex) {
+
+            var list = this.lists[oldindex];
+            this.lists[oldindex] = this.lists[newindex];
+            this.lists[newindex] = list;
 
         }
 
@@ -539,7 +577,7 @@ namespace ME.ECSEditor {
 
         private float GetElementHeight(int index) {
             
-            var featureData = (FeaturesList.FeatureData)this.list.list[index];
+            var featureData = (FeaturesList.FeatureData)this.lists[this.currentListIndex].list[index];
             var height = InitializerEditor.ONE_LINE_HEIGHT;
 
             if (featureData.feature != null) { // Draw systems
@@ -597,9 +635,86 @@ namespace ME.ECSEditor {
             
         }
 
+        private float GetElementHeightCategory(int index) {
+            
+            while (index >= this.lists.Count) this.lists.Add(null);
+            var list = this.lists[index];
+            this.FillList(index, ref list);
+            
+            return list.GetHeight() + 10f;
+
+        }
+
+        private System.Collections.Generic.List<UnityEditorInternal.ReorderableList> lists = new System.Collections.Generic.List<UnityEditorInternal.ReorderableList>();
+        private int currentListIndex;
+        private void FillList(int index, ref UnityEditorInternal.ReorderableList list) {
+            
+            this.currentListIndex = index;
+
+            list = this.lists[index];
+            if (list == null) {
+                
+                var featureData = (FeaturesListCategory)this.listCategories.list[index];
+                list = new UnityEditorInternal.ReorderableList(featureData.features.features, typeof(FeaturesList.FeatureData), true, true, true, true);
+                list.drawElementCallback = this.OnDrawListItem;
+                list.drawHeaderCallback = this.OnDrawHeaderSubItem;
+                list.onChangedCallback = this.OnChanged;
+                list.elementHeightCallback = this.GetElementHeight;
+
+            }
+
+            this.lists[index] = list;
+            
+        }
+        
+        private void OnDrawListCategoryItem(Rect rect, int index, bool isActive, bool isFocused) {
+            
+            this.currentListIndex = index;
+
+            rect.height = InitializerEditor.ONE_LINE_HEIGHT;
+            
+            var rectCheckBox = new Rect(rect);
+            rectCheckBox.width = 20f;
+
+            while (index >= this.lists.Count) this.lists.Add(null);
+            var list = this.lists[index];
+            this.FillList(index, ref list);
+
+            var isDirty = false;
+            {
+
+                rect.y += 1f;
+                rect.height -= 2f;
+                
+            }
+            
+            list.DoList(rect);
+            
+            if (isDirty == true) {
+                
+                EditorUtility.SetDirty(this.target);
+                
+            }
+            
+        }
+
+        private void OnDrawHeaderSubItem(Rect rect) {
+            
+            var featureData = (FeaturesListCategory)this.listCategories.list[this.currentListIndex];
+            var newCaption = EditorGUI.TextField(rect, featureData.folderCaption, EditorStyles.boldLabel);
+            if (string.IsNullOrEmpty(newCaption) == true) newCaption = "Group Name";
+            if (newCaption != featureData.folderCaption) {
+
+                featureData.folderCaption = newCaption;
+                EditorUtility.SetDirty(this.target);
+
+            }
+
+        }
+        
         private void OnDrawListItem(Rect rect, int index, bool isActive, bool isFocused) {
 
-            var featureData = (FeaturesList.FeatureData)this.list.list[index];
+            var featureData = (FeaturesList.FeatureData)this.lists[this.currentListIndex].list[index];
 
             rect.height = InitializerEditor.ONE_LINE_HEIGHT;
             
@@ -629,9 +744,9 @@ namespace ME.ECSEditor {
                     featureData.feature = obj;
 
                     var count = 0;
-                    for (int i = 0; i < this.list.count; ++i) {
+                    for (int i = 0; i < this.lists[this.currentListIndex].count; ++i) {
                         
-                        var data = (FeaturesList.FeatureData)this.list.list[i];
+                        var data = (FeaturesList.FeatureData)this.lists[this.currentListIndex].list[i];
                         if (data.feature != null && featureData.feature != null && featureData.feature == data.feature) {
 
                             ++count;
@@ -672,7 +787,8 @@ namespace ME.ECSEditor {
 
             if (featureData.feature != null) { // Draw feature
 
-                rect.x += rectCheckBox.width + 14f;
+                rect.x += rectCheckBox.width;// + 14f;
+                rect.width -= rectCheckBox.width;
 
                 var editorComment = featureData.feature.editorComment;
                 if (string.IsNullOrEmpty(editorComment) == false) {

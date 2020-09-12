@@ -131,9 +131,14 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetComponentTypeId<TComponent>() where TComponent : struct, IStructComponent {
+        public static int GetComponentTypeId<TComponent>() {
 
-            if (ComponentTypes<TComponent>.typeId < 0) ComponentTypes<TComponent>.typeId = ++ComponentTypesCounter.counter;
+            if (ComponentTypes<TComponent>.typeId < 0) {
+                
+                ComponentTypes<TComponent>.typeId = ++ComponentTypesCounter.counter;
+                ComponentTypesRegistry.typeId.Add(typeof(TComponent), ComponentTypes<TComponent>.typeId);
+
+            }
             return ComponentTypes<TComponent>.typeId;
 
         }
@@ -146,9 +151,22 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void SetComponentAsTag<TComponent>() where TComponent : struct, IStructComponent {
+        public static void SetComponentAsTag<TComponent>() {
 
             ComponentTypes<TComponent>.isTag = true;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void InitComponentTypeId<TComponent>(bool isTag = false) {
+
+            if (ComponentTypes<TComponent>.typeId < 0) {
+
+                if (isTag == true) WorldUtilities.SetComponentAsTag<TComponent>();
+                ComponentTypes<TComponent>.typeId = ++ComponentTypesCounter.counter;
+                ComponentTypesRegistry.typeId.Add(typeof(TComponent), ComponentTypes<TComponent>.typeId);
+
+            }
 
         }
 

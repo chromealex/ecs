@@ -16,6 +16,9 @@ namespace ME.ECS {
     #endif
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
+    #if MESSAGE_PACK_SUPPORT
+    [MessagePack.MessagePackObjectAttribute()]
+    #endif
     public readonly struct Tick : IComparable, IConvertible, IFormattable, IComparable<TName>, IEquatable<TName>, ISerializable {
 
         public static readonly Tick Zero = 0L;
@@ -24,6 +27,9 @@ namespace ME.ECS {
         public static readonly Tick MinValue = 0UL;
         public static readonly Tick MaxValue = ulong.MaxValue;
         
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(0)]
+        #endif
         public readonly TType v; // Do not rename (binary serialization)
 
         private Tick(TType value) {

@@ -72,8 +72,14 @@ namespace ME.ECS {
 namespace ME.ECS.StatesHistory {
 
     [System.Serializable]
+    #if MESSAGE_PACK_SUPPORT
+    [MessagePack.MessagePackObjectAttribute]
+    #endif
     public struct HistoryStorage {
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(0)]
+        #endif
         public HistoryEvent[] events;
 
     }
@@ -84,42 +90,69 @@ namespace ME.ECS.StatesHistory {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
     [System.Serializable]
+    #if MESSAGE_PACK_SUPPORT
+    [MessagePack.MessagePackObjectAttribute]
+    #endif
     public struct HistoryEvent {
 
         // Header
         /// <summary>
         /// Event tick
         /// </summary>
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(0)]
+        #endif
         public long tick;
         /// <summary>
         /// Global event order (for example: you have 30 players on the map, each has it's own index)
         /// </summary>
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(1)]
+        #endif
         public int order;
         /// <summary>
         /// Local event order (order would be the first, then localOrder applies)
         /// </summary>
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(2)]
+        #endif
         public int localOrder;
         
         // Data
         /// <summary>
         /// Object Id to be called on (see NetworkModule::RegisterObject)
         /// </summary>
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(3)]
+        #endif
         public int objId;
         /// <summary>
         /// Group Id of objects (see NetworkModule::RegisterObject).
         /// One object could be registered in different groups at the same time.
         /// 0 by default (Common group)
         /// </summary>
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(4)]
+        #endif
         public int groupId;
         /// <summary>
         /// Rpc Id is a method Id (see NetworkModule::RegisterRPC) 
         /// </summary>
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(5)]
+        #endif
         public int rpcId;
         /// <summary>
         /// Parameters of method
         /// </summary>
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(6)]
+        #endif
         public object[] parameters;
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.KeyAttribute(7)]
+        #endif
         public bool storeInHistory;
 
         public override string ToString() {

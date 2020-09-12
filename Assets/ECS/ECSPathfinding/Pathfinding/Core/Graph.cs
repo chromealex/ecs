@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace ME.ECS.Pathfinding {
 
+    using ME.ECS.Collections;
+    
     public enum BuildingState : byte {
 
         NotBuilt = 0,
@@ -151,7 +153,7 @@ namespace ME.ECS.Pathfinding {
 
         public abstract T GetNearest<T>(Vector3 worldPosition, Constraint constraint) where T : Node;
 
-        public abstract void GetNodesInBounds(List<Node> output, Bounds bounds);
+        public abstract void GetNodesInBounds(ListCopyable<Node> output, Bounds bounds);
 
         private Dictionary<int, Color> areaColors = new Dictionary<int, Color>();
         protected Color GetAreaColor(int area) {

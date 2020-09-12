@@ -390,7 +390,7 @@ namespace ME.ECSEditor {
 
             }
 
-            public IList<ME.ECS.IModuleBase> GetModules() {
+            public ME.ECS.Collections.ListCopyable<ME.ECS.IModuleBase> GetModules() {
 
                 return WorldHelper.GetModules(this.world);
 
@@ -432,7 +432,7 @@ namespace ME.ECSEditor {
         }
 
         private static Dictionary<System.Type, IGUIEditorBase> editors;
-        private static IGUIEditorBase GetEditor<T>(T instance, IGUIEditorBase editor) {
+        public static IGUIEditorBase GetEditor<T>(T instance, IGUIEditorBase editor) {
             
             var editorT = editor as IGUIEditor<T>;
             if (editorT != null) {
@@ -456,7 +456,7 @@ namespace ME.ECSEditor {
 
         }
 
-        private static IGUIEditorBase GetEditor<T>(T instance, System.Type type) {
+        public static IGUIEditorBase GetEditor<T>(T instance, System.Type type) {
             
             IGUIEditorBase editor;
             if (WorldsViewerEditor.editors.TryGetValue(type, out editor) == true) {
@@ -469,13 +469,13 @@ namespace ME.ECSEditor {
 
         }
 
-        private static IGUIEditorBase GetEditor<T>(T instance) {
+        public static IGUIEditorBase GetEditor<T>(T instance) {
 
             return WorldsViewerEditor.GetEditor(instance, out _);
 
         }
 
-        private static IGUIEditorBase GetEditor<T>(T instance, out int order) {
+        public static IGUIEditorBase GetEditor<T>(T instance, out int order) {
 
             if (WorldsViewerEditor.editors == null) GUILayoutExt.CollectEditors<IGUIEditorBase, CustomEditorAttribute>(ref WorldsViewerEditor.editors);
 
@@ -878,7 +878,7 @@ namespace ME.ECSEditor {
             #endregion
         }
         
-        public static void DrawEntity(Entity entityData, WorldEditor world, IStorage storage, IStructComponentsContainer componentsStructStorage, Components componentsStorage, IList<IModuleBase> modules) {
+        public static void DrawEntity(Entity entityData, WorldEditor world, IStorage storage, IStructComponentsContainer componentsStructStorage, Components componentsStorage, ME.ECS.Collections.ListCopyable<IModuleBase> modules) {
             
             const float padding = 8f;
 
@@ -1044,7 +1044,9 @@ namespace ME.ECSEditor {
                         }
 
                         GUILayoutExt.DrawAddComponentMenu(entityData, usedComponents, componentsStructStorage);
+                        #endregion
 
+                        #region Filters
                         {
                             var filtersCnt = 0;
                             var containsFilters = PoolList<Filter>.Spawn(1);

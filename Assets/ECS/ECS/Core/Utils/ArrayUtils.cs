@@ -31,7 +31,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static void Recycle<T, TCopy>(ref System.Collections.Generic.List<T> item, TCopy copy) where TCopy : IArrayElementCopy<T> {
+        public static void Recycle<T, TCopy>(ref ListCopyable<T> item, TCopy copy) where TCopy : IArrayElementCopy<T> {
 
             if (item != null) {
 
@@ -62,6 +62,54 @@ namespace ME.ECS {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Copy<T, TCopy>(System.Collections.Generic.List<T> fromArr, ref System.Collections.Generic.List<T> arr, TCopy copy) where TCopy : IArrayElementCopy<T> {
+
+            if (fromArr == null) {
+
+                if (arr != null) {
+
+                    for (int i = 0; i < arr.Count; ++i) {
+                        
+                        copy.Recycle(arr[i]);
+                        
+                    }
+                    PoolList<T>.Recycle(ref arr);
+                    
+                }
+
+                arr = null;
+                return;
+
+            }
+
+            if (arr == null || fromArr.Count != arr.Count) {
+
+                if (arr != null) PoolList<T>.Recycle(ref arr);
+                arr = PoolList<T>.SpawnList(fromArr.Count);
+
+            }
+
+            var cnt = arr.Count;
+            for (int i = 0; i < fromArr.Count; ++i) {
+
+                var isDefault = i >= cnt;
+                T item = (isDefault ? default : arr[i]);
+                copy.Copy(fromArr[i], ref item);
+                if (isDefault == true) {
+                    
+                    arr.Add(item);
+                    
+                } else {
+
+                    arr[i] = item;
+
+                }
+
+            }
+            
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void Copy<T, TCopy>(ListCopyable<T> fromArr, ref ListCopyable<T> arr, TCopy copy) where TCopy : IArrayElementCopy<T> {
 
             if (fromArr == null) {
 

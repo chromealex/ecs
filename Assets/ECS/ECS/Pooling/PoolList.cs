@@ -255,23 +255,44 @@
 	public static class PoolList<TValue> {
 
 		private static int capacity;
-		private static PoolInternalBase pool = new PoolInternalBase(() => new List<TValue>(PoolList<TValue>.capacity), (x) => ((List<TValue>)x).Clear());
+		private static PoolInternalBase pool = new PoolInternalBase(() => new ListCopyable<TValue>(PoolList<TValue>.capacity), (x) => ((ListCopyable<TValue>)x).Clear());
+		private static PoolInternalBase poolList = new PoolInternalBase(() => new List<TValue>(PoolList<TValue>.capacity), (x) => ((List<TValue>)x).Clear());
 
-		public static List<TValue> Spawn(int capacity) {
+		public static List<TValue> SpawnList(int capacity) {
 
 			PoolList<TValue>.capacity = capacity;
-			return (List<TValue>)PoolList<TValue>.pool.Spawn();
+			return (List<TValue>)PoolList<TValue>.poolList.Spawn();
 		    
 		}
 
 		public static void Recycle(ref List<TValue> dic) {
+
+			PoolList<TValue>.poolList.Recycle(dic);
+			dic = null;
+
+		}
+
+		public static void Recycle(List<TValue> dic) {
+
+			PoolList<TValue>.poolList.Recycle(dic);
+
+		}
+
+		public static ListCopyable<TValue> Spawn(int capacity) {
+
+			PoolList<TValue>.capacity = capacity;
+			return (ListCopyable<TValue>)PoolList<TValue>.pool.Spawn();
+		    
+		}
+
+		public static void Recycle(ref ListCopyable<TValue> dic) {
 
 			PoolList<TValue>.pool.Recycle(dic);
 			dic = null;
 
 		}
 
-		public static void Recycle(List<TValue> dic) {
+		public static void Recycle(ListCopyable<TValue> dic) {
 
 			PoolList<TValue>.pool.Recycle(dic);
 

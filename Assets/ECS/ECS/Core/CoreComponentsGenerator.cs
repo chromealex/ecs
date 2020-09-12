@@ -3,6 +3,18 @@ namespace ME.ECS {
 
     public static class CoreComponentsInitializer {
 
+        public static void InitTypeId() {
+            
+            WorldUtilities.InitComponentTypeId<ME.ECS.Views.ViewComponent>(false);
+            WorldUtilities.InitComponentTypeId<ME.ECS.Views.IViewComponent>(false);
+            
+            TransformComponentsInitializer.InitTypeId();
+            NameComponentsInitializer.InitTypeId();
+            CameraComponentsInitializer.InitTypeId();
+            PhysicsComponentsInitializer.InitTypeId();
+
+        }
+        
         public static void Init(ref ME.ECS.StructComponentsContainer structComponentsContainer) {
             
             TransformComponentsInitializer.Init(ref structComponentsContainer);
@@ -38,12 +50,12 @@ namespace ME.ECS {
 
         public static void Init(in Entity entity) {
             
-            ComponentsInitializerWorld.onEntity.Invoke(entity);
-            
             TransformComponentsInitializer.Init(in entity);
             NameComponentsInitializer.Init(in entity);
             CameraComponentsInitializer.Init(in entity);
             PhysicsComponentsInitializer.Init(in entity);
+
+            ComponentsInitializerWorld.onEntity.Invoke(entity);
             
         }
 

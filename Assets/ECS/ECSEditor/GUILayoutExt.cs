@@ -176,8 +176,10 @@ namespace ME.ECSEditor {
         }
 	    
 	    private static System.Type[] allStructComponents;
-        public static void DrawAddComponentMenu(Entity entity, System.Collections.Generic.HashSet<System.Type> usedComponents, IStructComponentsContainer componentsStructStorage) {
-            
+	    private static System.Type[] allComponents;
+
+	    public static void DrawAddComponentMenu(System.Collections.Generic.HashSet<System.Type> usedComponents, System.Action<System.Type, bool> onAdd, bool drawRefComponents = false) {
+		    
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             GUIStyle style = new GUIStyle(GUI.skin.button);
@@ -187,16 +189,22 @@ namespace ME.ECSEditor {
  
             var rect = GUILayoutUtility.GetLastRect();
  
-            if (GUILayout.Button("Manage Components", style)) {
+            if (GUILayout.Button(drawRefComponents == true ? "Edit Managed Components" : "Edit Components", style)) {
                 
                 rect.y += 26f;
                 rect.x += rect.width;
                 rect.width = style.fixedWidth;
                 //AddEquipmentBehaviourWindow.Show(rect, entity, usedComponents);
 
-                if (GUILayoutExt.allStructComponents == null) {
+                if (drawRefComponents == true && GUILayoutExt.allStructComponents == null) {
 
 	                GUILayoutExt.allStructComponents = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(x => x.IsValueType == true && typeof(IStructComponent).IsAssignableFrom(x)).ToArray();
+
+                }
+
+                if (drawRefComponents == true && GUILayoutExt.allComponents == null) {
+
+	                GUILayoutExt.allComponents = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(x => x.IsInterface == false && x.IsValueType == false && typeof(IComponent).IsAssignableFrom(x)).ToArray();
 
                 }
 
@@ -215,7 +223,9 @@ namespace ME.ECSEditor {
 	                separator = '.',
 	                
                 };
-                foreach (var type in GUILayoutExt.allStructComponents) {
+                var arr = GUILayoutExt.allStructComponents;
+                if (drawRefComponents == true) arr = GUILayoutExt.allComponents;
+                foreach (var type in arr) {
 
 	                var isUsed = usedComponents.Contains(type);
 
@@ -254,33 +264,8 @@ namespace ME.ECSEditor {
 	                System.Action<PopupWindowAnim.PopupItem> onItemSelect = (item) => {
 		                
 		                isUsed = usedComponents.Contains(type);
-		                var registries = componentsStructStorage.GetAllRegistries();
-		                for (int i = 0; i < registries.Length; ++i) {
+		                onAdd.Invoke(addType, isUsed);
 		                
-			                var registry = registries.arr[i];
-			                if (registry == null) continue;
-			                if (registry.HasType(addType) == true) {
-
-				                if (isUsed == true) {
-
-					                usedComponents.Remove(addType);
-					                registry.RemoveObject(entity);
-					                Worlds.currentWorld.RemoveComponentFromFilter(entity);
-
-				                } else {
-				                
-					                usedComponents.Add(addType);
-					                registry.SetObject(entity, (IStructComponent)System.Activator.CreateInstance(addType));
-					                Worlds.currentWorld.AddComponentToFilter(entity);
-
-				                }
-
-				                break;
-
-			                }
-		                
-		                }
-	                
 		                isUsed = usedComponents.Contains(type);
 		                var tex = isUsed == true ? EditorStyles.toggle.onNormal.scaledBackgrounds[0] : EditorStyles.toggle.normal.scaledBackgrounds[0];
 		                item.image = tex;
@@ -297,6 +282,41 @@ namespace ME.ECSEditor {
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
  
+	    }
+
+	    public static void DrawAddComponentMenu(Entity entity, System.Collections.Generic.HashSet<System.Type> usedComponents, IStructComponentsContainer componentsStructStorage) {
+            
+		    GUILayoutExt.DrawAddComponentMenu(usedComponents, (addType, isUsed) => {
+			    
+			    var registries = componentsStructStorage.GetAllRegistries();
+			    for (int i = 0; i < registries.Length; ++i) {
+		                
+				    var registry = registries.arr[i];
+				    if (registry == null) continue;
+				    if (registry.HasType(addType) == true) {
+
+					    if (isUsed == true) {
+
+						    usedComponents.Remove(addType);
+						    registry.RemoveObject(entity);
+						    Worlds.currentWorld.RemoveComponentFromFilter(entity);
+
+					    } else {
+				                
+						    usedComponents.Add(addType);
+						    registry.SetObject(entity, (IStructComponent)System.Activator.CreateInstance(addType));
+						    Worlds.currentWorld.AddComponentToFilter(entity);
+
+					    }
+
+					    break;
+
+				    }
+		                
+			    }
+
+		    });
+		    
         }
         
         public static void CollectEditors<TEditor, TAttribute>(ref System.Collections.Generic.Dictionary<System.Type, TEditor> dic, System.Reflection.Assembly searchAssembly = null) where TEditor : IGUIEditorBase where TAttribute : CustomEditorAttribute {
@@ -540,7 +560,7 @@ namespace ME.ECSEditor {
                         EditorGUI.BeginDisabledGroup(disabled: (isEditable == false));
                         if (GUILayoutExt.PropertyField(world, customName != null ? customName : field.Name, field, field.FieldType, ref value, typeCheckOnly: false) == true) {
 
-                            if (oldValue.ToString() != value.ToString()) {
+                            if (oldValue != value) {
 
                                 field.SetValue(instance, value);
                                 changed = true;
@@ -585,7 +605,7 @@ namespace ME.ECSEditor {
 
         public static bool PropertyField(WorldsViewerEditor.WorldEditor world, string caption, System.Reflection.FieldInfo fieldInfo, System.Type type, ref object value, bool typeCheckOnly) {
 
-            if (typeCheckOnly == false && value == null) {
+            if (typeCheckOnly == false && value == null && type.HasBaseType(typeof(UnityEngine.Object)) == false) {
 
                 EditorGUILayout.LabelField("Null");
                 return false;
@@ -692,7 +712,7 @@ namespace ME.ECSEditor {
 
 	            if (typeCheckOnly == false) {
 
-		            var entity = ((RefEntity)value).entity;
+		            var entity = (Worlds.currentWorld != null) ? ((RefEntity)value).entity : Entity.Empty;
 		            GUILayout.BeginHorizontal();
 		            var buttonWidth = 50f;
 		            EditorGUILayout.LabelField(caption, GUILayout.Width(EditorGUIUtility.labelWidth));
@@ -769,19 +789,35 @@ namespace ME.ECSEditor {
                 
             } else if (type == typeof(Vector2)) {
 
-                if (typeCheckOnly == false) {
+	            if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.Vector2Field(caption, (Vector2)value);
+		            value = EditorGUILayout.Vector2Field(caption, (Vector2)value);
 
-                }
+	            }
 
             } else if (type == typeof(Vector3)) {
 
-                if (typeCheckOnly == false) {
+	            if (typeCheckOnly == false) {
 
-                    value = EditorGUILayout.Vector3Field(caption, (Vector3)value);
+		            value = EditorGUILayout.Vector3Field(caption, (Vector3)value);
 
-                }
+	            }
+
+            }  else if (type == typeof(FPVector2)) {
+
+	            if (typeCheckOnly == false) {
+
+		            value = (FPVector2)EditorGUILayout.Vector2Field(caption, (FPVector2)value);
+
+	            }
+
+            } else if (type == typeof(FPVector3)) {
+
+	            if (typeCheckOnly == false) {
+
+		            value = (FPVector3)EditorGUILayout.Vector3Field(caption, (FPVector3)value);
+
+	            }
 
             } else if (type == typeof(Vector4)) {
 
@@ -793,11 +829,27 @@ namespace ME.ECSEditor {
 
             } else if (type == typeof(Quaternion)) {
 
-                if (typeCheckOnly == false) {
+	            if (typeCheckOnly == false) {
 
-                    value = Quaternion.Euler(EditorGUILayout.Vector3Field(caption, ((Quaternion)value).eulerAngles));
+		            value = Quaternion.Euler(EditorGUILayout.Vector3Field(caption, ((Quaternion)value).eulerAngles));
 
-                }
+	            }
+
+            } else if (type == typeof(FPQuaternion)) {
+
+	            if (typeCheckOnly == false) {
+
+		            value = (FPQuaternion)Quaternion.Euler(EditorGUILayout.Vector3Field(caption, ((FPQuaternion)value).eulerAngles));
+
+	            }
+
+            } else if (type == typeof(pfloat)) {
+
+	            if (typeCheckOnly == false) {
+
+		            value = (pfloat)EditorGUILayout.FloatField(caption, (float)(pfloat)value);
+
+	            }
 
             } else if (type == typeof(int)) {
 

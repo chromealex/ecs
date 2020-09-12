@@ -1,6 +1,7 @@
 ﻿
 namespace ME.ECS.Pathfinding.Features {
 
+    using Collections;
     using ME.ECS.Pathfinding;
     using Pathfinding.Components; using Pathfinding.Modules; using Pathfinding.Systems; using Pathfinding.Markers;
     
@@ -59,7 +60,7 @@ namespace ME.ECS.Pathfinding.Features {
             
         }
 
-        public void GetNodesInBounds(System.Collections.Generic.List<Node> output, UnityEngine.Bounds bounds) {
+        public void GetNodesInBounds(ListCopyable<Node> output, UnityEngine.Bounds bounds) {
          
             this.pathfindingEntity.GetComponent<PathfindingInstance>().pathfinding.GetNodesInBounds(output, bounds);
             

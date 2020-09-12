@@ -222,7 +222,7 @@
 	        //buffer = new BufferArray<T>(null, 0);
 	        //return;
 	        
-	        var arr = buffer.arr;
+	        T[] arr = buffer.arr;
 	        PoolArray<T>.Release(ref arr);
 	        buffer = new BufferArray<T>(null, 0);
 
@@ -233,7 +233,7 @@
 	        //buffer = new BufferArray<T>(null, 0);
 	        //return;
 	        
-	        var arr = buffer.arr;
+	        T[] arr = buffer.arr;
 	        PoolArray<T>.Release(ref arr);
 	        
         }

@@ -57,12 +57,14 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static UnityEngine.Vector2 GetPosition2D(this in Entity child) {
 
-            var position = Worlds.currentWorld.GetData<Position>(in child).ToVector3();
+            var position = Worlds.currentWorld.GetData<Position2D>(in child).ToVector2();
             var current = Worlds.currentWorld.GetData<Container>(in child, createIfNotExists: false).entity;
             while (current.IsEmpty() == false) {
 
-                position = Worlds.currentWorld.GetData<Rotation>(in current).ToQuaternion() * position;
-                position += Worlds.currentWorld.GetData<Position>(in current).ToVector3();
+                var angle = Worlds.currentWorld.GetData<Rotation2D>(in current).ToQuaternion2D();
+                position = UnityEngine.Quaternion.Euler(0f, angle, 0f) * position;
+                //position = UnityEngine.Vector2.Rotate(position, angle);
+                position += Worlds.currentWorld.GetData<Position2D>(in current).ToVector2();
                 current = Worlds.currentWorld.GetData<Container>(in current, createIfNotExists: false).entity;
 
             }
@@ -74,7 +76,7 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static UnityEngine.Vector2 GetLocalPosition2D(this in Entity child) {
 
-            return Worlds.currentWorld.GetData<Position>(in child).ToVector3();
+            return Worlds.currentWorld.GetData<Position2D>(in child).ToVector2();
             
         }
 
@@ -111,7 +113,7 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static UnityEngine.Vector2 GetLocalScale2D(this in Entity child) {
 
-            return Worlds.currentWorld.GetData<Scale>(in child).ToVector3();
+            return Worlds.currentWorld.GetData<Scale2D>(in child).ToVector2();
 
         }
 
@@ -123,7 +125,7 @@
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static UnityEngine.Vector2 ToVector3(this in Position2D v) {
+        public static UnityEngine.Vector2 ToVector2(this in Position2D v) {
             
             return new UnityEngine.Vector2() { x = v.x, y = v.y };
             
@@ -151,7 +153,7 @@
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static UnityEngine.Vector2 ToVector3(this in Scale2D v) {
+        public static UnityEngine.Vector2 ToVector2(this in Scale2D v) {
             
             return new UnityEngine.Vector2() { x = v.x, y = v.y };
             

@@ -40,7 +40,7 @@
                 
             }
             
-            var worldToCameraMatrix = Matrix4x4.TRS(entity.GetPosition(), entity.GetRotation(), Vector3.one);
+            var worldToCameraMatrix = Matrix4x4.TRS(entity.GetPosition(), (Quaternion)entity.GetRotation(), Vector3.one);
             
             var screenSize = new Vector2(Screen.width, Screen.height);
             position.x *= screenSize.x;

@@ -2,31 +2,12 @@ using System.Linq;
 
 namespace ME.ECS.Collections {
     
-    using System.Collections.Generic;
-
-    public interface IRefList {
-
-        int Capacity { get; }
-        int UsedCount { get; }
-        int FromIndex { get; }
-        int SizeCount { get; }
-        void Clear();
-        bool RemoveAt(int index);
-        int GetNextIndex();
-
-        bool IsFree(int index);
-        
-        TData Get<TData>(int index);
-        void Set<TData>(int index, TData data);
-
-    }
-
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public sealed class RefList<T> : IRefList, IPoolableRecycle, IPoolableSpawn {
+    public sealed class RefList<T> : IPoolableRecycle, IPoolableSpawn {
         
         private BufferArray<T> arr;
         // TODO: Add int[] next array which determine next index in arr (useful for enumeration)

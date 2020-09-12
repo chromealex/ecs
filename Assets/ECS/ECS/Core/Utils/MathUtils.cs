@@ -9,6 +9,38 @@ namespace ME.ECS {
     #endif
     public static class VectorExt {
 
+        public static FPVector2 Abs(FPVector2 v) {
+            
+            return new FPVector2(FPMath.Abs(v.x), FPMath.Abs(v.y));
+            
+        }
+
+        public static FPVector3 XY(this FPVector2 v) {
+            
+            return new FPVector3(v.x, v.y, 0f);
+            
+        }
+        
+        public static FPVector3 XZ(this FPVector2 v) {
+            
+            return new FPVector3(v.x, 0f, v.y);
+            
+        }
+
+        public static FPVector2 XY(this FPVector3 v) {
+            
+            return new FPVector2(v.x, v.y);
+            
+        }
+        
+        public static FPVector2 XZ(this FPVector3 v) {
+            
+            return new FPVector2(v.x, v.z);
+            
+        }
+
+        
+        
         public static Vector2 Abs(Vector2 v) {
             
             return new Vector2(Mathf.Abs(v.x), Mathf.Abs(v.y));

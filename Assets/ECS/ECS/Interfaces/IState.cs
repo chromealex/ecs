@@ -39,7 +39,7 @@ namespace ME.ECS {
         /// <returns></returns>
         public virtual int GetHash() {
 
-            return this.components.GetHash() ^ this.structComponents.Count;
+            return this.components.GetHash() ^ this.structComponents.Count;//^ this.structComponents.GetCustomHash();
 
         }
 

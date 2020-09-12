@@ -38,6 +38,8 @@ namespace ME.ECS {
     public abstract class StructRegistryBase : IStructRegistryBase, IPoolableRecycle {
         
         public World world;
+
+        public abstract bool IsTag();
         
         public abstract bool HasType(System.Type type);
         public abstract IStructComponent GetObject(Entity entity);
@@ -64,6 +66,8 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public abstract void OnRecycle();
 
+        public abstract int GetCustomHash();
+
     }
 
     #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -77,6 +81,26 @@ namespace ME.ECS {
         internal BufferArray<TComponent> components;
         internal BufferArray<byte> componentsStates;
         internal TComponent emptyComponent;
+
+        public override int GetCustomHash() {
+
+            var hash = 0;
+            if (typeof(TComponent) == typeof(ME.ECS.Transform.Position)) {
+
+                for (int i = 0; i < this.components.Length; ++i) {
+
+                    var p = (ME.ECS.Transform.Position)(object)this.components.arr[i];
+                    hash ^= (int)(p.x * 100000f);
+                    hash ^= (int)(p.y * 100000f);
+                    hash ^= (int)(p.z * 100000f);
+
+                }
+
+            }
+
+            return hash;
+
+        }
 
         public override void OnRecycle() {
 
@@ -176,6 +200,12 @@ namespace ME.ECS {
             }
 
             return null;
+
+        }
+
+        public override bool IsTag() {
+
+            return this.isTag;
 
         }
 
@@ -365,6 +395,7 @@ namespace ME.ECS {
 
         internal interface ITask {
 
+            Entity entity { get; }
             void Execute();
             void Recycle();
             ITask Clone();
@@ -373,14 +404,14 @@ namespace ME.ECS {
 
         internal class NextFrameTask<TComponent> : ITask where TComponent : struct, IStructComponent {
 
-            public Entity entity;
+            public Entity entity { get; set; }
             public TComponent data;
             public World world;
             public ComponentLifetime lifetime;
             
             public void Execute() {
 
-                this.world.SetData(in this.entity, in this.data, this.lifetime);
+                this.world.SetData(this.entity, in this.data, this.lifetime);
 
             }
 
@@ -442,6 +473,18 @@ namespace ME.ECS {
             }
         }
 
+        public int GetCustomHash() {
+
+            var hash = 0;
+            for (int i = 0; i < this.list.Length; ++i) {
+
+                hash ^= this.list.arr[i].GetCustomHash();
+
+            }
+            return hash;
+
+        }
+
         #if ECS_COMPILE_IL2CPP_OPTIONS
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
@@ -482,7 +525,35 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
         #endif
         public void RemoveAll(in Entity entity) {
-            
+
+            for (int i = 0; i < this.nextFrameTasks.Count; ++i) {
+
+                if (this.nextFrameTasks[i] == null) continue;
+
+                if (this.nextFrameTasks[i].entity == entity) {
+
+                    this.nextFrameTasks[i].Recycle();
+                    this.nextFrameTasks.RemoveAt(i);
+                    --i;
+
+                }
+
+            }
+
+            for (int i = 0; i < this.nextTickTasks.Count; ++i) {
+
+                if (this.nextTickTasks[i] == null) continue;
+                
+                if (this.nextTickTasks[i].entity == entity) {
+
+                    this.nextTickTasks[i].Recycle();
+                    this.nextTickTasks.RemoveAt(i);
+                    --i;
+
+                }
+
+            }
+
             for (int i = 0, length = this.list.Length; i < length; ++i) {
 
                 var item = this.list.arr[i];
@@ -923,7 +994,7 @@ namespace ME.ECS {
         public bool HasData<TComponent>(in Entity entity) where TComponent : struct, IStructComponent {
 
             #if WORLD_EXCEPTIONS
-            if (entity.version == 0) {
+            if (entity.IsAlive() == false) {
                 
                 EmptyEntityException.Throw();
                 
@@ -940,7 +1011,7 @@ namespace ME.ECS {
         public ref TComponent GetData<TComponent>(in Entity entity, bool createIfNotExists = true) where TComponent : struct, IStructComponent {
 
             #if WORLD_EXCEPTIONS
-            if (entity.version == 0) {
+            if (entity.IsAlive() == false) {
                 
                 EmptyEntityException.Throw();
                 
@@ -953,6 +1024,14 @@ namespace ME.ECS {
             ref var state = ref reg.componentsStates.arr[entity.id];
             if (state == 0 && createIfNotExists == true) {
 
+                #if WORLD_EXCEPTIONS
+                if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                    OutOfStateException.ThrowWorldStateCheck();
+
+                }
+                #endif
+                
                 state = 1;
                 if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
                 ++this.currentState.structComponents.count;
@@ -977,7 +1056,7 @@ namespace ME.ECS {
             #endif
 
             #if WORLD_EXCEPTIONS
-            if (entity.version == 0) {
+            if (entity.IsAlive() == false) {
                 
                 EmptyEntityException.Throw();
                 
@@ -1021,7 +1100,7 @@ namespace ME.ECS {
             #endif
 
             #if WORLD_EXCEPTIONS
-            if (entity.version == 0) {
+            if (entity.IsAlive() == false) {
                 
                 EmptyEntityException.Throw();
                 
@@ -1046,6 +1125,34 @@ namespace ME.ECS {
 
         }
 
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal void SetData(in Entity entity, in IStructComponent data, in int index) {
+
+            #if WORLD_STATE_CHECK
+            if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
+
+                OutOfStateException.ThrowWorldStateCheck();
+                
+            }
+            #endif
+
+            #if WORLD_EXCEPTIONS
+            if (entity.IsAlive() == false) {
+                
+                EmptyEntityException.Throw();
+                
+            }
+            #endif
+            
+            // Inline all manually
+            ref var reg = ref this.currentState.structComponents.list.arr[index];
+            if (reg.IsTag() == false) reg.SetObject(entity, data);
+            if (this.currentState.filters.allFiltersArchetype.HasBit(in index) == true) this.currentState.storage.archetypes.Set(in entity, in index);
+            ++this.currentState.structComponents.count;
+            this.AddComponentToFilter(entity);
+
+        }
+
         public void PlayTasksForFrame() {
 
             if (this.currentState.structComponents.nextFrameTasks.Count > 0) {
@@ -1053,6 +1160,8 @@ namespace ME.ECS {
                 for (int i = 0; i < this.currentState.structComponents.nextFrameTasks.Count; ++i) {
 
                     var task = this.currentState.structComponents.nextFrameTasks[i];
+                    if (task == null) continue;
+                    
                     task.Execute();
                     task.Recycle();
 
@@ -1071,6 +1180,8 @@ namespace ME.ECS {
                 for (int i = 0; i < this.currentState.structComponents.nextTickTasks.Count; ++i) {
 
                     var task = this.currentState.structComponents.nextTickTasks[i];
+                    if (task == null) continue;
+                    
                     task.Execute();
                     task.Recycle();
 

@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace ME.ECS.Pathfinding {
 
+    using ME.ECS.Collections;
+    
     #if ECS_COMPILE_IL2CPP_OPTIONS
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
         [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
@@ -238,7 +240,7 @@ namespace ME.ECS.Pathfinding {
 
         }
 
-        public override void GetNodesInBounds(List<Node> result, Bounds bounds) {
+        public override void GetNodesInBounds(ListCopyable<Node> result, Bounds bounds) {
 
             var min = bounds.min;
             var max = bounds.max;

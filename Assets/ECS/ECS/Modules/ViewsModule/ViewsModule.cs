@@ -247,6 +247,7 @@ namespace ME.ECS.Views {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
+    [System.Serializable]
     public readonly struct ViewInfo : System.IEquatable<ViewInfo> {
 
         public readonly Entity entity;
@@ -366,7 +367,7 @@ namespace ME.ECS.Views {
     public struct Views {
 
         public IView mainView;
-        public List<IView> otherViews;
+        public ListCopyable<IView> otherViews;
         public bool isNotEmpty;
 
         #if ECS_COMPILE_IL2CPP_OPTIONS

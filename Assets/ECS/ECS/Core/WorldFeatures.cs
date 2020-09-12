@@ -1,5 +1,40 @@
 namespace ME.ECS {
 
+    [System.Serializable]
+    public sealed class FeaturesListCategories {
+
+        public System.Collections.Generic.List<FeaturesListCategory> items = new System.Collections.Generic.List<FeaturesListCategory>();
+
+        public void Initialize(World world) {
+
+            for (int i = 0; i < this.items.Count; ++i) {
+                
+                this.items[i].features.Initialize(world);
+                
+            }
+            
+        }
+
+        public void DeInitialize(World world) {
+
+            for (int i = 0; i < this.items.Count; ++i) {
+                
+                this.items[i].features.DeInitialize(world);
+                
+            }
+
+        }
+
+    }
+
+    [System.Serializable]
+    public sealed class FeaturesListCategory {
+
+        public string folderCaption;
+        public FeaturesList features = new FeaturesList();
+
+    }
+    
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
@@ -19,7 +54,7 @@ namespace ME.ECS {
             public bool enabled;
             public FeatureBase feature;
             public FeatureBase featureInstance;
-
+            
         }
 
         public System.Collections.Generic.List<FeatureData> features = new System.Collections.Generic.List<FeatureData>();

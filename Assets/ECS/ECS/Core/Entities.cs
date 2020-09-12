@@ -1,12 +1,20 @@
 ﻿namespace ME.ECS {
 
+    using Collections;
+    
     public struct ComponentTypesCounter {
 
         public static int counter = -1;
 
     }
 
-    public struct ComponentTypes<TComponent> where TComponent : IStructComponent {
+    public struct ComponentTypesRegistry {
+
+        public static System.Collections.Generic.Dictionary<System.Type, int> typeId = new System.Collections.Generic.Dictionary<System.Type, int>();
+
+    }
+
+    public struct ComponentTypes<TComponent> {
 
         public static readonly byte _;
         public static int typeId = -1;
@@ -138,7 +146,7 @@
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static System.Collections.Generic.List<IComponent> ForEachComponent<TComponent>(this Entity entity)
+        public static ListCopyable<IComponent> ForEachComponent<TComponent>(this Entity entity)
             where TComponent : class, IComponent
         {
         
@@ -265,12 +273,21 @@
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
     [System.Serializable]
-    public readonly struct Entity : System.IEquatable<Entity>, System.IComparable<Entity> {
+    #if MESSAGE_PACK_SUPPORT
+    [MessagePack.MessagePackObjectAttribute()]
+    #endif
+    public readonly partial struct Entity : System.IEquatable<Entity>, System.IComparable<Entity> {
 
         public const ushort VERSION_ZERO = 0;
         public static Entity Empty = new Entity(0, Entity.VERSION_ZERO);
         
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(0)]
+        #endif
         public readonly int id;
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(1)]
+        #endif
         public readonly ushort version;
         
         #if ECS_COMPILE_IL2CPP_OPTIONS

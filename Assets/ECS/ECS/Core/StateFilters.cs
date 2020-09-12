@@ -1126,8 +1126,6 @@ namespace ME.ECS {
 
         public Filter WithComponent<TComponent>() where TComponent : class, IComponent {
 
-            //var node = new ComponentExistsFilterNode<TComponent>();
-            //this.tempNodes.Add(node);
             this.archetypeContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWith<TComponent>();
@@ -1138,8 +1136,6 @@ namespace ME.ECS {
         
         public Filter WithoutComponent<TComponent>() where TComponent : class, IComponent {
 
-            //var node = new ComponentNotExistsFilterNode<TComponent>();
-            //this.tempNodes.Add(node);
             this.archetypeNotContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWithout<TComponent>();
@@ -1150,8 +1146,6 @@ namespace ME.ECS {
 
         public Filter WithStructComponent<TComponent>() where TComponent : struct, IStructComponent {
 
-            //var node = new ComponentStructExistsFilterNode<TComponent>();
-            //this.tempNodes.Add(node);
             this.archetypeContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWith<TComponent>();
@@ -1162,8 +1156,6 @@ namespace ME.ECS {
 
         public Filter WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent {
 
-            //var node = new ComponentStructNotExistsFilterNode<TComponent>();
-            //this.tempNodes.Add(node);
             this.archetypeNotContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWithout<TComponent>();

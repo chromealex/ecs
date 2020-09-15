@@ -6,8 +6,14 @@
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
     [System.Serializable]
+    #if MESSAGE_PACK_SUPPORT
+    [MessagePack.MessagePackObjectAttribute()]
+    #endif
     public partial struct pfloat : System.IEquatable<pfloat>, System.IComparable<pfloat> {
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(0)]
+        #endif
         public readonly long v;
 
         // Precision of this type is 2^-32, that is 2,3283064365386962890625E-10
@@ -973,6 +979,9 @@
         /// <summary>
         /// The underlying integer representation
         /// </summary>
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.IgnoreMemberAttribute]
+        #endif
         public long RawValue {
             get {
                 return this.v;
@@ -983,12 +992,23 @@
         /// This is the constructor from raw value; it can only be used interally.
         /// </summary>
         /// <param name="rawValue"></param>
-        private pfloat(long rawValue) {
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.SerializationConstructorAttribute]
+        #endif
+        public pfloat(long rawValue) {
             this.v = rawValue;
         }
 
         public pfloat(int value) {
             this.v = value * pfloat.ONE;
+        }
+
+        public pfloat(pfloat value) {
+            this.v = value.v;
+        }
+
+        public pfloat(float value) {
+            this.v = ((pfloat)value).v;
         }
 
     }

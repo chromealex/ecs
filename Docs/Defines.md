@@ -11,5 +11,6 @@
 | FPS_MODULE_SUPPORT | Turns on FPS Module. See [Default Modules](DefaultModules.md) section for more info. |
 | ECS_COMPILE_IL2CPP_OPTIONS | If turned on, ME.ECS will use IL2CPP options for the faster runtime, this flag removed unnecessary null-checks and bounds array checks. |
 | ECS_COMPILE_IL2CPP_OPTIONS_FILE_INCLUDE | Turn off this option if you provide your own Il2CppSetOptionAttribute. Works with ECS_COMPILE_IL2CPP_OPTIONS. |
+| MESSAGE_PACK_SUPPORT | Turn on this option to enable MessagePack support (https://github.com/neuecc/MessagePack-CSharp). |
 
 [![](Footer.png)](/../../#glossary)

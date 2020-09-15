@@ -104,6 +104,42 @@ namespace ME.ECS {
     #endif
     public static class MathUtils {
 
+        public static string ToStringDec(this float value) {
+            
+            return ((decimal)value).ToString("F10");
+
+        }
+
+        public static string ToStringDec(this Vector2 value) {
+            
+            return value.x.ToStringDec() + "; " + value.y.ToStringDec();
+
+        }
+
+        public static string ToStringDec(this Vector3 value) {
+            
+            return value.x.ToStringDec() + "; " + value.y.ToStringDec() + "; " + value.z.ToStringDec();
+
+        }
+
+        public static string ToStringDec(this pfloat value) {
+            
+            return value.ToString();
+
+        }
+
+        public static string ToStringDec(this FPVector2 value) {
+            
+            return value.x.ToStringDec() + "; " + value.y.ToStringDec();
+
+        }
+
+        public static string ToStringDec(this FPVector3 value) {
+            
+            return value.x.ToStringDec() + "; " + value.y.ToStringDec() + "; " + value.z.ToStringDec();
+
+        }
+
         public static bool IsUnityMathematicsUsed() {
             
             #if UNITY_MATHEMATICS

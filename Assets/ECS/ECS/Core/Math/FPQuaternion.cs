@@ -5,14 +5,30 @@
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
+    [System.Serializable]
+    #if MESSAGE_PACK_SUPPORT
+    [MessagePack.MessagePackObjectAttribute()]
+    #endif
     public struct FPQuaternion : System.IEquatable<FPQuaternion> {
         
         public static readonly FPQuaternion identity = new FPQuaternion(0, 0, 0, 1);
         public static UnityEngine.Quaternion q;
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(0)]
+        #endif
         public pfloat x;
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(1)]
+        #endif
         public pfloat y;
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(2)]
+        #endif
         public pfloat z;
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(3)]
+        #endif
         public pfloat w;
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -43,6 +59,9 @@
             
         }
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.IgnoreMemberAttribute]
+        #endif
         public FPVector3 eulerAngles {
             get {
 

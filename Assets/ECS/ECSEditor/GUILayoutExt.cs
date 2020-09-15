@@ -196,7 +196,7 @@ namespace ME.ECSEditor {
                 rect.width = style.fixedWidth;
                 //AddEquipmentBehaviourWindow.Show(rect, entity, usedComponents);
 
-                if (drawRefComponents == true && GUILayoutExt.allStructComponents == null) {
+                if (drawRefComponents == false && GUILayoutExt.allStructComponents == null) {
 
 	                GUILayoutExt.allStructComponents = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(x => x.IsValueType == true && typeof(IStructComponent).IsAssignableFrom(x)).ToArray();
 

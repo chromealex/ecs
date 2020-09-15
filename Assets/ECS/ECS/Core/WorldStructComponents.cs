@@ -402,7 +402,7 @@ namespace ME.ECS {
 
         }
 
-        internal class NextFrameTask<TComponent> : ITask where TComponent : struct, IStructComponent {
+        internal class NextFrameTask<TComponent> : ITask, System.IEquatable<NextFrameTask<TComponent>> where TComponent : struct, IStructComponent {
 
             public Entity entity { get; set; }
             public TComponent data;
@@ -433,6 +433,13 @@ namespace ME.ECS {
                 copy.world = this.world;
                 copy.lifetime = this.lifetime;
                 return copy;
+
+            }
+
+            public bool Equals(NextFrameTask<TComponent> other) {
+
+                if (other == null) return false;
+                return this.entity == other.entity && this.lifetime == other.lifetime;
 
             }
 
@@ -1286,7 +1293,7 @@ namespace ME.ECS {
                     
                     task.lifetime = ComponentLifetime.NotifyAllSystemsBelow;
 
-                    this.currentState.structComponents.nextTickTasks.Add(task);
+                    if (this.currentState.structComponents.nextTickTasks.Contains(task) == false) this.currentState.structComponents.nextTickTasks.Add(task);
 
                 }
 

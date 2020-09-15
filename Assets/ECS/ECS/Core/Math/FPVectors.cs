@@ -6,12 +6,22 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
+    [System.Serializable]
+    #if MESSAGE_PACK_SUPPORT
+    [MessagePack.MessagePackObjectAttribute()]
+    #endif
     public struct FPVector2 : System.IEquatable<FPVector2> {
         
         public static readonly FPVector2 zero = new FPVector2(0, 0);
         public static readonly FPVector2 one = new FPVector2(1, 1);
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(0)]
+        #endif
         public pfloat x;
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(1)]
+        #endif
         public pfloat y;
 
         public bool Equals(FPVector2 other) {
@@ -87,6 +97,9 @@ namespace ME.ECS {
             
         }
         
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.IgnoreMemberAttribute]
+        #endif
         public pfloat sqrMagnitude {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
@@ -94,6 +107,9 @@ namespace ME.ECS {
             }
         }
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.IgnoreMemberAttribute]
+        #endif
         public pfloat magnitude {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
@@ -101,11 +117,21 @@ namespace ME.ECS {
             }
         }
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.IgnoreMemberAttribute]
+        #endif
         public FPVector2 normalized {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
                 return FPVector2.Normalize(this);
             }
+        }
+
+        public static FPVector2 Lerp(FPVector2 a, FPVector2 b, pfloat t) {
+            
+            t = FPMath.Clamp01(t);
+            return new FPVector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+            
         }
 
         public static implicit operator FPVector2(UnityEngine.Vector2 v) {
@@ -187,13 +213,26 @@ namespace ME.ECS {
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
          Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
+    [System.Serializable]
+    #if MESSAGE_PACK_SUPPORT
+    [MessagePack.MessagePackObjectAttribute()]
+    #endif
     public struct FPVector3 : System.IEquatable<FPVector3> {
         
         public static readonly FPVector3 zero = new FPVector3(0, 0, 0);
         public static readonly FPVector3 one = new FPVector3(1, 1, 1);
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(0)]
+        #endif
         public pfloat x;
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(1)]
+        #endif
         public pfloat y;
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.Key(2)]
+        #endif
         public pfloat z;
 
         public bool Equals(FPVector3 other) {
@@ -213,7 +252,14 @@ namespace ME.ECS {
             throw new AllocationException();
             
         }
-
+        
+        public static FPVector3 Lerp(FPVector3 a, FPVector3 b, pfloat t) {
+            
+            t = FPMath.Clamp01(t);
+            return new FPVector3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
+            
+        }
+        
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public FPVector3(pfloat x, pfloat y, pfloat z) {
 
@@ -258,6 +304,9 @@ namespace ME.ECS {
             
         }
         
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.IgnoreMemberAttribute]
+        #endif
         public pfloat sqrMagnitude {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
@@ -265,6 +314,9 @@ namespace ME.ECS {
             }
         }
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.IgnoreMemberAttribute]
+        #endif
         public pfloat magnitude {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {
@@ -272,6 +324,9 @@ namespace ME.ECS {
             }
         }
 
+        #if MESSAGE_PACK_SUPPORT
+        [MessagePack.IgnoreMemberAttribute]
+        #endif
         public FPVector3 normalized {
             [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get {

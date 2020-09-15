@@ -40,7 +40,7 @@ namespace ME.ECSEditor {
         bool IGUIEditorBase.OnDrawGUI() {
             
             var target = this.target;
-            target = UnityEngine.Quaternion.Euler(UnityEditor.EditorGUILayout.Vector3Field("Rotation", target.ToQuaternion().eulerAngles)).ToRotationStruct();
+            target = UnityEngine.Quaternion.Euler((FPVector3)UnityEditor.EditorGUILayout.Vector3Field("Rotation", target.ToQuaternion().eulerAngles)).ToRotationStruct();
             var isDirty = (target.ToQuaternion() != this.target.ToQuaternion());
             this.target = target;
             

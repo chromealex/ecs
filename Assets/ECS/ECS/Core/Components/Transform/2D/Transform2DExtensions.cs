@@ -19,7 +19,7 @@
 
                 var containerRotation = UnityEngine.Quaternion.Euler(0f, 0f, container.entity.GetRotation2D());
                 var containerPosition = container.entity.GetPosition2D();
-                child.SetLocalPosition2D(UnityEngine.Quaternion.Inverse(containerRotation) * (position - containerPosition));
+                child.SetLocalPosition2D(FPQuaternion.Inverse(containerRotation) * (position - containerPosition));
 
             } else {
                 

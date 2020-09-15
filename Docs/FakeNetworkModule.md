@@ -27,7 +27,7 @@ public class NetworkModule : ME.ECS.Network.NetworkModule<State> {
         // Here you need to set up transporter and serializer classes
         var instance = (ME.ECS.Network.INetworkModuleBase)this;
         instance.SetTransporter(new FakeTransporter(this.GetNetworkType()));
-        instance.SetSerializer(new FakeSerializer());
+        instance.SetSerializer(new FSSerializer());
 
     }
 
@@ -132,8 +132,12 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
     }
 
 }
+```
 
-public class FakeSerializer : ME.ECS.Network.ISerializer {
+### FullSerializer Implementation
+
+```csharp
+public class FSSerializer : ME.ECS.Network.ISerializer {
 
     private readonly FullSerializer.fsSerializer fsSerializer = new FullSerializer.fsSerializer();
 
@@ -178,6 +182,39 @@ public class FakeSerializer : ME.ECS.Network.ISerializer {
     }
 
 }
+    
 ```
+
+### MsgPack Implementation
+```csharp
+public class MsgPackSerializer : ME.ECS.Network.ISerializer {
+
+    public byte[] SerializeStorage(ME.ECS.StatesHistory.HistoryStorage historyStorage) {
+
+        return MsgPack.Serialization.SerializationContext.Default.GetSerializer<ME.ECS.StatesHistory.HistoryStorage>().PackSingleObject(historyStorage);
+            
+    }
+
+    public ME.ECS.StatesHistory.HistoryStorage DeserializeStorage(byte[] bytes) {
+
+        return MsgPack.Serialization.SerializationContext.Default.GetSerializer<ME.ECS.StatesHistory.HistoryStorage>().UnpackSingleObject(bytes);
+
+    }
+
+    public byte[] Serialize(ME.ECS.StatesHistory.HistoryEvent historyEvent) {
+            
+        return MsgPack.Serialization.SerializationContext.Default.GetSerializer<ME.ECS.StatesHistory.HistoryEvent>().PackSingleObject(historyEvent);
+
+    }
+
+    public ME.ECS.StatesHistory.HistoryEvent Deserialize(byte[] bytes) {
+
+        return MsgPack.Serialization.SerializationContext.Default.GetSerializer<ME.ECS.StatesHistory.HistoryEvent>().UnpackSingleObject(bytes);
+
+    }
+
+}
+```
+
 
 [![](Footer.png)](/../../#glossary)

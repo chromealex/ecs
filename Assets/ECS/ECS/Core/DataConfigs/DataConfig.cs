@@ -8,12 +8,12 @@ namespace ME.ECS.DataConfigs {
     public class DataConfig : ScriptableObject {
 
         [SerializeReference]
-        public IStructComponent[] structComponents;
+        public IStructComponent[] structComponents = new IStructComponent[0];
         [SerializeReference]
-        public IComponent[] components;
+        public IComponent[] components = new IComponent[0];
 
-        public int[] structComponentsTypeIds;
-        public int[] componentsTypeIds;
+        public int[] structComponentsTypeIds = new int[0];
+        public int[] componentsTypeIds = new int[0];
         
         public void Apply(in Entity entity) {
 

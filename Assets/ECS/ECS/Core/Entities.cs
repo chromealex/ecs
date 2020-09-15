@@ -276,7 +276,7 @@
     #if MESSAGE_PACK_SUPPORT
     [MessagePack.MessagePackObjectAttribute()]
     #endif
-    public readonly partial struct Entity : System.IEquatable<Entity>, System.IComparable<Entity> {
+    public readonly struct Entity : System.IEquatable<Entity>, System.IComparable<Entity> {
 
         public const ushort VERSION_ZERO = 0;
         public static Entity Empty = new Entity(0, Entity.VERSION_ZERO);

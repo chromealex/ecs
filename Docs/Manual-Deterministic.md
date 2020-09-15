@@ -31,4 +31,8 @@ As you know (I hope) all random values must deterministic, so if you need to use
 In deterministic logic you couldn't use default HashSet and Dictionary because it call GetHashCode() method on your instances.
 You should override GetHashCode() method to be able to use these collection types.
      
+### If you are Fixed-Point Math fan
+
+In ME.ECS has FPVector2, FPVector3, FPQuaternion, pfloat and FPMath implementations. If you really need to use fixed-point math you can use any of these structs.
+
 [![](Footer.png)](/../../#glossary)

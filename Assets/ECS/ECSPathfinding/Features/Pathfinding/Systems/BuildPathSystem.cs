@@ -47,6 +47,7 @@ namespace ME.ECS.Pathfinding.Features.Pathfinding.Systems {
             entity.RemoveComponents<Path>();
 
             var request = entity.GetData<CalculatePath>();
+            //UnityEngine.Debug.LogWarning("REQUEST PATH: " + request.@from.ToStringDec() + " to " + request.to.ToStringDec());
             var constraint = request.constraint;
             var path = active.CalculatePath(request.from, request.to, constraint, new ME.ECS.Pathfinding.PathCornersModifier());
             if (path.result == ME.ECS.Pathfinding.PathCompleteState.Complete) {
@@ -71,6 +72,16 @@ namespace ME.ECS.Pathfinding.Features.Pathfinding.Systems {
                 unitPath.path = ME.ECS.Collections.BufferArray<UnityEngine.Vector3>.From(vPath);
                 unitPath.nodes = ME.ECS.Collections.BufferArray<ME.ECS.Pathfinding.Node>.From(path.nodesModified);
 
+                /*
+                UnityEngine.Debug.LogWarning("============================= PATH: {");
+                for (int i = 0; i < unitPath.path.Length; ++i) {
+                    
+                    UnityEngine.Debug.LogWarning("PATH POINT: " + unitPath.path.arr[i].ToStringDec());
+                    
+                }
+                UnityEngine.Debug.LogWarning("============================= } END");
+                */
+                
                 entity.SetData(new IsPathBuilt(), ComponentLifetime.NotifyAllSystems);
                 
                 PoolList<UnityEngine.Vector3>.Recycle(ref vPath);

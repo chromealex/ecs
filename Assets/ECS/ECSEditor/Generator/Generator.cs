@@ -151,6 +151,9 @@ namespace ME.ECSEditor {
             var itemStr2 = Generator.CONTENT_ITEM2;
             var itemStr3 = Generator.CONTENT_ITEM3;
 
+            var splittedMain = dir.Split('/');
+            var asmNameMain = splittedMain[splittedMain.Length - 1];
+
             var listEntities = new List<System.Type>();
             var listComponents = new List<System.Type>();
             var asms = UnityEditor.AssetDatabase.FindAssets("t:asmdef", new[] { dir });
@@ -170,25 +173,56 @@ namespace ME.ECSEditor {
                 var asmName = splitted[splitted.Length - 1];
 
                 var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
+                var allAsms = new HashSet<string>();
+                System.Reflection.Assembly mainAsm = null;
                 foreach (var assembly in assemblies) {
 
-                    if (assembly.GetName().Name != "ECSAssembly") {
+                    if (assembly.GetName().Name == asmNameMain) {
+
+                        mainAsm = assembly;
+                        
+                        allAsms.Add(mainAsm.GetName().Name);
+                        var refs = mainAsm.GetReferencedAssemblies();
+                        foreach (var r in refs) {
+
+                            allAsms.Add(r.Name);
+
+                        }
+                        break;
+
+                    }
+
+                }
+
+                foreach (var assembly in assemblies) {
+
+                    if (allAsms.Contains(assembly.GetName().Name) == true && assembly.GetName().Name != "ECSAssembly") {
 
                         var allTypes = assembly.GetTypes();
                         foreach (var type in allTypes) {
 
+                            if (type.IsInterface == true) continue;
+                            
                             var interfaces = type.GetInterfaces();
                             foreach (var @interface in interfaces) {
 
                                 if (@interface.IsAssignableFrom(Generator.SEARCH_TYPE) == true) {
 
-                                    if (listEntities.Contains(type) == false) listEntities.Add(type);
+                                    if (listEntities.Contains(type) == false) {
+                                        
+                                        listEntities.Add(type);
+                                        
+                                    }
 
                                 }
 
                                 if (@interface.IsAssignableFrom(typeof(ME.ECS.IComponent)) == true) {
 
-                                    if (listComponents.Contains(type) == false) listComponents.Add(type);
+                                    if (listComponents.Contains(type) == false) {
+
+                                        listComponents.Add(type);
+                                        
+                                    }
 
                                 }
 

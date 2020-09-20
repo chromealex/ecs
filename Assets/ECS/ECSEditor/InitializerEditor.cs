@@ -575,54 +575,6 @@ namespace ME.ECSEditor {
 
         }
 
-        private float GetElementHeight(int index) {
-            
-            var featureData = (FeaturesList.FeatureData)this.lists[this.currentListIndex].list[index];
-            var height = InitializerEditor.ONE_LINE_HEIGHT;
-
-            if (featureData.feature != null) { // Draw systems
-                
-                var editorComment = featureData.feature.editorComment;
-                if (string.IsNullOrEmpty(editorComment) == false) {
-
-                    var style = EditorStyles.label;
-                    var content = new GUIContent(editorComment);
-                    height += style.CalcHeight(content, this.drawWidth);
-                    
-                }
-                
-                var count = this.GetSystemsCount(featureData.feature);
-                if (count > 0) {
-
-                    height += InitializerEditor.ONE_LINE_HEIGHT;
-                    var isOpen = this.IsSystemFoldout(featureData.feature);
-                    if (isOpen == true) {
-
-                        height += InitializerEditor.ONE_LINE_HEIGHT * count;
-
-                    }
-
-                }
-                
-                count = this.GetModulesCount(featureData.feature);
-                if (count > 0) {
-
-                    height += InitializerEditor.ONE_LINE_HEIGHT;
-                    var isOpen = this.IsModuleFoldout(featureData.feature);
-                    if (isOpen == true) {
-
-                        height += InitializerEditor.ONE_LINE_HEIGHT * count;
-
-                    }
-
-                }
-
-            }
-
-            return height;
-
-        }
-
         private void OnDrawHeader(Rect rect) {
             
             GUI.Label(rect, "Features");
@@ -712,6 +664,59 @@ namespace ME.ECSEditor {
 
         }
         
+        private float GetElementHeight(int index) {
+            
+            var featureData = (FeaturesList.FeatureData)this.lists[this.currentListIndex].list[index];
+            var height = InitializerEditor.ONE_LINE_HEIGHT;
+
+            if (featureData.feature != null) { // Draw systems
+
+                var editorComment = featureData.feature.editorComment;
+                if (string.IsNullOrEmpty(editorComment) == false) {
+                    
+                    var rectCheckBoxWidth = 20f;
+                    var w = this.drawWidth;
+                    w -= rectCheckBoxWidth;
+
+                    var style = new GUIStyle(EditorStyles.label);
+                    style.wordWrap = true;
+                    var content = new GUIContent(editorComment);
+                    height += style.CalcHeight(content, w);
+                    
+                }
+                
+                var count = this.GetSystemsCount(featureData.feature);
+                if (count > 0) {
+
+                    height += InitializerEditor.ONE_LINE_HEIGHT;
+                    var isOpen = this.IsSystemFoldout(featureData.feature);
+                    if (isOpen == true) {
+
+                        height += InitializerEditor.ONE_LINE_HEIGHT * count;
+
+                    }
+
+                }
+                
+                count = this.GetModulesCount(featureData.feature);
+                if (count > 0) {
+
+                    height += InitializerEditor.ONE_LINE_HEIGHT;
+                    var isOpen = this.IsModuleFoldout(featureData.feature);
+                    if (isOpen == true) {
+
+                        height += InitializerEditor.ONE_LINE_HEIGHT * count;
+
+                    }
+
+                }
+
+            }
+
+            return height;
+
+        }
+
         private void OnDrawListItem(Rect rect, int index, bool isActive, bool isFocused) {
 
             var featureData = (FeaturesList.FeatureData)this.lists[this.currentListIndex].list[index];
@@ -793,7 +798,8 @@ namespace ME.ECSEditor {
                 var editorComment = featureData.feature.editorComment;
                 if (string.IsNullOrEmpty(editorComment) == false) {
 
-                    var style = EditorStyles.label;
+                    var style = new GUIStyle(EditorStyles.label);
+                    style.wordWrap = true;
                     var content = new GUIContent(editorComment);
                     var newRect = new Rect(rect);
                     newRect.height = style.CalcHeight(content, rect.width);

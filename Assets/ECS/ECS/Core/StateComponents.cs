@@ -26,11 +26,13 @@ namespace ME.ECS {
 
         }
 
+        [ME.ECS.Serializer.SerializeField]
         private BufferArray<Bucket> buckets; // arr by component type
+        [ME.ECS.Serializer.SerializeField]
+        private int capacity;
+        
         private static int typeId;
         
-        private int capacity;
-
         public void Initialize(int capacity) {
 
             this.buckets = PoolArray<Bucket>.Spawn(capacity);

@@ -897,7 +897,7 @@
 
         public override string ToString() {
             // Up to 10 decimal places
-            return ((decimal)this).ToString("0.##########");
+            return ((decimal)this).ToString("X");
             //return this.v.ToString();
         }
 

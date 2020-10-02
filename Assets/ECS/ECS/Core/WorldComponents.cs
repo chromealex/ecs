@@ -92,14 +92,14 @@ namespace ME.ECS {
             #endif
 
             this.currentState.components.Add(entity.id, data);
-            this.currentState.storage.archetypes.Set<TComponent>(in entity);
+            if (this.currentState.filters.HasInFilters<TComponent>() == true) this.currentState.storage.archetypes.Set<TComponent>(in entity);
             this.AddComponentToFilter(entity);
             
             return data;
 
         }
 
-        internal void AddComponent<TComponent>(Entity entity, TComponent data, int index) where TComponent : class, IComponent {
+        internal void AddComponent<TComponent>(Entity entity, TComponent data, in int componentIndex) where TComponent : class, IComponent {
             
             #if WORLD_STATE_CHECK
             if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
@@ -118,7 +118,7 @@ namespace ME.ECS {
             #endif
 
             this.currentState.components.Add(entity.id, data);
-            this.currentState.storage.archetypes.Set(in entity, index);
+            if (this.currentState.filters.allFiltersArchetype.HasBit(in componentIndex) == true) this.currentState.storage.archetypes.Set(in entity, in componentIndex);
             this.AddComponentToFilter(entity);
 
         }
@@ -172,6 +172,7 @@ namespace ME.ECS {
 
             if (this.currentState.components.RemoveAllPredicate<TComponent, TComponentPredicate>(entity.id, predicate) > 0) {
                 
+                this.currentState.storage.archetypes.RemoveAll(in entity);
                 this.RemoveComponentFromFilter(in entity);
 
             }

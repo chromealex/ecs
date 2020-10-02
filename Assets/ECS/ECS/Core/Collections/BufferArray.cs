@@ -9,7 +9,7 @@ namespace ME.ECS.Collections {
 
         int Count { get; }
         System.Array GetArray();
-
+        
     }
     
     #if ECS_COMPILE_IL2CPP_OPTIONS
@@ -66,21 +66,7 @@ namespace ME.ECS.Collections {
 
             }
 
-            /*
-            public static bool operator ==(EditorArr v1, EditorArr v2) {
-
-                return v1.data == v2.data;
-
-            }
-
-            public static bool operator !=(EditorArr v1, EditorArr v2) {
-
-                return !(v1 == v2);
-
-            }*/
-
         }
-
         public readonly EditorArr arr;
         #else
         public readonly T[] arr;
@@ -142,74 +128,6 @@ namespace ME.ECS.Collections {
             
             return new Enumerator(this);
             
-        }
-
-        public struct Enumerator : IEnumerator<T> {
-
-            private BufferArray<T> bufferArray;
-            private int index;
-            
-            public Enumerator(BufferArray<T> bufferArray) {
-
-                this.bufferArray = bufferArray;
-                this.index = -1;
-
-            }
-
-            object IEnumerator.Current {
-                get {
-                    throw new AllocationException();
-                }
-            }
-
-            #if ECS_COMPILE_IL2CPP_OPTIONS
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-            #endif
-            T IEnumerator<T>.Current {
-                [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-                get {
-                    return this.bufferArray.arr[this.index];
-                }
-            }
-            
-            #if ECS_COMPILE_IL2CPP_OPTIONS
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-            #endif
-            public ref T Current {
-                [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-                get {
-                    return ref this.bufferArray.arr[this.index];
-                }
-            }
-
-            #if ECS_COMPILE_IL2CPP_OPTIONS
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
-            #endif
-            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() {
-
-                ++this.index;
-                if (this.index >= this.bufferArray.Length) return false;
-                return true;
-
-            }
-
-            public void Reset() {}
-
-            public void Dispose() {}
-            
-        }
-        
-        public static BufferArray<T> Empty {
-            get {
-                return new BufferArray<T>(null, 0);
-            }
         }
 
         public static BufferArray<T> From(ListCopyable<T> arr) {
@@ -325,6 +243,74 @@ namespace ME.ECS.Collections {
             } 
             return "BufferArray<>[" + this.Length + "]:\n" + content;
             
+        }
+
+        public struct Enumerator : IEnumerator<T> {
+
+            private BufferArray<T> bufferArray;
+            private int index;
+            
+            public Enumerator(BufferArray<T> bufferArray) {
+
+                this.bufferArray = bufferArray;
+                this.index = -1;
+
+            }
+
+            object IEnumerator.Current {
+                get {
+                    throw new AllocationException();
+                }
+            }
+
+            #if ECS_COMPILE_IL2CPP_OPTIONS
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+            #endif
+            T IEnumerator<T>.Current {
+                [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                get {
+                    return this.bufferArray.arr[this.index];
+                }
+            }
+            
+            #if ECS_COMPILE_IL2CPP_OPTIONS
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+            #endif
+            public ref T Current {
+                [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                get {
+                    return ref this.bufferArray.arr[this.index];
+                }
+            }
+
+            #if ECS_COMPILE_IL2CPP_OPTIONS
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
+            [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
+            #endif
+            [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext() {
+
+                ++this.index;
+                if (this.index >= this.bufferArray.Length) return false;
+                return true;
+
+            }
+
+            public void Reset() {}
+
+            public void Dispose() {}
+            
+        }
+        
+        public static BufferArray<T> Empty {
+            get {
+                return new BufferArray<T>(null, 0);
+            }
         }
 
     }

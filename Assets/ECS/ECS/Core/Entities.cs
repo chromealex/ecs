@@ -8,13 +8,28 @@
 
     }
 
+    public struct AllComponentTypesCounter {
+
+        public static int counter = -1;
+
+    }
+
     public struct ComponentTypesRegistry {
 
+        public static System.Collections.Generic.Dictionary<System.Type, int> allTypeId = new System.Collections.Generic.Dictionary<System.Type, int>();
         public static System.Collections.Generic.Dictionary<System.Type, int> typeId = new System.Collections.Generic.Dictionary<System.Type, int>();
 
     }
 
     public struct ComponentTypes<TComponent> {
+
+        public static readonly byte _;
+        public static int typeId = -1;
+        public static bool isTag = false;
+
+    }
+
+    public struct AllComponentTypes<TComponent> {
 
         public static readonly byte _;
         public static int typeId = -1;
@@ -28,6 +43,13 @@
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
     public static partial class EntityExtensions {
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void Destroy(this in Entity entity) {
+            
+            Worlds.currentWorld.RemoveEntity(entity);
+            
+        }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Entity RemoveData<TComponent>(this Entity entity) where TComponent : struct, IStructComponent {
@@ -164,6 +186,7 @@
     [System.Serializable]
     public readonly struct RefEntity : System.IEquatable<RefEntity>, System.IComparable<RefEntity> {
 
+        [ME.ECS.Serializer.SerializeField]
         private readonly Entity storage;
         public Entity entity {
             #if ECS_COMPILE_IL2CPP_OPTIONS

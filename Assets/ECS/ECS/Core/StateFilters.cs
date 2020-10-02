@@ -34,7 +34,7 @@ namespace ME.ECS {
             return this.allFiltersArchetype.Count;
 
         }
-        
+
         public bool HasInFilters<TComponent>() {
 
             return this.allFiltersArchetype.Has<TComponent>();
@@ -152,6 +152,7 @@ namespace ME.ECS {
         public void CopyFrom(FiltersStorage other) {
 
             this.nextId = other.nextId;
+            this.allFiltersArchetype = other.allFiltersArchetype;
             
             /*if (this.filters != null) {
 
@@ -214,6 +215,7 @@ namespace ME.ECS {
             } else {
                 
                 // Filters storage is not in a freeze mode, so it is an active state filters
+                if (this.filters.arr == null && other.filters.arr != null) this.filters = PoolArray<Filter>.Spawn(other.filters.Length);
                 for (int i = 0, count = other.filters.Length; i < count; ++i) {
 
                     if (other.filters.arr[i] == null && this.filters.arr[i] == null) {
@@ -243,6 +245,8 @@ namespace ME.ECS {
                 }
                 
             }
+
+            this.freeze = other.freeze;
 
         }
 
@@ -347,7 +351,11 @@ namespace ME.ECS {
             }
         }
 
-        private World world;
+        private World world {
+            get {
+                return Worlds.currentWorld;
+            }
+        }
         private BufferArray<IFilterNode> nodes;
         private Archetype archetypeContains;
         private Archetype archetypeNotContains;
@@ -1092,7 +1100,7 @@ namespace ME.ECS {
                     this.id = world.currentState.filters.AllocateNextId();
 
                     filter = this;
-                    this.world = worldInt;
+                    //this.world = worldInt;
                     world.currentState.filters.RegisterInAllArchetype(in this.archetypeContains);
                     world.currentState.filters.RegisterInAllArchetype(in this.archetypeNotContains);
                     worldInt.Register(this);
@@ -1126,6 +1134,7 @@ namespace ME.ECS {
 
         public Filter WithComponent<TComponent>() where TComponent : class, IComponent {
 
+            WorldUtilities.SetComponentTypeId<TComponent>();
             this.archetypeContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWith<TComponent>();
@@ -1136,6 +1145,7 @@ namespace ME.ECS {
         
         public Filter WithoutComponent<TComponent>() where TComponent : class, IComponent {
 
+            WorldUtilities.SetComponentTypeId<TComponent>();
             this.archetypeNotContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWithout<TComponent>();
@@ -1146,6 +1156,7 @@ namespace ME.ECS {
 
         public Filter WithStructComponent<TComponent>() where TComponent : struct, IStructComponent {
 
+            WorldUtilities.SetComponentTypeId<TComponent>();
             this.archetypeContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWith<TComponent>();
@@ -1156,6 +1167,7 @@ namespace ME.ECS {
 
         public Filter WithoutStructComponent<TComponent>() where TComponent : struct, IStructComponent {
 
+            WorldUtilities.SetComponentTypeId<TComponent>();
             this.archetypeNotContains.Add<TComponent>();
             #if UNITY_EDITOR
             this.AddTypeToEditorWithout<TComponent>();

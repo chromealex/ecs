@@ -122,6 +122,17 @@ namespace ME.ECS.Collections {
     #endif
     public sealed class HashSetCopyable<T> : ICollection<T>, IPoolableRecycle, IPoolableSpawn {
 
+        internal struct Slot {
+
+            [ME.ECS.Serializer.SerializeField]
+            internal int hashCode; // Lower 31 bits of hash code, -1 if unused
+            [ME.ECS.Serializer.SerializeField]
+            internal int next; // Index of next entry, -1 if last
+            [ME.ECS.Serializer.SerializeField]
+            internal T value;
+
+        }
+
         // store lower 31 bits of hash code
         private const int Lower31BitMask = 0x7FFFFFFF;
         // cutoff point, above which we won't do stackallocs. This corresponds to 100 integers.
@@ -141,12 +152,19 @@ namespace ME.ECS.Collections {
         private const String VersionName = "Version";
         #endif
 
+        [ME.ECS.Serializer.SerializeField]
         private BufferArray<int> m_buckets;
+        [ME.ECS.Serializer.SerializeField]
         private BufferArray<Slot> m_slots;
+        [ME.ECS.Serializer.SerializeField]
         private int m_count;
+        [ME.ECS.Serializer.SerializeField]
         private int m_lastIndex;
+        [ME.ECS.Serializer.SerializeField]
         private int m_freeList;
+        [ME.ECS.Serializer.SerializeField]
         private IEqualityComparer<T> m_comparer;
+        [ME.ECS.Serializer.SerializeField]
         private int m_version;
 
         #if !SILVERLIGHT
@@ -994,14 +1012,6 @@ namespace ME.ECS.Collections {
             return this.m_comparer.GetHashCode(item) & HashSetCopyable<T>.Lower31BitMask;
         }
         #endregion
-
-        internal struct Slot {
-
-            internal int hashCode; // Lower 31 bits of hash code, -1 if unused
-            internal int next; // Index of next entry, -1 if last
-            internal T value;
-
-        }
 
         public T GetFirst() {
 

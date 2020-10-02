@@ -91,9 +91,13 @@ namespace ME.ECS.Collections {
         /// </summary>
         private class Tables
         {
+            [ME.ECS.Serializer.SerializeField]
             internal readonly Node[] m_buckets; // A singly-linked list for each bucket.
+            [ME.ECS.Serializer.SerializeField]
             internal readonly object[] m_locks; // A set of locks, each guarding a section of the table.
+            [ME.ECS.Serializer.SerializeField]
             internal volatile int[] m_countPerLock; // The number of elements guarded by each lock.
+            [ME.ECS.Serializer.SerializeField]
             internal readonly IEqualityComparer<TKey> m_comparer; // Key equality comparer
  
             internal Tables(Node[] buckets, object[] locks, int[] countPerLock, IEqualityComparer<TKey> comparer)
@@ -107,13 +111,16 @@ namespace ME.ECS.Collections {
 #if !FEATURE_CORECLR
         [NonSerialized]
 #endif
+        [ME.ECS.Serializer.SerializeField]
         private volatile Tables m_tables; // Internal tables of the dictionary       
         // NOTE: this is only used for compat reasons to serialize the comparer.
         // This should not be accessed from anywhere else outside of the serialization methods.
+        [ME.ECS.Serializer.SerializeField]
         internal IEqualityComparer<TKey> m_comparer;
 #if !FEATURE_CORECLR
         [NonSerialized]
 #endif
+[ME.ECS.Serializer.SerializeField]
         private readonly bool m_growLockArray; // Whether to dynamically increase the size of the striped lock
  
         // How many times we resized becaused of collisions. 
@@ -125,18 +132,23 @@ namespace ME.ECS.Collections {
         // This will prevent cases where the field was not serialized.
         [OptionalField]
 #endif
+        [ME.ECS.Serializer.SerializeField]
         private int m_keyRehashCount;
  
 #if !FEATURE_CORECLR
         [NonSerialized]
 #endif
+        [ME.ECS.Serializer.SerializeField]
         private int m_budget; // The maximum number of elements per lock before a resize operation is triggered
  
 #if !FEATURE_CORECLR // These fields are not used in CoreCLR
+        [ME.ECS.Serializer.SerializeField]
         private KeyValuePair<TKey, TValue>[] m_serializationArray; // Used for custom serialization
  
+        [ME.ECS.Serializer.SerializeField]
         private int m_serializationConcurrencyLevel; // used to save the concurrency level in serialization
  
+        [ME.ECS.Serializer.SerializeField]
         private int m_serializationCapacity; // used to save the capacity in serialization
 #endif
  

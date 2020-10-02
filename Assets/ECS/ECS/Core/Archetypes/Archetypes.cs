@@ -10,7 +10,9 @@ namespace ME.ECS {
     #endif
     public class ArchetypeEntities : IPoolableRecycle {
 
+        [ME.ECS.Serializer.SerializeField]
         private BufferArray<Archetype> prevTypes;
+        [ME.ECS.Serializer.SerializeField]
         private BufferArray<Archetype> types;
         
         public void OnRecycle() {
@@ -156,6 +158,7 @@ namespace ME.ECS {
 
     public struct Archetype : System.IEquatable<Archetype> {
 
+        [ME.ECS.Serializer.SerializeField]
         internal BitMask value;
         
         public Archetype(in BitMask value) {

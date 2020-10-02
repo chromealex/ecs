@@ -9,15 +9,24 @@ namespace ME.ECS.Collections {
     #endif
     public sealed class RefList<T> : IPoolableRecycle, IPoolableSpawn {
         
+        [ME.ECS.Serializer.SerializeField]
         private BufferArray<T> arr;
         // TODO: Add int[] next array which determine next index in arr (useful for enumeration)
+        [ME.ECS.Serializer.SerializeField]
         private int count;
+        [ME.ECS.Serializer.SerializeField]
         private int size;
+        [ME.ECS.Serializer.SerializeField]
         private int capacity;
+        [ME.ECS.Serializer.SerializeField]
         private int fromIndex;
+        [ME.ECS.Serializer.SerializeField]
         private QueueCopyable<int> freePeek;
+        [ME.ECS.Serializer.SerializeField]
         private HashSetCopyable<int> free;
+        [ME.ECS.Serializer.SerializeField]
         private HashSetCopyable<int> freePrepared;
+        [ME.ECS.Serializer.SerializeField]
         private int initCapacity;
 
         public RefList() : this(4) {}

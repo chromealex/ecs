@@ -18,9 +18,13 @@ namespace ME.ECS {
         public const int MAX_BIT_INDEX = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD - 1;
         //public const int BitSize = BitMask.FIELD_COUNT * BitMask.BITS_PER_FIELD;
         
+        [ME.ECS.Serializer.SerializeField]
         private FieldType field0;
+        [ME.ECS.Serializer.SerializeField]
         private FieldType field1;
+        [ME.ECS.Serializer.SerializeField]
         private FieldType field2;
+        [ME.ECS.Serializer.SerializeField]
         private FieldType field3;
 
         public BitMask(in FieldType field0, in FieldType field1, in FieldType field2, in FieldType field3) {

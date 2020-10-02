@@ -224,6 +224,25 @@
 
         }
 
+        public State GetOldestState() {
+
+            State state = null;
+            var minTick = Tick.MaxValue;
+            foreach (var entry in this.entries) {
+
+                if (entry.tick < minTick && entry.isEmpty == false) {
+
+                    state = entry.state;
+                    minTick = entry.tick;
+
+                }
+                
+            }
+            
+            return state;
+
+        }
+
 		public Tick GetOldestEntryTick() {
 
             var marker = this.currentEntryNode;

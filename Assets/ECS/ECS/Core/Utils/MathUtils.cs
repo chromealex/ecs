@@ -106,7 +106,8 @@ namespace ME.ECS {
 
         public static string ToStringDec(this float value) {
             
-            return ((decimal)value).ToString("F10");
+            long lVal = System.BitConverter.DoubleToInt64Bits(value);
+            return lVal.ToString("X");
 
         }
 

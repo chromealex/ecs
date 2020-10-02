@@ -60,7 +60,8 @@ namespace ME.ECS {
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void Release(ref FiltersStorage storage) {
-            
+
+            if (storage == null) return;
             PoolClass<FiltersStorage>.Recycle(ref storage);
             
         }
@@ -107,6 +108,7 @@ namespace ME.ECS {
             
             Worlds.DeInitializeBegin();
             var w = world;
+            Worlds.currentWorld = w;
             world.RecycleResetState<TState>();
             PoolClass<World>.Recycle(ref w);
             world.RecycleStates<TState>();
@@ -131,16 +133,36 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int GetAllComponentTypeId<TComponent>() {
+
+            if (AllComponentTypes<TComponent>.typeId < 0) {
+                
+                AllComponentTypes<TComponent>.typeId = ++AllComponentTypesCounter.counter;
+                ComponentTypesRegistry.allTypeId.Add(typeof(TComponent), AllComponentTypes<TComponent>.typeId);
+
+            }
+            
+            return AllComponentTypes<TComponent>.typeId;
+
+        }
+
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int GetComponentTypeId<TComponent>() {
+
+            return ComponentTypes<TComponent>.typeId;
+
+        }
+        
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static void SetComponentTypeId<TComponent>() {
 
             if (ComponentTypes<TComponent>.typeId < 0) {
                 
                 ComponentTypes<TComponent>.typeId = ++ComponentTypesCounter.counter;
                 ComponentTypesRegistry.typeId.Add(typeof(TComponent), ComponentTypes<TComponent>.typeId);
-
+                
             }
-            return ComponentTypes<TComponent>.typeId;
-
+            
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -160,13 +182,8 @@ namespace ME.ECS {
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void InitComponentTypeId<TComponent>(bool isTag = false) {
 
-            if (ComponentTypes<TComponent>.typeId < 0) {
-
-                if (isTag == true) WorldUtilities.SetComponentAsTag<TComponent>();
-                ComponentTypes<TComponent>.typeId = ++ComponentTypesCounter.counter;
-                ComponentTypesRegistry.typeId.Add(typeof(TComponent), ComponentTypes<TComponent>.typeId);
-
-            }
+            if (isTag == true) WorldUtilities.SetComponentAsTag<TComponent>();
+            WorldUtilities.GetAllComponentTypeId<TComponent>();
 
         }
 

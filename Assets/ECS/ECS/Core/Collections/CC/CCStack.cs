@@ -64,7 +64,9 @@ namespace ME.ECS.Collections {
         /// </summary>
         private class Node : IPoolableRecycle
         {
+            [ME.ECS.Serializer.SerializeField]
             internal T m_value; // Value of the node.
+            [ME.ECS.Serializer.SerializeField]
             internal Node m_next; // Next pointer.
  
             public Node() {}
@@ -91,7 +93,9 @@ namespace ME.ECS.Collections {
 #if !FEATURE_CORECLR
         [NonSerialized]
 #endif //!FEATURE_CORECLR
+        [ME.ECS.Serializer.SerializeField]
         private volatile Node m_head; // The stack is a singly linked list, and only remembers the head.
+        [ME.ECS.Serializer.SerializeField]
         public bool usePool = true;
 
 #if !FEATURE_CORECLR

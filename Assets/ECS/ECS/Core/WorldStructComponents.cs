@@ -36,8 +36,12 @@ namespace ME.ECS {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
     public abstract class StructRegistryBase : IStructRegistryBase, IPoolableRecycle {
-        
-        public World world;
+
+        public World world {
+            get {
+                return Worlds.currentWorld;
+            }
+        }
 
         public abstract bool IsTag();
         
@@ -77,8 +81,11 @@ namespace ME.ECS {
     #endif
     public sealed class StructComponents<TComponent> : StructRegistryBase where TComponent : struct, IStructComponent {
 
+        [ME.ECS.Serializer.SerializeField]
         internal bool isTag;
+        [ME.ECS.Serializer.SerializeField]
         internal BufferArray<TComponent> components;
+        [ME.ECS.Serializer.SerializeField]
         internal BufferArray<byte> componentsStates;
         internal TComponent emptyComponent;
 
@@ -445,11 +452,16 @@ namespace ME.ECS {
 
         }
         
+        [ME.ECS.Serializer.SerializeField]
         internal CCList<ITask> nextFrameTasks;
+        [ME.ECS.Serializer.SerializeField]
         internal CCList<ITask> nextTickTasks;
 
+        [ME.ECS.Serializer.SerializeField]
         internal BufferArray<StructRegistryBase> list;
+        [ME.ECS.Serializer.SerializeField]
         internal int count;
+        [ME.ECS.Serializer.SerializeField]
         private bool isCreated;
 
         public bool IsCreated() {
@@ -581,7 +593,7 @@ namespace ME.ECS {
         #endif
         public void Validate<TComponent>(in Entity entity, bool isTag = false) where TComponent : struct, IStructComponent {
             
-            var code = WorldUtilities.GetComponentTypeId<TComponent>();
+            var code = WorldUtilities.GetAllComponentTypeId<TComponent>();
             this.Validate<TComponent>(in code, isTag);
             var reg = (StructComponents<TComponent>)this.list.arr[code];
             reg.Validate(in entity);
@@ -595,7 +607,7 @@ namespace ME.ECS {
         #endif
         public void Validate<TComponent>(bool isTag = false) where TComponent : struct, IStructComponent {
             
-            var code = WorldUtilities.GetComponentTypeId<TComponent>();
+            var code = WorldUtilities.GetAllComponentTypeId<TComponent>();
             if (isTag == true) WorldUtilities.SetComponentAsTag<TComponent>();
             this.Validate<TComponent>(in code, isTag);
             
@@ -625,7 +637,7 @@ namespace ME.ECS {
                     instance = newInstance;
 
                 }
-                instance.world = Worlds.currentWorld;
+                
                 this.list.arr[code] = instance;
 
             }
@@ -1008,7 +1020,7 @@ namespace ME.ECS {
             }
             #endif
 
-            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
+            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetAllComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
             return reg.Has(in entity);
 
@@ -1026,7 +1038,7 @@ namespace ME.ECS {
             #endif
 
             // Inline all manually
-            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
+            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetAllComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
             ref var state = ref reg.componentsStates.arr[entity.id];
             if (state == 0 && createIfNotExists == true) {
@@ -1071,7 +1083,7 @@ namespace ME.ECS {
             #endif
             
             // Inline all manually
-            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
+            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetAllComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
             if (reg.isTag == false) reg.components.arr[entity.id] = default;
             ref var state = ref reg.componentsStates.arr[entity.id];
@@ -1115,7 +1127,7 @@ namespace ME.ECS {
             #endif
             
             // Inline all manually
-            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
+            ref var r = ref this.currentState.structComponents.list.arr[WorldUtilities.GetAllComponentTypeId<TComponent>()];
             var reg = (StructComponents<TComponent>)r;
             if (reg.isTag == false) reg.components.arr[entity.id] = data;
             ref var state = ref reg.componentsStates.arr[entity.id];
@@ -1133,7 +1145,7 @@ namespace ME.ECS {
         }
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        internal void SetData(in Entity entity, in IStructComponent data, in int index) {
+        internal void SetData(in Entity entity, in IStructComponent data, in int dataIndex, in int componentIndex) {
 
             #if WORLD_STATE_CHECK
             if (this.HasStep(WorldStep.LogicTick) == false && this.HasResetState() == true) {
@@ -1152,9 +1164,9 @@ namespace ME.ECS {
             #endif
             
             // Inline all manually
-            ref var reg = ref this.currentState.structComponents.list.arr[index];
+            ref var reg = ref this.currentState.structComponents.list.arr[dataIndex];
             if (reg.IsTag() == false) reg.SetObject(entity, data);
-            if (this.currentState.filters.allFiltersArchetype.HasBit(in index) == true) this.currentState.storage.archetypes.Set(in entity, in index);
+            if (this.currentState.filters.allFiltersArchetype.HasBit(in componentIndex) == true) this.currentState.storage.archetypes.Set(in entity, in componentIndex);
             ++this.currentState.structComponents.count;
             this.AddComponentToFilter(entity);
 
@@ -1342,7 +1354,7 @@ namespace ME.ECS {
             }
             #endif
             
-            var reg = (StructComponents<TComponent>)this.currentState.structComponents.list.arr[WorldUtilities.GetComponentTypeId<TComponent>()];
+            var reg = (StructComponents<TComponent>)this.currentState.structComponents.list.arr[WorldUtilities.GetAllComponentTypeId<TComponent>()];
             ref var state = ref reg.componentsStates.arr[entity.id];
             if (state > 0) {
                 

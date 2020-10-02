@@ -736,15 +736,15 @@ namespace ME.ECS.Views {
 
         public ViewId RegisterViewSource<TProvider>(TProvider providerInitializer, IView prefab) where TProvider : struct, IViewsProviderInitializer {
 
+            /*if (this.world.HasStep(WorldStep.LogicTick) == true) {
+
+                throw new InStateException();
+
+            }*/
+
             if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
 
                 return viewId;
-
-            }
-            
-            if (this.world.HasStep(WorldStep.LogicTick) == true) {
-
-                throw new InStateException();
 
             }
 
@@ -764,13 +764,13 @@ namespace ME.ECS.Views {
 
         public bool UnRegisterViewSource(IView prefab) {
 
+            if (this.world.HasStep(WorldStep.LogicTick) == true) {
+
+                throw new InStateException();
+
+            }
+
             if (this.registryPrefabToId.TryGetValue(prefab, out var viewId) == true) {
-
-                if (this.world.HasStep(WorldStep.LogicTick) == true) {
-
-                    throw new InStateException();
-
-                }
 
                 var provider = this.registryPrefabToProvider[viewId];
                 provider.world = null;
@@ -851,6 +851,12 @@ namespace ME.ECS.Views {
             }*/
 
             return this.rendering.Contains(viewInfo);
+
+        }
+
+        public void SetRequestsAsDirty() {
+
+            this.isRequestsDirty = true;
 
         }
 

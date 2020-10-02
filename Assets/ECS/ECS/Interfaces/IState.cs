@@ -15,7 +15,10 @@ namespace ME.ECS {
         int GetHash();
 
         void Initialize(World world, bool freeze, bool restore);
-        
+
+        byte[] Serialize<T>() where T : State;
+
+        void Deserialize<T>(byte[] bytes) where T : State;
     }
 
     public interface IState : IStateBase, IPoolableRecycle {
@@ -24,13 +27,20 @@ namespace ME.ECS {
 
     public abstract class State : IState {
 
+        [ME.ECS.Serializer.SerializeField]
         public int entityId { get; set; }
+        [ME.ECS.Serializer.SerializeField]
         public Tick tick { get; set; }
+        [ME.ECS.Serializer.SerializeField]
         public RandomState randomState { get; set; }
 
-        internal FiltersStorage filters;
+        // [ME.ECS.Serializer.SerializeField]
+        public FiltersStorage filters;
+        [ME.ECS.Serializer.SerializeField]
         internal StructComponentsContainer structComponents;
+        [ME.ECS.Serializer.SerializeField]
         internal Storage storage;
+        [ME.ECS.Serializer.SerializeField]
         internal Components components;
         
         /// <summary>
@@ -72,6 +82,22 @@ namespace ME.ECS {
             WorldUtilities.Release(ref this.storage);
             WorldUtilities.Release(ref this.components);
 
+        }
+
+        public virtual byte[] Serialize<T>() where T : State {
+         
+            var serializers = ME.ECS.Serializer.ECSSerializers.GetSerializers();
+            serializers.Add(new ME.ECS.Serializer.BufferArraySerializer());
+            return ME.ECS.Serializer.Serializer.Pack((T)this, serializers);
+            
+        }
+
+        public virtual void Deserialize<T>(byte[] bytes) where T : State {
+            
+            var serializers = ME.ECS.Serializer.ECSSerializers.GetSerializers();
+            serializers.Add(new ME.ECS.Serializer.BufferArraySerializer());
+            ME.ECS.Serializer.Serializer.Unpack(bytes, serializers, (T)this);
+            
         }
 
     }

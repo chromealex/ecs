@@ -50,8 +50,8 @@ namespace ME.ECS.Network {
 
     public interface ISerializer {
 
-        byte[] SerializeStorage(StatesHistory.HistoryStorage historyStorage);
-        StatesHistory.HistoryStorage DeserializeStorage(byte[] bytes);
+        ME.ECS.StatesHistory.HistoryStorage DeserializeStorage(byte[] bytes);
+        byte[] SerializeStorage(ME.ECS.StatesHistory.HistoryStorage historyStorage);
         
         byte[] Serialize(StatesHistory.HistoryEvent historyEvent);
         StatesHistory.HistoryEvent Deserialize(byte[] bytes);
@@ -402,38 +402,47 @@ namespace ME.ECS.Network {
 
                 }
 
-                if (this.transporter == null || this.transporter.IsConnected() == false) return;
-
                 // Set up other event data
                 evt.order = this.GetRPCOrder();
                 evt.localOrder = ++this.localOrderIndex;
                 evt.storeInHistory = storeInHistory;
                 
                 var storedInHistory = false;
-                if (storeInHistory == true && (this.GetNetworkType() & NetworkType.RunLocal) != 0) {
-
+                if (this.GetNetworkType() == NetworkType.RunLocal) {
+                    
+                    this.statesHistoryModule.AddEvent(evt);
+                    storedInHistory = true;
+                    
+                }
+                
+                if (storedInHistory == false && storeInHistory == true && (this.GetNetworkType() & NetworkType.RunLocal) != 0) {
+ 
                     var dEvt = this.serializer.Deserialize(this.serializer.Serialize(evt));
                     this.statesHistoryModule.AddEvent(dEvt);
                     storedInHistory = true;
-
+ 
                 }
-
-                if (runLocalOnly == false && (this.GetNetworkType() & NetworkType.SendToNet) != 0) {
-
-                    if (this.transporter != null && this.serializer != null) {
-
-                        if (storeInHistory == false) {
-                         
-                            this.transporter.SendSystem(this.serializer.Serialize(evt));
-   
-                        } else {
-
-                            this.transporter.Send(this.serializer.Serialize(evt));
-
+ 
+                if (this.transporter != null && this.transporter.IsConnected() == true) {
+ 
+                    if (runLocalOnly == false && (this.GetNetworkType() & NetworkType.SendToNet) != 0) {
+ 
+                        if (this.transporter != null && this.serializer != null) {
+ 
+                            if (storeInHistory == false) {
+ 
+                                this.transporter.SendSystem(this.serializer.Serialize(evt));
+ 
+                            } else {
+ 
+                                this.transporter.Send(this.serializer.Serialize(evt));
+ 
+                            }
+ 
                         }
-
+ 
                     }
-
+ 
                 }
 
                 if (storedInHistory == false && parameters != null) {

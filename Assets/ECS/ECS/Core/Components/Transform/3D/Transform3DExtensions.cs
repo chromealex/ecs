@@ -57,12 +57,12 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static UnityEngine.Vector3 GetPosition(this in Entity child) {
 
-            var position = Worlds.currentWorld.GetData<Position>(in child, createIfNotExists: false).ToVector3();
+            var position = Worlds.currentWorld.GetData<Position>(in child).ToVector3();
             var current = Worlds.currentWorld.GetData<Container>(in child, createIfNotExists: false).entity;
             while (current.IsEmpty() == false) {
 
-                position = Worlds.currentWorld.GetData<Rotation>(in current, createIfNotExists: false).ToQuaternion() * position;
-                position += Worlds.currentWorld.GetData<Position>(in current, createIfNotExists: false).ToVector3();
+                position = Worlds.currentWorld.GetData<Rotation>(in current).ToQuaternion() * position;
+                position += Worlds.currentWorld.GetData<Position>(in current).ToVector3();
                 current = Worlds.currentWorld.GetData<Container>(in current, createIfNotExists: false).entity;
 
             }
@@ -74,7 +74,7 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static UnityEngine.Vector3 GetLocalPosition(this in Entity child) {
 
-            return Worlds.currentWorld.GetData<Position>(in child, createIfNotExists: false).ToVector3();
+            return Worlds.currentWorld.GetData<Position>(in child).ToVector3();
             
         }
 
@@ -95,7 +95,7 @@
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static UnityEngine.Quaternion GetRotation(this in Entity child) {
 
-            var worldRot = Worlds.currentWorld.GetData<Rotation>(in child, createIfNotExists: false).ToQuaternion();//child.GetLocalRotation();
+            var worldRot = Worlds.currentWorld.GetData<Rotation>(in child).ToQuaternion();//child.GetLocalRotation();
             var current = Worlds.currentWorld.GetData<Container>(in child, createIfNotExists: false).entity;
             while (current.IsEmpty() == false) {
                 

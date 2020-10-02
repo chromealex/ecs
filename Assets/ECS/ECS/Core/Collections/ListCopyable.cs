@@ -9,9 +9,14 @@
     public sealed class ListCopyable<T> : IPoolableSpawn, IPoolableRecycle, System.Collections.Generic.IEnumerable<T> {
 
         private const int DefaultCapacity = 8;
+        
+        [ME.ECS.Serializer.SerializeField]
         public BufferArray<T> innerArray;
+        [ME.ECS.Serializer.SerializeField]
         public int Count { get; private set; } //Also the index of the next element to be added
+        [ME.ECS.Serializer.SerializeField]
         public int Capacity = ListCopyable<T>.DefaultCapacity;
+        [ME.ECS.Serializer.SerializeField]
         private bool isValueType;
 
         public void CopyFrom(ListCopyable<T> other) {

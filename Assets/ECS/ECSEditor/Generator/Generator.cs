@@ -63,7 +63,7 @@ namespace ME.ECSEditor {
 
                 if (delete == true) {
 
-                    var fullDir = asmNamePath + "/" + Generator.FILE_NAME;
+                    var fullDir = asmNamePath + System.IO.Path.DirectorySeparatorChar + Generator.FILE_NAME;
                     if (System.IO.File.Exists(fullDir) == true) {
 
                         AssetDatabase.DeleteAsset(fullDir);
@@ -151,8 +151,8 @@ namespace ME.ECSEditor {
             var itemStr2 = Generator.CONTENT_ITEM2;
             var itemStr3 = Generator.CONTENT_ITEM3;
 
-            var splittedMain = dir.Split('/');
-            var asmNameMain = splittedMain[splittedMain.Length - 1];
+            var splittedMain = dir.Split(System.IO.Path.DirectorySeparatorChar);
+            var asmNameMain  = splittedMain[splittedMain.Length - 1];
 
             var listEntities = new List<System.Type>();
             var listComponents = new List<System.Type>();
@@ -169,8 +169,8 @@ namespace ME.ECSEditor {
                 var asmNamePath = System.IO.Path.GetDirectoryName(asmPath);
                 if (System.IO.Directory.Exists(asmNamePath) == false) continue;
 
-                var splitted = asmNamePath.Split('/');
-                var asmName = splitted[splitted.Length - 1];
+                var splitted = asmNamePath.Split(System.IO.Path.DirectorySeparatorChar);
+                var asmName  = splitted[splitted.Length - 1];
 
                 var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
                 var allAsms = new HashSet<string>();

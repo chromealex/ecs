@@ -92,8 +92,11 @@ namespace ME.ECS {
 
         }
 
+        [ME.ECS.Serializer.SerializeField]
         private RefList<Entity> list;
+        [ME.ECS.Serializer.SerializeField]
         private bool freeze;
+        [ME.ECS.Serializer.SerializeField]
         internal ArchetypeEntities archetypes;
 
         void IPoolableRecycle.OnRecycle() {

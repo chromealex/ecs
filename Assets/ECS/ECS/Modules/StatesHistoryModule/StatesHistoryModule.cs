@@ -160,6 +160,19 @@ namespace ME.ECS.StatesHistory {
             return "Tick: " + this.tick + ", Order: " + this.order + ", LocalOrder: " + this.localOrder + ", objId: " + this.objId + ", groupId: " + this.groupId + ", rpcId: " + this.rpcId + ", parameters: " + (this.parameters != null ? this.parameters.Length : 0);
             
         }
+        
+        public bool IsEqualsTo(HistoryEvent historyEvent) {
+
+            return this.tick == historyEvent.tick &&
+                   this.order == historyEvent.order &&
+                   this.localOrder == historyEvent.localOrder &&
+                   this.groupId == historyEvent.groupId &&
+                   this.objId == historyEvent.objId &&
+                   this.rpcId == historyEvent.rpcId &&
+                   this.storeInHistory == historyEvent.storeInHistory &&
+                   ((historyEvent.parameters == null && this.parameters == null) || (this.parameters != null && historyEvent.parameters != null && this.parameters.Length == historyEvent.parameters.Length));
+
+        }
 
     }
 
@@ -174,7 +187,9 @@ namespace ME.ECS.StatesHistory {
         void BeginAddEvents();
         void EndAddEvents();
 
+        State GetOldestState();
         HistoryStorage GetHistoryStorage();
+        HistoryStorage GetHistoryStorage(Tick from, Tick to);
         
         System.Collections.IDictionary GetData();
         ME.ECS.Network.IStatesHistory GetDataStates();
@@ -193,12 +208,13 @@ namespace ME.ECS.StatesHistory {
 
         int GetStateHash(State state);
 
+        void Reset();
+        void AddEvents(IList<HistoryEvent> historyEvents);
+        void AddEvent(HistoryEvent historyEvent);
+
     }
 
     public interface IStatesHistoryModule<TState> : IStatesHistoryModuleBase, IModule where TState : State, new() {
-
-        void AddEvents(IList<HistoryEvent> historyEvents);
-        void AddEvent(HistoryEvent historyEvent);
 
         new ME.ECS.Network.IStatesHistory<TState> GetDataStates();
         Tick GetAndResetOldestTick(Tick tick);
@@ -247,6 +263,9 @@ namespace ME.ECS.StatesHistory {
         
         void IModuleBase.OnConstruct() {
 
+            this.oldestTick = Tick.Invalid;
+            this.lastSavedStateTick = Tick.Invalid;
+            
             this.statesHistory = new ME.ECS.Network.StatesHistory<TState>(this.world, this.GetQueueCapacity());
             //this.states = new StatesCircularQueue<TState>(this.GetTicksPerState(), this.GetQueueCapacity());
             this.events = PoolDictionary<Tick, ME.ECS.Collections.SortedList<long, HistoryEvent>>.Spawn(StatesHistoryModule<TState>.POOL_EVENTS_CAPACITY);
@@ -266,8 +285,8 @@ namespace ME.ECS.StatesHistory {
             this.beginAddEvents = false;
             this.statEventsAdded = 0;
             this.statPlayedEvents = 0;
-            this.oldestTick = Tick.Zero;
-            this.lastSavedStateTick = Tick.Zero;
+            this.oldestTick = Tick.Invalid;
+            this.lastSavedStateTick = Tick.Invalid;
             
             this.statesHistory.DiscardAll();
             
@@ -301,17 +320,43 @@ namespace ME.ECS.StatesHistory {
 
         HistoryStorage IStatesHistoryModuleBase.GetHistoryStorage() {
 
+            return ((IStatesHistoryModuleBase)this).GetHistoryStorage(Tick.Invalid, Tick.Invalid);
+
+        }
+
+        public State GetOldestState() {
+
+            return this.statesHistory.GetOldestState();
+
+        }
+
+        /// <summary>
+        /// Returns all events by tick range [from..to] (including from and to)
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        HistoryStorage IStatesHistoryModuleBase.GetHistoryStorage(Tick from, Tick to) {
+
             var list = PoolList<HistoryEvent>.Spawn(100);
             foreach (var data in this.events) {
+
+                var tick = data.Key;
+                if ((from != Tick.Invalid && tick < from) ||
+                    (to != Tick.Invalid && tick > to)) {
+                    
+                    continue;
+                    
+                }
 
                 var values = data.Value.Values;
                 for (int i = 0, cnt = values.Count; i < cnt; ++i) {
 
                     var evt = values[i];
                     if (evt.storeInHistory == true) {
-                        
+
                         list.Add(evt);
-                        
+
                     }
 
                 }
@@ -387,7 +432,49 @@ namespace ME.ECS.StatesHistory {
             
         }
 
+        public bool HasEvent(HistoryEvent historyEvent) {
+
+            ME.ECS.Collections.SortedList<long, HistoryEvent> list;
+            if (this.events.TryGetValue(historyEvent.tick, out list) == true) {
+
+                for (int i = 0; i < list.Count; ++i) {
+
+                    if (list[i].IsEqualsTo(historyEvent) == true) return true;
+
+                }
+
+            }
+
+            return false;
+
+        }
+
+        public void Reset() {
+
+            this.oldestTick = Tick.Invalid;
+            this.lastSavedStateTick = Tick.Invalid;
+            
+            this.syncHash.Clear();
+            this.statesHistory.DiscardAll();
+            this.statesHistory.Clear();
+            
+            foreach (var item in this.events) {
+                
+                PoolSortedList<long, HistoryEvent>.Recycle(item.Value);
+                
+            }
+            this.events.Clear();
+            
+        }
+        
         public void AddEvent(HistoryEvent historyEvent) {
+
+            if (this.HasEvent(historyEvent) == true) {
+                
+                UnityEngine.Debug.LogWarning("Duplicate event: " + historyEvent + ". Skip.");
+                return;
+                
+            }
             
             ++this.statEventsAdded;
             
@@ -549,7 +636,7 @@ namespace ME.ECS.StatesHistory {
 
         public Tick GetAndResetOldestTick(Tick tick) {
 
-            if (tick % StatesHistoryModule<TState>.OLDEST_TICK_THRESHOLD != 0) return Tick.Invalid;
+            if (tick % StatesHistoryModule<TState>.OLDEST_TICK_THRESHOLD != 0L) return Tick.Invalid;
 
             var result = this.oldestTick;
             this.oldestTick = Tick.Invalid;
@@ -559,7 +646,7 @@ namespace ME.ECS.StatesHistory {
         
         public void PlayEventsForTick(Tick tick) {
 
-            if (tick > this.lastSavedStateTick && tick > Tick.Zero && tick % this.GetTicksPerState() == 0) {
+            if (tick > this.lastSavedStateTick && tick > Tick.Zero && tick % this.GetTicksPerState() == 0L) {
 
                 this.StoreState(tick);
                 this.lastSavedStateTick = tick;

@@ -10,10 +10,16 @@ namespace ME.ECS.Collections {
     #endif
     public sealed class QueueCopyable<T> : IPoolableSpawn, IPoolableRecycle where T : struct {
 
+        [ME.ECS.Serializer.SerializeField]
         private BufferArray<T> innerArray;
+        [ME.ECS.Serializer.SerializeField]
         private int head;
+        [ME.ECS.Serializer.SerializeField]
         private int tail;
+        
+        [ME.ECS.Serializer.SerializeField]
         public int Count { get; private set; }
+        [ME.ECS.Serializer.SerializeField]
         public int Capacity { get; private set; }
 
         public QueueCopyable() : this(8) { }

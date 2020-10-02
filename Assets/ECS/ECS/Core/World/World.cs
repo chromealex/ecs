@@ -242,7 +242,7 @@ namespace ME.ECS {
 
         public void RecycleResetState<TState>() where TState : State, new() {
             
-            WorldUtilities.ReleaseState<TState>(ref this.resetState);
+            if (this.resetState != this.currentState) WorldUtilities.ReleaseState<TState>(ref this.resetState);
             
         }
 
@@ -670,7 +670,7 @@ namespace ME.ECS {
             ref var dic = ref FiltersDirectCache.dic.arr[this.id];
             ArrayUtils.Resize(filterRef.id - 1, ref dic);
             dic.arr[filterRef.id - 1] = true;
-
+            
             if (this.entitiesCapacity > 0) filterRef.SetEntityCapacity(this.entitiesCapacity);
             
             if (this.ForEachEntity(out var allEntities) == true) {
@@ -1106,9 +1106,7 @@ namespace ME.ECS {
             var entity = new Entity(nextIndex, (ushort)(ent.version + 1));
             entitiesList.Add(entity);
 
-            this.CreateEntityPlugins(entity);
-            this.CreateEntityInFilters(entity);
-            this.UpdateFilters(entity);
+            this.UpdateEntity(entity);
             
             if (name != null) {
 
@@ -1119,6 +1117,14 @@ namespace ME.ECS {
             }
 
             return entity;
+
+        }
+
+        public void UpdateEntity(in Entity entity) {
+            
+            this.CreateEntityPlugins(entity);
+            this.CreateEntityInFilters(entity);
+            this.UpdateFilters(entity);
 
         }
 
@@ -1167,7 +1173,7 @@ namespace ME.ECS {
             #endif
             
             var data = this.currentState.storage.GetData();
-            if (data.IsFree(entity.id) == false) {
+            if (data.IsFree(entity.id) == false && entity.id > 0) {
 
                 //var entityInStorage = data[entity.id];
                 /*if (entityInStorage.version == entity.version)*/ {
@@ -2090,7 +2096,7 @@ namespace ME.ECS {
         partial void SetEntityCapacityPlugin9(int capacity);
 
         [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private void CreateEntityPlugins(in Entity entity) {
+        public void CreateEntityPlugins(in Entity entity) {
             
             this.CreateEntityPlugin1(entity);
             this.CreateEntityPlugin2(entity);

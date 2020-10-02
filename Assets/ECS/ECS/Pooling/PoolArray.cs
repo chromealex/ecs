@@ -1,6 +1,21 @@
 ﻿namespace ME.ECS {
 
 	using Collections;
+
+	public static class PoolArrayUtilities {
+
+		public static int GetArrayLengthPot(int length) {
+			
+			var bucketIndex = 0;
+			while (1 << bucketIndex < length && bucketIndex < 30) {
+				++bucketIndex;
+			}
+
+			return 1 << bucketIndex;
+
+		}
+
+	}
 	
     #if ECS_COMPILE_IL2CPP_OPTIONS
     [Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]

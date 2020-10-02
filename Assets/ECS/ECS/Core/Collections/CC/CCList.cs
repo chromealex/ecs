@@ -30,9 +30,13 @@
             }
         }
 
+        [ME.ECS.Serializer.SerializeField]
         private int index;
+        [ME.ECS.Serializer.SerializeField]
         private int fuzzyCount;
+        [ME.ECS.Serializer.SerializeField]
         private int count;
+        [ME.ECS.Serializer.SerializeField]
         internal readonly T[][] array;
 
         public CCList() {

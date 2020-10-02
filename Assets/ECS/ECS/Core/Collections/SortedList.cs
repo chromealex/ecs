@@ -72,12 +72,19 @@ namespace ME.ECS.Collections {
     public sealed class SortedList<TKey, TValue> : 
         IDictionary<TKey, TValue>, System.Collections.IDictionary, IReadOnlyDictionary<TKey, TValue>
     {
+        [ME.ECS.Serializer.SerializeField]
         private TKey[] keys;
+        [ME.ECS.Serializer.SerializeField]
         private TValue[] values;
+        [ME.ECS.Serializer.SerializeField]
         private int _size;
+        [ME.ECS.Serializer.SerializeField]
         private int version;
+        [ME.ECS.Serializer.SerializeField]
         private IComparer<TKey> comparer;
+        [ME.ECS.Serializer.SerializeField]
         private KeyList keyList;
+        [ME.ECS.Serializer.SerializeField]
         private ValueList valueList;
 #if !FEATURE_NETCORE
         [NonSerialized]

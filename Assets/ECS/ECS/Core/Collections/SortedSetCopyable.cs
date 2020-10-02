@@ -168,9 +168,13 @@ namespace ME.ECS.Collections {
     public class SortedSetCopyable<T> : ISet<T>, ICollection<T>, ICollection {
 #endif //!FEATURE_NETCORE
         #region local variables/constants
+        [ME.ECS.Serializer.SerializeField]
         Node root;
+        [ME.ECS.Serializer.SerializeField]
         IComparer<T> comparer;
+        [ME.ECS.Serializer.SerializeField]
         int count;
+        [ME.ECS.Serializer.SerializeField]
         int version;
         private Object _syncRoot;
  

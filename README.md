@@ -33,7 +33,7 @@ https://github.com/chromealex/ecs.example
 | [Send and Receive RPC Calls](Docs/Manual-SendingAndReceivingRPCCalls.md) | How to register object in **NetworkModule**, send and receive RPC packages |
 | [Defines](Docs/Defines.md) | Define usage |
 | [Code Generators](Docs/CodeGenerators.md) | Code Generators usage |
-| [Pathfinding Package](Assets/ECS/ECSPathfinding) | Here are Pathfinding Package readme |
+| [Pathfinding Package](Assets/ECS-submodule/ECSPathfinding) | Here are Pathfinding Package readme |
 
 ## Contact Me
 Telegram: https://t.me/chromealex</br>

@@ -9,6 +9,9 @@
 ## Example Repository
 https://github.com/chromealex/ecs.example
 
+## Submodule Repository
+https://github.com/chromealex/ecs-submodule
+
 ## Glossary
 | Link | Description |
 | ------ | ----- |

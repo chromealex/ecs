@@ -3,10 +3,10 @@
 #### Entities
 [How to create an entity](Manual-CreatingEntities.md)
 
-Entities are containers with **ID** and **Generation**.
-**ID** - unique entity identifier in the world.
-**Generation** - unique entity generation identifier, increase when entity creates from the pool.
-**GetVersion()** - method to return unique version of the entity, increase when entity changed.
+Entities are containers with **ID** and **Generation**.<br>
+**ID** - unique entity identifier in the world.<br>
+**Generation** - unique entity generation identifier, increase when entity creates from the pool.<br>
+**GetVersion()** - method to return unique version of the entity, increase when entity changed.<br>
 <br>
 <br>
 

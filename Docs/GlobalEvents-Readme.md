@@ -1,7 +1,7 @@
 # Global Events [![](Logo-Tiny.png)](/../../#glossary)
 ME.ECS has Global Event files to use events outside the ECS logic step.
 To add Global Event object to your project, choose **Create/ME.ECS/Global Event** menu and create your event file.
-In event file you can set up another events to be called before this event.
+In GlobalEvent file you can set up `callOthers` array to call other events when this event fired. Note that child events would run before the main event and avoid cyclic dependencies.
 
 For example if you need to change UI button state when your player's health changes, you can fire the event inside any **AdvanceTick** step life this:
 ```csharp
@@ -17,9 +17,7 @@ In your UI script you need to set up subscribtion onto your `testEvent`:
 ```csharp
 public GlobalEvent testEvent;
 void Start() {
-  
   this.testEvent.Subscribe(this.TestEventCallback);
-  
 }
 
 void OnDestroy() {
@@ -42,16 +40,23 @@ GlobalEvent::Execute(in entity, GlobalEventType.Logic); // Make a call after cur
 
 > To make a call immediatelly you should use **GlobalEvent::Run()** method, but note that it is not recommended.
 
-> Please note, that Execute events works only once by unique GlobalEvent keys. For example: if you call Execute on the same GlobalEvent instance twice - only one event would be fired.
+> Please note, that Execute events works only once by unique GlobalEvent keys. For example: if you call Execute on the same GlobalEvent instance twice with the same entity - only one event would be fired.
 
-You can cancel event don't want to call this event anymore:
+You can cancel event don't want to call this event anymore. Note that you need to cancel the same method signature or parameters as the Execute methood.
 ```csharp
 void AdvanceTick(float deltaTime) {
   ...
-  this.feature.testEvent.Cancel();
+  this.feature.testEvent.Execute();
+  this.feature.testEvent.Cancel(); // Works
+  ...
+  this.feature.testEvent.Execute(in entity);
+  this.feature.testEvent.Cancel(in entity); // Works
+  ...
+  this.feature.testEvent.Execute(in entity);
+  this.feature.testEvent.Cancel(); // Don't work
   ...
 }
 ```
-All Global Events run once and removed after this call, so you shoudn't do Cancel work manually.
+All Global Events run once and removed after this call, so you shoudn't Cancel them manually.
 
 [![](Footer.png)](/../../#glossary)

@@ -4,7 +4,7 @@ In ME.ECS there are several places where general logic must be replaced with det
 
 ### Random
 
-As you know (I hope) all random values must deterministic, so if you need to use some random logic, you can use one of these methods:
+As you know (I hope) all random values must be deterministic, so if you need to use some random logic, you can use one of these methods:
 | Method | Replace |
 | ------ | ------- |
 | ```float UnityEngine.Random.Range(float, float)``` | ```float world.GetRandomRange(float, float)``` | |

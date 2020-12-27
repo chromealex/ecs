@@ -1,7 +1,7 @@
 # Global Events [![](Logo-Tiny.png)](/../../#glossary)
 ME.ECS has Global Event files to use events outside the ECS logic step.
 To add Global Event object to your project, choose **Create/ME.ECS/Global Event** menu and create your event file.
-In GlobalEvent file you can set up `callOthers` array to call other events when this event fired. Note that child events would run before the main event and you should avoid cyclic dependencies.
+In GlobalEvent file you can set up `callOthers` array to call other events when this event fired. Note that child events would run before the main event and you should avoid cyclic dependencies manually.
 
 For example if you need to change UI button state when your player's health changes, you can fire the event inside any **AdvanceTick** step life this:
 ```csharp

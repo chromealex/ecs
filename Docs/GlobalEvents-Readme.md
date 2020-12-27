@@ -57,6 +57,7 @@ void AdvanceTick(float deltaTime) {
   ...
 }
 ```
+Note that Cancel events will send cancel to all child events too.
 All Global Events run once and removed after this call, so you shoudn't Cancel them manually.
 
 [![](Footer.png)](/../../#glossary)

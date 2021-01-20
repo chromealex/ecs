@@ -4,6 +4,10 @@ To instantiate view need to call thread-safe method **world.InstantiateView(view
 >
 > But here are some **limitations**: for now you couldn't attach one source twice, only different sources for one entity allowed.
 ```csharp
+entity.InstantiateView(this.viewSourceId);
+```
+or
+```csharp
 this.world.InstantiateView(this.viewSourceId, entity);
 ```
 

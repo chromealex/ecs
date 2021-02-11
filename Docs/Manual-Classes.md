@@ -10,12 +10,12 @@ Entities are containers with **ID** and **Generation**.<br>
 <br>
 <br>
 
-#### Components (```IComponent```, ```IStructComponent```)
+#### Components (```IStructComponent```, ```IStructCopyable<>```)
 [How to create a component](Manual-CreatingComponents.md)
 
-Components are storing data. In ME.ECS there are 2 component types: IComponent and IStructComponent.
-IComponentCopyable(IComponent) could store multiple times and could be iterated by type. It is reference type and must implement CopyFrom and OnRecycle methods.
-IStructComponent could store just simple types or StackArray. It is value type.
+Components are storing data. In ME.ECS there are 2 component types: IStructCopyable<> and IStructComponent.
+IStructCopyable<> could be stored only once. it could store any types (including managed data) and must implement CopyFrom and OnRecycle methods.
+IStructComponent could store just simple types or StackArray.
 <br>
 <br>
 

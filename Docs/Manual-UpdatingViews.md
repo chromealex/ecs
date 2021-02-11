@@ -41,8 +41,14 @@ public class ApplyYourViewStateParticle : ParticleView<ApplyYourViewStateParticl
     }
 
     // If you need to use something that couldn't be done in jobs - you could use this method
+    // This method calls on entity change
     public override void ApplyState(float deltaTime, bool immediately) {
 
+    }
+    
+    // This method calls every frame
+    public override void OnUpdate(float deltaTime) {
+    
     }
 
 }
@@ -79,8 +85,14 @@ public class ApplyYourViewStateParticle : MonoBehaviourView {
     }
 
     // If you need to use something that couldn't be done in jobs - you could use this method
+    // This method calls on entity change
     public override void ApplyState(float deltaTime, bool immediately) {
 
+    }
+
+    // This method calls every frame
+    public override void OnUpdate(float deltaTime) {
+    
     }
 
 }
@@ -122,8 +134,14 @@ public class ApplyYourViewStateDrawMesh : DrawMeshView<ApplyYourViewStateDrawMes
     }
 
     // If you need to use something that couldn't be done in jobs - you could use this method
+    // This method calls on entity change
     public override void ApplyState(float deltaTime, bool immediately) {
 
+    }
+
+    // This method calls every frame
+    public override void OnUpdate(float deltaTime) {
+    
     }
 
 }

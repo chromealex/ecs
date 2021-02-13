@@ -1,5 +1,4 @@
 # Creating Components [![](Logo-Tiny.png)](/../../#glossary)
-In ME.ECS there are 2 component variations: struct and class. Class components could be added multiple times on certain entity. Struct components couldn't been added twice.
 
 ### Struct Components
 

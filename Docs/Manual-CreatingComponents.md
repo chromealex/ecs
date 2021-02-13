@@ -5,6 +5,7 @@ In ME.ECS there are 2 component variations: struct and class. Class components c
 
 In struct components you don't have any methods and all copies make automatically.
 If you store managed array here, only pointer will be copied, so if you have static array with some data you can use managed arrays here, but if you change data by your logic in these arrays, you shouldn't store any managed data here. In some cases you can use **StackArray** to allocate struct array, but there are some limitations with data size.
+In order to use some arrays, you can use **Intrusive** collections (IntrusiveList, IntrusiveHashSet, IntrusiveDictionary) to be free of copying any struct data.
 
 ```csharp
 public struct MyStructComponent : IStructComponent {
@@ -14,7 +15,8 @@ public struct MyStructComponent : IStructComponent {
 }
 ```
 
-If you need to store managed data with custom copy interface, you could use **IStructCopyable<>** interface where you need to implement CopyFrom(in T other) and OnRecycle() methods.
+If you need to store managed data with custom copy interface, you should use **IStructCopyable<>** component where you need to implement CopyFrom(in T other) and OnRecycle() methods.
+> Use this if you are really want to use managed data and you really changes this data in your systems. In other cases use **Intrusive** collections.
 ```csharp
 public struct MyStructCopyableComponent : IStructCopyable<MyStructCopyableComponent> {
         

@@ -4,7 +4,7 @@
 
 In struct components you don't have any methods and all copies make automatically.
 If you store managed array here, only pointer will be copied, so if you have static array with some data you can use managed arrays here, but if you change data by your logic in these arrays, you shouldn't store any managed data here. In some cases you can use **StackArray** to allocate struct array, but there are some limitations with data size.
-In order to use some arrays, you can use [**Intrusive collections**](https://github.com/chromealex/ecs-submodule/tree/master/ECS/Core/Collections/Intrusive) (IntrusiveList, IntrusiveHashSet, IntrusiveDictionary) to be free of copying any struct data.
+In order to use some arrays, you can use [**Intrusive collections**](https://github.com/chromealex/ecs-submodule/tree/master/ECS/Core/Collections/Intrusive) (IntrusiveList, IntrusiveHashSet, IntrusiveDictionary, IntrusiveStack, IntrusiveQueue) to be free of copying any struct data.
 
 ```csharp
 public struct MyStructComponent : IStructComponent {

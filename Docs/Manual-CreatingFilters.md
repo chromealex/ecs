@@ -9,7 +9,7 @@ Filter filter;
 
 void ISystemBase.OnConstruct() {
 
-    Filter.Create("YourFilterName").WithStructComponent<MyStructComponent>().WithoutComponent<MyComponent>().Push(ref this.filter);
+    Filter.Create("YourFilterName").With<MyStructComponent>().Without<MyComponent>().Push(ref this.filter);
 
 }
 ```

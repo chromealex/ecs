@@ -21,12 +21,12 @@ You can use these methods to filter your entities:
 | ----- | ----- |
 | WithStructComponent\<T\> | Filters all entities having T struct component |
 | WithoutStructComponent\<T\> | Filters all entities that doesn't have T struct component |
-| WithComponent\<T\> | Filters all entities having T class component |
-| WithoutComponent\<T\> | Filters all entities that doesn't have T class component |
 | SetOnEntityAdd\<T\> | Call Execute method on callback instance when new entity added into filter |
 | SetOnEntityRemove\<T\> | Call Execute method on callback instance when new entity removed into filter |
+| OnVersionChangedOnly\<T\> | Filtered only entities if its version has changed. filter.ToArray() and filter.GetEnumerator() resets these versions. |
 
 ## Filter Actions
+Define: ENTITY_ACTIONS
 In ME.ECS you could use SetOnEntityAdd/SetOnEntityRemove for filters, but on high level you can use FilterAction class to automatically receive onAdd/onRemove callbacks as System.Action:
 
 ```csharp

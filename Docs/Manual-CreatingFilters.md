@@ -26,7 +26,8 @@ You can use these methods to filter your entities:
 | OnVersionChangedOnly\<T\> | Filtered only entities if its version has changed. filter.ToArray() and filter.GetEnumerator() resets these versions. |
 
 ## Filter Actions
-Define: ENTITY_ACTIONS
+Define: **ENTITY_ACTIONS**
+
 In ME.ECS you could use SetOnEntityAdd/SetOnEntityRemove for filters, but on high level you can use FilterAction class to automatically receive onAdd/onRemove callbacks as System.Action:
 
 ```csharp

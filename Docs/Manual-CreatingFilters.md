@@ -19,11 +19,11 @@ You can use these methods to filter your entities:
 
 | Method | Description |
 | ----- | ----- |
-| With\<T\> | Filters all entities having T struct component |
-| Without\<T\> | Filters all entities that doesn't have T struct component |
-| SetOnEntityAdd\<T\> | Call Execute method on callback instance when new entity added into filter |
-| SetOnEntityRemove\<T\> | Call Execute method on callback instance when new entity removed into filter |
-| OnVersionChangedOnly\<T\> | Filtered only entities if its version has changed. filter.ToArray() and filter.GetEnumerator() resets these versions. |
+| ```With<T>``` | Filters all entities having T struct component |
+| ```Without<T>``` | Filters all entities that doesn't have T struct component |
+| ```SetOnEntityAdd<T>``` | Call Execute method on callback instance when new entity added into filter |
+| ```SetOnEntityRemove<T>``` | Call Execute method on callback instance when new entity removed into filter |
+| ```OnVersionChangedOnly``` | Filtered only entities if its version has changed. filter.ToArray() and filter.GetEnumerator() resets these versions. |
 
 ## Filter Actions
 Define: **ENTITY_ACTIONS**

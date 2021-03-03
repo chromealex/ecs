@@ -29,7 +29,6 @@ public class YourSystem : ISystemFilter {
     void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
 
         // Place your logic here
-        // Be sure you works with this entity only if you have jobs = true
 
     }
 

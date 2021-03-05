@@ -28,7 +28,7 @@ As you know (I hope) all random values must be deterministic, so if you need to 
 
 ### HashSet and Dictionary
 
-In deterministic logic you couldn't use default HashSet and Dictionary because it call GetHashCode() method on your instances.
+In deterministic logic you couldn't use default HashSet and Dictionary with object instances because it calls GetHashCode() method on your instances.
 You should override GetHashCode() method to be able to use these collection types.
      
 ### If you are Fixed-Point Math fan

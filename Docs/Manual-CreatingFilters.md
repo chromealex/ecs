@@ -37,7 +37,7 @@ void ISystemBase.OnConstruct() {
         // Here is your code
     }, onRemove: (entity) => {
         // Here is your code
-    }, customName: "YourFilterActionName").WithStructComponent<MyStructComponent>().WithoutComponent<MyComponent>().Push();
+    }, customName: "YourFilterActionName").With<MyStructComponent>().Without<MyComponent>().Push();
 
 }
 ```

@@ -44,7 +44,7 @@ void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
     // Read data (Here you can read data only, entity version has not been changed)
     ref readonly var dataReadonly = ref entity.ReadData<MyStructComponent>();
     
-    // Change data (Any call GetData inside Logic step will trigger entity version to change)
+    // Change data (Any call of GetData inside Logic step will trigger entity version to change)
     ref var data = ref entity.GetData<MyStructComponent>();
     ++data.someData;
     

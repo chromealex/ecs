@@ -56,10 +56,20 @@ void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
 
 ### Versioned Components
 
-In ME.ECS you could track version of component type by calling **entity.GetDataVersion\<TComponent\>()**, it would return world's tick when component changed on this entity. To enable this feature for component type, you should define **IVersioned** interface at your component:
+In ME.ECS you could track version of component type by calling **entity.GetDataVersion\<TComponent\>()**, it would return world's tick when component has changed on this entity. To enable this feature for component type, you should define **IVersioned** interface at your component:
 	
 ```csharp
 struct MyComponent : IStructComponent, IVersioned {
+    ...
+}
+```
+
+### Versioned Components (Non-state)
+
+In ME.ECS you could track version of component type by calling **entity.GetDataVersionNoState\<TComponent\>()**, it would return incremented number each time component has changed on this entity. To enable this feature for component type, you should define **IVersionedNoState** interface at your component:
+	
+```csharp
+struct MyComponent : IStructComponent, IVersionedNoState {
     ...
 }
 ```

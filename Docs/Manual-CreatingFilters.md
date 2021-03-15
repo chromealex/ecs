@@ -19,10 +19,33 @@ You can use these methods to filter your entities:
 
 | Method | Description |
 | ----- | ----- |
-| ```With<T>``` | Filters all entities having T struct component |
-| ```Without<T>``` | Filters all entities that doesn't have T struct component |
+| ```With<T>``` | Filters all entities having T component |
+| ```Without<T>``` | Filters all entities that don't have T component |
 | ```SetOnEntityAdd<T>``` | Call Execute method on callback instance when new entity added into filter |
 | ```SetOnEntityRemove<T>``` | Call Execute method on callback instance when new entity removed into filter |
+| ```OnVersionChangedOnly``` | Filtered only entities if its version has changed. filter.ToArray() and filter.GetEnumerator() resets these versions. |
+
+## Multiple Filters
+MultipleFilters - it is the solution which combines two filters inside and allows to filter Any<T0, T1> or WithoutAny<T0, T1> components:
+```csharp
+MultipleFilter filter;
+
+void ISystemBase.OnConstruct() {
+
+    MultipleFilter.Create("YourMultipleFilterName").Any<Component1, Component2>().Push(ref this.filter);
+
+}
+```
+
+You can use these methods to filter your entities:
+> All methods are combined with **AND** operator
+
+| Method | Description |
+| ----- | ----- |
+| ```With<T>``` | Filters all entities having T component |
+| ```Without<T>``` | Filters all entities that don't have T component |
+| ```Any<T0, T1>``` | Filters all entities having T0 or T1 component |
+| ```WithoutAny<T0, T1>``` | Filters all entities that don't have T0 and T1 component |
 | ```OnVersionChangedOnly``` | Filtered only entities if its version has changed. filter.ToArray() and filter.GetEnumerator() resets these versions. |
 
 ## Filter Actions

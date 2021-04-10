@@ -13,7 +13,7 @@
 1. Download or add as a submodule this repository https://github.com/chromealex/ecs-submodule.
 2. Create an empty file called ```csc.gen.rsp``` inside Assets folder. Your file should has a path ```Assets/csc.gen.rsp```.
 3. In Package Manager install Burst (tested with version 1.3.9).
-4. In Package Manager install Unity Collections (tested with version 0.9.0-preview.6). Note: to find unity collections you need to choose "Add package from git url" and fill it with "com.unity.collections".
+4. In Package Manager install Unity Collections (tested with version 0.9.0-preview.6). Note: to find unity collections you need to choose "Add package from git URL" and fill it with "com.unity.collections".
 5. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
 6. You are ready to [Initilize Project](Docs/VideoTutorials.md).
 

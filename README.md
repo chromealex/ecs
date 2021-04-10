@@ -12,7 +12,7 @@
 
 1. Download or add as a submodule this repository https://github.com/chromealex/ecs-submodule.
 2. Create an empty file called ```csc.gen.rsp``` inside Assets folder. Your file should has a path ```Assets/csc.gen.rsp```.
-3. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule".
+3. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
 4. You are ready to [Initilize Project](Docs/VideoTutorials.md).
 
 ### Using Unity Package Manager

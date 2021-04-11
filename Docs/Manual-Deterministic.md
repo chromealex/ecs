@@ -24,7 +24,7 @@ As you know (I hope) all random values must be deterministic, so if you need to 
 
 > Note! We are recommend to use Unity.Mathematics package instead of UnityEngine.Random. To use Unity.Mathematics package you should set UNITY_MATHEMATICS define on.
 
-> Note! Using world.GetRandom*() methods couldn't be called inside systems with **jobs** on. You can turn of this check by disabling WORLD_THREAD_CHECK.
+> Note! Using world.GetRandom*() methods couldn't be called inside systems with **jobs** on. You can turn off this check by disabling WORLD_THREAD_CHECK.
 
 ### HashSet and Dictionary
 

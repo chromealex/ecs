@@ -37,20 +37,62 @@ In systems where you need to use components you could use these methods:
 void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
       
     // Set data
-    entity.SetData(new MyStructComponent() {
+    entity.Set(new MyStructComponent() {
     	someData = 123
     });
 
     // Read data (Here you can read data only, entity version has not been changed)
-    ref readonly var dataReadonly = ref entity.ReadData<MyStructComponent>();
+    ref readonly var dataReadonly = ref entity.Read<MyStructComponent>();
     
     // Change data (Any call of GetData inside Logic step will trigger entity version to change)
-    ref var data = ref entity.GetData<MyStructComponent>();
+    ref var data = ref entity.Get<MyStructComponent>();
     ++data.someData;
     
     // Remove data
-    entity.RemoveData<MyStructComponent>();
+    entity.Remove<MyStructComponent>();
     
+}
+```
+
+### Shared Components
+
+Shared components are the same as default components, but this feature support shared component groups.
+For example: you have an Entity1 and Entity2, also you have Component1 that you would like to add to Entity1 and to Entity2, but you don't want to create data copy for each entity, so you can store one copy for these entities.
+Also you have an option to store shared components by the groupId. Provide groupId to store copy for each unique groupId.
+
+```csharp
+struct MySharedComponent : IComponentShared {
+    ...
+}
+
+void Example() {
+
+    ...
+    ref readonly var c = ref entity.ReadShared<MySharedComponent>([groupId]); // Read data if exist
+    ref var c = ref entity.GetShared<MySharedComponent>([groupId]); // Get or create data for this entity
+    // If you change
+    entity.RemoveShared<MySharedComponent>([groupId]); // Remove data for this entity
+
+}
+```
+
+### Static Components
+
+Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
+If you don't want to store some components on entity, but you still want to get data by reading data configs - you can provide IComponentStatic interface to avoid any applying on entity.
+
+```csharp
+struct MyStaticComponent : IComponentStatic {
+    ...
+}
+
+void Example() {
+
+    ...
+    var data = config.Get<MyStaticComponent>(); // Read data from DataConfig
+    
+    var emptyData = entity.Read<MyStaticComponent>(); // Fail! Returns an empty data
+
 }
 ```
 
@@ -88,10 +130,10 @@ For struct components there are lifetime property as described in the table belo
 In general you need to use **Infinite**, **NotifyAllSystemsBelow** and **NotifyAllSystems** lifetime.
 ```csharp
 // Set struct data with Lifetime = Infinite
-entity.SetData(new YourStructComponent());
+entity.Set(new YourStructComponent());
 
 // Set struct data with Lifetime = NotifyAllSystemsBelow
-entity.SetData(new YourAnotherStructComponent(), ComponentLifetime.NotifyAllSystemsBelow);
+entity.Set(new YourAnotherStructComponent(), ComponentLifetime.NotifyAllSystemsBelow);
 ```
 
 > Note! If you set **Infinite** lifetime and after that set **non-Infinite** lifetime, **non-Infinite** will be ignored. First you need to call **RemoveData** before set another lifetime.

@@ -58,7 +58,7 @@ void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
 
 Shared components are the same as default components, but this feature support shared component groups.
 For example: you have an Entity1 and Entity2, also you have Component1 that you would like to add to Entity1 and to Entity2, but you don't want to create data copy for each entity, so you can store one copy for these entities.
-Also you have an option to store shared components by the groupId. Provide groupId to store copy for each unique groupId.
+Also you have an option to store shared components by the groupId. Provide groupId to store a copy for each unique groupId.
 
 ```csharp
 struct MySharedComponent : IComponentShared {

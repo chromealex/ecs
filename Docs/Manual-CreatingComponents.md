@@ -3,7 +3,7 @@
 ### Struct Components
 
 In struct components you don't have any methods and all copies make automatically.
-If you store managed array here, only pointer will be copied, so if you have static array with some data you can use managed arrays here, but if you change data by your logic in these arrays, you shouldn't store any managed data here. In some cases you can use **StackArray** to allocate struct array, but there are some limitations with data size.
+If you store managed array here, only pointer will be copied, so if you have static array with some data you can use managed arrays here, but if you change data by your logic in these arrays, you will get sync problems. In some cases you can use **StackArray** to allocate struct array, but there are some limitations with data size. To use managed types in struct components you need to use ```[GeneratorIgnoreManagedType]``` attribute to avoid generator errors.
 In order to use some arrays, you can use [**Intrusive collections**](https://github.com/chromealex/ecs-submodule/tree/master/ECS/Core/Collections/Intrusive) (IntrusiveList, IntrusiveHashSet, IntrusiveDictionary, IntrusiveStack, IntrusiveQueue) to be free of copying any struct data.
 
 ```csharp

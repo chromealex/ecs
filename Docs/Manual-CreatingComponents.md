@@ -70,7 +70,7 @@ void Example() {
     ...
     ref readonly var c = ref entity.ReadShared<MySharedComponent>([groupId]); // Read data if exist
     ref var c = ref entity.GetShared<MySharedComponent>([groupId]); // Get or create data for this entity
-    // If you change
+    // If you change component data, all entities with the same groupId will be changed
     entity.RemoveShared<MySharedComponent>([groupId]); // Remove data for this entity
 
 }

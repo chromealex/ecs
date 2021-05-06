@@ -37,6 +37,6 @@ ME.ECS has FPVector2, FPVector3, FPQuaternion, pfloat and FPMath implementations
 
 ### Burst
 
-Now is 2021 and we currently have no Burst deterministic functions. So in burst you can use Fixed-Point Math to be sure all calculations are identical on all platforms.
+Now is 2021 and we are currently have no Burst deterministic functions. So in burst you can use Fixed-Point Math to be sure all calculations are identical on all platforms.
 
 [![](Footer.png)](/../../#glossary)

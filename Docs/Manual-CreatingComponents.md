@@ -96,6 +96,8 @@ void Example() {
 }
 ```
 
+Sometimes you need to call initialization method for static components, so you need to use IComponentStaticInitializable interface.
+
 ### Versioned Components
 
 In ME.ECS you could track version of component type by calling **entity.GetDataVersion\<TComponent\>()**, it would return world's tick when component has changed on this entity. To enable this feature for component type, you should define **IVersioned** interface at your component:

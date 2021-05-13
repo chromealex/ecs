@@ -96,7 +96,10 @@ void Example() {
 }
 ```
 
-Sometimes you need to call initialization method for static components, so you need to use IComponentStaticInitializable interface.
+### IComponentInitializable
+
+Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
+Sometimes you need to call initialization method for components, so you need to use IComponentInitializable interface.
 
 ### Versioned Components
 

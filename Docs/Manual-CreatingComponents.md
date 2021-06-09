@@ -127,8 +127,8 @@ For struct components there are lifetime property as described in the table belo
 | Value | Description |
 | ----- | ----------- |
 | Infinite | Lifetime has not set, so you need to remove it manually by calling **RemoveData** method on entity. It is component default value. |
-| NotifyAllSystemsBelow | If set all systems defined after executing system will be able to get this component. At the end of current tick this component will be destroyed automatically (see [custom lifetime]() section). |
-| NotifyAllSystems | If set all systems will be able to get this component, but only from the begining of the next tick. At the end of next tick this component will be destroyed automatically (see custom lifetime section). |
+| NotifyAllSystemsBelow | If set all systems defined after executing system will be able to get this component. At the end of current tick this component will be destroyed automatically (see [custom lifetime](https://github.com/chromealex/ecs/blob/master/Docs/Manual-CreatingComponents.md#component-custom-lifetime) section). |
+| NotifyAllSystems | If set all systems will be able to get this component, but only from the begining of the next tick. At the end of next tick this component will be destroyed automatically (see [custom lifetime](https://github.com/chromealex/ecs/blob/master/Docs/Manual-CreatingComponents.md#component-custom-lifetime) section). |
 | NotifyAllModulesBelow | Is set all modules and systems defined after executing system will be able to get this component. At the end of current frame this component will be destroyed automatically. |
 | NotifyAllModules | If set all modules and systems will be able to get this component, but only from the begining of the next frame. At the end of next frame this component will be destroyed automatically. |
 

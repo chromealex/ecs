@@ -127,8 +127,8 @@ For struct components there are lifetime property as described in the table belo
 | Value | Description |
 | ----- | ----------- |
 | Infinite | Lifetime has not set, so you need to remove it manually by calling **RemoveData** method on entity. It is component default value. |
-| NotifyAllSystemsBelow | If set all systems defined after executing system will be able to get this component. At the end of current tick this component will be destroyed automatically. |
-| NotifyAllSystems | If set all systems will be able to get this component, but only from the begining of the next tick. At the end of next tick this component will be destroyed automatically. |
+| NotifyAllSystemsBelow | If set all systems defined after executing system will be able to get this component. At the end of current tick this component will be destroyed automatically (see [custom lifetime]() section). |
+| NotifyAllSystems | If set all systems will be able to get this component, but only from the begining of the next tick. At the end of next tick this component will be destroyed automatically (see custom lifetime section). |
 | NotifyAllModulesBelow | Is set all modules and systems defined after executing system will be able to get this component. At the end of current frame this component will be destroyed automatically. |
 | NotifyAllModules | If set all modules and systems will be able to get this component, but only from the begining of the next frame. At the end of next frame this component will be destroyed automatically. |
 
@@ -141,8 +141,10 @@ entity.Set(new YourStructComponent());
 entity.Set(new YourAnotherStructComponent(), ComponentLifetime.NotifyAllSystemsBelow);
 ```
 
-In some cases you need to set up custom lifetime for component, so you can use ```entity.Set(new YourStructComponent(), ComponentLifetime.NotifyAllSystemsBelow, lifetimeInSeconds)``` to determine how long your component should be alive. Note that NotifyAllSystems or NotifyAllSystemsBelow should work as expected because this parameter controls only creation time of the component.
-
 > Note! If you set **Infinite** lifetime and after that set **non-Infinite** lifetime, **non-Infinite** will be ignored. First you need to call **RemoveData** before set another lifetime.
+
+### Component Custom Lifetime
+
+In some cases you need to set up custom lifetime for component, so you can use ```entity.Set(new YourStructComponent(), ComponentLifetime.NotifyAllSystemsBelow, lifetimeInSeconds)``` to determine how long your component should be alive. Note that NotifyAllSystems or NotifyAllSystemsBelow should work as expected because this parameter controls only creation time of the component.
         
 [![](Footer.png)](/../../#glossary)

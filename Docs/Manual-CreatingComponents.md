@@ -141,6 +141,8 @@ entity.Set(new YourStructComponent());
 entity.Set(new YourAnotherStructComponent(), ComponentLifetime.NotifyAllSystemsBelow);
 ```
 
+In some cases you need to set up custom lifetime for component, so you can use ```entity.Set(new YourStructComponent(), ComponentLifetime.NotifyAllSystemsBelow, lifetimeInSeconds)``` to determine how long your component should be alive. Note that NotifyAllSystems or NotifyAllSystemsBelow should work as expected because this parameter controls only creation time of the component.
+
 > Note! If you set **Infinite** lifetime and after that set **non-Infinite** lifetime, **non-Infinite** will be ignored. First you need to call **RemoveData** before set another lifetime.
         
 [![](Footer.png)](/../../#glossary)

@@ -68,6 +68,8 @@ https://github.com/chromealex/ecs-submodule
 | [Code Generators](Docs/CodeGenerators.md) | Code Generators usage |
 | [Pathfinding Package](https://github.com/chromealex/ecs-submodule/tree/master/ECSPathfinding) | Here is Pathfinding Package readme |
 | [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/ECSSerializer) | Here is Serializer Package readme |
+| [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/ECSAddons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
+
 
 ## Contact Me
 Telegram: https://t.me/chromealex</br>

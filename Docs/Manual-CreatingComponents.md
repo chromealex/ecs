@@ -96,6 +96,11 @@ void Example() {
 }
 ```
 
+### IComponentRuntime
+
+Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
+To be able to add only data components and to avoid components marked ```IComponentRuntime```you can use this interface.
+
 ### IComponentInitializable
 
 Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.

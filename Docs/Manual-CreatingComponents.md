@@ -98,17 +98,17 @@ void Example() {
 
 ### IComponentRuntime
 
-Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
-To be able to add only data components and to avoid components marked ```IComponentRuntime```you can use this interface.
+Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
+To be able to add only data components and to avoid components marked ```IComponentRuntime``` you can use this interface.
 
 ### IComponentInitializable
 
-Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
-Sometimes you need to call initialization method for components, so you need to use IComponentInitializable interface.
+Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
+Sometimes you need to call initialization method for components, so you need to use ```IComponentInitializable``` interface.
 
 ### Versioned Components
 
-In ME.ECS you could track version of component type by calling **entity.GetDataVersion\<TComponent\>()**, it would return world's tick when component has changed on this entity. To enable this feature for component type, you should define **IVersioned** interface at your component:
+In ME.ECS you could track version of component type by calling ```entity.GetDataVersion\<TComponent\>()```, it would return world's tick when component has changed on this entity. To enable this feature for component type, you should define ```IVersioned** interface at your component:
 	
 ```csharp
 struct MyComponent : IStructComponent, IVersioned {

@@ -104,8 +104,13 @@ To be able to add only data components and to avoid components marked ```ICompon
 ### IComponentInitializable
 
 Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
-Sometimes you need to call initialization method for components, so you need to use ```IComponentInitializable``` interface.
+Sometimes you need to call initialization method for components, so you need to use ```IComponentInitializable``` interface. This call is done before copying component onto your entity.
 
+### IComponentDeinitializable
+	
+Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
+Opposite of ```IComponentInitializable```. Called on ```DataConfig::Apply``` when you removing components.
+	
 ### Versioned Components
 
 In ME.ECS you could track version of component type by calling ```entity.GetDataVersion<TComponent>()```, it would return world's tick when component has changed on this entity. To enable this feature for component type, you should define ```IVersioned interface at your component:

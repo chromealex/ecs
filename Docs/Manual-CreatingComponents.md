@@ -113,7 +113,7 @@ Opposite of ```IComponentInitializable```. Called on ```DataConfig::Apply``` whe
 	
 ### Versioned Components
 
-In ME.ECS you could track version of component type by calling ```entity.GetDataVersion<TComponent>()```, it would return world's tick when component has changed on this entity. To enable this feature for component type, you should define ```IVersioned interface at your component:
+In ME.ECS you could track version of component type by calling ```entity.GetDataVersion<TComponent>()```, it would return world's tick when component has changed on this entity. To enable this feature for component type, you should define ```IVersioned``` interface at your component:
 	
 ```csharp
 struct MyComponent : IStructComponent, IVersioned {

@@ -37,6 +37,10 @@ ME.ECS has FPVector2, FPVector3, FPQuaternion, pfloat and FPMath implementations
 
 ### Burst
 
-Now is 2021 and we are currently have no Burst deterministic functions. So in burst you can use Fixed-Point Math to be sure all calculations are identical on all platforms.
+Now is 2021 and we are currently have no Burst deterministic functions. So in burst you can use Fixed-Point Math to be sure all calculations are identical on all platforms. It is recommend to use FloatingPoint.High btw.
+
+### Mono/IL2CPP Builds
+
+Unity Editor runs using mono, but all target builds must have IL2CPP compiler to works right with determinism. So you can use Mono builds with Unity Editor and IL2CPP builds with other IL2CPP builds, otherwise you've got some desync point.
 
 [![](Footer.png)](/../../#glossary)

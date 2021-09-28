@@ -72,6 +72,8 @@ https://github.com/chromealex/ecs-submodule
 | [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/ECSSerializer) | Here is Serializer Package readme |
 | [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/ECSAddons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
 
+## Discord
+https://discord.gg/FFMSjQau
 
 ## Contact Me
 Telegram: https://t.me/chromealex</br>

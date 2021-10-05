@@ -111,6 +111,18 @@ Sometimes you need to call initialization method for components, so you need to 
 Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
 Opposite of ```IComponentInitializable```. Called on ```DataConfig::Apply``` when you removing components.
 	
+### IComponentOneShot
+
+In ME.ECS you could fire one-tick components without store them in state.<br>
+These components are similar to NotifyAllSystemsBelow lifetime flag and automatically removed at the end of the tick.
+		
+```csharp
+entity.SetOneShot(new YourOneShotComponent());
+// Here you can get access to your component data or use filters
+... (TICK)
+// No component data exist
+```
+
 ### Versioned Components
 
 In ME.ECS you could track version of component type by calling ```entity.GetDataVersion<TComponent>()```, it would return world's tick when component has changed on this entity. To enable this feature for component type, you should define ```IVersioned``` interface at your component:

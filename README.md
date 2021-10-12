@@ -6,6 +6,36 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/chromealex/ecs/blob/master/LICENSE)
 
+## Installation
+
+### Using submodule
+
+1. Download or add as a submodule this repository https://github.com/chromealex/ecs-submodule.
+2. Create an empty file called ```csc.gen.rsp``` inside Assets folder. Your file should have the path ```Assets/csc.gen.rsp```.
+3. In Package Manager install Burst (tested with version 1.5.3).
+4. In Package Manager install Unity Collections (tested with version 1.0.0-pre.3). Note: to find unity collections you need to choose "Add package from git URL" and fill it with "com.unity.collections".
+5. In Package Manager install Unity UI Toolkit (tested with version 1.0.0-preview.16). Note: to find unity ui toolkit you need to choose "Add package from git URL" and fill it with "com.unity.ui".
+6. In Package Manager install Unity Mathematics (tested with version 1.2.1).
+7. In Package Manager install Unity Addressables (tested with version 1.18.13).
+8. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
+9. You are ready to [Initialize Project](Docs/VideoTutorials.md).
+
+### Using Unity Package Manager
+
+1. Create an empty file called ```csc.gen.rsp``` inside Assets folder. Your file should have the path ```Assets/csc.gen.rsp```.
+2. Open ```Packages/manifest.json``` file.
+3. Add ME.ECS to your dependencies section:
+
+```
+{
+  "dependencies": {
+    [HERE ARE OTHER PACKAGES]
+    "com.me.ecs": "https://github.com/chromealex/ecs-submodule.git"
+  }
+}
+```
+4. You are ready to [Initialize Project](Docs/VideoTutorials.md).
+
 ## Example Repository
 https://github.com/chromealex/ecs.example
 
@@ -27,6 +57,7 @@ https://github.com/chromealex/ecs-submodule
 | [Create Component](Docs/Manual-CreatingComponents.md) | How to create new component |
 | [Create Filter](Docs/Manual-CreatingFilters.md) | How to create new filter |
 | [Create Marker](Docs/Manual-CreatingMarkers.md) | How to create new marker |
+| [Create Timers](Docs/Manual-Timers.md) | How to create timers |
 | [Register Prefabs](Docs/Manual-RegisteringPrefabs.md) | How to register prefab in ME.ECS |
 | [Instantiate View](Docs/Manual-InstantiatingViews.md) | How to instantiate view from previously registered prefab |
 | [Update Views](Docs/Manual-UpdatingViews.md) | How to update views with entity data |
@@ -40,6 +71,10 @@ https://github.com/chromealex/ecs-submodule
 | [Code Generators](Docs/CodeGenerators.md) | Code Generators usage |
 | [Pathfinding Package](https://github.com/chromealex/ecs-submodule/tree/master/ECSPathfinding) | Here is Pathfinding Package readme |
 | [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/ECSSerializer) | Here is Serializer Package readme |
+| [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/ECSAddons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
+
+## Discord
+https://discord.gg/FFMSjQau
 
 ## Contact Me
 Telegram: https://t.me/chromealex</br>

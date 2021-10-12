@@ -5,9 +5,10 @@ In config file you can add struct components, reference components and "remove" 
 
 All configs should be applied on exist entity by the following code:
 ```csharp
-config.Apply(in entity);
+config.Apply(in entity, [overrideIfExist]);
 ```
-After this code works, on your entity you'll get all components you'd choosed in your config file.
+After this code works, on your entity you'll get all components you'd choosed in your config file (except [IComponentStatic](https://github.com/chromealex/ecs/blob/master/Docs/Manual-CreatingComponents.md#static-components)).
+For [shared components](https://github.com/chromealex/ecs/blob/master/Docs/Manual-CreatingComponents.md#shared-components) each DataConfig stores groupId (you could edit it at the top of data config in inspector).
 
 You can check has config some component or not:
 ```csharp

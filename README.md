@@ -48,6 +48,7 @@ https://github.com/chromealex/ecs-submodule
 | [Video Tutorials](Docs/VideoTutorials.md) | Here are some links to youtube channel which shows how to use some features |
 | [Classes](Docs/Manual-Classes.md) | All classes and structures used in ME.ECS |
 | [Deterministic Operations](Docs/Manual-Deterministic.md) | Deterministic Operations like Random and GetHashCode in collections |
+| [Burst](Docs/Manual-Burst.md) | How to use burst |
 | [Default Modules](Docs/DefaultModules.md) | Describe default modules included in ME.ECS by default |
 | [Create World](Docs/Manual-CreatingWorld.md) | Describe how to create new world and set up your empty project |
 | [Create Feature](Docs/Manual-CreatingFeature.md) | How to create new feature |

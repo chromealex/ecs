@@ -444,47 +444,32 @@ public class PhotonTransporter : ME.ECS.Network.ITransporter {
 ```csharp
 public class FSSerializer : ME.ECS.Network.ISerializer {
 
-    private readonly FullSerializer.fsSerializer fsSerializer = new FullSerializer.fsSerializer();
-
     public byte[] SerializeStorage(ME.ECS.StatesHistory.HistoryStorage historyEvent) {
 
-        FullSerializer.fsData data;
-        this.fsSerializer.TrySerialize(typeof(ME.ECS.StatesHistory.HistoryStorage), historyEvent, out data).AssertSuccessWithoutWarnings();
-        var str = FullSerializer.fsJsonPrinter.CompressedJson(data);
-        return System.Text.Encoding.UTF8.GetBytes(str);
+        return ME.ECS.Serializer.Serializer.Pack(historyEvent);
 
     }
 
     public ME.ECS.StatesHistory.HistoryStorage DeserializeStorage(byte[] bytes) {
 
-        var fsData = System.Text.Encoding.UTF8.GetString(bytes);
-        FullSerializer.fsData data = FullSerializer.fsJsonParser.Parse(fsData);
-        object deserialized = null;
-        this.fsSerializer.TryDeserialize(data, typeof(ME.ECS.StatesHistory.HistoryStorage), ref deserialized).AssertSuccessWithoutWarnings();
-
-        return (ME.ECS.StatesHistory.HistoryStorage)deserialized;
-
+        return ME.ECS.Serializer.Serializer.Unpack<ME.ECS.StatesHistory.HistoryStorage>(bytes);
+        
     }
 
     public byte[] Serialize(ME.ECS.StatesHistory.HistoryEvent historyEvent) {
 
-        FullSerializer.fsData data;
-        this.fsSerializer.TrySerialize(typeof(ME.ECS.StatesHistory.HistoryEvent), historyEvent, out data).AssertSuccessWithoutWarnings();
-        var str = FullSerializer.fsJsonPrinter.CompressedJson(data);
-        return System.Text.Encoding.UTF8.GetBytes(str);
+        return ME.ECS.Serializer.Serializer.Pack(historyEvent);
 
     }
 
     public ME.ECS.StatesHistory.HistoryEvent Deserialize(byte[] bytes) {
 
-        var fsData = System.Text.Encoding.UTF8.GetString(bytes);
-        FullSerializer.fsData data = FullSerializer.fsJsonParser.Parse(fsData);
-        object deserialized = null;
-        this.fsSerializer.TryDeserialize(data, typeof(ME.ECS.StatesHistory.HistoryEvent), ref deserialized).AssertSuccessWithoutWarnings();
-
-        return (ME.ECS.StatesHistory.HistoryEvent)deserialized;
+        return ME.ECS.Serializer.Serializer.Unpack<ME.ECS.StatesHistory.HistoryEvent>(bytes);
 
     }
+
+    public byte[] Serialize(ME.ECS.StatesHistory.HistoryEvent historyEvent) => ME.ECS.Serializer.Serializer.Pack(historyEvent);
+    public ME.ECS.StatesHistory.HistoryEvent Deserialize(byte[] bytes) => ME.ECS.Serializer.Serializer.Unpack<ME.ECS.StatesHistory.HistoryEvent>(bytes);
 
 }
 ```

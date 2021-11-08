@@ -2,7 +2,7 @@
 
 Filters in ME.ECS can be used with burst compiler. There are two variants to use burst to iterate filter.
 
-#### Use Filter Bag (Recommended)
+### Use Filter Bag (Recommended)
 
 This method can be used with job system:
 ```csharp
@@ -41,7 +41,7 @@ public struct Job : IJobParallelFor {
 }
 ```
 
-#### Use ForEach
+### Use ForEach
 
 This method has several restrictions: 
 * Components can't be removed

@@ -2,20 +2,7 @@
 
 Filters in ME.ECS can be used with burst compiler. There are two variants to use burst to iterate filter.
 
-#### Use ForEach
-
-This method has several restrictions: 
-* Components can't be removed
-* ForEach can't run in parallel mode
-```csharp
-this.filter.ForEach((in Entity entity, in Component1 component1, ref Component2 component2) => {
-    
-    
-    
-}).WithBurst();
-```
-
-#### Use Filter Bag
+#### Use Filter Bag (Recommended)
 
 This method can be used with job system:
 ```csharp
@@ -52,6 +39,19 @@ public struct Job : IJobParallelFor {
     }
   
 }
+```
+
+#### Use ForEach
+
+This method has several restrictions: 
+* Components can't be removed
+* ForEach can't run in parallel mode
+```csharp
+this.filter.ForEach((in Entity entity, in Component1 component1, ref Component2 component2) => {
+    
+    
+    
+}).WithBurst();
 ```
 
 [![](Footer.png)](/../../#glossary)

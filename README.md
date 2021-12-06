@@ -75,7 +75,7 @@ https://github.com/chromealex/ecs-submodule
 | [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/ECSAddons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
 
 ## Discord
-https://discord.gg/n5VPBEj2
+https://discord.gg/SxJJPPNsSf
 
 ## Contact Me
 Telegram: https://t.me/chromealex</br>

@@ -45,7 +45,7 @@ public struct Job : IJobParallelFor {
 
 This method has several restrictions: 
 * Components can't be removed
-* ForEach can't run in parallel mode
+* ForEach couldn't be run in parallel mode
 ```csharp
 this.filter.ForEach((in Entity entity, in Component1 component1, ref Component2 component2) => {
     

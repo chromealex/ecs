@@ -15,7 +15,7 @@ public struct MyStructComponent : IStructComponent {
 ```
 
 If you need to store managed data with custom copy interface, you should use **IStructCopyable<>** component where you need to implement CopyFrom(in T other) and OnRecycle() methods.
-> Use this if you are really want to use managed data and you really changes this data in your systems. In other cases use [**Intrusive collections**](https://github.com/chromealex/ecs-submodule/tree/master/ECS/Core/Collections/Intrusive).
+> Use this if you are really want to use managed data and you really changes this data in your systems. In other cases use [**Intrusive collections**](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Core/Collections/Intrusive).
 ```csharp
 public struct MyStructCopyableComponent : IStructCopyable<MyStructCopyableComponent> {
         

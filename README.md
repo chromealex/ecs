@@ -71,9 +71,9 @@ https://github.com/chromealex/ecs-submodule
 | [Data Configs](Docs/DataConfig-Readme.md) | How to create and use data configs |
 | [Global Events](Docs/GlobalEvents-Readme.md) | How to create and use global events |
 | [Code Generators](Docs/CodeGenerators.md) | Code Generators usage |
-| [Pathfinding Package](https://github.com/chromealex/ecs-submodule/tree/master/ECSPathfinding) | Here is Pathfinding Package readme |
-| [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/ECSSerializer) | Here is Serializer Package readme |
-| [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/ECSAddons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
+| [Pathfinding Package](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Pathfinding) | Here is Pathfinding Package readme |
+| [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Serializer) | Here is Serializer Package readme |
+| [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/Addons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
 
 ## Discord
 https://discord.gg/SxJJPPNsSf

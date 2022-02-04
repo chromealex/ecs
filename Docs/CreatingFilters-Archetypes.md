@@ -29,5 +29,6 @@ You can use these methods to filter your entities:
 | ```Any<T1, T2>``` | Filters all entities having T1 or T2 component |
 | ```Any<T1, T2, T3>``` | Filters all entities having T1 or T2 or T3 component |
 | ```Any<T1, T2, T3, T4>``` | Filters all entities having T1 or T2 or T3 or T4 component |
+| ```WithLambda<TLambda, T>``` | Filters all entities having T component and TLambda::Execute(T) returns true |
 
 [![](Footer.png)](/../../#glossary)

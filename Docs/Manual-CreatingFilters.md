@@ -23,8 +23,6 @@ You can use these methods to filter your entities:
 | ```Without<T>``` | Filters all entities that don't have T component |
 | ```WithShared<T>``` | Filter works only if static shared T component exists |
 | ```WithoutShared<T>``` | Filter works only if static shared T component doesn't exist |
-| ```SetOnEntityAdd<T>``` | Call Execute method on callback instance when new entity added into filter |
-| ```SetOnEntityRemove<T>``` | Call Execute method on callback instance when new entity removed into filter |
 | ```OnVersionChangedOnly``` | Filtered only entities if its version has changed. filter.ToArray() and filter.GetEnumerator() resets these versions. |
 
 ## Multiple Filters

@@ -1,4 +1,4 @@
-# Creating Filters (Raw) [![](Logo-Tiny.png)](/../../#glossary)
+# Creating Filters (Default) [![](Logo-Tiny.png)](/../../#glossary)
 
 > Note! This is default filters in ME.ECS. Turn off FILTERS_STORAGE_ARCHETYPES define to use this filter type.
 

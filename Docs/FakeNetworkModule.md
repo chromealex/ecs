@@ -52,7 +52,19 @@ public class FakeTransporter : ME.ECS.Network.ITransporter {
         this.networkType = networkType;
 
     }
+    
+    public bool IsConnected() {
+        
+        return true;
+        
+    }
 
+    public void SendSystem(byte[] bytes) {
+        
+        this.Send(bytes);
+        
+    }
+    
     public void Send(byte[] bytes) {
 
         if ((this.networkType & ME.ECS.Network.NetworkType.RunLocal) == 0) {

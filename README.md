@@ -18,8 +18,9 @@
 6. In Package Manager install Unity UI Toolkit (tested with version 1.0.0-preview.16). Note: to find unity ui toolkit you need to choose "Add package from git URL" and fill it with "com.unity.ui".
 7. In Package Manager install Unity Mathematics (tested with version 1.2.1).
 8. In Package Manager install Unity Addressables (tested with version 1.18.13).
-9. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
-10. You are ready to [Initialize Project](Docs/VideoTutorials.md).
+9. In Package Manager install Unity Localization (tested with version 1.0.5).
+10. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
+11. You are ready to [Initialize Project](Docs/VideoTutorials.md).
 
 ### Using Unity Package Manager
 

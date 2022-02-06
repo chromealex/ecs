@@ -25,3 +25,9 @@
 ### Can I somehow notify view from logic?
 <answer>No, in views you can't! You should add some component in logic tick onto your entity, when your effect over - just remove it from entity. In view just check does entity has component or not and update your view.</answer>
 <answer>But if you want to notify UI, you can use GlobalEvent that allows receive events after logic tick has been complete.</answer>
+
+### Will entity be removed automatically if it has no components at the end of the tick?
+<answer>No, entity will be alive forever until you call entity.Destroy().</answer>
+
+### How can I remove entity by the time or at the end of the tick?
+<answer>You can use Essentials Destroy feature addon to control entities lifetime.</answer>

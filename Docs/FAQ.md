@@ -8,7 +8,7 @@
 <answer>No! You should understand that any coroutine-like plugin (e.g. DOTween) run in Unity update (e.g. Update/LateUpdate/FixedUpdate), so in Unity update methods you can't modify the game state.</answer>
 
 ### I've got compilation error like Copyright (C) Microsoft Corporation. All rights reserved.
-<answer>This behaviour can be caused by different things, you need to read the error text to determine what goes wrong. But in ME.ECS context you should check if this file is exist: <b>Assets/csc.rsp.gen</b>.</answer>
+<answer>This behaviour can be caused by different things, you need to read the error text to determine what goes wrong. But in ME.ECS context you should check if this file is exist: Assets/csc.rsp.gen.</answer>
 
 ### I've got compilation error when removing or renaming component
 <answer>If you remove or rename component manually (not using IDE) you've got compilation error because ME.ECS has code-generation tool. Just find and remove file compiler.gen.structcomponents.cs, it will be created automatically. If not, you should check ME.ECS/Generators/Struct Components/Auto Compile checkmark.</answer>

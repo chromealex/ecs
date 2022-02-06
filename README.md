@@ -44,6 +44,9 @@ https://github.com/chromealex/ecs.example
 ## Submodule Repository
 https://github.com/chromealex/ecs-submodule
 
+## FAQ
+[FAQ](Docs/FAQ.md)
+
 ## Glossary
 | Link | Description |
 | ------ | ----- |

@@ -12,15 +12,16 @@
 
 1. Download or add as a submodule this repository https://github.com/chromealex/ecs-submodule.
 2. Create an empty file called ```csc.gen.rsp``` inside Assets folder. Your file should have the path ```Assets/csc.gen.rsp```.
-3. In Package Manager install Burst (tested with version 1.5.3).
-4. In Package Manager install Unity Collections (tested with version 1.0.0-pre.3). Note: to find unity collections you need to choose "Add package from git URL" and fill it with ```com.unity.collections```.
-5. In Package Manager install Unity Profiling Core (tested with version 1.0.0). Note: to find unity profiling core you need to choose "Add package from git URL" and fill it with ```com.unity.profiling.core```.
-6. In Package Manager install Unity UI Toolkit (tested with version 1.0.0-preview.16). Note: to find unity ui toolkit you need to choose "Add package from git URL" and fill it with ```com.unity.ui```.
-7. In Package Manager install ```Unity Mathematics``` (tested with version 1.2.1).
-8. In Package Manager install ```Unity Addressables``` (tested with version 1.18.13).
-9. In Package Manager install ```Unity Localization``` (tested with version 1.0.5).
-10. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
-11. You are ready to [Initialize Project](Docs/VideoTutorials.md).
+3. Add packages (or see [Package Dependencies](#package-dependencies) section):
+    1. In Package Manager install ```Burst``` (tested with version 1.5.3).
+    2. In Package Manager install ```Unity Collections``` (tested with version 1.0.0-pre.3). Note: to find unity collections you need to choose "Add package from git URL" and fill it with ```com.unity.collections```.
+    3. In Package Manager install ```Unity Profiling Core``` (tested with version 1.0.0). Note: to find unity profiling core you need to choose "Add package from git URL" and fill it with ```com.unity.profiling.core```.
+    4. In Package Manager install ```Unity UI Toolkit``` (tested with version 1.0.0-preview.16). Note: to find unity ui toolkit you need to choose "Add package from git URL" and fill it with ```com.unity.ui```.
+    5. In Package Manager install ```Unity Mathematics``` (tested with version 1.2.1).
+    6. In Package Manager install ```Unity Addressables``` (tested with version 1.18.13).
+    7. In Package Manager install ```Unity Localization``` (tested with version 1.0.5). Note: to find unity collections you need to choose "Add package from git URL" and fill it with ```com.unity.localization```.
+4. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
+5. You are ready to [Initialize Project](Docs/VideoTutorials.md).
 
 ### Using Unity Package Manager
 
@@ -37,6 +38,18 @@
 }
 ```
 4. You are ready to [Initialize Project](Docs/VideoTutorials.md).
+
+### Package Dependencies
+
+```
+  "com.unity.collections": "1.0.0-pre.6",
+  "com.unity.ui": "1.0.0-preview.18",
+  "com.unity.addressables": "1.19.9",
+  "com.unity.burst": "1.5.6",
+  "com.unity.mathematics": "1.2.1",
+  "com.unity.localization": "1.0.5",
+  "com.unity.profiling.core": "1.0.0"
+```
 
 ## Example Repository
 https://github.com/chromealex/ecs.example

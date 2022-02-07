@@ -1,4 +1,4 @@
-### Does marker is one-frame?
+### Is marker a one-frame?
 <answer>Yes, marker's lifetime is a one-frame. It's created immediately and removed at the end of the frame.</answer>
 
 ### Can I change the game state (e.g. call entity.Get/entity.Set) from the view?

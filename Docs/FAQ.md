@@ -33,4 +33,4 @@
 <answer>You can use Essentials Destroy feature addon to control entities lifetime.</answer>
 
 ### Is there any one-tick component?
-<answer>Yes, you can use entity.Set(new Component(), ComponentLifetime.NotifyAllSystems) API.</answer>
+<answer>Yes, you can use entity.Set(new Component(), ComponentLifetime.NotifyAllSystems) API. For cases where you need to notify all systems below - you can use OneShotComponent type. It will be better choice because OneShot components have not stored in state and theirs lifetime over at the end of the tick.</answer>

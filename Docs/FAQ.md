@@ -34,3 +34,6 @@
 
 ### Is there any one-tick component?
 <answer>Yes, you can use entity.Set(new Component(), ComponentLifetime.NotifyAllSystems) API to be able to notify all systems start from the next tick. For cases where you need to notify all systems below - you can use OneShotComponent type. It will be better choice because OneShot components have not stored in state and theirs lifetime over at the end of the tick.</answer>
+
+### Can I call entity.InstantiateView for current player in AdvanceTick?
+<answer>No! You can't do anything in AdvanceTick which will affect your active player only. InstantiateView will create a ViewComponent and place it onto your entity, so it will affect your game state.</answer>

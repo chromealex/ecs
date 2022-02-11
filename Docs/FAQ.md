@@ -23,7 +23,7 @@
 <answer>In general, no. If you just read this object and never change it - you can place it in component, but if you want to modify this object you should use Copyable Component. Take a look into DataObject struct type, that allows you to modify data and store it in default IComponent. But in any case you should implement CopyFrom and Recycle methods for your object.</answer>
 
 ### Can I somehow notify view from logic?
-<answer>No, in views you can't! You should add some component in logic tick onto your entity, when your effect over - just remove it from entity. In view just check does entity has component or not and update your view.</answer>
+<answer>No, you not able to notify views directly from your logic! You should add some component in logic tick onto your entity, when your effect over - just remove it from entity. In view just check does entity has component or not and update your view.</answer>
 <answer>But if you want to notify UI, you can use GlobalEvent that allows receive events after logic tick has been complete.</answer>
 
 ### Will entity be removed automatically if it has no components at the end of the tick?

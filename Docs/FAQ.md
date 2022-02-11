@@ -39,7 +39,7 @@
 <answer>No! You can't do anything in AdvanceTick which will affect your active player only. InstantiateView will create a ViewComponent and place it onto your entity, so it will affect your game state.</answer>
 
 ### Can I send entity through RPC?
-<answer>No! You can't.</answer>
+<answer>No! You can't. This is because entity could changed with rollback and RPC events will apply onto wrong entity.</answer>
 
 ### Can I store entity in components?
 <answer>Yes, sure you can. You can store entity in IComponent or in copyable components.</answer>

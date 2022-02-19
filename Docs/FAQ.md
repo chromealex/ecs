@@ -44,7 +44,7 @@
 ### Can I store entity in components?
 <answer>Yes, sure you can. You can store entity in IComponent or in copyable components.</answer>
 
-### I've got a hash errors when playing in multiplayer mode
+### I've got a hash errors while playing in multiplayer mode
 <answer>Hash errors may occur when you doesn't lead instructions in general case. But in some cases you can got this error because of different processor archetectures on your clients.</answer>
 <answer>If you test your multiplayer on the same computer - just check your code, the problem is there 100%. Check all IStructCopyable components, be sure you Copy and Recycle these components properly.</answer>
 <answer>If you test your multiplayer on different computers (for example mac and pc) - call world.GetIEEEFloat and world.GetIEEEFloatFixed. If you've got GetIEEEFloat result as different and GetIEEEFloatFixed the same - you need to use fpmath.</answer>

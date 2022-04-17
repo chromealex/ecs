@@ -32,5 +32,6 @@ You can use these methods to filter your entities:
 | ```WithLambda<TLambda, T>``` | Filters all entities having T component and TLambda::Execute(T) returns true |
 | ```OnChanged<T>``` | Filters all entities only if T component has been changed. Changed components are mark as changed on Set/Get operations. |
 | ```Parent(Filter)``` | Filters all entities having parent entity that matches custom filter |
+| ```Connect<TConnect>(Filter)``` | Filters all entities having custom entity that matches custom filter |
 
 [![](Footer.png)](/../../#glossary)

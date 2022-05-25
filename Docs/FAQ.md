@@ -48,3 +48,12 @@
 <answer>Hash errors may occur when you doesn't lead instructions in general case. But in some cases you can got this error because of different processor archetectures on your clients.</answer>
 <answer>If you test your multiplayer on the same computer - just check your code, the problem is there 100%. Check all IStructCopyable components, be sure you Copy and Recycle these components properly.</answer>
 <answer>If you test your multiplayer on different computers (for example mac and pc) - call world.GetIEEEFloat and world.GetIEEEFloatFixed. If you've got GetIEEEFloat result as different and GetIEEEFloatFixed the same - you need to use fpmath.</answer>
+
+### I want to play sound (for example), how and where can I do this?
+<answer>In ME.ECS you have events, which accumulated in AdvanceTick and fires only on VisualTick (regular Update). So you don't need to play sound inside your logic, you should play it after all rollbacks have done.</answer>
+
+### I want to implement interpolation, how can I do this?
+<answer>In ME.ECS there are Logic and View layers, which are separate. Logic can read and write state, while View can only read state. So when rollback fires, it will affect state data only (not views). Thats why you can run your game without any visual views. You will receive two states in the certain view: before rollback and after rollback, so you can interpolate it on the view layer.</answer>
+
+### How does server validate client events?
+<answer>In ME.ECS events could be run in different ways: SendToServer and/or RunLocal. So you can choose the way you want. RunLocal runs your event locally immediately and SendToServer - send it to the other clients (or may be to your client too if you don't choose RunLocal option). If you want to validate your actions on the server - you can use SendToServer mode only. Btw ME.ECS has Cancel Event functionality, which allows you to cancel some event on the certain client (for example if client ping is too high for some reason and server receive the event too late).</answer>

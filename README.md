@@ -52,7 +52,8 @@
 ```
 
 ## Example Repository
-https://github.com/chromealex/ecs.example
+<div>https://github.com/Oleg-Grim/Pong-Out</div>
+<div>Pong Out - a classic pong game with fully functioning multiplayer made with ME.ECS</div>
 
 ## Submodule Repository
 https://github.com/chromealex/ecs-submodule

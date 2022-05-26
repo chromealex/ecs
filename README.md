@@ -5,8 +5,8 @@
 <div><h4>ME.ECS - it's ECS implementation for Unity Engine with full state automatic rollbacks. In general ME.ECS could be used for multiplayer real-time strategy games (or any tcp-based) because of Network support out of the box with automatic rollbacks. You can set up tick time for your game and ME.ECS will store your state and automatically sync game instances using minimum traffic (just user RPC calls, no full game sync required).</h4></div>
 
 [![License: MIT](https://img.shields.io/github/license/chromealex/ecs?style=flat&color=green)](https://github.com/chromealex/ecs/blob/master/LICENSE)
-<img src="https://img.shields.io/github/package-json/v/chromealex/ecs-submodule?style=flat&color=blue"/>
-<img src="https://img.shields.io/github/last-commit/chromealex/ecs-submodule?style=flat&color=yellow"/>
+<a href="https://github.com/chromealex/ecs"><img src="https://img.shields.io/github/package-json/v/chromealex/ecs-submodule?style=flat&color=blue" /></a>
+<a href="https://github.com/chromealex/ecs"><img src="https://img.shields.io/github/last-commit/chromealex/ecs-submodule?style=flat&color=yellow" /></a>
 [![](https://img.shields.io/discord/434291087629221918?style=flat&color=blueviolet)](https://discord.gg/SxJJPPNsSf)
 
 

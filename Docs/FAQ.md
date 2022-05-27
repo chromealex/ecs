@@ -15,7 +15,10 @@
  
 ### I've got compilation error when removing or renaming component
 <answer>If you remove or rename component manually (not using IDE) you might get a compilation error. In that case you should find and delete file “compiler.gen.structcomponents” located at “Assets\Project\Generator\gen”. Don’t worry, ME.ECS has code-generation tool and will regenerate this file. If not, you should check ME.ECS/Generators/Struct Components/Auto Compile checkmark, but otherwise – ME.ECS should handle that error on it’s own as you let Unity refresh assets and recompile.</answer>
- 
+
+### I've renamed a component via IDE, but get an Unknown managed type referenced ... ?
+<answer>You can get this error if you use DataConfigs, this happens due to Unity's serialization methods. If you get this error - you can either remove that component from all configs that use it, or you can open a config SO in your IDE and manually rename invalid component to correct naming. Note that if you changed not only name of component, but also its fields or data type - you should correct them in scriptable object too.</answer>
+
 ### Can I store logic between-frames temp data in systems, views, etc?
 <answer>No! You should not store any temporary between-frames data in systems and views. In general, if you need to store any data, that goes out of the scope of a single call of AdvanceTick(), you should create components and use them to hold that data. More to this - views are stateless, and you should not store any data in them, or you would need to update it when the “immediately” flag is true while “View::ApplyState” is called.</answer>
  

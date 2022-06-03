@@ -75,9 +75,7 @@ https://github.com/chromealex/ecs-submodule
 | [Create Filter](Docs/Manual-CreatingFilters.md) | How to create new filter |
 | [Create Marker](Docs/Manual-CreatingMarkers.md) | How to create new marker |
 | [Create Timers](Docs/Manual-Timers.md) | How to create timers |
-| [Register Prefabs](Docs/Manual-RegisteringPrefabs.md) | How to register prefab in ME.ECS |
-| [Instantiate View](Docs/Manual-InstantiatingViews.md) | How to instantiate view from previously registered prefab |
-| [Update Views](Docs/Manual-UpdatingViews.md) | How to update views with entity data |
+| [Create Views](Docs/Manual-CreatingViews.md) | How to register prefab in ME.ECS |
 | [Send User Input](Docs/Manual-SendingUserInputToWorld.md) | How to send user inputs to systems |
 | [Send UI Events](Docs/Manual-SendingUIEventsToWorld.md) | How to send events from UI to systems |
 | [Receive User Input](Docs/Manual-ReceivingUserInputInWorld.md) | How to receive markers in systems |

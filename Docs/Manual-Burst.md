@@ -11,7 +11,7 @@ public Filter filter; // for example we use filter define
 void AdvanceTick(in float deltaTime) {
   
     // Here we define new filter bag with 2 components (up to 9 components)
-    var bag = new FilterBag<Component1, Component2>(this.filter, Allocator.Temp);
+    var bag = new FilterBag<Component1, Component2>(this.filter, Allocator.TempJob);
     
     // Schedule the job with your bag
     var job = new Job() { bag = bag };
@@ -24,11 +24,9 @@ void AdvanceTick(in float deltaTime) {
 }
 
 [BurstCompile(FloatPrecision.High, FloatMode.Deterministic, CompileSynchronously = true, Debug = false)]
-public struct Job : IJobParallelFor {
+public struct Job : IJobParallelForFilterBag<FilterBag<Component1, Component2>> {
 
-    public FilterBag<Component1, Component2> bag;
-    
-    public void Execute(int index) {
+    public void Execute(in FilterBag<Component1, Component2> bag, int index) {
       
         // Read first component in bag and change its value
         ref var component1 = ref this.bag.GetT0(index);

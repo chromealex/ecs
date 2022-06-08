@@ -25,6 +25,13 @@ public class YourFeature : Feature {
 
     }
     
+    protected override void OnConstructLate() {
+        
+        // You can create entities here
+        // Use this method instead of OnConstruct because all Filters should been registered at this point
+        
+    }
+    
     protected override void OnDeconstruct() {
         
         // Unload data, you don't need to remove systems and modules at this point, just unload your custom data if it was loaded on OnConstruct() stage

@@ -18,7 +18,7 @@ All other things like rollbacks, simulation process, calculating ticks, etc. wil
 Btw, world's time will be increased automatically by Unity deltaTime, but at the long distance you will get too different results,
 so it is recommended to use SetTimeSinceStart API as often as you can.
 
-### Manually World Simulation
+### Manual World Simulation
 
 NetworkModule controls simulation by default, but you want to set it up manually you can choose how you want to run simulation.
 ```csharp

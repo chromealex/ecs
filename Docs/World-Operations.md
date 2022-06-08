@@ -41,7 +41,10 @@ NetworkModule at this point uses ```World::Simulate(fromStateTick, currentTick)`
 
 You have an option to rewind world to any tick you want if you have all events on board already.
 ```csharp
-world.RewindTo(tick, doVisualUpdate);
+world.RewindTo(targetTick, doVisualUpdate); // Rewind to targetTick immediately
+
+// Async rewinder allow to simulate world smoothly with maxSimulationTime delay per batch
+world.RewindToAsync(targetTick, doVisualUpdate, [onState = null], [maxSimulationTime = 1f]);
 ```
 
 ### Replay Mode

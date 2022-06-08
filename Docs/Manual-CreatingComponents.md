@@ -170,4 +170,8 @@ entity.Set(new YourAnotherStructComponent(), ComponentLifetime.NotifyAllSystemsB
 
 In some cases you need to set up custom lifetime for component, so you can use ```entity.Set(new YourStructComponent(), ComponentLifetime.NotifyAllSystemsBelow, lifetimeInSeconds)``` to determine how long your component should be alive. Note that NotifyAllSystems or NotifyAllSystemsBelow should work as expected because this parameter controls only creation time of the component.
         
+## Flow
+	
+<img src="ECS-ComponentsStorage.png" />
+	
 [![](Footer.png)](/../../#glossary)

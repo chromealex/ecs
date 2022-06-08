@@ -11,7 +11,7 @@ public class YourModule : IModule, IUpdate {
     
     void IModuleBase.OnDeconstruct() {}
     
-    void IUpdate.Update(TState state, float deltaTime) {
+    void IUpdate.Update(float deltaTime) {
         
         // Read some input and place marker to world
         if (Input.GetMouseButtonDown(0) == true) {

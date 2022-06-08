@@ -6,7 +6,7 @@ Filters in ME.ECS can be used with burst compiler. There are two variants to use
 
 This method can be used with job system:
 ```csharp
-public Filter filter; // for example we use filter define
+public Filter filter; // for example we use filter define somewhere
 
 void AdvanceTick(in float deltaTime) {
   

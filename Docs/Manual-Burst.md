@@ -14,8 +14,8 @@ void AdvanceTick(in float deltaTime) {
     var bag = new FilterBag<Component1, Component2>(this.filter, Allocator.TempJob);
     
     // Schedule the job with your bag
-    var job = new Job() { bag = bag };
-    job.Schedule(bag.Length, 64).Complete();
+    var job = new Job();
+    job.Schedule(bag).Complete();
     
     // Push changes to world
     // Or you can discard changes by calling Revert method

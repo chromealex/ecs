@@ -80,6 +80,8 @@ Use this interface in System to get an update every frame after IUpdate in World
 #### IUpdatePost
 Use this interface in System to get an update every frame in World::LateUpdate.
 
+## Flow
+
 <img src="ECS-Flow.png" />
 
 [![](Footer.png)](/../../#glossary)

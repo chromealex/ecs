@@ -45,4 +45,36 @@ Modules do visual update on the beginning of the frame and on the beginning of e
 
 Markers needed to implement Controller/UI events or something that doesn't exist in game state.
 
+### Interfaces
+
+#### ISystem
+Default System behaviour.
+
+#### IModule
+Default Module behaviour.
+
+#### IAdvanceTick
+Use this interface in System or Module to get an update every tick.
+
+#### IAdvanceTickPre
+Use this interface in System to get an update every tick before IAdvanceTick.
+
+#### IAdvanceTickPost
+Use this interface in System to get an update every tick after IAdvanceTick.
+
+#### ISystemFilter
+Use this interface in System to get an iteration through the filter.
+
+#### IAdvanceTickStep
+Use this interface in System to get an update every X tick.
+
+#### IUpdate
+Use this interface in System or Module to get an update every frame in World::Update.
+
+#### IUpdateLate
+Use this interface in System to get an update every frame after IUpdate in World::Update.
+
+#### IUpdatePost
+Use this interface in System to get an update every frame in World::LateUpdate.
+
 [![](Footer.png)](/../../#glossary)

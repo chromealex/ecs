@@ -7,7 +7,7 @@ If you store managed array here, only pointer will be copied, so if you have sta
 In order to use some arrays, you can use [**Intrusive collections**](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Core/Collections/Intrusive) (IntrusiveList, IntrusiveHashSet, IntrusiveDictionary, IntrusiveStack, IntrusiveQueue, etc.) to be free of copying any struct data. Also you can use DataArray<T>/DataObject<T> collection without Copyable component.
 
 ```csharp
-public struct MyStructComponent : IStructComponent {
+public struct MyStructComponent : IComponent {
         
     public int someData;
 

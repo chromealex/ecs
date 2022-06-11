@@ -87,7 +87,7 @@ https://github.com/chromealex/ecs-submodule
 | [Essentials](https://github.com/chromealex/ecs-submodule/tree/master/Essentials) | Here are essential packages for ME.ECS |
 | [Addons](https://github.com/chromealex/ecs-submodule/tree/master/Addons) | Here are addon packages for ME.ECS |
 | [Pathfinding Package](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Pathfinding) | Here is Pathfinding Package readme |
-| [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Serializer) | Here is Serializer Package readme |
+| [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Serializer) | Here is Serializer Package readme |
 | [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/Addons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
 | [World Operations](Docs/World-Operations.md) | How to operate the world |
 

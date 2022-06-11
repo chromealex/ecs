@@ -100,19 +100,19 @@ E-Mail: chrome.alex@gmail.com</br>
 Facebook: https://www.facebook.com/chrome.alex</br>
 
 ## Inspired by
-> <img src="Docs/Projects/game-mw2.png" width="650" height="520" /><br>
+> <img src="Docs/Projects/game-mw2.png" width="650" /><br>
 > <b>Mushroom Wars 2</b><br>
 > Steam, iOS, Android, Switch, XBOXOne, PS4
 
 ## Projects
-> <img src="Docs/Projects/game-wildwars.png" width="650" height="520" /><br>
+> <img src="Docs/Projects/game-wildwars.png" width="650" /><br>
 > <b>Wild Wars</b><br>
 > Mobile (iOS/Android)
 
-> <img src="Docs/Projects/game-qubix.png" width="650" height="520" /><br>
+> <img src="Docs/Projects/game-qubix.png" width="650" /><br>
 > <b>Qubix Infinity</b><br>
 > WebGL
 
-> <img src="Docs/Projects/game-unreleased1.png" width="650" height="520" /><br>
+> <img src="Docs/Projects/game-unreleased1.png" width="650" /><br>
 > <b>Unreleased Project #1</b><br>
 > Mobile (iOS/Android)

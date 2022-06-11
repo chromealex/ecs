@@ -99,7 +99,7 @@ Telegram: https://t.me/chromealex</br>
 E-Mail: chrome.alex@gmail.com</br>
 Facebook: https://www.facebook.com/chrome.alex</br>
 
-## How It Works
-![](Readme/HowItWorks.png?raw=true "How It Works")
-## Update
-![](Readme/UpdateTick.png?raw=true "Update Tick")
+## Projects
+<img src="Docs/Projects/game-wildwars.png" width="650" height="520" />
+<img src="Docs/Projects/game-qubix.png" width="650" height="520" />
+<img src="Docs/Projects/game-unreleased1.png" width="650" height="520" />

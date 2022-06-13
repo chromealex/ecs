@@ -66,7 +66,7 @@ Also, there are several methods to help you debug the entity
 
 ```csharp
 
-var noVersion = entity.ToStringNoVersion() ; // returns a formatted string with Id and  Generation
+	var noVersion = entity.ToStringNoVersion() ; // returns a formatted string with Id and  Generation
 	var full = entity.ToString(); // returns a formatted string, with an Id, generation and version
 	var small = entity.ToSmallString(); // same as above, but formatted shorter
 

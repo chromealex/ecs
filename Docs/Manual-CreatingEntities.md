@@ -5,9 +5,8 @@ Entity – is an abstract idea of something that exists in a world. In context o
 In ME.ECS – Entities are structs, that have a name (relevant in editor only), a generation and a version. They do not have anything by themselves, and it is your job to do something with them. Entities could be created by in two ways
 
 ```csharp
-
-  var entity = this.world.AddEntity(); //this would create an empty entity and add it to the world
-  var entity = new Entity(someName); // this would alse create an empty entity and add it to the world, but with a given name
+	var entity = this.world.AddEntity(); //this would create an empty entity and add it to the world
+	var entity = new Entity(someName); // this would alse create an empty entity and add it to the world, but with a given name
 
 ```
 > *NOTE: If you are using “new Entity()” instead of “this.world.AddEntity()” you **must** provide a name and/or a flag.*
@@ -19,10 +18,10 @@ You can have a OneShot entity, that would be (as a OneShotComponent) removed and
 You can have a DestroyWithoutComponents entity, that would be automatically removed and returned to the pool if it has no components associated with it.
 ```csharp
 
-    var entity1 = this.world.AddEntity(EntityFlag.None); // adds an entity with no name and a default flag
-    var entity2 = this.world.AddEntity("someEntity", EntityFlag.OneShot); // adds an entity with a name and a OneShot flag
-    var entity3 = new Entity("someEntity"); // adds an entity with a name and a default flag
-    var entity4 = new Entity(EntityFlag.DestroyWithoutComponents); // adds an entity with no name and a flag
+	var entity1 = this.world.AddEntity(EntityFlag.None); // adds an entity with no name and a default flag
+	var entity2 = this.world.AddEntity("someEntity", EntityFlag.OneShot); // adds an entity with a name and a OneShot flag
+	var entity3 = new Entity("someEntity"); // adds an entity with a name and a default flag
+    	var entity4 = new Entity(EntityFlag.DestroyWithoutComponents); // adds an entity with no name and a flag
 
 ```
 
@@ -33,13 +32,14 @@ You can remove an entity at any given time during AdvanceTick() or in any RPC, b
 
 void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
 
-            if (someCondition) {
-            
-                entity.Destroy();
+	if (someCondition) {
+        
+		entity.Destroy();
             }
         }
  
 ```
+
 # What are the generation and version for?
 Entities in ME.ECS are pooled for better performance, and every entity is generation 0 while it is dormant, but as soon as you create it from the pool – it’s generation goes up, indicating, that this entity has already been created, processed and recycled.
 Versions are almost the same, but they indicate entity’s changes throughout it’s lifetime (within one generation). Entity’s version is changed every time a component is added, removed, or component’s data is changed.

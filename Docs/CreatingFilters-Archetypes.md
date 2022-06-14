@@ -1,8 +1,5 @@
 # Creating Filters (Archetypes) [![](Logo-Tiny.png)](/../../#glossary)
 
-> **Note**
-> Turn on this feature with FILTERS_STORAGE_ARCHETYPES. Be default this storage type is inactive.
-
 In ME.ECS filters are storing archetypes with the certain components they have or not.
 Filters must be created in OnConstruct methods and shouldn't be added at the runtime.
 By default in **System with Filter** you have already defined filter and have an AdvanceTick method to implement logic working with certain entity.

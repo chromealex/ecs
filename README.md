@@ -95,9 +95,9 @@ https://github.com/chromealex/ecs-submodule
 https://discord.gg/SxJJPPNsSf
 
 ## Contact Me
-Telegram: https://t.me/chromealex</br>
-E-Mail: chrome.alex@gmail.com</br>
-Facebook: https://www.facebook.com/chrome.alex</br>
+<a href="https://t.me/chromealex"><img src="https://img.shields.io/badge/telegram-chromealex-cyan" /></a></br>
+<a href="mailto:chrome.alex@gmail.com"><img src="https://img.shields.io/badge/e--mail-chrome.alex%40gmail.com-black" /></a></br>
+<a href="https://www.facebook.com/chrome.alex"><img src="https://img.shields.io/badge/facebook-chrome.alex-blue" /></a></br>
 
 ## Inspired by
 > <img src="Docs/Projects/game-mw2.png" width="650" /><br>

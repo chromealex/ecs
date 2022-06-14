@@ -13,7 +13,13 @@ var entity = Entity.Create("someName");
 > **Warning**
 > If you are using ```new Entity()``` instead of ```this.world.AddEntity()``` you **must** provide a name and/or a flag.
 
-Entities can have certain flags associated with them, controlling their lifetime. By default – if you do not provide a flag yourself, or choose None flag – entity's lifetime would be infinite, as in – you would have to manually remove entity from the world (entity would be returned to the pool upun Desstoy() call).
+Entities can have certain flags associated with them, controlling their lifetime. By default – if you do not provide a flag yourself, or choose None flag – entity's lifetime would be infinite, as in – you would have to manually remove entity from the world (entity would be returned to the pool upon Destroy() call).
+
+| Flag | Description |
+| ------ | ----- |
+| ```EntityFlag.None``` | Entity would never been removed, you should destroy it manually. ```Default``` behaviour. |
+| ```EntityFlag.OneShot``` | Entity would destroy automatically at the end of the tick. |
+| ```EntityFlag.DestroyWithoutComponents``` | Entity would destroy automatically at the end of the tick if there are no components on it. |
 
 You can have a OneShot entity, that would be (as a OneShotComponent) removed and returned to the pool at the end of a logic tick it was created in.
 
@@ -21,7 +27,7 @@ You can have a DestroyWithoutComponents entity, that would be automatically remo
 
 ```csharp
 var entity = this.world.AddEntity("someName"); // adds an entity with a name and a default flag
-var entity = this.world.AddEntity(EntityFlag.DestroyWithouComponents); // adds an entity with no name and a destroy flag 
+var entity = this.world.AddEntity(EntityFlag.DestroyWithoutComponents); // adds an entity with no name and a destroy flag 
 var entity = this.world.AddEntity("someEntity", EntityFlag.OneShot); // adds an entity with a name and a OneShot flag 
 
 var entity = new Entity("someEntity"); // adds an entity with a name and a default flag 
@@ -34,10 +40,8 @@ var entity = Entity.Create("someName", EntityFlag.OneShot); // adds an entity wi
 ```
 
 You can remove an entity at any given time during AdvanceTick() or in any RPC, by calling entity.Destroy().
-
 > **Warning**
 > This should be done at the end of the logic call, or the loop should be continued or broken, to exclude any errors.
-
 ```csharp
 void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
 

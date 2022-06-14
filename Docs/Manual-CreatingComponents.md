@@ -98,7 +98,8 @@ void Example() {
 
 ### Static Components
 
-Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
+> **Note**
+> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
 If you don't want to store some components on entity, but you still want to get data by reading data configs - you can provide ```IComponentStatic``` interface to avoid any applying on entity.
 
 ```csharp
@@ -118,17 +119,20 @@ void Example() {
 
 ### Runtime Components
 
-Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
+> **Note**
+> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
 To be able to add only data components and to avoid components marked ```IComponentRuntime``` you can use this interface.
 
 ### Initializable Components
 
-Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
+> **Note**
+> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
 Sometimes you need to call initialization method for components, so you need to use ```IComponentInitializable``` interface. This call is done before copying component onto your entity.
 
 ### Deinitializable Components
 	
-Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
+> **Note**
+> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
 Opposite of ```IComponentInitializable```. Called on ```DataConfig::Apply``` when you removing components.
 	
 ### OneShot Components
@@ -139,8 +143,8 @@ These components are similar to NotifyAllSystemsBelow lifetime flag and automati
 ```csharp
 entity.SetOneShot(new YourOneShotComponent());
 // Here you can get access to your component data or use filters
-... (TICK)
-// No component data exist
+**(TICK END)**
+// No component data exist at this point
 ```
 
 ### Versioned Components

@@ -5,13 +5,13 @@
 | [```IComponent```](#struct-components) | Unmanaged data component. |
 | [```ICopyable<T>```](#copyable-components) | Managed data component with custom ```CopyFrom()``` and ```OnRecycle()``` methods. |
 | [```IComponentShared```](#shared-components) | Shared components are the same as default components, but this feature support shared component groups. |
+| [```IComponentOneShot```](#oneshot-components) | Doesn't stored in state, automatically removed at the end of the tick. |
+| [```IVersioned```](#versioned-components) | Track version of component by calling ```entity.GetDataVersion<TComponent>()```. |
+| [```IVersionedNoState```](#versioned-components-non-state) | Increment version of component on each change. |
 | [```IComponentStatic```](#static-components) | Feature to avoid any applying on entity when applying DataConfig. |
 | [```IComponentRuntime```](#runtime-components) | Feature to avoid adding these components onto the DataConfig. |
 | [```IComponentInitializable```](#initializable-components) | This call is done before copying component onto your entity when applying DataConfig. |
 | [```IComponentDeinitializable```](#deinitializable-components) | Called on ```DataConfig::Apply``` on components removings. |
-| [```IComponentOneShot```](#oneshot-components) | Doesn't stored in state, automatically removed at the end of the tick. |
-| [```IVersioned```](#versioned-components) | Track version of component by calling ```entity.GetDataVersion<TComponent>()```. |
-| [```IVersionedNoState```](#versioned-components-non-state) | Increment version of component on each change. |
 
 ### Struct Components
 
@@ -96,45 +96,6 @@ void Example() {
 }
 ```
 
-### Static Components
-
-> **Note**
-> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
-If you don't want to store some components on entity, but you still want to get data by reading data configs - you can provide ```IComponentStatic``` interface to avoid any applying on entity.
-
-```csharp
-struct MyStaticComponent : IComponentStatic {
-    ...
-}
-
-void Example() {
-
-    ...
-    var data = config.Get<MyStaticComponent>(); // Read data from DataConfig
-    
-    var emptyData = entity.Read<MyStaticComponent>(); // Fail! Returns an empty data
-
-}
-```
-
-### Runtime Components
-
-> **Note**
-> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
-To be able to add only data components and to avoid components marked ```IComponentRuntime``` you can use this interface.
-
-### Initializable Components
-
-> **Note**
-> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
-Sometimes you need to call initialization method for components, so you need to use ```IComponentInitializable``` interface. This call is done before copying component onto your entity.
-
-### Deinitializable Components
-	
-> **Note**
-> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
-Opposite of ```IComponentInitializable```. Called on ```DataConfig::Apply``` when you removing components.
-	
 ### OneShot Components
 
 In ME.ECS you could fire one-tick components without store them in state.<br>
@@ -167,6 +128,49 @@ struct MyComponent : IComponent, IVersionedNoState {
 }
 ```
 
+### Static Components
+
+> **Note**
+> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
+	
+If you don't want to store some components on entity, but you still want to get data by reading data configs - you can provide ```IComponentStatic``` interface to avoid any applying on entity.
+
+```csharp
+struct MyStaticComponent : IComponentStatic {
+    ...
+}
+
+void Example() {
+
+    ...
+    var data = config.Get<MyStaticComponent>(); // Read data from DataConfig
+    
+    var emptyData = entity.Read<MyStaticComponent>(); // Fail! Returns an empty data
+
+}
+```
+
+### Runtime Components
+
+> **Note**
+> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
+	
+To be able to add only data components and to avoid components marked ```IComponentRuntime``` you can use this interface.
+
+### Initializable Components
+
+> **Note**
+> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
+	
+Sometimes you need to call initialization method for components, so you need to use ```IComponentInitializable``` interface. This call is done before copying component onto your entity.
+
+### Deinitializable Components
+	
+> **Note**
+> Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
+	
+Opposite of ```IComponentInitializable```. Called on ```DataConfig::Apply``` when you removing components.
+	
 ### Component Lifetime
 
 For struct components there are lifetime property as described in the table below:

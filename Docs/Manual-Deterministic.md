@@ -2,7 +2,7 @@
 # Deterministic Operations [![](Logo-Tiny.png)](/../../#glossary)
 In ME.ECS there are several places where general logic must be replaced with deterministic logic.
 
-### Random
+## Random
 
 As you know (I hope) all random values must be deterministic, so if you need to use some random logic, you can use one of these methods:
 | Method | Replace |
@@ -28,20 +28,20 @@ As you know (I hope) all random values must be deterministic, so if you need to 
 > **Warning**
 > Using world.GetRandom*() methods couldn't be called inside systems with **jobs** on. You can turn off this check by disabling WORLD_THREAD_CHECK.
 
-### HashSet and Dictionary
+## HashSet and Dictionary
 
 In deterministic logic you couldn't use default HashSet and Dictionary with object instances because it calls GetHashCode() method on your instances.
 You should override GetHashCode() method to be able to use these collection types.
      
-### If you are Fixed-Point Math fan
+## If you are Fixed-Point Math fan
 
 ME.ECS has sfloat, VecMath class and ME.ECS.Mathematics implementations. If you really need to use fixed-point math you can use any of these structs.
 
-### Burst
+## Burst
 
 Now is 2021 and we are currently have no Burst deterministic functions. So in burst you can use Fixed-Point Math to be sure all calculations are identical on all platforms. It is recommend to use ```FloatingPoint.High``` btw.
 
-### Mono/IL2CPP Builds
+## Mono/IL2CPP Builds
 
 Unity Editor runs using mono, but all target builds must have IL2CPP compiler to works right with determinism. So you can use Mono builds with Unity Editor and IL2CPP builds with other IL2CPP builds, otherwise you've got some desync point.
 

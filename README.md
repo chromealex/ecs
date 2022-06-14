@@ -65,6 +65,7 @@ https://github.com/chromealex/ecs-submodule
 | [Classes](Docs/Manual-Classes.md) | All classes and structures used in ME.ECS |
 | [Deterministic Operations](Docs/Manual-Deterministic.md) | Deterministic Operations like Random and GetHashCode in collections |
 | [Burst](Docs/Manual-Burst.md) | How to use burst |
+| [World Operations](Docs/World-Operations.md) | How to operate the world |
 | [Default Modules](Docs/DefaultModules.md) | Describe default modules included in ME.ECS by default |
 | [Create World](Docs/Manual-CreatingWorld.md) | Describe how to create new world and set up your empty project |
 | [Create Feature](Docs/Manual-CreatingFeature.md) | How to create new feature |
@@ -88,8 +89,8 @@ https://github.com/chromealex/ecs-submodule
 | [Addons](https://github.com/chromealex/ecs-submodule/tree/master/Addons) | Here are addon packages for ME.ECS |
 | [Pathfinding Package](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Pathfinding) | Here is Pathfinding Package readme |
 | [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Serializer) | Here is Serializer Package readme |
+| [GOAP](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/GOAP) | GOAP Implementation |
 | [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/Addons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
-| [World Operations](Docs/World-Operations.md) | How to operate the world |
 
 ## Discord
 https://discord.gg/SxJJPPNsSf

@@ -22,9 +22,11 @@ As you know (I hope) all random values must be deterministic, so if you need to 
 | ```Unity.Mathematics.Random::NextFloat(0f, 1f)``` | ```float world.GetRandomValue()``` |
 | Returns random float in range 0..1 |
 
-> Note! We are recommend to use Unity.Mathematics package instead of UnityEngine.Random. To use Unity.Mathematics package you should set UNITY_MATHEMATICS define on.
+> **Note**
+> We are recommend to use Unity.Mathematics package instead of UnityEngine.Random. To use Unity.Mathematics package you should set UNITY_MATHEMATICS define on.
 
-> Note! Using world.GetRandom*() methods couldn't be called inside systems with **jobs** on. You can turn off this check by disabling WORLD_THREAD_CHECK.
+> **Warning**
+> Using world.GetRandom*() methods couldn't be called inside systems with **jobs** on. You can turn off this check by disabling WORLD_THREAD_CHECK.
 
 ### HashSet and Dictionary
 
@@ -33,11 +35,11 @@ You should override GetHashCode() method to be able to use these collection type
      
 ### If you are Fixed-Point Math fan
 
-ME.ECS has FPVector2, FPVector3, FPQuaternion, pfloat and FPMath implementations. If you really need to use fixed-point math you can use any of these structs.
+ME.ECS has sfloat, VecMath class and ME.ECS.Mathematics implementations. If you really need to use fixed-point math you can use any of these structs.
 
 ### Burst
 
-Now is 2021 and we are currently have no Burst deterministic functions. So in burst you can use Fixed-Point Math to be sure all calculations are identical on all platforms. It is recommend to use FloatingPoint.High btw.
+Now is 2021 and we are currently have no Burst deterministic functions. So in burst you can use Fixed-Point Math to be sure all calculations are identical on all platforms. It is recommend to use ```FloatingPoint.High``` btw.
 
 ### Mono/IL2CPP Builds
 

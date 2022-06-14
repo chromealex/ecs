@@ -1,5 +1,18 @@
 # Creating Components [![](Logo-Tiny.png)](/../../#glossary)
 
+| Type | Description |
+| ------ | ----- |
+| [```IComponent```](#struct-components) | Unmanaged data component. |
+| [```ICopyable<T>```](#copyable-components) | Managed data component with custom ```CopyFrom()``` and ```OnRecycle()``` methods. |
+| [```IComponentShared```](#shared-components) | Shared components are the same as default components, but this feature support shared component groups. |
+| [```IComponentStatic```](#static-components) | Feature to avoid any applying on entity when applying DataConfig. |
+| [```IComponentRuntime```](#runtime-components) | Feature to avoid adding these components onto the DataConfig. |
+| [```IComponentInitializable```](#initializable-components) | This call is done before copying component onto your entity when applying DataConfig. |
+| [```IComponentDeinitializable```](#deinitializable-components) | Called on ```DataConfig::Apply``` on components removings. |
+| [```IComponentOneShot```](#oneshot-components) | Doesn't stored in state, automatically removed at the end of the tick. |
+| [```IVersioned```](#versioned-components) | Track version of component by calling ```entity.GetDataVersion<TComponent>()```. |
+| [```IVersionedNoState```](#versioned-components-non-state) | Increment version of component on each change. |
+
 ### Struct Components
 
 In struct components you don't have any methods and all copies make automatically.
@@ -14,13 +27,16 @@ public struct MyStructComponent : IComponent {
 }
 ```
 
+### Copyable Components
+
 If you need to store managed data with custom copy interface, you should use **IStructCopyable<>** component where you need to implement CopyFrom(in T other) and OnRecycle() methods.
 > Use this if you are really want to use managed data and you really changes this data in your systems. In other cases use [**Intrusive collections**](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Core/Collections/Intrusive).
 	
-> Note! You **must** implement ```CopyFrom``` and ```Recycle``` methods and in CopyFrom you need to copy data from "other" component and in Recycle you need to reset you data to it's default state. Be sure you are copy and reset your data properly!
+> **Note**
+> You **must** implement ```CopyFrom``` and ```Recycle``` methods and in CopyFrom you need to copy data from "other" component and in Recycle you need to reset you data to it's default state. Be sure you are copy and reset your data properly!
 	
 ```csharp
-public struct MyStructCopyableComponent : IStructCopyable<MyStructCopyableComponent> {
+public struct MyStructCopyableComponent : ICopyable<MyStructCopyableComponent> {
         
     public int someData;
     
@@ -82,7 +98,7 @@ void Example() {
 ### Static Components
 
 Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
-If you don't want to store some components on entity, but you still want to get data by reading data configs - you can provide IComponentStatic interface to avoid any applying on entity.
+If you don't want to store some components on entity, but you still want to get data by reading data configs - you can provide ```IComponentStatic``` interface to avoid any applying on entity.
 
 ```csharp
 struct MyStaticComponent : IComponentStatic {
@@ -99,22 +115,22 @@ void Example() {
 }
 ```
 
-### IComponentRuntime
+### Runtime Components
 
 Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
 To be able to add only data components and to avoid components marked ```IComponentRuntime``` you can use this interface.
 
-### IComponentInitializable
+### Initializable Components
 
 Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
 Sometimes you need to call initialization method for components, so you need to use ```IComponentInitializable``` interface. This call is done before copying component onto your entity.
 
-### IComponentDeinitializable
+### Deinitializable Components
 	
 Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.<br>
 Opposite of ```IComponentInitializable```. Called on ```DataConfig::Apply``` when you removing components.
 	
-### IComponentOneShot
+### OneShot Components
 
 In ME.ECS you could fire one-tick components without store them in state.<br>
 These components are similar to NotifyAllSystemsBelow lifetime flag and automatically removed at the end of the tick.
@@ -155,7 +171,6 @@ For struct components there are lifetime property as described in the table belo
 | NotifyAllSystemsBelow | If set all systems defined after executing system will be able to get this component. At the end of current tick this component will be destroyed automatically (see [custom lifetime](https://github.com/chromealex/ecs/blob/master/Docs/Manual-CreatingComponents.md#component-custom-lifetime) section). |
 | NotifyAllSystems | If set all systems will be able to get this component, but only from the begining of the next tick. At the end of next tick this component will be destroyed automatically (see [custom lifetime](https://github.com/chromealex/ecs/blob/master/Docs/Manual-CreatingComponents.md#component-custom-lifetime) section). |
 
-In general you need to use **Infinite**, **NotifyAllSystemsBelow** and **NotifyAllSystems** lifetime.
 ```csharp
 // Set struct data with Lifetime = Infinite
 entity.Set(new YourStructComponent());
@@ -164,7 +179,8 @@ entity.Set(new YourStructComponent());
 entity.Set(new YourAnotherStructComponent(), ComponentLifetime.NotifyAllSystemsBelow);
 ```
 
-> Note! If you set **Infinite** lifetime and after that set **non-Infinite** lifetime, **non-Infinite** will be ignored. First you need to call **RemoveData** before set another lifetime.
+> **Note**
+> If you set **Infinite** lifetime and after that set **non-Infinite** lifetime, **non-Infinite** will be ignored. First you need to call **RemoveData** before set another lifetime.
 
 ### Component Custom Lifetime
 

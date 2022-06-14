@@ -56,7 +56,7 @@ Versions are almost the same, but they indicate entity’s changes throughout it
 
 You can access different entities properties
 ```csharp
-var id = entity.id; //returns you entity’s id
+var id = entity.id; // returns you entity’s id
 var generation = entity.generation; // returns entity’s generation
 var version = entity.GetVersion(); // returns current version of the entity
 ```

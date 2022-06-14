@@ -12,6 +12,9 @@
 
 ## Installation
 
+> **Warning**
+> This repository not always contains actual submodule, so you should check the latest changes in [submodule](https://github.com/chromealex/ecs-submodule)
+
 ### Using submodule
 
 1. Download or add as a submodule this repository https://github.com/chromealex/ecs-submodule.

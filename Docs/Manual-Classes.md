@@ -10,7 +10,7 @@ Entities are containers with **ID** and **Generation**.<br>
 <br>
 <br>
 
-#### Components (```IComponent```, ```IStructCopyable<>```)
+#### Components (```IComponent```, ```ICopyable<>```, etc.)
 [How to create a component](Manual-CreatingComponents.md)
 
 Components are storing data. In ME.ECS there are 2 component types: IStructCopyable<> and IStructComponent.

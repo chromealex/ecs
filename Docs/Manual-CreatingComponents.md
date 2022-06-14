@@ -27,6 +27,28 @@ public struct MyStructComponent : IComponent {
 }
 ```
 
+In systems where you need to use components you could use these methods:
+```csharp
+void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
+      
+    // Set data
+    entity.Set(new MyStructComponent() {
+    	someData = 123
+    });
+
+    // Read data (Here you can read data only, entity version has not been changed)
+    ref readonly var dataReadonly = ref entity.Read<MyStructComponent>();
+    
+    // Change data (Any call of GetData inside Logic step will trigger entity version to change)
+    ref var data = ref entity.Get<MyStructComponent>();
+    ++data.someData;
+    
+    // Remove data
+    entity.Remove<MyStructComponent>();
+    
+}
+```
+
 ### Copyable Components
 
 If you need to store managed data with custom copy interface, you should use **IStructCopyable<>** component where you need to implement CopyFrom(in T other) and OnRecycle() methods.
@@ -49,28 +71,6 @@ public struct MyStructCopyableComponent : ICopyable<MyStructCopyableComponent> {
     	// Return data to the pool
     }
 
-}
-```
-
-In systems where you need to use components you could use these methods:
-```csharp
-void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
-      
-    // Set data
-    entity.Set(new MyStructComponent() {
-    	someData = 123
-    });
-
-    // Read data (Here you can read data only, entity version has not been changed)
-    ref readonly var dataReadonly = ref entity.Read<MyStructComponent>();
-    
-    // Change data (Any call of GetData inside Logic step will trigger entity version to change)
-    ref var data = ref entity.Get<MyStructComponent>();
-    ++data.someData;
-    
-    // Remove data
-    entity.Remove<MyStructComponent>();
-    
 }
 ```
 

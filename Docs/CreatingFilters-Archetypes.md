@@ -16,6 +16,7 @@ void ISystemBase.OnConstruct() {
 ```
 
 You can use these methods to filter your entities:
+> **Note**
 > All methods are combined with **AND** operator
 
 | Method | Description |

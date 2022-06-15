@@ -54,7 +54,14 @@ void ISystemFilter.AdvanceTick(in Entity entity, in float deltaTime) {
 }
 ```
 
-# What are the generation and version for?
+## Entity Methods
+| Method | Description |
+| ------ | ----- |
+| ```SetAs<TComponent>(dataConfig)``` | Set entity's component state as in data config. |
+| ```SetAs<TComponent>(entity)``` | Set entity's component state as in source entity. |
+| ```CopyFrom(entity)``` | Clear target entity and add all components as defined on source entity. |
+
+## What are the generation and version for?
 Entities in ME.ECS are pooled for better performance, and every entity is generation 0 while it is dormant, but as soon as you create it from the pool – it’s generation goes up, indicating, that this entity has already been created, processed and recycled.
 Versions are almost the same, but they indicate entity’s changes throughout it’s lifetime (within one generation). Entity’s version is changed every time a component is added, removed, or component’s data is changed.
 

@@ -19,7 +19,7 @@
 
 1. Download or add as a submodule this repository https://github.com/chromealex/ecs-submodule.
 2. Create an empty file called ```csc.gen.rsp``` inside Assets folder. Your file should have the path ```Assets/csc.gen.rsp```.
-3. Add packages (see [Package Dependencies](#package-dependencies) section):
+3. Add packages (see [Package Dependencies](#package-dependencies) section).
 4. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
 5. You are ready to [Initialize Project](Docs/VideoTutorials.md).
 

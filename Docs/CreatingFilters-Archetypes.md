@@ -32,5 +32,6 @@ You can use these methods to filter your entities:
 | ```OnChanged<T>``` | Filters all entities only if T component has been changed. Changed components are mark as changed on Set/Get operations. |
 | ```Parent(Filter)``` | Filters all entities having parent entity that matches custom filter |
 | ```Connect<TConnect>(Filter)``` | Filters all entities having custom entity that matches custom filter |
+| ```WithinTicks``` | Filter will automatically range results and run partial enumeration depends on current tick |
 
 [![](Footer.png)](/../../#glossary)

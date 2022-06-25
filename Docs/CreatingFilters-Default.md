@@ -1,6 +1,7 @@
 # Creating Filters (Legacy) [![](Logo-Tiny.png)](/../../#glossary)
 
-> Note! This is default filters in ME.ECS. Turn off FILTERS_STORAGE_ARCHETYPES define to use this filter type.
+> **Warning**
+> This is legacy filters in ME.ECS. Turn on FILTERS_STORAGE_LEGACY define to use this filter type.
 
 In ME.ECS filters are storing entities with the certain components they have or not.
 Filters must be created in OnConstruct methods and shouldn't be added at the runtime.

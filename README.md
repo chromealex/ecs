@@ -97,6 +97,7 @@ https://github.com/chromealex/ecs-submodule
 | [Pathfinding Package](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Pathfinding) | Here is Pathfinding Package readme |
 | [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Serializer) | Here is Serializer Package readme |
 | [GOAP](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/GOAP) | GOAP Implementation |
+| [Physics](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Physics) | Unity Physics port with fixed-point math |
 | [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/Addons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
 
 ## Discord

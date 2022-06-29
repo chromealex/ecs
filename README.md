@@ -15,20 +15,21 @@
 > **Warning**
 > This repository not always contains actual submodule, so you should check the latest changes in [submodule](https://github.com/chromealex/ecs-submodule)
 
-### Using submodule
-
+<details>
+<summary><h4>Using submodule</h4></summary>
+  
 1. Download or add as a submodule this repository https://github.com/chromealex/ecs-submodule.
 2. Create an empty file called ```csc.gen.rsp``` inside Assets folder. Your file should have the path ```Assets/csc.gen.rsp```.
 3. Add packages (see [Package Dependencies](#package-dependencies) section).
 4. Be sure your submodule folder has a name ```Assets/ecs-submodule``` or ```Assets/ECS-submodule```.
 5. You are ready to [Initialize Project](Docs/VideoTutorials.md).
-
-### Using Unity Package Manager
-
+  
+</details><details>
+<summary><h4>Using Unity Package Manager</h4></summary>
+  
 1. Create an empty file called ```csc.gen.rsp``` inside Assets folder. Your file should have the path ```Assets/csc.gen.rsp```.
 2. Open ```Packages/manifest.json``` file.
 3. Add ME.ECS to your dependencies section:
-
 ```
 {
   "dependencies": {
@@ -38,6 +39,8 @@
 }
 ```
 4. You are ready to [Initialize Project](Docs/VideoTutorials.md).
+  
+</details>
 
 ### Package Dependencies
 

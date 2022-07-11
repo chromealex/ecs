@@ -12,6 +12,7 @@
 | [```IComponentRuntime```](#runtime-components) | Feature to avoid adding these components onto the DataConfig. |
 | [```IComponentInitializable```](#initializable-components) | This call is done before copying component onto your entity when applying DataConfig. |
 | [```IComponentDeinitializable```](#deinitializable-components) | Called on ```DataConfig::Apply``` on components removings. |
+| [```IComponentBlittable```](#blittable-components) | Forces component to be blittable. |
 
 ### Struct Components
 
@@ -169,7 +170,14 @@ Sometimes you need to call initialization method for components, so you need to 
 > **Note**
 > Useful with [DataConfigs](https://github.com/chromealex/ecs/blob/master/Docs/DataConfig-Readme.md) only.
 	
-Opposite of ```IComponentInitializable```. Called on ```DataConfig::Apply``` when you removing components.
+Opposite to ```IComponentInitializable```. Called on ```DataConfig::Apply``` when you removing components.
+	
+### Blittable Components
+	
+> **Note**
+> Useful with FilterBag.
+	
+Forces component to be blittable, usefull especially with FilterBag because of FilterBag requires unmanaged components only. For example, if you tag components are not blittable, because they stored inside special tag storage, so you need to force set tag component as blittable.
 	
 ### Component Lifetime
 

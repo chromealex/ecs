@@ -79,7 +79,7 @@ https://github.com/chromealex/ecs-submodule
 | [Create Module](Docs/Manual-CreatingModules.md) | How to create new module |
 | [Create Entity](Docs/Manual-CreatingEntities.md) | How to create new entity |
 | [Create Component](Docs/Manual-CreatingComponents.md) | How to create new component |
-| [Create Filter](Docs/Manual-CreatingFilters.md) | How to create new filter |
+| [Create Filter](Docs/CreatingFilters-Archetypes.md) | How to create new filter |
 | [Create Marker](Docs/Manual-CreatingMarkers.md) | How to create new marker |
 | [Create Timers](Docs/Manual-Timers.md) | How to create timers |
 | [Create Views](Docs/Manual-CreatingViews.md) | How to register prefab in ME.ECS |

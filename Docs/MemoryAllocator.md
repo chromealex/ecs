@@ -23,12 +23,13 @@ The main difference between `MemoryAllocator.List<>` and `NativeList<>` (or `Gen
 For now ME.ECS has these collections implemented:
 | Collection | Description | Burst |
 | ------ | ----- | ----- |
-| ```MemArrayAllocator``` | Default array implementation. | YES |
-| ```List``` | Default list implementation without IEquatable restriction (uses default `EqualityComparer`). | NO |
-| ```HashSet``` | Default hash set implementation without IEquatable restriction (uses default `EqualityComparer`). | NO |
-| ```Dictionary``` | Default dictionary implementation without IEquatable restriction (uses default `EqualityComparer`). | NO |
-| ```EquatableHashSet``` | Custom HashSet implementation with `IEquatableAllocator<>` restriction. Required for types which needs to check Equals using MemoryAllocator. | YES |
-| ```NativeHashSet``` | Custom HashSet implementation with default IEquatable restriction. Use this for primitive or types which has `IEquatable<>` interface. | YES |
+| ```MemArrayAllocator``` | Default array implementation. | :heavy_check_mark: |
+| ```List``` | Default list implementation. | :heavy_check_mark: |
+| ```HashSet``` | Default hash set implementation without IEquatable restriction (uses default `EqualityComparer`). |  |
+| ```Dictionary``` | Default dictionary implementation without IEquatable restriction (uses default `EqualityComparer`). |  |
+| ```EquatableHashSet``` | Custom HashSet implementation with `IEquatableAllocator<>` restriction. Required for types which needs to check Equals using MemoryAllocator. | :heavy_check_mark: |
+| ```NativeHashSet``` | Custom HashSet implementation with default IEquatable restriction. Use this for primitive or types which has `IEquatable<>` interface. | :heavy_check_mark: |
+| ```NativeDictionary``` | Custom Dictionary implementation with default IEquatable restriction. Use this for primitive or types which has `IEquatable<>` interface. | :heavy_check_mark: |
 
 ## Static Allocators
 

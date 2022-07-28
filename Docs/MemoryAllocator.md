@@ -30,8 +30,8 @@ For now ME.ECS has these collections implemented:
 | ```List``` | Default list implementation. | :heavy_check_mark: |
 | ```HashSet``` | Default hash set implementation without IEquatable restriction (uses default `EqualityComparer`). |  |
 | ```Dictionary``` | Default dictionary implementation without IEquatable restriction (uses default `EqualityComparer`). |  |
-| ```Stack``` | Default stack implementation. |  |
-| ```Queue``` | Default queue implementation. |  |
+| ```Stack``` | Default stack implementation. | :heavy_check_mark: |
+| ```Queue``` | Default queue implementation. | :heavy_check_mark: |
 | ```EquatableHashSet``` | Custom HashSet implementation with default IEquatable restriction. Use this for primitive or types which has `IEquatable<>` interface. | :heavy_check_mark: |
 | ```EquatableDictionary``` | Custom Dictionary implementation with default IEquatable restriction. Use this for primitive or types which has `IEquatable<>` interface. | :heavy_check_mark: |
 | ```NativeHashSet``` | Custom HashSet implementation with `IEquatableAllocator<>` restriction. Required for types which needs to check Equals using MemoryAllocator. | :heavy_check_mark: |

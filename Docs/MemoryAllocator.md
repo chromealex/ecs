@@ -3,6 +3,9 @@
 In ME.ECS there is custom Memory Allocator with custom pointers.
 Memory Allocator stored in State and contains all objects you have create in state.
 
+> **Warning**
+> Keep in mind that MemoryAllocator doesn't thread-safe for now.
+
 ```csharp
 // Get state allocator
 var allocator = world.GetState().allocator;

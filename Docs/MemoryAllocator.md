@@ -31,6 +31,15 @@ For now ME.ECS has these collections implemented:
 | ```EquatableDictionary``` | Custom Dictionary implementation with default IEquatable restriction. Use this for primitive or types which has `IEquatable<>` interface. | :heavy_check_mark: |
 | ```NativeHashSet``` | Custom HashSet implementation with `IEquatableAllocator<>` restriction. Required for types which needs to check Equals using MemoryAllocator. | :heavy_check_mark: |
 
+```csharp
+using ME.ECS.Collections.MemoryAllocator;
+
+public struct YourComponent : IComponent {
+    // You don't need to use ICopyable<> interface here because List<> is stored as unmanaged pointer
+    public List<int> list;
+}
+```
+
 ## Static Allocators
 
 By default ME.ECS has 2 static allocators:

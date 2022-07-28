@@ -69,6 +69,7 @@ https://github.com/chromealex/ecs-submodule
 | ------ | ----- |
 | [Video Tutorials](Docs/VideoTutorials.md) | Here are some links to youtube channel which shows how to use some features |
 | [Classes](Docs/Manual-Classes.md) | All classes and structures used in ME.ECS |
+| [Memory Allocator](Docs/MemoryAllocator.md) | How to use memory allocator |
 | [Deterministic Operations](Docs/Manual-Deterministic.md) | Deterministic Operations like Random and GetHashCode in collections |
 | [Burst](Docs/Manual-Burst.md) | How to use burst |
 | [World Operations](Docs/World-Operations.md) | How to operate the world |

@@ -4,9 +4,9 @@ In ME.ECS there is custom Memory Allocator with custom pointers.
 Memory Allocator stored in State and contains all objects you have create in state.
 
 ```csharp
-// Get custom allocator
+// Get state allocator
 var allocator = world.GetState().allocator;
-// Create collection in allocator
+// Create collection in state allocator
 var arr = new List<int>(ref allocator, 100);
 ...
 arr.Dispose(ref allocator);

@@ -21,7 +21,7 @@ The main difference between `MemoryAllocator.List<>` and `NativeList<>` (or `Gen
 * `MemoryAllocator.List<>` contains long, which doesn't point to the native memory, it points to the allocator, so you can store this collection everywhere: in UI, in components, etc. You can store collections inside collections and doesn't matter about copying.
 
 > **Warning**
-> Do not forget to call `Dispose()` MemoryAllocator collections.
+> Do not forget to call `Dispose()` on MemoryAllocator collections.
 
 For now ME.ECS has these collections implemented:
 | Collection | Description | Burst |

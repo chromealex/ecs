@@ -6,13 +6,13 @@
 | [```ICopyable<T>```](#copyable-components) | Managed data component with custom ```CopyFrom()``` and ```OnRecycle()``` methods. |
 | [```IComponentShared```](#shared-components) | Shared components are the same as default components, but this feature support shared component groups. |
 | [```IComponentOneShot```](#oneshot-components) | Doesn't stored in state, automatically removed at the end of the tick. |
-| [```IVersioned```](#versioned-components) | Track version of component by calling ```entity.GetDataVersion<TComponent>()```. |
-| [```IVersionedNoState```](#versioned-components-non-state) | Increment version of component on each change. |
 | [```IComponentStatic```](#static-components) | Feature to avoid any applying on entity when applying DataConfig. |
 | [```IComponentRuntime```](#runtime-components) | Feature to avoid adding these components onto the DataConfig. |
 | [```IComponentInitializable```](#initializable-components) | This call is done before copying component onto your entity when applying DataConfig. |
 | [```IComponentDeinitializable```](#deinitializable-components) | Called on ```DataConfig::Apply``` on components removings. |
 | [```IComponentBlittable```](#blittable-components) | Forces component to be blittable. |
+| [```IVersioned```](#versioned-components) | Track version of component by calling ```entity.GetDataVersion<TComponent>()```. |
+| [```IVersionedNoState```](#versioned-components-non-state) | Increment version of component on each change. |
 
 ### Struct Components
 

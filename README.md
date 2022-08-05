@@ -98,10 +98,10 @@ https://github.com/chromealex/ecs-submodule
 | ------ | ----- |
 | [Essentials](https://github.com/chromealex/ecs-submodule/tree/master/Essentials) | Here are essential packages for ME.ECS |
 | [Addons](https://github.com/chromealex/ecs-submodule/tree/master/Addons) | Here are addon packages for ME.ECS |
-| [Pathfinding Package](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Pathfinding) | Here is Pathfinding Package readme |
 | [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Addons/ME.Serializer) | Here is Serializer Package readme |
-| [GOAP](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/GOAP) | GOAP Implementation |
-| [Physics](https://github.com/chromealex/ecs-submodule/tree/master/Essentials/Physics) | Unity Physics port with fixed-point math |
+| [Pathfinding](https://github.com/chromealex/me.ecs-pathfinding) | Here is Pathfinding Package readme |
+| [GOAP](https://github.com/chromealex/me.ecs-goap) | GOAP Implementation |
+| [Physics](https://github.com/chromealex/me.ecs-physics) | Unity Physics port with fixed-point math |
 | [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/Addons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
 
 ## Discord

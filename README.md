@@ -96,9 +96,10 @@ https://github.com/chromealex/ecs-submodule
 ## Addons
 | Link | Description |
 | ------ | ----- |
-| [Essentials](https://github.com/chromealex/ecs-submodule/tree/master/Essentials) | Here are essential packages for ME.ECS |
 | [Addons](https://github.com/chromealex/ecs-submodule/tree/master/Addons) | Here are addon packages for ME.ECS |
 | [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Addons/ME.Serializer) | Here is Serializer Package readme |
+| [Input](https://github.com/chromealex/me.ecs-input) | Input Implementation for touch/mouse controls |
+| [Destroy](https://github.com/chromealex/me.ecs-destroy) | Destroy Feature to control entities lifetime |
 | [Pathfinding](https://github.com/chromealex/me.ecs-pathfinding) | Here is Pathfinding Package readme |
 | [GOAP](https://github.com/chromealex/me.ecs-goap) | GOAP Implementation |
 | [Physics](https://github.com/chromealex/me.ecs-physics) | Unity Physics port with fixed-point math |

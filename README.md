@@ -68,8 +68,6 @@ https://github.com/chromealex/ecs-submodule
 
 ## Glossary
 
-<div align="center">
-
 | Link | Description |
 | ------ | ----- |
 | [Video Tutorials](Docs/VideoTutorials.md) | Here are some links to youtube channel which shows how to use some features |
@@ -97,8 +95,6 @@ https://github.com/chromealex/ecs-submodule
 | [Data Configs](Docs/DataConfig-Readme.md) | How to create and use data configs |
 | [Global Events](Docs/GlobalEvents-Readme.md) | How to create and use global events |
 | [Code Generators](Docs/CodeGenerators.md) | Code Generators usage |
-
-</div>
 
 ## ME.ECS Add-ons
 

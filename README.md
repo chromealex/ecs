@@ -142,18 +142,6 @@ https://github.com/chromealex/ecs-submodule
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-viewaddressables?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-viewaddressables/blob/master/LICENSE) <a href="https://github.com/chromealex/me.ecs-viewaddressables"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-viewaddressables?style=flat&color=blue" /></a><br>Additional API to be able load addressables<br>https://github.com/chromealex/me.ecs-viewaddressables |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
 
-## Addons
-| Link | Description |
-| ------ | ----- |
-| [Addons](https://github.com/chromealex/ecs-submodule/tree/master/Addons) | Here are addon packages for ME.ECS |
-| [Serializer Package](https://github.com/chromealex/ecs-submodule/tree/master/Runtime/Addons/ME.Serializer) | Here is Serializer Package readme |
-| [Input](https://github.com/chromealex/me.ecs-input) | Input Implementation for touch/mouse controls |
-| [Destroy](https://github.com/chromealex/me.ecs-destroy) | Destroy Feature to control entities lifetime |
-| [Pathfinding](https://github.com/chromealex/me.ecs-pathfinding) | Here is Pathfinding Package readme |
-| [GOAP](https://github.com/chromealex/me.ecs-goap) | GOAP Implementation |
-| [Physics](https://github.com/chromealex/me.ecs-physics) | Unity Physics port with fixed-point math |
-| [Data Config Generator](https://github.com/chromealex/ecs-submodule/tree/master/Addons/DataConfigGenerator) | Data Config Generator with Google Spreadsheets |
-
 ## Discord
 https://discord.gg/SxJJPPNsSf
 

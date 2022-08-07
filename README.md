@@ -97,50 +97,78 @@ https://github.com/chromealex/ecs-submodule
 
 ## ME.ECS Add-ons
 
+<div align="center">
+
 | <h3>Pathfinding</h3> |
 | ------ |
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-pathfinding?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-pathfinding/blob/master/LICENSE) <a href="https://github.com/chromealex/me.ecs-pathfinding"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-pathfinding?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-pathfinding"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-pathfinding?style=flat&color=yellow" /></a><br>Pathfinding implementation: AStar, FlowField, NavMesh<br>https://github.com/chromealex/me.ecs-pathfinding |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+
+</div>
+<div align="center">
 
 | <h3>Physics</h3> |
 | ------ |
 | [![License: Unity](https://img.shields.io/badge/license-UCL-yellowgreen)](https://github.com/chromealex/me.ecs-physics/blob/main/LICENSE) <a href="https://github.com/chromealex/me.ecs-physics"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-physics?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-physics"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-physics?style=flat&color=yellow" /></a><br>Unity Physics port (DOTS) with fixed-point math<br>https://github.com/chromealex/me.ecs-physics |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
 
+</div>
+<div align="center">
+
 | <h3>Input</h3> |
 | ------ |
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-input?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-input/blob/main/LICENSE) <a href="https://github.com/chromealex/me.ecs-input"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-input?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-input"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-input?style=flat&color=yellow" /></a><br>Input implementation for mouse/touch<br>https://github.com/chromealex/me.ecs-input |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+
+</div>
+<div align="center">
 
 | <h3>Destroy</h3> |
 | ------ |
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-destroy?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-destroy/blob/master/LICENSE) <a href="https://github.com/chromealex/me.ecs-destroy"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-destroy?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-destroy"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-destroy?style=flat&color=yellow" /></a><br>Additional API to destroy entities by the time<br>https://github.com/chromealex/me.ecs-destroy |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
 
+</div>
+<div align="center">
+
 | <h3>Goal-Oriented Action Planning (GOAP)</h3> |
 | ------ |
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-goap?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-goap/blob/master/LICENSE) <a href="https://github.com/chromealex/me.ecs-goap"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-goap?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-goap"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-goap?style=flat&color=yellow" /></a><br>Goal-Oriented Action Planning (GOAP) implementation<br>https://github.com/chromealex/me.ecs-goap |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+
+</div>
+<div align="center">
 
 | <h3>Data Config Generator</h3> |
 | ------ |
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-dataconfiggenerator?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-dataconfiggenerator/blob/master/LICENSE) <a href="https://github.com/chromealex/me.ecs-dataconfiggenerator"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-dataconfiggenerator?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-dataconfiggenerator"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-dataconfiggenerator?style=flat&color=yellow" /></a><br>Data Config Generator for Google Spreadsheets<br>https://github.com/chromealex/me.ecs-dataconfiggenerator |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
 
+</div>
+<div align="center">
+
 | <h3>Addressable Views</h3> |
 | ------ |
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-viewaddressables?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-viewaddressables/blob/master/LICENSE) <a href="https://github.com/chromealex/me.ecs-viewaddressables"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-viewaddressables?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-viewaddressables"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-viewaddressables?style=flat&color=yellow" /></a><br>Additional API to be able load addressables<br>https://github.com/chromealex/me.ecs-viewaddressables |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+
+</div>
+<div align="center">
 
 | <h3>Collections: DataObject</h3> |
 | ------ |
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-collections-dataobject?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-collections-dataobject/blob/master/LICENSE) <a href="https://github.com/chromealex/me.ecs-collections-dataobject"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-collections-dataobject?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-collections-dataobject"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-collections-dataobject?style=flat&color=yellow" /></a><br>DataObject collections<br>https://github.com/chromealex/me.ecs-collections-dataobject |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
 
+</div>
+<div align="center">
+
 | <h3>Collections: Intrusive</h3> |
 | ------ |
 | [![License: MIT](https://img.shields.io/github/license/chromealex/me.ecs-collections-intrusive?style=flat&color=greenyellow)](https://github.com/chromealex/me.ecs-collections-intrusive/blob/master/LICENSE) <a href="https://github.com/chromealex/me.ecs-collections-intrusive"><img src="https://img.shields.io/github/package-json/v/chromealex/me.ecs-collections-intrusive?style=flat&color=blue" /></a> <a href="https://github.com/chromealex/me.ecs-collections-intrusive"><img src="https://img.shields.io/github/last-commit/chromealex/me.ecs-collections-intrusive?style=flat&color=yellow" /></a><br>Intrusive collections<br>https://github.com/chromealex/me.ecs-collections-intrusive |
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+
+</div>
 
 ## Discord
 https://discord.gg/SxJJPPNsSf

@@ -98,6 +98,9 @@ https://github.com/chromealex/ecs-submodule
 
 ## ME.ECS Add-ons
 
+> **Note**
+> To install modules you can use `ME.ECS/Add-ons` menu.
+
 <div align="center">
 
 | <h3>Pathfinding</h3> |

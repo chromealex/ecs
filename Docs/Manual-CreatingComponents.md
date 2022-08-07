@@ -177,7 +177,7 @@ Opposite to ```IComponentInitializable```. Called on ```DataConfig::Apply``` whe
 > **Note**
 > Useful with [FilterBag](https://github.com/chromealex/ecs/blob/master/Docs/Manual-Burst.md).
 	
-Forces component to be blittable, usefull especially with FilterBag because of FilterBag requires unmanaged components only. For example, if you tag components are not blittable, because they stored inside special tag storage, so you need to force set tag component as blittable.
+Forces component to be blittable, usefull especially with FilterBag because of FilterBag requires unmanaged components only. For example, tag components are not blittable because they are stored in special tag storage, so you need to force set tag component as blittable.
 	
 ### Component Lifetime
 

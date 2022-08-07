@@ -95,7 +95,7 @@ https://github.com/chromealex/ecs-submodule
 | [Global Events](Docs/GlobalEvents-Readme.md) | How to create and use global events |
 | [Code Generators](Docs/CodeGenerators.md) | Code Generators usage |
 
-## ME.ECS Addons
+## ME.ECS Add-ons
 
 | <h3>Pathfinding</h3> |
 | ------ |

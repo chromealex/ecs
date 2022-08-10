@@ -99,7 +99,7 @@ https://github.com/chromealex/ecs-submodule
 ## ME.ECS Add-ons
 
 > **Note**
-> To install modules you can use `ME.ECS/Add-ons` menu.
+> To install modules you can use `ME.ECS/Add-ons` menu (all packages listed here: https://github.com/chromealex/ecs-submodule/blob/master/Addons.md).
 
 <div align="center">
 

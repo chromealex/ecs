@@ -88,4 +88,16 @@ var noVersion = entity.ToStringNoVersion() ; // returns a formatted string with 
 var full = entity.ToString(); // returns a formatted string, with an Id, generation and version
 var small = entity.ToSmallString(); // same as above, but formatted shorter
 ```
+
+## Entities Group
+If you want to create multiple entities as fast as you can, you may use EntitiesGroup.
+```csharp
+// Length - amount of entities you want to create
+// Allocator - Unity Allocator to store entities collection
+// CopyMode - if set true some sort of optimizations will be used (in general this mean that you will create the same components onto all entities)
+var group = world.AddEntities(100, Allocator.Temp, copyMode: true);
+group.Set(new YourComponent()); // Set component data onto all entities
+config.Apply(group); // Apply config onto all entities
+```
+
 [![](Footer.png)](/../../#glossary)

@@ -153,4 +153,13 @@ public class MonoViewInitializer : SceneViewInitializer {
     }
 ```
 
+## Interpolation
+ME.ECS has interpolation in views by default. You just need to turn on interpolation in your view settings. There are default speed settings, but you can override them by implementing these two methods:
+```csharp
+// Movement speed
+public override float GetInterpolationMovementSpeed() => this.entity.Read<YourMovementSpeedComponent>().value;
+// Rotation speed
+public override float GetInterpolationRotationSpeed() => this.entity.Read<YourRotationSpeedComponent>().value;
+```
+
 [![](Footer.png)](/../../#glossary)

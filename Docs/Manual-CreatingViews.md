@@ -161,6 +161,7 @@ public override float GetInterpolationMovementSpeed() => this.entity.Read<YourMo
 // Rotation speed
 public override float GetInterpolationRotationSpeed() => this.entity.Read<YourRotationSpeedComponent>().value;
 ```
-> Note! Only MonoBehaviourView supported
+> **Note**
+> Useful with MonoBehaviourView only.
 
 [![](Footer.png)](/../../#glossary)

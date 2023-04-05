@@ -29,7 +29,7 @@ public struct Job : IJobParallelForFilterBag<FilterBag<Component1, Component2>> 
     public void Execute(in FilterBag<Component1, Component2> bag, int index) {
       
         // Read first component in bag and change its value
-        ref var component1 = ref this.bag.GetT0(index);
+        ref var component1 = ref bag.GetT0(index);
         component1.data = ...;
         
         // Here you can read, change or remove components defined in bag

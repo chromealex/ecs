@@ -1,3 +1,5 @@
+# ME.BECS will be available in a days ;) Use "watch" button to not miss start date https://github.com/chromealex/ME.BECS
+
 # ME.ECS
 
 <a href="https://github.com/chromealex/ecs"><img src="Docs/ME.ECS-logo-128.png" width="150px" height="150px" align="left" /></a>

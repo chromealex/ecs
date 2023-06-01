@@ -1,4 +1,4 @@
-# ME.BECS will be available in a days ;) Use "watch" button to not miss start date https://github.com/chromealex/ME.BECS
+### ME.BECS now is available https://github.com/chromealex/ME.BECS
 
 # ME.ECS
 
